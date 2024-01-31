@@ -33,6 +33,14 @@ class HealthCheckTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `Health page reports database ok`() {
+    webTestClient.get().uri("/health")
+      .exchange()
+      .expectStatus().isOk
+      .expectBody().jsonPath("components.db.status").isEqualTo("UP")
+  }
+
+  @Test
   fun `Health ping page is accessible`() {
     webTestClient.get()
       .uri("/health/ping")
