@@ -2,6 +2,7 @@ version: 2.1
 
 orbs:
   hmpps: ministryofjustice/hmpps@8
+  codecov: codecov/codecov@3
 
 parameters:
   alerts-slack-channel:
@@ -14,8 +15,13 @@ parameters:
 jobs:
   validate:
     executor:
-      name: hmpps/java
-      tag: "21.0"
+      name: hmpps/java_localstack_postgres
+      jdk_tag: "21.0"
+      localstack_tag: "3"
+      services: "sqs,sns"
+      postgres_tag: "16"
+      postgres_username: "alerts"
+      postgres_password: "alerts"
     steps:
       - checkout
       - restore_cache:
@@ -24,6 +30,8 @@ jobs:
             - gradle-
       - run:
           command: ./gradlew check
+      - codecov/upload:
+          file: build/reports/jacoco/test/jacocoTestReport.xml
       - save_cache:
           paths:
             - ~/.gradle
@@ -32,6 +40,8 @@ jobs:
           path: build/test-results
       - store_artifacts:
           path: build/reports/tests
+      - store_artifacts:
+          path: build/reports/jacoco
 
 workflows:
   version: 2

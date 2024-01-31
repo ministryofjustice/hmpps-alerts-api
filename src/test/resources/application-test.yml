@@ -1,6 +1,16 @@
+spring:
+  datasource:
+    url: 'jdbc:postgresql://localhost:5432/alerts'
+    username: alerts
+    password: alerts
+
 server:
   shutdown: immediate
 
 management.endpoint:
   health.cache.time-to-live: 0
   info.cache.time-to-live: 0
+
+hmpps:
+  auth:
+    url: http://localhost:8090/auth
