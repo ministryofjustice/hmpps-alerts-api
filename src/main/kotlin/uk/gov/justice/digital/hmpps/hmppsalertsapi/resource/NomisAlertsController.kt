@@ -15,21 +15,21 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlertMapping
+import java.util.UUID
 
 @RestController
 @RequestMapping("/nomis-alerts", produces = [MediaType.APPLICATION_JSON_VALUE])
 class NomisAlertsController {
-  @GetMapping("/{alertId}")
+  @GetMapping("/{alertUuid}")
   @Operation(
-    summary = "Get an alert in NOMIS format by its identifier",
+    summary = "Get an alert in NOMIS format by its unique identifier",
     description = "Returns the alert with the matching identifier in the NOMIS data format. " +
       "This endpoint is intended to be used by the synchronisation process to retrieve the latest state of an alert.",
   )
@@ -61,30 +61,37 @@ class NomisAlertsController {
   fun retrieveAlert(
     @PathVariable
     @Parameter(
-      description = "Alert identifier",
+      description = "Alert unique identifier",
       required = true,
     )
-    alertId: Long,
+    alertUuid: UUID,
     request: HttpServletRequest,
   ): NomisAlert = throw NotImplementedError()
 
-  @ResponseStatus(HttpStatus.CREATED)
   @PostMapping
   @Operation(
-    summary = "Create an alert from NOMIS alert data",
-    description = "Accepts alerts data in NOMIS format and creates a corresponding alert in this service. " +
-      "The alert is returned along with the assigned alert id for mapping purposes. " +
-      "This endpoint is idempotent and will not create duplicate alert records. It uses the supplied offender book id and sequence number values " +
-      "as a combined unique identifier. If that combination is already in the data store, that alert will be returned using HTTP status code 200 OK. " +
+    summary = "Create or update an alert from NOMIS alert data. An upsert endpoint",
+    description = "Accepts alerts data in NOMIS format and creates a corresponding alert in this service if one does not exist or " +
+      "updates an existing alert if a corresponding alert already exists in the new service. This can be disambiguated by the response code, " +
+      "A 201 Created indicates the request caused a new alert to be created, a 200 OK is returned when an existing alert was updated by the request. " +
+      "In both cases, the alert's unique identifier is returned for mapping purposes. " +
+      "This endpoint is therefore idempotent and will not create duplicate alert records. " +
       "This endpoint does not validate the supplied data as it must accept all NOMIS alert data. " +
-      "This endpoint is intended to be used by the synchronisation process to migrate existing alerts and sync new ones.",
+      "This endpoint is intended to be used by the synchronisation process to migrate existing alerts and sync new and updated ones. " +
+      "The '$SYNC_SUPPRESS_EVENTS' header should be used to suppress domain event publishing when alerts are initially migrated. " +
+      "It should not be used or should be set to false (the default) when syncing new and updated alerts. ",
   )
   @ApiResponses(
     value = [
       ApiResponse(
+        responseCode = "200",
+        description = "Alert updated successfully",
+        content = [Content(schema = Schema(implementation = NomisAlertMapping::class))],
+      ),
+      ApiResponse(
         responseCode = "201",
         description = "Alert created successfully",
-        content = [Content(schema = Schema(implementation = Alert::class))],
+        content = [Content(schema = Schema(implementation = NomisAlertMapping::class))],
       ),
       ApiResponse(
         responseCode = "400",
@@ -109,76 +116,27 @@ class NomisAlertsController {
     @Valid
     @RequestBody
     @Parameter(
-      description = "The NOMIS alert to create in this service",
+      description = "The NOMIS alert to create or update in this service",
       required = true,
     )
     nomisAlert: NomisAlert,
-  ): Alert = throw NotImplementedError()
+  ): NomisAlertMapping = throw NotImplementedError()
 
-  @ResponseStatus(HttpStatus.OK)
-  @PutMapping("/{alertId}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @DeleteMapping("/{alertUuid}")
   @Operation(
-    summary = "Updates an existing alert with new NOMIS alert data",
-    description = "Accepts alerts data in NOMIS format and updates the alert with the corresponding identifier in this service. " +
-      "This endpoint does not validate the supplied data as it must accept all NOMIS alert data. " +
-      "This endpoint is intended to be used by the synchronisation process to sync updates to existing alerts.",
+    summary = "Deletes an alert",
+    description = "This endpoint fully removes the alert from the system. It is used when an alert " +
+      "has been created in error or otherwise removed from NOMIS and should therefore also be removed from this service. " +
+      "This endpoint will return 200 OK if the alert was not found or already deleted. This is to prevent low value warnings being logged. " +
+      "This endpoint is intended to be used by the synchronisation process to sync the deletion of existing alerts.",
   )
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "200",
-        description = "Alert updated successfully",
-        content = [Content(schema = Schema(implementation = Alert::class))],
+        description = "Alert was not found or already deleted",
       ),
-      ApiResponse(
-        responseCode = "400",
-        description = "Bad request",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorised, requires a valid Oauth2 token",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Forbidden, requires an appropriate role",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "The alert associated with this identifier was not found.",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  @PreAuthorize("hasAnyRole('$ROLE_NOMIS_ALERTS', '$ROLE_ALERTS_ADMIN')")
-  fun updateAlert(
-    @PathVariable
-    @Parameter(
-      description = "Alert identifier",
-      required = true,
-    )
-    alertId: Long,
-    @Valid
-    @RequestBody
-    @Parameter(
-      description = "The NOMIS alert to create in this service",
-      required = true,
-    )
-    nomisAlert: NomisAlert,
-  ): Alert = throw NotImplementedError()
-
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  @DeleteMapping("/{alertId}")
-  @Operation(
-    summary = "Deletes and alert",
-    description = "Deletes an alert. This endpoint fully removes the alert from the system. It is used when an alert " +
-      "has been created in error or otherwise removed from NOMIS and should therefore be removed from this service. " +
-      "This endpoint is intended to be used by the synchronisation process to sync the deletion of existing alerts.",
-  )
-  @ApiResponses(
-    value = [
       ApiResponse(
         responseCode = "204",
         description = "Alert deleted",
@@ -193,20 +151,15 @@ class NomisAlertsController {
         description = "Forbidden, requires an appropriate role",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
-      ApiResponse(
-        responseCode = "404",
-        description = "The alert associated with this identifier was not found.",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_NOMIS_ALERTS', '$ROLE_ALERTS_ADMIN')")
   fun deleteAlert(
     @PathVariable
     @Parameter(
-      description = "Alert identifier",
+      description = "Alert unique identifier",
       required = true,
     )
-    alertId: Long,
+    alertUuid: UUID,
   ): Unit = throw NotImplementedError()
 }
