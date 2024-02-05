@@ -8,6 +8,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.context.jdbc.SqlMergeMode
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer
@@ -16,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.Postgre
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.OAuthExtension
 
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
+@Sql("classpath:test_data/reset-database.sql")
 @ExtendWith(OAuthExtension::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
