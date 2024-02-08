@@ -1,0 +1,46 @@
+erDiagram
+    ALERTS one to zero or more COMMENTS : writes
+    ALERTS one to one or more ALERT_AUDIT : captures
+    ALERTS zero or one to one ALERT_VERIFICATIONS : verifies
+    NOMIS_ALERTS zero or one to one ALERTS : "converts via sync"
+ALERTS {
+    long id PK
+    uuid alert_uuid "This is the ID we expose."
+    varchar alert_type
+    varchar alert_code
+    varchar offender_id
+    varchar authorised_by
+    timestamptz valid_from
+    timestamptz valid_to
+    timestamptz removed_at "This is how we distinguish a soft delete."
+}
+ALERT_VERIFICATIONS {
+    long id PK
+    long alert_id FK
+    varchar verification_action
+    varchar verified_by
+    timestamptz verified_at
+}
+ALERT_AUDIT {
+    long id PK
+    long alert_id FK
+    varchar audit_event
+    varchar audit_timestamp
+    varchar audit_user_id
+    varchar audit_user_captured_name
+}
+COMMENTS {
+    long id PK
+    text comment
+    long alert_id FK
+    timestamptz created_at
+    varchar created_by
+}
+
+NOMIS_ALERTS {
+    long id PK
+    json nomis_data
+    long alert_id FK
+}
+
+
