@@ -62,6 +62,10 @@ data class NomisAlert(
 
   val verifiedFlag: Boolean = false,
 
+  val verifiedDatetime: LocalDateTime?,
+
+  val verifiedUserId: String?,
+
   val expiryDate: LocalDate?,
 
   val commentText: String?,

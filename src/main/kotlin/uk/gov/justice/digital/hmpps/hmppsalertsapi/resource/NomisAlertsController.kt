@@ -20,13 +20,17 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.SyncContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlertMapping
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.NomisAlertService
 import java.util.UUID
 
 @RestController
 @RequestMapping("/nomis-alerts", produces = [MediaType.APPLICATION_JSON_VALUE])
-class NomisAlertsController {
+class NomisAlertsController(
+  private val nomisAlertService: NomisAlertService,
+) {
   @GetMapping("/{alertUuid}")
   @Operation(
     summary = "Get an alert in NOMIS format by its unique identifier. SYNC ONLY",
@@ -112,7 +116,7 @@ class NomisAlertsController {
   )
   @PreAuthorize("hasAnyRole('$ROLE_NOMIS_ALERTS', '$ROLE_ALERTS_ADMIN')")
   @SyncSuppressEventsHeader
-  fun createAlert(
+  fun upsertAlert(
     @Valid
     @RequestBody
     @Parameter(
@@ -120,7 +124,8 @@ class NomisAlertsController {
       required = true,
     )
     nomisAlert: NomisAlert,
-  ): NomisAlertMapping = throw NotImplementedError()
+    request: HttpServletRequest,
+  ): NomisAlertMapping = nomisAlertService.upsertAlert(nomisAlert, request.syncContext())
 
   @ResponseStatus(HttpStatus.NO_CONTENT)
   @DeleteMapping("/{alertUuid}")
@@ -162,4 +167,7 @@ class NomisAlertsController {
     )
     alertUuid: UUID,
   ): Unit = throw NotImplementedError()
+
+  private fun HttpServletRequest.syncContext() =
+    getAttribute(SyncContext::class.simpleName) as SyncContext
 }

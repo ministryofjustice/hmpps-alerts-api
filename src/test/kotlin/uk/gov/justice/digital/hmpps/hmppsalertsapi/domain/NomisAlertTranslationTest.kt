@@ -32,6 +32,8 @@ class NomisAlertTranslationTest {
     createDate = LocalDate.of(2022, 9, 15),
     alertStatus = NomisAlertStatus.ACTIVE.name,
     verifiedFlag = false,
+    verifiedDatetime = null,
+    verifiedUserId = null,
     expiryDate = null,
     commentText = "Alert comment",
     // Always null in NOMIS
