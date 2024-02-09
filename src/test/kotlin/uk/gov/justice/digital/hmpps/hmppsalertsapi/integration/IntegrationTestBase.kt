@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalSt
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer.setLocalStackProperties
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.OAuthExtension
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SYNC_SUPPRESS_EVENTS
 
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 @Sql("classpath:test_data/reset-database.sql")
@@ -35,6 +36,12 @@ abstract class IntegrationTestBase {
     client: String = CLIENT_ID,
     roles: List<String> = listOf(),
   ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisation(user, client, roles)
+
+  internal fun setSyncContext(
+    suppressEvents: Boolean = false,
+  ): (HttpHeaders) -> Unit = {
+    it.set(SYNC_SUPPRESS_EVENTS, suppressEvents.toString())
+  }
 
   companion object {
     private val pgContainer = PostgresContainer.instance

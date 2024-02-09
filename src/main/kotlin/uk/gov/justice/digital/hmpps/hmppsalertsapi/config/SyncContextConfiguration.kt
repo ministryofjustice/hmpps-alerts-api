@@ -19,7 +19,7 @@ class SyncContextConfiguration(
   }
 
   private companion object {
-    val log = LoggerFactory.getLogger(this::class.java)
+    private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
 

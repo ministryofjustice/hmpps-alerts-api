@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -24,6 +25,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.SyncContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlertMapping
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.NomisAlertService
+import java.net.URI
 import java.util.UUID
 
 @RestController
@@ -62,7 +64,7 @@ class NomisAlertsController(
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_NOMIS_ALERTS', '$ROLE_ALERTS_ADMIN')")
-  fun retrieveAlert(
+  fun retrieveNomisAlert(
     @PathVariable
     @Parameter(
       description = "Alert unique identifier",
@@ -116,7 +118,7 @@ class NomisAlertsController(
   )
   @PreAuthorize("hasAnyRole('$ROLE_NOMIS_ALERTS', '$ROLE_ALERTS_ADMIN')")
   @SyncSuppressEventsHeader
-  fun upsertAlert(
+  fun upsertNomisAlert(
     @Valid
     @RequestBody
     @Parameter(
@@ -125,7 +127,10 @@ class NomisAlertsController(
     )
     nomisAlert: NomisAlert,
     request: HttpServletRequest,
-  ): NomisAlertMapping = nomisAlertService.upsertAlert(nomisAlert, request.syncContext())
+  ) =
+    nomisAlertService.upsertNomisAlert(nomisAlert, request.syncContext()).let {
+      ResponseEntity.created(URI.create("/nomis-alerts/${it.alertUuid}")).body(it)
+    }
 
   @ResponseStatus(HttpStatus.NO_CONTENT)
   @DeleteMapping("/{alertUuid}")
@@ -159,7 +164,7 @@ class NomisAlertsController(
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_NOMIS_ALERTS', '$ROLE_ALERTS_ADMIN')")
-  fun deleteAlert(
+  fun deleteNomisAlert(
     @PathVariable
     @Parameter(
       description = "Alert unique identifier",

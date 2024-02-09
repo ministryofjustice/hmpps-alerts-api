@@ -24,8 +24,9 @@ class NomisAlertTranslationTest {
   val nomisAlertModel = NomisAlertModel(
     alertDate = LocalDate.of(2023, 11, 27),
     offenderBookId = 3,
-    alertSeq = 1,
     rootOffenderId = 2,
+    offenderNo = "A1234AA",
+    alertSeq = 1,
     alertType = "A",
     alertCode = "ABC",
     authorizePersonText = "A. Authorizer",
@@ -43,6 +44,7 @@ class NomisAlertTranslationTest {
     caseloadType = NomisCaseloadType.INST.name,
     createDatetime = LocalDateTime.of(2022, 9, 15, 9, 25),
     createUserId = "CREATED_BY",
+    // In discussion about removing the following properties as likely not needed
     auditTimestamp = LocalDateTime.of(2023, 3, 6, 14, 30),
     auditUserId = "CREATED_OR_MODIFIED_BY",
     auditModuleName = "AUDIT_MODULE",

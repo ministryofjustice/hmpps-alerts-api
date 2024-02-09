@@ -48,6 +48,8 @@ data class NomisAlert(
 
   val rootOffenderId: Long?,
 
+  val offenderNo: String,
+
   val alertSeq: Int,
 
   val alertType: String,
