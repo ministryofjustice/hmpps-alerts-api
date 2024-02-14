@@ -8,10 +8,12 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.SyncContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toMappingModel
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlertMapping
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.NomisAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.UpsertStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.NomisAlertRepository
+import java.time.LocalDateTime
 import java.util.UUID
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlert as NomisAlertModel
 
 @Service
 @Transactional
@@ -20,15 +22,30 @@ class NomisAlertService(
   private val objectMapper: ObjectMapper,
 ) {
   fun upsertNomisAlert(
-    nomisAlert: NomisAlert,
+    nomisAlertModel: NomisAlertModel,
     syncContext: SyncContext,
-  ): NomisAlertMapping {
-    val alertUuid = UUID.randomUUID()
+  ) =
+    nomisAlertRepository.findByOffenderBookIdAndAlertSeq(nomisAlertModel.offenderBookId, nomisAlertModel.alertSeq).let {
+      when (it) {
+        null -> createNomisAlert(nomisAlertModel)
+        else -> updateNomisAlert(it, nomisAlertModel)
+      }
+    }
 
-    val entity = nomisAlert.toEntity(objectMapper, alertUuid)
+  private fun createNomisAlert(nomisAlertModel: NomisAlertModel) =
+    nomisAlertModel.toEntity(objectMapper, UUID.randomUUID()).let {
+      nomisAlertRepository.saveAndFlush(it)
+      it.toMappingModel(UpsertStatus.CREATED)
+    }
 
-    return entity.toMappingModel()
-  }
+  private fun updateNomisAlert(existingEntity: NomisAlert, nomisAlertModel: NomisAlertModel) =
+    existingEntity.apply {
+      nomisAlertData = objectMapper.valueToTree(nomisAlertModel)
+      upsertedAt = LocalDateTime.now()
+    }.let {
+      nomisAlertRepository.saveAndFlush(it)
+      it.toMappingModel(UpsertStatus.UPDATED)
+    }
 
   private companion object {
     private val log: Logger = LoggerFactory.getLogger(this::class.java)

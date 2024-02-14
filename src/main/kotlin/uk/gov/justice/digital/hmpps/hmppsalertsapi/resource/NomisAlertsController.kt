@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.SyncContext
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.UpsertStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlertMapping
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.NomisAlertService
@@ -129,7 +130,10 @@ class NomisAlertsController(
     request: HttpServletRequest,
   ) =
     nomisAlertService.upsertNomisAlert(nomisAlert, request.syncContext()).let {
-      ResponseEntity.created(URI.create("/nomis-alerts/${it.alertUuid}")).body(it)
+      when (it.status) {
+        UpsertStatus.CREATED -> ResponseEntity.created(URI.create("/nomis-alerts/${it.alertUuid}")).body(it)
+        UpsertStatus.UPDATED -> ResponseEntity.ok(it)
+      }
     }
 
   @ResponseStatus(HttpStatus.NO_CONTENT)

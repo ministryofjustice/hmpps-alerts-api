@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.domain
 import com.fasterxml.jackson.databind.ObjectMapper
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.NomisAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.UpsertStatus
 import java.time.LocalDateTime
 import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlert as NomisAlertModel
@@ -22,9 +23,10 @@ fun NomisAlertModel.toAlertEntity(alertUuid: UUID) =
     alertUuid = alertUuid,
   )
 
-fun NomisAlert.toMappingModel() =
+fun NomisAlert.toMappingModel(status: UpsertStatus) =
   NomisAlertMappingModel(
     offenderBookId = this.offenderBookId,
     alertSeq = this.alertSeq,
     alertUuid = this.alertUuid,
+    status = status,
   )

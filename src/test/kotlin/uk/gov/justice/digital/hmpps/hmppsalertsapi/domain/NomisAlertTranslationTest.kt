@@ -7,6 +7,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.NomisAlertStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.NomisCaseloadType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.UpsertStatus
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -96,6 +97,7 @@ class NomisAlertTranslationTest {
       offenderBookId = 3,
       alertSeq = 1,
       alertUuid = alertUuid,
+      status = UpsertStatus.CREATED,
     )
 
     val entity = NomisAlertEntity(
@@ -107,7 +109,7 @@ class NomisAlertTranslationTest {
       upsertedAt = upsertedAt,
     )
 
-    val model = entity.toMappingModel()
+    val model = entity.toMappingModel(UpsertStatus.CREATED)
 
     assertThat(model).isEqualTo(expectedModel)
   }

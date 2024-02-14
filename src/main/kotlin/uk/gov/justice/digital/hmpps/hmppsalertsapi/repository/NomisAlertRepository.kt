@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.NomisAlert
 
 @Repository
-interface NomisAlertRepository : JpaRepository<NomisAlert, Long>
+interface NomisAlertRepository : JpaRepository<NomisAlert, Long> {
+  fun findByOffenderBookIdAndAlertSeq(offenderBookId: Long, alertSeq: Int): NomisAlert?
+}
