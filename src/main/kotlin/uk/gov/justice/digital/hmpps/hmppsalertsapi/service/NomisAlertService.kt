@@ -38,8 +38,8 @@ class NomisAlertService(
       it.toMappingModel(UpsertStatus.CREATED)
     }
 
-  private fun updateNomisAlert(existingEntity: NomisAlert, nomisAlertModel: NomisAlertModel) =
-    existingEntity.apply {
+  private fun updateNomisAlert(existingNomisAlert: NomisAlert, nomisAlertModel: NomisAlertModel) =
+    existingNomisAlert.apply {
       nomisAlertData = objectMapper.valueToTree(nomisAlertModel)
       upsertedAt = LocalDateTime.now()
     }.let {

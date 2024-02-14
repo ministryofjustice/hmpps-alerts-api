@@ -1,13 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.domain
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonMapperBuilder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.NomisAlertStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.NomisCaseloadType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.UpsertStatus
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.testObjectMapper
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -17,10 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlert as NomisAler
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlertMapping as NomisAlertMappingModel
 
 class NomisAlertTranslationTest {
-  private val objectMapper = jacksonMapperBuilder()
-    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    .addModule(JavaTimeModule())
-    .build()
+  private val objectMapper = testObjectMapper()
 
   val nomisAlertModel = NomisAlertModel(
     alertDate = LocalDate.of(2023, 11, 27),
