@@ -1,12 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.domain
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonMapperBuilder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.NomisAlertStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.NomisCaseloadType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.UpsertStatus
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.testObjectMapper
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -16,22 +15,22 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlert as NomisAler
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlertMapping as NomisAlertMappingModel
 
 class NomisAlertTranslationTest {
-  private val objectMapper = jacksonMapperBuilder()
-    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    .addModule(JavaTimeModule())
-    .build()
+  private val objectMapper = testObjectMapper()
 
   val nomisAlertModel = NomisAlertModel(
     alertDate = LocalDate.of(2023, 11, 27),
     offenderBookId = 3,
-    alertSeq = 1,
     rootOffenderId = 2,
+    offenderNo = "A1234AA",
+    alertSeq = 1,
     alertType = "A",
     alertCode = "ABC",
     authorizePersonText = "A. Authorizer",
     createDate = LocalDate.of(2022, 9, 15),
     alertStatus = NomisAlertStatus.ACTIVE.name,
     verifiedFlag = false,
+    verifiedDatetime = null,
+    verifiedUserId = null,
     expiryDate = null,
     commentText = "Alert comment",
     // Always null in NOMIS
@@ -41,6 +40,7 @@ class NomisAlertTranslationTest {
     caseloadType = NomisCaseloadType.INST.name,
     createDatetime = LocalDateTime.of(2022, 9, 15, 9, 25),
     createUserId = "CREATED_BY",
+    // In discussion about removing the following properties as likely not needed
     auditTimestamp = LocalDateTime.of(2023, 3, 6, 14, 30),
     auditUserId = "CREATED_OR_MODIFIED_BY",
     auditModuleName = "AUDIT_MODULE",
@@ -92,6 +92,7 @@ class NomisAlertTranslationTest {
       offenderBookId = 3,
       alertSeq = 1,
       alertUuid = alertUuid,
+      status = UpsertStatus.CREATED,
     )
 
     val entity = NomisAlertEntity(
@@ -103,7 +104,7 @@ class NomisAlertTranslationTest {
       upsertedAt = upsertedAt,
     )
 
-    val model = entity.toMappingModel()
+    val model = entity.toMappingModel(UpsertStatus.CREATED)
 
     assertThat(model).isEqualTo(expectedModel)
   }

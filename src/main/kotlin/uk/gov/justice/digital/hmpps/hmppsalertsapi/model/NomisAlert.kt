@@ -48,6 +48,8 @@ data class NomisAlert(
 
   val rootOffenderId: Long?,
 
+  val offenderNo: String,
+
   val alertSeq: Int,
 
   val alertType: String,
@@ -61,6 +63,10 @@ data class NomisAlert(
   val alertStatus: String,
 
   val verifiedFlag: Boolean = false,
+
+  val verifiedDatetime: LocalDateTime?,
+
+  val verifiedUserId: String?,
 
   val expiryDate: LocalDate?,
 

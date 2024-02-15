@@ -29,7 +29,7 @@ data class NomisAlert(
   @Column(columnDefinition = "jsonb")
   var nomisAlertData: JsonNode,
 
-  val upsertedAt: LocalDateTime = LocalDateTime.now(),
+  var upsertedAt: LocalDateTime = LocalDateTime.now(),
 ) {
   var removedAt: LocalDateTime? = null
 

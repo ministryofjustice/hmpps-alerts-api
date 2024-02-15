@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.integration
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -15,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalSt
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer.setLocalStackProperties
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.OAuthExtension
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SYNC_SUPPRESS_EVENTS
 
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 @Sql("classpath:test_data/reset-database.sql")
@@ -22,7 +24,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.OAuthExt
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 abstract class IntegrationTestBase {
-
   @Suppress("SpringJavaInjectionPointsAutowiringInspection")
   @Autowired
   lateinit var webTestClient: WebTestClient
@@ -30,11 +31,20 @@ abstract class IntegrationTestBase {
   @Autowired
   lateinit var jwtAuthHelper: JwtAuthHelper
 
+  @Autowired
+  lateinit var objectMapper: ObjectMapper
+
   internal fun setAuthorisation(
     user: String? = null,
     client: String = CLIENT_ID,
     roles: List<String> = listOf(),
   ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisation(user, client, roles)
+
+  internal fun setSyncContext(
+    suppressEvents: Boolean = false,
+  ): (HttpHeaders) -> Unit = {
+    it.set(SYNC_SUPPRESS_EVENTS, suppressEvents.toString())
+  }
 
   companion object {
     private val pgContainer = PostgresContainer.instance
