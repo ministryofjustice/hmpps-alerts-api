@@ -2,10 +2,10 @@ create table alerts
 (
     alert_id bigserial NOT NULL CONSTRAINT alerts_pk PRIMARY KEY,
     alert_uuid uuid not null,
-    alert_type varchar(255) not null,
-    alert_code varchar(255) not null,
-    offender_id varchar(255) not null,
-    authorised_by varchar(255) not null,
+    alert_type varchar(12) not null,
+    alert_code varchar(12) not null,
+    offender_id varchar(10) not null,
+    authorised_by varchar(40) not null,
     valid_from timestamptz not null,
     valid_to timestamptz,
     removed_at timestamptz
