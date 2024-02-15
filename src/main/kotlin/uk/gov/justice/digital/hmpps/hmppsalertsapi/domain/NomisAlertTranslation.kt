@@ -10,11 +10,11 @@ import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlert as NomisAlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlertMapping as NomisAlertMappingModel
 
-fun NomisAlertModel.toEntity(objectMapper: ObjectMapper, alert: Alert, upsertedAt: LocalDateTime = LocalDateTime.now()) =
+fun NomisAlertModel.toEntity(objectMapper: ObjectMapper, upsertedAt: LocalDateTime = LocalDateTime.now()) =
   NomisAlert(
     offenderBookId = offenderBookId,
     alertSeq = alertSeq,
-    alert = alert,
+    alert = toAlertEntity(),
     nomisAlertData = objectMapper.valueToTree(this),
     upsertedAt = upsertedAt,
   )
@@ -34,5 +34,5 @@ fun NomisAlert.toMappingModel(status: UpsertStatus) =
     offenderBookId = this.offenderBookId,
     alertSeq = this.alertSeq,
     alertUuid = this.alert.alertUuid,
-    status = status
+    status = status,
   )

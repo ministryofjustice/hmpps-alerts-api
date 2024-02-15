@@ -55,10 +55,10 @@ class NomisAlertTranslationTest {
     val upsertedAt = LocalDateTime.now()
     val alert = AlertEntity(
       alertType = "A",
-      alertCode = "B",
-      authorisedBy = "",
-      offenderId = "A1122DZ",
-      validFrom = LocalDate.now(),
+      alertCode = "ABC",
+      authorisedBy = "A. Authorizer",
+      offenderId = "A1234AA",
+      validFrom = LocalDate.of(2022, 9, 15),
     )
     val expectedEntity = NomisAlertEntity(
       nomisAlertId = 0,
@@ -69,9 +69,9 @@ class NomisAlertTranslationTest {
       upsertedAt = upsertedAt,
     )
 
-    val entity = nomisAlertModel.toEntity(objectMapper, alert, upsertedAt)
+    val entity = nomisAlertModel.toEntity(objectMapper, upsertedAt)
 
-    assertThat(entity).isEqualTo(expectedEntity)
+    assertThat(entity).usingRecursiveComparison().ignoringFields("alert.alertUuid").isEqualTo(expectedEntity)
     assertThat(entity.removedAt).isNull()
   }
 
@@ -81,11 +81,11 @@ class NomisAlertTranslationTest {
       alertType = "A",
       alertCode = "ABC",
       authorisedBy = "A. Authorizer",
-      offenderId = "A1122DZ",
+      offenderId = "A1234AA",
       validFrom = LocalDate.of(2022, 9, 15),
     )
 
-    val entity = nomisAlertModel.toAlertEntity("A1122DZ")
+    val entity = nomisAlertModel.toAlertEntity()
 
     assertThat(entity).usingRecursiveComparison().ignoringFields("alertUuid").isEqualTo(expectedEntity)
   }

@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity
 
 import com.fasterxml.jackson.databind.JsonNode
 import io.hypersistence.utils.hibernate.type.json.JsonType
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
@@ -24,7 +25,7 @@ data class NomisAlert(
 
   val alertSeq: Int,
 
-  @ManyToOne
+  @ManyToOne(cascade = [CascadeType.ALL])
   @JoinColumn(name = "alert_id")
   val alert: Alert,
 

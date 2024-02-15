@@ -9,6 +9,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.SyncContext
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.NomisAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.NomisAlertStatus
@@ -53,7 +54,7 @@ class NomisAlertServiceUpsertTest {
     service.upsertNomisAlert(nomisAlertModel, syncContext)
 
     nomisAlertCaptor.firstValue.run {
-      assertThat(this).isEqualTo(nomisAlertModel.toEntity(objectMapper, this.alertUuid, this.upsertedAt))
+      assertThat(this).usingRecursiveComparison().ignoringFields("alert.alertUuid").isEqualTo(nomisAlertModel.toEntity(objectMapper, this.upsertedAt))
     }
   }
 
@@ -79,10 +80,11 @@ class NomisAlertServiceUpsertTest {
   @Test
   fun `updates existing NOMIS alert`() {
     val nomisAlertModel = nomisAlertModel()
+    val alert = nomisAlertModel.toAlertEntity()
     val existingNomisAlert = NomisAlert(
       offenderBookId = nomisAlertModel.offenderBookId,
       alertSeq = nomisAlertModel.alertSeq,
-      alertUuid = UUID.randomUUID(),
+      alert = alert,
       nomisAlertData = objectMapper.valueToTree(nomisAlertModel(commentText = "Original comment")),
       upsertedAt = LocalDateTime.now().minusDays(1),
     )
@@ -108,7 +110,7 @@ class NomisAlertServiceUpsertTest {
     val existingNomisAlert = NomisAlert(
       offenderBookId = nomisAlertModel.offenderBookId,
       alertSeq = nomisAlertModel.alertSeq,
-      alertUuid = UUID.randomUUID(),
+      alert = nomisAlertModel.toAlertEntity(),
       nomisAlertData = objectMapper.valueToTree(nomisAlertModel(commentText = "Original comment")),
       upsertedAt = LocalDateTime.now().minusDays(1),
     )
@@ -121,7 +123,7 @@ class NomisAlertServiceUpsertTest {
       NomisAlertMapping(
         offenderBookId = offenderBookId,
         alertSeq = alertSeq,
-        alertUuid = existingNomisAlert.alertUuid,
+        alertUuid = existingNomisAlert.alert.alertUuid,
         status = UpsertStatus.UPDATED,
       ),
     )
