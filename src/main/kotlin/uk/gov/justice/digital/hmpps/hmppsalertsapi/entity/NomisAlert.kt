@@ -7,10 +7,11 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.Type
 import java.time.LocalDateTime
-import java.util.UUID
 
 @Entity
 @Table
@@ -23,7 +24,9 @@ data class NomisAlert(
 
   val alertSeq: Int,
 
-  val alertUuid: UUID,
+  @ManyToOne
+  @JoinColumn(name = "alert_id")
+  val alert: Alert,
 
   @Type(JsonType::class)
   @Column(columnDefinition = "jsonb")

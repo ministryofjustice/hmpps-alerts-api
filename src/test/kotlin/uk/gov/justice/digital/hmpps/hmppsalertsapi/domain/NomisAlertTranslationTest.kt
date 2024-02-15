@@ -52,19 +52,24 @@ class NomisAlertTranslationTest {
 
   @Test
   fun `should convert NomisAlert model to NomisAlert entity`() {
-    val alertUuid = UUID.randomUUID()
     val upsertedAt = LocalDateTime.now()
-
+    val alert = AlertEntity(
+      alertType = "A",
+      alertCode = "B",
+      authorisedBy = "",
+      offenderId = "A1122DZ",
+      validFrom = LocalDate.now(),
+    )
     val expectedEntity = NomisAlertEntity(
       nomisAlertId = 0,
       offenderBookId = 3,
       alertSeq = 1,
-      alertUuid = alertUuid,
+      alert = alert,
       nomisAlertData = objectMapper.valueToTree(nomisAlertModel),
       upsertedAt = upsertedAt,
     )
 
-    val entity = nomisAlertModel.toEntity(objectMapper, alertUuid, upsertedAt)
+    val entity = nomisAlertModel.toEntity(objectMapper, alert, upsertedAt)
 
     assertThat(entity).isEqualTo(expectedEntity)
     assertThat(entity.removedAt).isNull()
@@ -72,15 +77,17 @@ class NomisAlertTranslationTest {
 
   @Test
   fun `should convert NomisAlert model to Alert entity`() {
-    val alertUuid = UUID.randomUUID()
-
     val expectedEntity = AlertEntity(
-      alertUuid = alertUuid,
+      alertType = "A",
+      alertCode = "ABC",
+      authorisedBy = "A. Authorizer",
+      offenderId = "A1122DZ",
+      validFrom = LocalDate.of(2022, 9, 15),
     )
 
-    val entity = nomisAlertModel.toAlertEntity(alertUuid)
+    val entity = nomisAlertModel.toAlertEntity("A1122DZ")
 
-    assertThat(entity).isEqualTo(expectedEntity)
+    assertThat(entity).usingRecursiveComparison().ignoringFields("alertUuid").isEqualTo(expectedEntity)
   }
 
   @Test
@@ -94,12 +101,19 @@ class NomisAlertTranslationTest {
       alertUuid = alertUuid,
       status = UpsertStatus.CREATED,
     )
-
+    val expectedEntity = AlertEntity(
+      alertType = "A",
+      alertCode = "B",
+      authorisedBy = "",
+      offenderId = "A1122DZ",
+      alertUuid = alertUuid,
+      validFrom = LocalDate.now(),
+    )
     val entity = NomisAlertEntity(
       nomisAlertId = 0,
       offenderBookId = 3,
       alertSeq = 1,
-      alertUuid = alertUuid,
+      alert = expectedEntity,
       nomisAlertData = objectMapper.valueToTree(nomisAlertModel),
       upsertedAt = upsertedAt,
     )
