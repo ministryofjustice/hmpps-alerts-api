@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.NomisAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.UpsertStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.NomisAlertRepository
 import java.time.LocalDateTime
-import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlert as NomisAlertModel
 
 @Service
@@ -33,7 +32,7 @@ class NomisAlertService(
     }
 
   private fun createNomisAlert(nomisAlertModel: NomisAlertModel) =
-    nomisAlertModel.toEntity(objectMapper, UUID.randomUUID()).let {
+    nomisAlertModel.toEntity(objectMapper).let {
       nomisAlertRepository.saveAndFlush(it)
       it.toMappingModel(UpsertStatus.CREATED)
     }
