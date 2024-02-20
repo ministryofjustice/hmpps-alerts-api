@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType as AlertTypeM
 
 fun AlertCode.toAlertCodeModel() =
   AlertCodeModel(
+    alertTypeCode = alertType.code,
     code = code,
     description = description,
     listSequence = listSequence,

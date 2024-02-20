@@ -18,6 +18,7 @@ class AlertTypeTranslationTest {
 
     assertThat(model).isEqualTo(
       AlertCodeModel(
+        alertTypeCode = alertType.code,
         code = alertCode.code,
         description = alertCode.description,
         listSequence = alertCode.listSequence,
@@ -113,6 +114,7 @@ class AlertTypeTranslationTest {
     assertThat(model.alertCodes).isEqualTo(
       listOf(
         AlertCodeModel(
+          alertTypeCode = alertType.code,
           code = alertCode.code,
           description = alertCode.description,
           listSequence = alertCode.listSequence,

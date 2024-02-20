@@ -6,6 +6,12 @@ import java.time.LocalDateTime
 
 data class AlertCode(
   @Schema(
+    description = "The short code for the alert type",
+    example = "A",
+  )
+  val alertTypeCode: String,
+
+  @Schema(
     description = "The short code for the alert code. Usually starts with the alert type code",
     example = "ABC",
   )
