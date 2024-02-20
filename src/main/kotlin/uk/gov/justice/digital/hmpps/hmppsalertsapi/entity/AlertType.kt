@@ -29,6 +29,11 @@ data class AlertType(
   @OneToMany(mappedBy = "alertType")
   private val alertCodes: MutableList<AlertCode> = mutableListOf()
 
+  fun addAlertCode(alertCode: AlertCode): AlertCode {
+    alertCodes.add(alertCode)
+    return alertCode
+  }
+
   fun alertCodes(includeInactive: Boolean) = alertCodes.filter { includeInactive || it.isActive() }.toList()
 
   fun isActive() = deactivatedAt?.isBefore(LocalDateTime.now()) != true
