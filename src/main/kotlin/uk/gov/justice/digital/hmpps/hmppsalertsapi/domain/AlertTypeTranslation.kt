@@ -20,7 +20,8 @@ fun AlertCode.toAlertCodeModel() =
   )
 
 fun Collection<AlertCode>.toAlertCodeModels() =
-  map { it.toAlertCodeModel() }
+  sortedWith(compareBy({ it.listSequence }, { it.code }))
+    .map { it.toAlertCodeModel() }
 
 fun AlertType.toAlertTypeModel(includeInactive: Boolean) =
   AlertTypeModel(
@@ -38,4 +39,6 @@ fun AlertType.toAlertTypeModel(includeInactive: Boolean) =
   )
 
 fun Collection<AlertType>.toAlertTypeModels(includeInactive: Boolean) =
-  filter { includeInactive || it.isActive() }.map { it.toAlertTypeModel(includeInactive) }
+  filter { includeInactive || it.isActive() }
+    .sortedWith(compareBy({ it.listSequence }, { it.code }))
+    .map { it.toAlertTypeModel(includeInactive) }
