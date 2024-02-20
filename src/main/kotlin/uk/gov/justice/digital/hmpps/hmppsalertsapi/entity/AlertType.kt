@@ -6,7 +6,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
-import java.time.ZonedDateTime
+import java.time.LocalDateTime
 
 @Entity
 @Table
@@ -18,12 +18,12 @@ data class AlertType(
   val code: String,
   var description: String,
   var listSequence: Int,
-  val createdAt: ZonedDateTime,
+  val createdAt: LocalDateTime,
   val createdBy: String,
 ) {
-  var modifiedAt: ZonedDateTime? = null
+  var modifiedAt: LocalDateTime? = null
   var modifiedBy: String? = null
-  var deactivatedAt: ZonedDateTime? = null
+  var deactivatedAt: LocalDateTime? = null
   var deactivatedBy: String? = null
 
   @OneToMany(mappedBy = "alertType")
@@ -31,5 +31,5 @@ data class AlertType(
 
   fun alertCodes(includeInactive: Boolean) = alertCodes.filter { includeInactive || it.isActive() }.toList()
 
-  fun isActive() = deactivatedAt?.isBefore(ZonedDateTime.now()) != true
+  fun isActive() = deactivatedAt?.isBefore(LocalDateTime.now()) != true
 }

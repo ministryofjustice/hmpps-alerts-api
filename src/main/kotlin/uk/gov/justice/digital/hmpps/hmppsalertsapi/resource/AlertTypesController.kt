@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import org.springframework.http.MediaType
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -20,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertTypeService
 class AlertTypesController(
   private val alertTypeService: AlertTypeService,
 ) {
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_ALERTS_ADMIN', '$PRISON')")
   @GetMapping
   @Operation(
     summary = "Get all alert types",
@@ -46,7 +48,6 @@ class AlertTypesController(
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_ALERTS_ADMIN', '$PRISON')")
   fun getAlertTypes(
     @Parameter(
       description = "Include inactive alert types and codes. Defaults to false",

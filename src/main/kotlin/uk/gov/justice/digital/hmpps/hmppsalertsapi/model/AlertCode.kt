@@ -1,16 +1,20 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.model
 
-import java.time.ZonedDateTime
+import com.fasterxml.jackson.annotation.JsonFormat
+import java.time.LocalDateTime
 
 data class AlertCode(
   val code: String,
   val description: String,
   val listSequence: Int,
   val isActive: Boolean,
-  val createdAt: ZonedDateTime,
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+  val createdAt: LocalDateTime,
   val createdBy: String,
-  val modifiedAt: ZonedDateTime?,
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+  val modifiedAt: LocalDateTime?,
   val modifiedBy: String?,
-  val deactivatedAt: ZonedDateTime?,
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+  val deactivatedAt: LocalDateTime?,
   val deactivatedBy: String?,
 )

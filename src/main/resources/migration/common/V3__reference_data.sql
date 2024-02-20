@@ -6,11 +6,11 @@ CREATE TABLE alert_type
     code                varchar(12) NOT NULL,
     description         varchar(40) NOT NULL,
     list_sequence       int,
-    created_at          timestamptz NOT NULL,
+    created_at          timestamp   NOT NULL,
     created_by          varchar(32) NOT NULL,
-    modified_at         timestamptz,
+    modified_at         timestamp,
     modified_by         varchar(32),
-    deactivated_at      timestamptz,
+    deactivated_at      timestamp,
     deactivated_by      varchar(32)
 );
 
@@ -26,11 +26,11 @@ CREATE TABLE alert_code
     code                varchar(12) NOT NULL,
     description         varchar(40) NOT NULL,
     list_sequence       int,
-    created_at          timestamptz NOT NULL,
+    created_at          timestamp   NOT NULL,
     created_by          varchar(32) NOT NULL,
-    modified_at         timestamptz,
+    modified_at         timestamp,
     modified_by         varchar(32),
-    deactivated_at      timestamptz,
+    deactivated_at      timestamp,
     deactivated_by      varchar(32)
 );
 
