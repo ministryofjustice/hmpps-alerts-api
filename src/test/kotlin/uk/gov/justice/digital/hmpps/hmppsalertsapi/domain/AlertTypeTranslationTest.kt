@@ -28,7 +28,7 @@ class AlertTypeTranslationTest {
         modifiedBy = alertCode.modifiedBy,
         deactivatedAt = null,
         deactivatedBy = null,
-      )
+      ),
     )
   }
 
@@ -85,7 +85,7 @@ class AlertTypeTranslationTest {
         deactivatedAt = null,
         deactivatedBy = null,
         alertCodes = emptyList(),
-      )
+      ),
     )
   }
 
@@ -123,7 +123,7 @@ class AlertTypeTranslationTest {
           modifiedBy = alertCode.modifiedBy,
           deactivatedAt = null,
           deactivatedBy = null,
-        )
+        ),
       ),
     )
   }
@@ -140,6 +140,7 @@ class AlertTypeTranslationTest {
     val model = alertType.toAlertTypeModel(false)
 
     assertThat(model.alertCodes.map { it.code }).isEqualTo(listOf(activeAlertCode.code))
+    assertThat(model.alertCodes.map { it.code }).doesNotContain(inactiveAlertCode.code)
   }
 
   @Test
