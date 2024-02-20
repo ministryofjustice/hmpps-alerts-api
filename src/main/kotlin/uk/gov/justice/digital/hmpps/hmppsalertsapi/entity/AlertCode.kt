@@ -21,8 +21,8 @@ data class AlertCode(
   val alertType: AlertType,
 
   val code: String,
-  val description: String,
-  val listSequence: Int,
+  var description: String,
+  var listSequence: Int,
   val createdAt: ZonedDateTime,
   val createdBy: String,
 ) {
@@ -30,4 +30,6 @@ data class AlertCode(
   var modifiedBy: String? = null
   var deactivatedAt: ZonedDateTime? = null
   var deactivatedBy: String? = null
+
+  fun isActive() = deactivatedAt?.isBefore(ZonedDateTime.now()) != true
 }

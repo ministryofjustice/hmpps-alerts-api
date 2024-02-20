@@ -16,8 +16,8 @@ data class AlertType(
   val alertTypeId: Long = 0,
 
   val code: String,
-  val description: String,
-  val listSequence: Int,
+  var description: String,
+  var listSequence: Int,
   val createdAt: ZonedDateTime,
   val createdBy: String,
 ) {
@@ -29,5 +29,7 @@ data class AlertType(
   @OneToMany(mappedBy = "alertType")
   private val alertCodes: MutableList<AlertCode> = mutableListOf()
 
-  fun alertCodes() = alertCodes.toList()
+  fun alertCodes(includeInactive: Boolean) = alertCodes.filter { includeInactive || it.isActive() }.toList()
+
+  fun isActive() = deactivatedAt?.isBefore(ZonedDateTime.now()) != true
 }
