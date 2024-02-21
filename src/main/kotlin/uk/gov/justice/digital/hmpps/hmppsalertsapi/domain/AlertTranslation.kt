@@ -35,11 +35,11 @@ fun CreateAlert.toAlertEntity(
     )
   }
 
-fun Alert.toAlertModel() {
+fun Alert.toAlertModel(): AlertModel {
   val createdAuditEvent = createdAuditEvent()
   val lastModifiedAuditEvent = lastModifiedAuditEvent()
 
-  AlertModel(
+  return AlertModel(
     alertUuid = alertUuid,
     alertCode = alertCode.toAlertCodeSummary(),
     prisonNumber = prisonNumber,

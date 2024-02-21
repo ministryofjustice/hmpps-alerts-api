@@ -24,11 +24,14 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
 import java.util.UUID
 
 @RestController
 @RequestMapping("/alerts", produces = [MediaType.APPLICATION_JSON_VALUE])
-class AlertsController {
+class AlertsController(
+  private val alertService: AlertService,
+) {
   @ResponseStatus(HttpStatus.CREATED)
   @PostMapping
   @Operation(
@@ -73,7 +76,7 @@ class AlertsController {
       required = true,
     )
     request: CreateAlert,
-  ): Alert = throw NotImplementedError()
+  ): Alert = alertService.createAlert(request)
 
   @ResponseStatus(HttpStatus.OK)
   @GetMapping("/{alertUuid}")

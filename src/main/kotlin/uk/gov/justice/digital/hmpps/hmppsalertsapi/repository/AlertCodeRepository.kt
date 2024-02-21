@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 
 @Repository
-interface AlertCodeRepository : JpaRepository<AlertCode, Long>
+interface AlertCodeRepository : JpaRepository<AlertCode, Long> {
+  fun findByCode(code: String): AlertCode?
+}
