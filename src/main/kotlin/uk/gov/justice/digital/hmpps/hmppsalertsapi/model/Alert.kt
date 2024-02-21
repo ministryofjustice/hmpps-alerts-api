@@ -34,7 +34,7 @@ data class Alert(
       "It is limited to 1000 characters.",
     example = "Alert description",
   )
-  val description: String,
+  val description: String?,
 
   @Schema(
     description = "The user, staff member, approving person or organisation that authorised the alert to be added. " +
@@ -74,7 +74,7 @@ data class Alert(
     description = "The comments thread associated with the alert. " +
       "The comments are ordered by the date and time they were created, with the most recent comment first.",
   )
-  val comments: Collection<AlertComment>,
+  val comments: Collection<Comment>,
 
   @Schema(
     description = "The date and time the alert was created",

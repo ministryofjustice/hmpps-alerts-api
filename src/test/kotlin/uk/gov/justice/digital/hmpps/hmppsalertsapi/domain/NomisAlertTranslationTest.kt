@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.testObjectMapper
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert as AlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.NomisAlert as NomisAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlert as NomisAlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlertMapping as NomisAlertMappingModel
@@ -52,42 +51,21 @@ class NomisAlertTranslationTest {
 
   @Test
   fun `should convert NomisAlert model to NomisAlert entity`() {
+    val alertUuid = UUID.randomUUID()
     val upsertedAt = LocalDateTime.now()
-    val alert = AlertEntity(
-      alertType = "A",
-      alertCode = "ABC",
-      authorisedBy = "A. Authorizer",
-      offenderId = "A1234AA",
-      validFrom = LocalDate.of(2022, 9, 15),
-    )
     val expectedEntity = NomisAlertEntity(
       nomisAlertId = 0,
       offenderBookId = 3,
       alertSeq = 1,
-      alert = alert,
+      alertUuid = alertUuid,
       nomisAlertData = objectMapper.valueToTree(nomisAlertModel),
       upsertedAt = upsertedAt,
     )
 
-    val entity = nomisAlertModel.toEntity(objectMapper, upsertedAt)
+    val entity = nomisAlertModel.toEntity(objectMapper, alertUuid, upsertedAt)
 
-    assertThat(entity).usingRecursiveComparison().ignoringFields("alert.alertUuid").isEqualTo(expectedEntity)
+    assertThat(entity).isEqualTo(expectedEntity)
     assertThat(entity.removedAt).isNull()
-  }
-
-  @Test
-  fun `should convert NomisAlert model to Alert entity`() {
-    val expectedEntity = AlertEntity(
-      alertType = "A",
-      alertCode = "ABC",
-      authorisedBy = "A. Authorizer",
-      offenderId = "A1234AA",
-      validFrom = LocalDate.of(2022, 9, 15),
-    )
-
-    val entity = nomisAlertModel.toAlertEntity()
-
-    assertThat(entity).usingRecursiveComparison().ignoringFields("alertUuid").isEqualTo(expectedEntity)
   }
 
   @Test
@@ -101,19 +79,11 @@ class NomisAlertTranslationTest {
       alertUuid = alertUuid,
       status = UpsertStatus.CREATED,
     )
-    val expectedEntity = AlertEntity(
-      alertType = "A",
-      alertCode = "B",
-      authorisedBy = "",
-      offenderId = "A1122DZ",
-      alertUuid = alertUuid,
-      validFrom = LocalDate.now(),
-    )
     val entity = NomisAlertEntity(
       nomisAlertId = 0,
       offenderBookId = 3,
       alertSeq = 1,
-      alert = expectedEntity,
+      alertUuid = alertUuid,
       nomisAlertData = objectMapper.valueToTree(nomisAlertModel),
       upsertedAt = upsertedAt,
     )

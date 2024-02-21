@@ -8,7 +8,7 @@ import java.util.UUID
 @Schema(
   description = "A comment appended to an alert comment thread",
 )
-data class AlertComment(
+data class Comment(
   @Schema(
     description = "The unique identifier assigned to the comment",
     example = "476939e3-7cc1-4c5f-8f54-e7d055d1d50c",

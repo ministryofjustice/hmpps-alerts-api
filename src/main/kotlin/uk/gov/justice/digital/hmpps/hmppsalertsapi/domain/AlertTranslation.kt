@@ -9,7 +9,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertComment as CommentModel
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Comment as CommentModel
 
 fun CreateAlert.toAlertEntity(
   alertCode: AlertCode,

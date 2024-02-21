@@ -10,6 +10,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
+import jakarta.persistence.JoinColumn
 import org.hibernate.annotations.SQLRestriction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import java.time.LocalDate
@@ -27,11 +28,12 @@ data class Alert(
   val alertUuid: UUID,
 
   @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = "alert_code_id", nullable = false)
   val alertCode: AlertCode,
 
   val prisonNumber: String,
 
-  val description: String,
+  val description: String?,
 
   val authorisedBy: String?,
 
