@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
+@Schema(
+  description = "An alert type used to categorise alerts",
+)
 data class AlertType(
   @Schema(
     description = "The short code for the alert type",
