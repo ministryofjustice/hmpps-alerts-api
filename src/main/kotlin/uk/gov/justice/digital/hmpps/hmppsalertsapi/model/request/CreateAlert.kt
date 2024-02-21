@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
 
+@Schema(
+  description = "The request body for creating a new alert for a person",
+)
 data class CreateAlert(
   @Schema(
     description = "The prison number of the person the alert is for. " +
@@ -33,7 +36,7 @@ data class CreateAlert(
       "It is limited to 40 characters.",
     example = "A. Nurse, An Agency",
   )
-  val authorisedBy: String,
+  val authorisedBy: String?,
 
   @Schema(
     description = "The date the alert should be active from. " +

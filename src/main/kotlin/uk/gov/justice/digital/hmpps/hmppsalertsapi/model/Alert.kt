@@ -6,6 +6,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
+@Schema(
+  description = "An alert associated with a person",
+)
 data class Alert(
   @Schema(
     description = "The unique identifier assigned to the alert",
@@ -22,9 +25,8 @@ data class Alert(
 
   @Schema(
     description = "The alert code for the alert. A person will only have one alert using each code active at any one time.",
-    example = "ABC",
   )
-  val alertCode: AlertCode,
+  val alertCode: AlertCodeSummary,
 
   @Schema(
     description = "The description of the alert. " +
@@ -69,6 +71,12 @@ data class Alert(
   val isActive: Boolean,
 
   @Schema(
+    description = "The comments thread associated with the alert. " +
+      "The comments are ordered by the date and time they were created, with the most recent comment first.",
+  )
+  val comments: Collection<AlertComment>,
+
+  @Schema(
     description = "The date and time the alert was created",
     example = "2021-09-27T14:19:25",
   )
@@ -93,10 +101,4 @@ data class Alert(
     example = "USER1234",
   )
   val lastModifiedBy: String?,
-
-  @Schema(
-    description = "The comments thread associated with the alert. " +
-      "The comments are ordered by the date and time they were created, with the most recent comment first.",
-  )
-  val comments: Collection<AlertComment>,
 )

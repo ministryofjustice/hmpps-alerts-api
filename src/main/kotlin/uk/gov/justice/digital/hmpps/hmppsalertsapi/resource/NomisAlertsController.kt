@@ -31,6 +31,7 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/nomis-alerts", produces = [MediaType.APPLICATION_JSON_VALUE])
+@Deprecated("This controller is for the legacy NOMIS alert sync process. It will be removed in a future release.")
 class NomisAlertsController(
   private val nomisAlertService: NomisAlertService,
 ) {

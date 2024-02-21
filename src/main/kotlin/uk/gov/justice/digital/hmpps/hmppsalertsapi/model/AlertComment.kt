@@ -5,18 +5,15 @@ import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 import java.util.UUID
 
+@Schema(
+  description = "A comment appended to an alert comment thread",
+)
 data class AlertComment(
   @Schema(
     description = "The unique identifier assigned to the comment",
     example = "476939e3-7cc1-4c5f-8f54-e7d055d1d50c",
   )
   val commentUuid: UUID,
-
-  @Schema(
-    description = "The unique identifier assigned to the alert",
-    example = "8cdadcf3-b003-4116-9956-c99bd8df6a00",
-  )
-  val alertUuid: UUID,
 
   @Schema(
     description = "The comment text appended to the alert comment thread. " +
