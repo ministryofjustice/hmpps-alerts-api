@@ -42,7 +42,7 @@ data class Alert(
       "It is limited to 40 characters.",
     example = "A. Nurse, An Agency",
   )
-  val authorisedBy: String,
+  val authorisedBy: String?,
 
   @Schema(
     description = "The date the alert should be active from. " +
@@ -90,6 +90,12 @@ data class Alert(
   val createdBy: String,
 
   @Schema(
+    description = "The displayable name of the user who created the alert",
+    example = "Firstname Lastname",
+  )
+  val createdByDisplayName: String,
+
+  @Schema(
     description = "The date and time the alert was last modified",
     example = "2022-07-15T15:24:56",
   )
@@ -101,4 +107,10 @@ data class Alert(
     example = "USER1234",
   )
   val lastModifiedBy: String?,
+
+  @Schema(
+    description = "The displayable name of the user who last modified the alert",
+    example = "Firstname Lastname",
+  )
+  val lastModifiedByDisplayName: String?,
 )
