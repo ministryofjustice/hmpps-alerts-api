@@ -31,7 +31,7 @@ dependencies {
   // Test dependencies
   testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-  testImplementation("org.wiremock:wiremock-standalone:3.4.0")
+  testImplementation("org.wiremock:wiremock-standalone:3.4.1")
   testImplementation("org.testcontainers:postgresql:1.19.5")
   testImplementation("org.testcontainers:localstack:1.19.5")
   testImplementation("org.awaitility:awaitility-kotlin:4.2.0")
