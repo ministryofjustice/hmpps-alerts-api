@@ -61,12 +61,4 @@ data class CreateAlert(
   )
   @JsonFormat(pattern = "yyyy-MM-dd")
   val activeTo: LocalDate?,
-
-  @Schema(
-    description = "The username of the user who created the alert. " +
-      "If not provided, the username of the user making the request will be used.",
-    example = "USER1234",
-  )
-  @field:Size(max = 32, message = "Created by must be <= 32 characters")
-  val createdBy: String?,
 )

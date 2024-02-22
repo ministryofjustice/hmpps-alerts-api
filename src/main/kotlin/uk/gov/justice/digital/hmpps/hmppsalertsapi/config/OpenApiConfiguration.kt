@@ -33,7 +33,19 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
       Info()
         .title("Alerts API")
         .version(version)
-        .description("API for retrieving and managing alerts relating to a person")
+        .description(
+          "API for retrieving and managing alerts relating to a person.\n\n" +
+            "## Authentication\n\n" +
+            "This API uses OAuth2 with JWTs. " +
+            "You will need to pass the JWT in the `Authorization` header using the `Bearer` scheme.\n\n" +
+            "## Authorisation\n\n" +
+            "The API uses roles to control access to the endpoints. " +
+            "The roles required for each endpoint are documented in the endpoint descriptions.\n\n" +
+            "**The endpoints expect the username of the user to be passed in via a `user_name` or `username` claim**. " +
+            "If one of these claims are not found, the API will return a 403 Forbidden response.\n\n" +
+            "A 403 Forbidden response will also be returned if the user identified by the username does not have " +
+            "access to the caseload associated with the person.",
+        )
         .contact(
           Contact()
             .name("HMPPS Digital Studio")

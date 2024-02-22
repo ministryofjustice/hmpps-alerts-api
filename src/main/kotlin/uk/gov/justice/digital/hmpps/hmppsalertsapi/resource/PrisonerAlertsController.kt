@@ -51,7 +51,7 @@ class PrisonerAlertsController {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_ALERTS_ADMIN', '$ROLE_NOMIS_ALERTS')")
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_ALERTS_ADMIN', '$PRISON')")
   fun retrievePrisonerAlerts(
     @PathVariable
     @Parameter(

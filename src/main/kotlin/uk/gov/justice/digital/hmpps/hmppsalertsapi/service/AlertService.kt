@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
@@ -15,16 +16,15 @@ class AlertService(
   private val alertRepository: AlertRepository,
   private val alertCodeRepository: AlertCodeRepository,
 ) {
-  fun createAlert(request: CreateAlert): AlertModel {
+  fun createAlert(request: CreateAlert, context: AlertRequestContext): AlertModel {
     val alertCode = alertCodeRepository.findByCode(request.alertCode)
     require(alertCode != null) { "Alert code not found: ${request.alertCode}" }
 
     return alertRepository.save(
       request.toAlertEntity(
         alertCode = alertCode,
-        createdBy = request.createdBy ?: "GET_FROM_REQUEST",
-        // TODO: Get the display name from the user service
-        createdByDisplayName = "Firstname Lastname",
+        createdBy = context.username,
+        createdByDisplayName = context.userDisplayName,
       ),
     ).toAlertModel()
   }
