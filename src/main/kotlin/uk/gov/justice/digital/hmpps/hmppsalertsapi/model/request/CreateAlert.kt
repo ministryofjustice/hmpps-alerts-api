@@ -28,7 +28,7 @@ data class CreateAlert(
       "It is limited to 1000 characters.",
     example = "Alert description",
   )
-  val description: String,
+  val description: String?,
 
   @Schema(
     description = "The user, staff member, approving person or organisation that authorised the alert to be added. " +
@@ -55,4 +55,11 @@ data class CreateAlert(
   )
   @JsonFormat(pattern = "yyyy-MM-dd")
   val activeTo: LocalDate?,
+
+  @Schema(
+    description = "The username of the user who created the alert. " +
+      "If not provided, the username of the user making the request will be used.",
+    example = "USER1234",
+  )
+  val createdBy: String?,
 )

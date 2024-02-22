@@ -7,18 +7,25 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
-import java.time.ZonedDateTime
+import java.time.LocalDateTime
+import java.util.UUID
 
 @Entity
-@Table(name = "comments")
+@Table
 data class Comment(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Id
-  val commentId: Long,
-  val comment: String,
+  val commentId: Long = 0,
+
+  val commentUuid: UUID,
+
   @ManyToOne
-  @JoinColumn(name = "alert_id")
+  @JoinColumn(name = "alert_id", nullable = false)
   val alert: Alert,
-  val createdAt: ZonedDateTime,
+
+  val comment: String,
+
+  val createdAt: LocalDateTime,
   val createdBy: String,
+  val createdByDisplayName: String,
 )

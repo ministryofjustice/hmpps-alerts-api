@@ -2,8 +2,18 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.domain
 
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCodeSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode as AlertCodeModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType as AlertTypeModel
+
+fun AlertCode.toAlertCodeSummary() =
+  AlertCodeSummary(
+    alertTypeCode = alertType.code,
+    code = code,
+    description = description,
+    listSequence = listSequence,
+    isActive = isActive(),
+  )
 
 fun AlertCode.toAlertCodeModel() =
   AlertCodeModel(
