@@ -11,6 +11,8 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
+import org.hibernate.annotations.Fetch
+import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.SQLRestriction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import java.time.LocalDate
@@ -44,6 +46,7 @@ data class Alert(
   fun isActive() = activeFrom.isBefore(LocalDate.now()) && activeTo?.isBefore(LocalDate.now()) != true
 
   @OneToMany(mappedBy = "alert", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @Fetch(FetchMode.SUBSELECT)
   private val comments: MutableList<Comment> = mutableListOf()
 
   fun comments() = comments.toList()
@@ -67,6 +70,7 @@ data class Alert(
   }
 
   @OneToMany(mappedBy = "alert", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @Fetch(FetchMode.SUBSELECT)
   @OrderBy("actioned_at DESC")
   private val auditEvents: MutableList<AuditEvent> = mutableListOf()
 
