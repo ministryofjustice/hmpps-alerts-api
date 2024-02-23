@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
 import java.util.UUID
 
 @RestController
+@UsernameHeader
 @RequestMapping("/alerts", produces = [MediaType.APPLICATION_JSON_VALUE])
 class AlertsController(
   private val alertService: AlertService,

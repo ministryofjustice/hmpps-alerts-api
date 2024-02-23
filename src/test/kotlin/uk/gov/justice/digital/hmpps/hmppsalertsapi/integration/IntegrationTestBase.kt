@@ -16,11 +16,14 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalSt
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer.setLocalStackProperties
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.OAuthExtension
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.UserManagementExtension
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SYNC_SUPPRESS_EVENTS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 @Sql("classpath:test_data/reset-database.sql")
-@ExtendWith(OAuthExtension::class)
+@ExtendWith(OAuthExtension::class, UserManagementExtension::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 abstract class IntegrationTestBase {
@@ -39,6 +42,12 @@ abstract class IntegrationTestBase {
     client: String = CLIENT_ID,
     roles: List<String> = listOf(),
   ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisation(user, client, roles)
+
+  internal fun setAlertRequestContext(
+    username: String? = TEST_USER,
+  ): (HttpHeaders) -> Unit = {
+    it.set(USERNAME, username)
+  }
 
   internal fun setSyncContext(
     suppressEvents: Boolean = false,
