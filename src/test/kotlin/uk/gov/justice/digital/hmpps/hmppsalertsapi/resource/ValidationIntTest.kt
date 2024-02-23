@@ -148,7 +148,7 @@ class ValidationIntTest : IntegrationTestBase() {
           authorisedBy = "A. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = LocalDate.now().minusDays(1),
-          appendComment = null
+          appendComment = null,
         ),
       )
       .exchange()
@@ -157,7 +157,6 @@ class ValidationIntTest : IntegrationTestBase() {
       .returnResult().responseBody
     assertThat(response.developerMessage).contains("Active from must be before active to")
   }
-
 
   @Test
   fun `Update validate description too long`() {
@@ -175,7 +174,7 @@ class ValidationIntTest : IntegrationTestBase() {
           authorisedBy = "A. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = null,
-          appendComment = null
+          appendComment = null,
         ),
       )
       .exchange()
@@ -197,7 +196,7 @@ class ValidationIntTest : IntegrationTestBase() {
           authorisedBy = "A. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = null,
-          appendComment = null
+          appendComment = null,
         ),
       )
       .exchange()
@@ -223,7 +222,7 @@ class ValidationIntTest : IntegrationTestBase() {
           authorisedBy = "A. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = null,
-          appendComment = appendComment
+          appendComment = appendComment,
         ),
       )
       .exchange()
