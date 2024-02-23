@@ -8,10 +8,14 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
@@ -22,6 +26,9 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 class CreateAlertIntTest : IntegrationTestBase() {
   @Autowired
   lateinit var alertRepository: AlertRepository
+
+  @Autowired
+  lateinit var alertCodeRepository: AlertCodeRepository
 
   @Test
   fun `401 unauthorised`() {
@@ -37,6 +44,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .uri("/alerts")
       .bodyValue(createAlertRequest())
       .headers(setAuthorisation())
+      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
   }
@@ -47,8 +55,49 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .uri("/alerts")
       .bodyValue(createAlertRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
+  }
+
+  @Test
+  fun `400 bad request - username not supplied`() {
+    val response = webTestClient.post()
+      .uri("/alerts")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: Could not find non empty username from user_name or username token claims or Username header")
+      assertThat(developerMessage).isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - username not found`() {
+    val response = webTestClient.post()
+      .uri("/alerts")
+      .bodyValue(createAlertRequest())
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAlertRequestContext(USER_NOT_FOUND))
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: User details for supplied username not found")
+      assertThat(developerMessage).isEqualTo("User details for supplied username not found")
+      assertThat(moreInfo).isNull()
+    }
   }
 
   @Test
@@ -91,6 +140,27 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `502 bad gateway - get user details request failed`() {
+    val response = webTestClient.post()
+      .uri("/alerts")
+      .bodyValue(createAlertRequest())
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAlertRequestContext(USER_THROW_EXCEPTION))
+      .exchange()
+      .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(502)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Downstream service exception: Get user details request failed")
+      assertThat(developerMessage).isEqualTo("Get user details request failed")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
   fun `should return populated alert model`() {
     val request = createAlertRequest()
 
@@ -116,6 +186,29 @@ class CreateAlertIntTest : IntegrationTestBase() {
       ),
     )
     assertThat(alert.createdAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+  }
+
+  @Test
+  fun `should create new alert`() {
+    val request = createAlertRequest()
+
+    val alert = webTestClient.createAlert(request)
+
+    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+    val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
+
+    assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+      Alert(
+        1,
+        alert.alertUuid,
+        alertCode,
+        request.prisonNumber,
+        request.description,
+        request.authorisedBy,
+        request.activeFrom!!,
+        request.activeTo,
+      ),
+    )
   }
 
   private fun createAlertRequest(

@@ -12,6 +12,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
+import java.util.*
 
 @Configuration
 class AlertRequestContextConfiguration(private val alertRequestContextInterceptor: AlertRequestContextInterceptor) : WebMvcConfigurer {
@@ -59,14 +60,11 @@ class AlertRequestContextInterceptor(
       ?: throw ValidationException("Could not find non empty username from user_name or username token claims or Username header")
 
   private fun HttpServletRequest.getUserDetails() =
-    try {
-      userService.getUserDetails(getUsername()) ?: throw AccessDeniedException("User details not found")
-    } catch (e: Exception) {
-      log.warn("Get user details call failed", e)
-      throw AccessDeniedException("Get user details call failed")
+    getUsername().let { username ->
+      try {
+        userService.getUserDetails(username)
+      } catch (e: Exception) {
+        throw DownstreamServiceException("Get user details request failed", e)
+      } ?: throw ValidationException("User details for supplied username not found")
     }
-
-  companion object {
-    private val log = LoggerFactory.getLogger(this::class.java)
-  }
 }

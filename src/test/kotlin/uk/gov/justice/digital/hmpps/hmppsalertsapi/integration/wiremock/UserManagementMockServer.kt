@@ -16,6 +16,8 @@ import java.util.UUID
 
 internal const val TEST_USER = "TEST_USER"
 internal const val TEST_USER_NAME = "Test User"
+internal const val USER_NOT_FOUND = "USER_NOT_FOUND"
+internal const val USER_THROW_EXCEPTION = "USER_THROW_EXCEPTION"
 
 class UserManagementExtension : BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
   companion object {
@@ -26,6 +28,7 @@ class UserManagementExtension : BeforeAllCallback, AfterAllCallback, BeforeEachC
   override fun beforeAll(context: ExtensionContext) {
     userManagement.start()
     userManagement.stubGetUserDetails()
+    userManagement.stubGetUserDetailsException()
   }
 
   override fun beforeEach(context: ExtensionContext) {
@@ -62,4 +65,7 @@ class UserManagementServer : WireMockServer(8111) {
             .withStatus(200),
         ),
     )
+
+  fun stubGetUserDetailsException(username: String = USER_THROW_EXCEPTION): StubMapping =
+    stubFor(get("/users/$username").willReturn(aResponse().withStatus(500)))
 }
