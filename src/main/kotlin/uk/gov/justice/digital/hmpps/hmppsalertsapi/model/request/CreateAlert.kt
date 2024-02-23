@@ -2,17 +2,21 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.Size
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.DateComparison
 import java.time.LocalDate
 
 @Schema(
   description = "The request body for creating a new alert for a person",
 )
+@DateComparison("Active from must be before active to")
 data class CreateAlert(
   @Schema(
     description = "The prison number of the person the alert is for. " +
       "Also referred to as the offender number, offender id or NOMS id.",
     example = "A1234AA",
   )
+  @field:Size(max = 10, message = "Prison number must be <= 10 characters")
   val prisonNumber: String,
 
   @Schema(
@@ -28,6 +32,7 @@ data class CreateAlert(
       "It is limited to 1000 characters.",
     example = "Alert description",
   )
+  @field:Size(max = 1000, message = "Description must be <= 1000 characters")
   val description: String?,
 
   @Schema(
@@ -36,6 +41,7 @@ data class CreateAlert(
       "It is limited to 40 characters.",
     example = "A. Nurse, An Agency",
   )
+  @field:Size(max = 40, message = "Authorised by must be <= 40 characters")
   val authorisedBy: String?,
 
   @Schema(
@@ -61,5 +67,6 @@ data class CreateAlert(
       "If not provided, the username of the user making the request will be used.",
     example = "USER1234",
   )
+  @field:Size(max = 32, message = "Created by must be <= 32 characters")
   val createdBy: String?,
 )
