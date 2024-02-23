@@ -9,6 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.servlet.HandlerInterceptor
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
 
 @Configuration
 class AlertRequestContextConfiguration(private val alertRequestContextInterceptor: AlertRequestContextInterceptor) : WebMvcConfigurer {
@@ -23,17 +24,17 @@ class AlertRequestContextConfiguration(private val alertRequestContextIntercepto
 }
 
 @Configuration
-class AlertRequestContextInterceptor : HandlerInterceptor {
+class AlertRequestContextInterceptor(
+  private val userService: UserService,
+) : HandlerInterceptor {
   override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-    val username = getUsername()
-    val userDisplayName = getUserDisplayName(username)
-    // TODO: Add user's caseload to request context to authorise access to alerts via the prison the person is resident in
+    val userDetails = userService.getUserDetails(getUsername()) ?: throw AccessDeniedException("User details not found")
 
     request.setAttribute(
       AlertRequestContext::class.simpleName,
       AlertRequestContext(
-        username = username,
-        userDisplayName = userDisplayName,
+        username = userDetails.username,
+        userDisplayName = userDetails.name,
       ),
     )
 
@@ -50,8 +51,4 @@ class AlertRequestContextInterceptor : HandlerInterceptor {
         ?: it.tokenAttributes["username"] as String?
         ?: throw AccessDeniedException("Token does not contain user_name or username")
     }
-
-  private fun getUserDisplayName(username: String): String =
-    // TODO: get user from API call
-    "GET_FROM_API_CALL"
 }

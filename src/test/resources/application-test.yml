@@ -14,3 +14,7 @@ management.endpoint:
 hmpps:
   auth:
     url: http://localhost:8090/auth
+
+user-management:
+  api:
+    url: http://localhost:8111
