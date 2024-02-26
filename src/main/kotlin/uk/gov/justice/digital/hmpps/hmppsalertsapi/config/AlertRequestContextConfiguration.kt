@@ -51,11 +51,11 @@ class AlertRequestContextInterceptor(
     authentication().let {
       it.tokenAttributes["user_name"] as String?
         ?: it.tokenAttributes["username"] as String?
-    }?.trim()?.takeUnless(String::isBlank)
+    }
 
   private fun HttpServletRequest.getUsername(): String =
-    getUsernameFromClaim()
-      ?: getHeader(USERNAME)?.trim()?.takeUnless(String::isBlank)?.also { if (it.length > 33) throw ValidationException("Created by must be <= 32 characters") }
+    (getUsernameFromClaim() ?: getHeader(USERNAME))
+      ?.trim()?.takeUnless(String::isBlank)?.also { if (it.length > 32) throw ValidationException("Created by must be <= 32 characters") }
       ?: throw ValidationException("Could not find non empty username from user_name or username token claims or Username header")
 
   private fun HttpServletRequest.getUserDetails() =
