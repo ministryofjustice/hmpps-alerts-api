@@ -13,13 +13,13 @@ import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.context.SecurityContextHolder
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.usermanagement.dto.UserDetailsDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.userDetailsDto
 import java.time.temporal.ChronoUnit
 
 class AlertRequestContextConfigurationTest {
@@ -32,7 +32,7 @@ class AlertRequestContextConfigurationTest {
   @BeforeEach
   fun beforeEach() {
     SecurityContextHolder.clearContext()
-    whenever(userService.getUserDetails(TEST_USER)).thenReturn(UserDetailsDto(TEST_USER, true, TEST_USER_NAME, "nomis", "123", null))
+    whenever(userService.getUserDetails(TEST_USER)).thenReturn(userDetailsDto())
   }
 
   @Test
@@ -84,7 +84,7 @@ class AlertRequestContextConfigurationTest {
   fun `accepts 32 character username from user_name claim`() {
     val username = "a".repeat(32)
     setSecurityContext(mapOf("user_name" to username))
-    whenever(userService.getUserDetails(username)).thenReturn(UserDetailsDto(username, true, "First Last", "nomis", "123", null))
+    whenever(userService.getUserDetails(username)).thenReturn(userDetailsDto(username))
 
     interceptor.preHandle(req, res, "null")
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
@@ -157,7 +157,7 @@ class AlertRequestContextConfigurationTest {
   fun `accepts 32 character username from username claim`() {
     val username = "a".repeat(32)
     setSecurityContext(mapOf("username" to username))
-    whenever(userService.getUserDetails(username)).thenReturn(UserDetailsDto(username, true, "First Last", "nomis", "123", null))
+    whenever(userService.getUserDetails(username)).thenReturn(userDetailsDto(username))
 
     interceptor.preHandle(req, res, "null")
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
@@ -234,7 +234,7 @@ class AlertRequestContextConfigurationTest {
     setSecurityContext(emptyMap())
     val username = "a".repeat(32)
     req.addHeader(USERNAME, username)
-    whenever(userService.getUserDetails(username)).thenReturn(UserDetailsDto(username, true, "First Last", "nomis", "123", null))
+    whenever(userService.getUserDetails(username)).thenReturn(userDetailsDto(username))
 
     interceptor.preHandle(req, res, "null")
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext

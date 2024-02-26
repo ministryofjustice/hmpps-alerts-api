@@ -26,7 +26,7 @@ class AlertService(
     require(alertCode != null) { "Alert code '${request.alertCode}' not found" }
     require(alertCode.isActive()) { "Alert code '${request.alertCode}' is inactive" }
 
-    return alertRepository.save(
+    return alertRepository.saveAndFlush(
       request.toAlertEntity(
         alertCode = alertCode,
         createdAt = context.requestAt,

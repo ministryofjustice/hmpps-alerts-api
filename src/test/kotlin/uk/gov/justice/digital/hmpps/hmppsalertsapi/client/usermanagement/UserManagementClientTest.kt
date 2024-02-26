@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.usermanagement.dto.UserDetailsDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.UserManagementServer
 import java.util.UUID
@@ -46,7 +47,7 @@ class UserManagementClientTest {
 
   @Test
   fun `getUserDetails - user not found`() {
-    val result = client.getUserDetails("NOT_FOUND")
+    val result = client.getUserDetails(USER_NOT_FOUND)
 
     assertThat(result).isNull()
   }
