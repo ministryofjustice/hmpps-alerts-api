@@ -9,6 +9,7 @@ import org.junit.jupiter.api.assertThrows
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.usermanagement.dto.UserDetailsDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.DownstreamServiceException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
@@ -53,13 +54,15 @@ class UserManagementClientTest {
   }
 
   @Test
-  fun `getUserDetails - 500 internal server error`() {
+  fun `getUserDetails - downstream service exception`() {
     server.stubGetUserDetailsException()
 
-    val exception = assertThrows<WebClientResponseException.InternalServerError> { client.getUserDetails(USER_THROW_EXCEPTION) }
-    assertThat(exception.message).isEqualTo(
-      "500 Internal Server Error from GET http://localhost:8111/users/USER_THROW_EXCEPTION",
-    )
+    val exception = assertThrows<DownstreamServiceException> { client.getUserDetails(USER_THROW_EXCEPTION) }
+    assertThat(exception.message).isEqualTo("Get user details request failed")
+    with(exception.cause) {
+      assertThat(this).isInstanceOf(WebClientResponseException::class.java)
+      assertThat(this!!.message).isEqualTo("500 Internal Server Error from GET http://localhost:8111/users/USER_THROW_EXCEPTION")
+    }
   }
 
   companion object {

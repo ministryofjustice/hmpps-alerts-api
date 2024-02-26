@@ -16,7 +16,6 @@ import org.springframework.security.core.context.SecurityContextHolder
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.userDetailsDto
@@ -90,7 +89,7 @@ class AlertRequestContextConfigurationTest {
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
 
     assertThat(context.username).isEqualTo(username)
-    assertThat(context.userDisplayName).isEqualTo("First Last")
+    assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
   }
 
   @Test
@@ -98,16 +97,6 @@ class AlertRequestContextConfigurationTest {
     setSecurityContext(mapOf("user_name" to USER_NOT_FOUND))
     val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
     assertThat(exception.message).isEqualTo("User details for supplied username not found")
-  }
-
-  @Test
-  fun `throws DownstreamServiceException when get user for username from user_name claim call throws exception`() {
-    setSecurityContext(mapOf("user_name" to USER_THROW_EXCEPTION))
-    val cause = RuntimeException("Test exception")
-    whenever(userService.getUserDetails(USER_THROW_EXCEPTION)).thenThrow(cause)
-    val exception = assertThrows<DownstreamServiceException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("Get user details request failed")
-    assertThat(exception.cause).isEqualTo(cause)
   }
 
   @Test
@@ -163,7 +152,7 @@ class AlertRequestContextConfigurationTest {
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
 
     assertThat(context.username).isEqualTo(username)
-    assertThat(context.userDisplayName).isEqualTo("First Last")
+    assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
   }
 
   @Test
@@ -171,16 +160,6 @@ class AlertRequestContextConfigurationTest {
     setSecurityContext(mapOf("username" to USER_NOT_FOUND))
     val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
     assertThat(exception.message).isEqualTo("User details for supplied username not found")
-  }
-
-  @Test
-  fun `throws DownstreamServiceException when get user for username from username claim call throws exception`() {
-    setSecurityContext(mapOf("username" to USER_THROW_EXCEPTION))
-    val cause = RuntimeException("Test exception")
-    whenever(userService.getUserDetails(USER_THROW_EXCEPTION)).thenThrow(cause)
-    val exception = assertThrows<DownstreamServiceException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("Get user details request failed")
-    assertThat(exception.cause).isEqualTo(cause)
   }
 
   @Test
@@ -240,7 +219,7 @@ class AlertRequestContextConfigurationTest {
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
 
     assertThat(context.username).isEqualTo(username)
-    assertThat(context.userDisplayName).isEqualTo("First Last")
+    assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
   }
 
   @Test
@@ -249,17 +228,6 @@ class AlertRequestContextConfigurationTest {
     req.addHeader(USERNAME, USER_NOT_FOUND)
     val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
     assertThat(exception.message).isEqualTo("User details for supplied username not found")
-  }
-
-  @Test
-  fun `throws DownstreamServiceException when get user for username from Username header call throws exception`() {
-    setSecurityContext(emptyMap())
-    req.addHeader(USERNAME, USER_THROW_EXCEPTION)
-    val cause = RuntimeException("Test exception")
-    whenever(userService.getUserDetails(USER_THROW_EXCEPTION)).thenThrow(cause)
-    val exception = assertThrows<DownstreamServiceException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("Get user details request failed")
-    assertThat(exception.cause).isEqualTo(cause)
   }
 
   @Test

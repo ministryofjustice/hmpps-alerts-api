@@ -59,11 +59,6 @@ class AlertRequestContextInterceptor(
       ?: throw ValidationException("Could not find non empty username from user_name or username token claims or Username header")
 
   private fun HttpServletRequest.getUserDetails() =
-    getUsername().let { username ->
-      try {
-        userService.getUserDetails(username)
-      } catch (e: Exception) {
-        throw DownstreamServiceException("Get user details request failed", e)
-      } ?: throw ValidationException("User details for supplied username not found")
-    }
+    getUsername().let { userService.getUserDetails(it) }
+      ?: throw ValidationException("User details for supplied username not found")
 }
