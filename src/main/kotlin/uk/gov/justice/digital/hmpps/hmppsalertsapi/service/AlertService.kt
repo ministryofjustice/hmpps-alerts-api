@@ -20,7 +20,7 @@ class AlertService(
 ) {
   fun createAlert(request: CreateAlert, context: AlertRequestContext): AlertModel {
     val prisoner = prisonerSearchClient.getPrisoner(request.prisonNumber)
-    require(prisoner != null) { "Prisoner not found for prison number: ${request.prisonNumber}" }
+    require(prisoner != null) { "Prison number '${request.prisonNumber}' not found" }
 
     val alertCode = alertCodeRepository.findByCode(request.alertCode)
     require(alertCode != null) { "Alert code '${request.alertCode}' not found" }

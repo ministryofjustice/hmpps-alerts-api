@@ -20,7 +20,6 @@ user-management:
     url: http://localhost:8111
 
 
-prisoner:
-  search:
-    api:
-      url: http://localhost:8112
+prisoner-search:
+  api:
+    url: http://localhost:8112

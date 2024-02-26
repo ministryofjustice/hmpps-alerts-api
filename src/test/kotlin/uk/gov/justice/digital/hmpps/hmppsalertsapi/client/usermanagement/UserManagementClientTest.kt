@@ -61,7 +61,7 @@ class UserManagementClientTest {
     assertThat(exception.message).isEqualTo("Get user details request failed")
     with(exception.cause) {
       assertThat(this).isInstanceOf(WebClientResponseException::class.java)
-      assertThat(this!!.message).isEqualTo("500 Internal Server Error from GET http://localhost:8111/users/USER_THROW_EXCEPTION")
+      assertThat(this!!.message).isEqualTo("500 Internal Server Error from GET http://localhost:8111/users/${USER_THROW_EXCEPTION}")
     }
   }
 

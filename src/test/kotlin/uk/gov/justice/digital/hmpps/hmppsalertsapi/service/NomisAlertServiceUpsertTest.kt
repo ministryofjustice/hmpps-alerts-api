@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.NomisAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.NomisAlertStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.NomisCaseloadType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.UpsertStatus
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlertMapping
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.NomisAlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.testObjectMapper
@@ -137,7 +138,7 @@ class NomisAlertServiceUpsertTest {
       offenderBookId = offenderBookId,
       rootOffenderId = 2,
       alertSeq = alertSeq,
-      offenderNo = "A1234AA",
+      offenderNo = PRISON_NUMBER,
       alertType = "A",
       alertCode = "ABC",
       authorizePersonText = "A. Authorizer",

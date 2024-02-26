@@ -11,7 +11,9 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISONER_THROW_EXCEPTION
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
@@ -124,6 +126,28 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `400 bad request - prisoner not found`() {
+    val request = createAlertRequest(prisonNumber = PRISON_NUMBER_NOT_FOUND)
+    val response = webTestClient.post()
+      .uri("/alerts")
+      .bodyValue(request)
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAlertRequestContext())
+      .exchange()
+      .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: Prison number '${PRISON_NUMBER_NOT_FOUND}' not found")
+      assertThat(developerMessage).isEqualTo("Prison number '${PRISON_NUMBER_NOT_FOUND}' not found")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
   fun `400 bad request - alert code not found`() {
     val response = webTestClient.post()
       .uri("/alerts")
@@ -206,6 +230,27 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `502 bad gateway - get prisoner request failed`() {
+    val response = webTestClient.post()
+      .uri("/alerts")
+      .bodyValue(createAlertRequest(prisonNumber = PRISON_NUMBER_THROW_EXCEPTION))
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAlertRequestContext())
+      .exchange()
+      .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(502)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Downstream service exception: Get prisoner request failed")
+      assertThat(developerMessage).isEqualTo("Get prisoner request failed")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
   fun `should populate created by using user_name claim`() {
     val request = createAlertRequest()
 
@@ -233,6 +278,27 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .uri("/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_WRITER), isUserToken = false))
+      .exchange()
+      .expectStatus().isCreated
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody(AlertModel::class.java)
+      .returnResult().responseBody!!
+
+    with(alert) {
+      assertThat(createdBy).isEqualTo(TEST_USER)
+      assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
+    }
+  }
+
+  @Test
+  fun `should populate created by using Username header`() {
+    val request = createAlertRequest()
+
+    val alert = webTestClient.post()
+      .uri("/alerts")
+      .bodyValue(request)
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isCreated
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -274,28 +340,6 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `prisoner not found`() {
-    val request = createAlertRequest(prisonNumber = PRISONER_THROW_EXCEPTION)
-    val response = webTestClient.post()
-      .uri("/alerts")
-      .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
-      .exchange()
-      .expectStatus().isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-
-    with(response!!) {
-      assertThat(status).isEqualTo(500)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Unexpected error: Prisoner not found for prison number: THROW")
-      assertThat(developerMessage).isEqualTo("Prisoner not found for prison number: THROW")
-      assertThat(moreInfo).isNull()
-    }
-  }
-
-  @Test
   fun `should create new alert`() {
     val request = createAlertRequest()
 
@@ -327,7 +371,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   private fun createAlertRequest(
-    prisonNumber: String = "A1234AA",
+    prisonNumber: String = PRISON_NUMBER,
     alertCode: String = ALERT_CODE_VICTIM,
   ) =
     CreateAlert(

@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -233,7 +234,7 @@ class AlertTest {
     Alert(
       alertUuid = UUID.randomUUID(),
       alertCode = alertCodeVictim(),
-      prisonNumber = "A1234AA",
+      prisonNumber = PRISON_NUMBER,
       description = "Alert description",
       authorisedBy = "A. Authorizer",
       activeFrom = LocalDate.now().minusDays(3),

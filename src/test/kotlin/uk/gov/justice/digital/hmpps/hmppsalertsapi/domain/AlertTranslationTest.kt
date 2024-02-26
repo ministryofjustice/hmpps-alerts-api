@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
@@ -21,7 +22,7 @@ class AlertTranslationTest {
   @Test
   fun `convert create alert to alert entity`() {
     val request = CreateAlert(
-      prisonNumber = "A1234AA",
+      prisonNumber = PRISON_NUMBER,
       alertCode = ALERT_CODE_VICTIM,
       description = "Alert description",
       authorisedBy = "A. Authorizer",
@@ -59,7 +60,7 @@ class AlertTranslationTest {
   @Test
   fun `use today when active from is not supplied`() {
     val request = CreateAlert(
-      prisonNumber = "A1234AA",
+      prisonNumber = PRISON_NUMBER,
       alertCode = ALERT_CODE_VICTIM,
       description = "Alert description",
       authorisedBy = "A. Authorizer",
@@ -218,7 +219,7 @@ class AlertTranslationTest {
     AlertEntity(
       alertUuid = UUID.randomUUID(),
       alertCode = alertCodeVictim(),
-      prisonNumber = "A1234AA",
+      prisonNumber = PRISON_NUMBER,
       description = "Alert description",
       authorisedBy = "A. Authorizer",
       activeFrom = LocalDate.now().minusDays(3),
