@@ -51,7 +51,7 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
             "The username is taken in priority order from the `user_name` or `username` claim in the JWT if present, followed by the `Username` header if no claim is found.\n\n" +
             "### 4XX response codes related to username:\n\n" +
             "- A 400 Bad Request response will be returned if the username cannot be found via any of the above methods.\n" +
-            "- A 403 Forbidden response will be returned if the username cannot be found in the user management service.\n" +
+            "- A 400 Bad Request response will be returned if the username cannot be found in the user management service.\n" +
             "- A 403 Forbidden response will also be returned if the user identified by the username does not have " +
             "access to the caseload associated with the person.",
         )

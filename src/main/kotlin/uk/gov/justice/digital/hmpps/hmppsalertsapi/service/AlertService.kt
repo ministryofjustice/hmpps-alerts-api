@@ -29,6 +29,7 @@ class AlertService(
     return alertRepository.save(
       request.toAlertEntity(
         alertCode = alertCode,
+        createdAt = context.requestAt,
         createdBy = context.username,
         createdByDisplayName = context.userDisplayName,
       ),
