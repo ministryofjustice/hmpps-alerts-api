@@ -32,7 +32,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .returnResult().responseBody!!
     assertThat(response.developerMessage).contains("Active from must be before active to")
   }
 
@@ -45,7 +45,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
-          prisonNumber = "ABC123ASDGAAA",
+          prisonNumber = "ABC123ASDGA",
           alertCode = "A",
           description = "description",
           authorisedBy = "A. Authorised",
@@ -56,7 +56,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .returnResult().responseBody!!
     assertThat(response.developerMessage).contains("Prison number must be <= 10 characters")
   }
 
@@ -84,7 +84,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .returnResult().responseBody!!
     assertThat(response.developerMessage).contains("Description must be <= 1000 characters")
   }
 
@@ -100,7 +100,7 @@ class ValidationIntTest : IntegrationTestBase() {
           prisonNumber = "ABC123A",
           alertCode = "A",
           description = "description",
-          authorisedBy = "A. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. Authorised",
+          authorisedBy = "A. AuthorisedA. AuthorisedA. AuthorisedA.",
           activeFrom = LocalDate.now(),
           activeTo = null,
         ),
@@ -108,7 +108,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .returnResult().responseBody!!
     assertThat(response.developerMessage).contains("Authorised by must be <= 40 characters")
   }
 
@@ -117,7 +117,7 @@ class ValidationIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
-      .headers(setAlertRequestContext("C. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. Reated"))
+      .headers(setAlertRequestContext("C. ReatedC. ReatedC. ReatedC. Reat"))
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
@@ -132,7 +132,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .returnResult().responseBody!!
     assertThat(response.developerMessage).contains("Created by must be <= 32 characters")
   }
 
@@ -155,7 +155,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .returnResult().responseBody!!
     assertThat(response.developerMessage).contains("Active from must be before active to")
   }
 
@@ -182,7 +182,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .returnResult().responseBody!!
     assertThat(response.developerMessage).contains("Description must be <= 1000 characters")
   }
 
@@ -196,7 +196,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .bodyValue(
         UpdateAlert(
           description = "description",
-          authorisedBy = "A. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. Authorised",
+          authorisedBy = "A. AuthorisedA. AuthorisedA. AuthorisedA.",
           activeFrom = LocalDate.now(),
           activeTo = null,
           appendComment = null,
@@ -205,7 +205,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .returnResult().responseBody!!
     assertThat(response.developerMessage).contains("Authorised by must be <= 40 characters")
   }
 
@@ -232,7 +232,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .returnResult().responseBody!!
     assertThat(response.developerMessage).contains("Append comment must be <= 1000 characters")
   }
 }

@@ -23,8 +23,9 @@ class AlertService(
     require(prisoner != null) { "Prisoner not found for prison number: ${request.prisonNumber}" }
 
     val alertCode = alertCodeRepository.findByCode(request.alertCode)
-    require(alertCode != null) { "Alert code not found: ${request.alertCode}" }
-    require(alertCode.isActive()) { "Alert code is not active: ${request.alertCode}" }
+    require(alertCode != null) { "Alert code '${request.alertCode}' not found" }
+    require(alertCode.isActive()) { "Alert code '${request.alertCode}' is inactive" }
+
     return alertRepository.save(
       request.toAlertEntity(
         alertCode = alertCode,

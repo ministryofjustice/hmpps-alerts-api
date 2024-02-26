@@ -45,7 +45,7 @@ data class Alert(
 ) {
   fun isActive() = activeFrom.isBefore(LocalDate.now()) && activeTo?.isBefore(LocalDate.now()) != true
 
-  @OneToMany(mappedBy = "alert", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
   @Fetch(FetchMode.SUBSELECT)
   private val comments: MutableList<Comment> = mutableListOf()
 
@@ -69,7 +69,7 @@ data class Alert(
     return commentEntity
   }
 
-  @OneToMany(mappedBy = "alert", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
   @Fetch(FetchMode.SUBSELECT)
   @OrderBy("actioned_at DESC")
   private val auditEvents: MutableList<AuditEvent> = mutableListOf()

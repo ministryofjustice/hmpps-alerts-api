@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 class CreateAlertDateValidator : ConstraintValidator<DateComparison, CreateAlert> {
   override fun isValid(value: CreateAlert, context: ConstraintValidatorContext?): Boolean {
     return if (value.activeFrom != null && value.activeTo != null) {
-      value.activeFrom!!.isBefore(value.activeTo)
+      value.activeFrom.isBefore(value.activeTo)
     } else {
       true
     }
