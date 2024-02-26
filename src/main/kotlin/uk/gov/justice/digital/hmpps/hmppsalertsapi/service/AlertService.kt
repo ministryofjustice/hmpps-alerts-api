@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertModel
@@ -15,11 +16,15 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 class AlertService(
   private val alertRepository: AlertRepository,
   private val alertCodeRepository: AlertCodeRepository,
+  private val prisonerSearchClient: PrisonerSearchClient,
 ) {
   fun createAlert(request: CreateAlert, context: AlertRequestContext): AlertModel {
+    val prisoner = prisonerSearchClient.getPrisoner(request.prisonNumber)
+    require(prisoner != null) { "Prisoner not found for prison number: ${request.prisonNumber}" }
+
     val alertCode = alertCodeRepository.findByCode(request.alertCode)
     require(alertCode != null) { "Alert code not found: ${request.alertCode}" }
-
+    require(alertCode.isActive()) { "Alert code is not active: ${request.alertCode}" }
     return alertRepository.save(
       request.toAlertEntity(
         alertCode = alertCode,

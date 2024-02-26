@@ -10,6 +10,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISONER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
@@ -186,6 +187,28 @@ class CreateAlertIntTest : IntegrationTestBase() {
       ),
     )
     assertThat(alert.createdAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+  }
+
+  @Test
+  fun `prisoner not found`() {
+    val request = createAlertRequest(prisonNumber = PRISONER_THROW_EXCEPTION)
+    val response = webTestClient.post()
+      .uri("/alerts")
+      .bodyValue(request)
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAlertRequestContext())
+      .exchange()
+      .expectStatus().isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(500)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Unexpected error: Prisoner not found for prison number: THROW")
+      assertThat(developerMessage).isEqualTo("Prisoner not found for prison number: THROW")
+      assertThat(moreInfo).isNull()
+    }
   }
 
   @Test
