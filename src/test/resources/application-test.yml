@@ -18,3 +18,9 @@ hmpps:
 user-management:
   api:
     url: http://localhost:8111
+
+
+prisoner:
+  search:
+    api:
+      url: http://localhost:8112

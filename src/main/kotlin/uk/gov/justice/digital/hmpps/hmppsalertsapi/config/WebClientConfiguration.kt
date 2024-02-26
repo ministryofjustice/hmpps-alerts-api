@@ -14,12 +14,21 @@ import org.springframework.web.reactive.function.client.WebClient
 @Configuration
 class WebClientConfiguration(
   @Value("\${user-management.api.url}") private val userManagementApiUri: String,
+  @Value("\${prisoner.search.api.url}") private val prisonerSearchApiUri: String,
 ) {
 
   @Bean
   fun userManagementWebClient(webclientBuilder: WebClient.Builder): WebClient {
     return webclientBuilder
       .baseUrl(userManagementApiUri)
+      .filter(addAuthHeaderFilterFunction())
+      .build()
+  }
+
+  @Bean
+  fun prisonerSearchWebClient(webclientBuilder: WebClient.Builder): WebClient {
+    return webclientBuilder
+      .baseUrl(prisonerSearchApiUri)
       .filter(addAuthHeaderFilterFunction())
       .build()
   }
