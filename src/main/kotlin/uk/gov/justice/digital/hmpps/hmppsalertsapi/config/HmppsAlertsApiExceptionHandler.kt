@@ -4,6 +4,7 @@ import jakarta.validation.ValidationException
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatus.BAD_GATEWAY
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED
@@ -106,6 +107,17 @@ class HmppsAlertsApiExceptionHandler {
       ),
     ).also { log.info("Method not allowed exception: {}", e.message) }
 
+  @ExceptionHandler(DownstreamServiceException::class)
+  fun handleException(e: DownstreamServiceException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(BAD_GATEWAY)
+    .body(
+      ErrorResponse(
+        status = BAD_GATEWAY,
+        userMessage = "Downstream service exception: ${e.message}",
+        developerMessage = e.message,
+      ),
+    ).also { log.warn("Downstream service exception", e.cause) }
+
   @ExceptionHandler(Exception::class)
   fun handleException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(INTERNAL_SERVER_ERROR)
@@ -138,3 +150,5 @@ data class ErrorResponse(
   ) :
     this(status.value(), errorCode, userMessage, developerMessage, moreInfo)
 }
+
+class DownstreamServiceException(message: String, cause: Throwable) : Exception(message, cause)

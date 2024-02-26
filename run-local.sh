@@ -21,8 +21,10 @@ export DB_SSL_MODE=prefer
 # AWS configuration
 export AWS_REGION=eu-west-2
 
-# Provide URLs to other dependent services. Dev services used here (can be local if you set uo the dependent services locally)
+# Provide URLs to other dependent services. Dev services used here (can be local if you set up the dependent services locally)
 export HMPPS_AUTH_URL=https://sign-in-dev.hmpps.service.justice.gov.uk/auth
+export USER_MANAGEMENT_API_URL=https://manage-users-api-dev.hmpps.service.justice.gov.uk
+export PRISONER_SEARCH_API_URL=https://prisoner-search-dev.prison.service.justice.gov.uk
 
 # Run the application with stdout and local profiles active
 SPRING_PROFILES_ACTIVE=stdout,local ./gradlew bootRun

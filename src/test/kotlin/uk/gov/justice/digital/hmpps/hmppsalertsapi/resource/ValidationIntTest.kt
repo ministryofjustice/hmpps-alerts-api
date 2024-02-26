@@ -17,6 +17,7 @@ class ValidationIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
@@ -26,7 +27,6 @@ class ValidationIntTest : IntegrationTestBase() {
           authorisedBy = "A. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = LocalDate.now().minusDays(1),
-          createdBy = null,
         ),
       )
       .exchange()
@@ -41,6 +41,7 @@ class ValidationIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
@@ -50,7 +51,6 @@ class ValidationIntTest : IntegrationTestBase() {
           authorisedBy = "A. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = null,
-          createdBy = null,
         ),
       )
       .exchange()
@@ -69,6 +69,7 @@ class ValidationIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
@@ -78,7 +79,6 @@ class ValidationIntTest : IntegrationTestBase() {
           authorisedBy = "A. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = null,
-          createdBy = null,
         ),
       )
       .exchange()
@@ -93,6 +93,7 @@ class ValidationIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
@@ -102,7 +103,6 @@ class ValidationIntTest : IntegrationTestBase() {
           authorisedBy = "A. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. AuthorisedA. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = null,
-          createdBy = null,
         ),
       )
       .exchange()
@@ -117,6 +117,7 @@ class ValidationIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAlertRequestContext("C. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. Reated"))
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
@@ -126,7 +127,6 @@ class ValidationIntTest : IntegrationTestBase() {
           authorisedBy = "A. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = null,
-          createdBy = "C. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. ReatedC. Reated",
         ),
       )
       .exchange()
@@ -141,6 +141,7 @@ class ValidationIntTest : IntegrationTestBase() {
     val response = webTestClient.put()
       .uri("/alerts/${UUID.randomUUID()}")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         UpdateAlert(
@@ -167,6 +168,7 @@ class ValidationIntTest : IntegrationTestBase() {
     val response = webTestClient.put()
       .uri("/alerts/${UUID.randomUUID()}")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         UpdateAlert(
@@ -189,6 +191,7 @@ class ValidationIntTest : IntegrationTestBase() {
     val response = webTestClient.put()
       .uri("/alerts/${UUID.randomUUID()}")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         UpdateAlert(
@@ -215,6 +218,7 @@ class ValidationIntTest : IntegrationTestBase() {
     val response = webTestClient.put()
       .uri("/alerts/${UUID.randomUUID()}")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         UpdateAlert(
