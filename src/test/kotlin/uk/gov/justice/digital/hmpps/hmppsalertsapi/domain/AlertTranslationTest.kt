@@ -19,7 +19,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Comment as CommentModel
 
 class AlertTranslationTest {
   @Test
-  fun `convert CreateAlert model to Alert entity`() {
+  fun `convert create alert to alert entity`() {
     val request = CreateAlert(
       prisonNumber = "A1234AA",
       alertCode = ALERT_CODE_VICTIM,
@@ -77,7 +77,7 @@ class AlertTranslationTest {
   }
 
   @Test
-  fun `convert Alert entity to model`() {
+  fun `convert alert entity to model`() {
     val createdAt = LocalDateTime.now().minusDays(3)
     val entity = alertEntity(createdAt)
 
@@ -105,7 +105,7 @@ class AlertTranslationTest {
   }
 
   @Test
-  fun `convert modified Alert entity to model`() {
+  fun `convert modified alert entity to model`() {
     val lastModifiedAt = LocalDateTime.now().minusDays(2)
     val entity = alertEntity().apply {
       auditEvent(
@@ -127,7 +127,7 @@ class AlertTranslationTest {
   }
 
   @Test
-  fun `convert Alert entity to model last modified uses most recent updated audit event`() {
+  fun `convert alert entity to model last modified uses most recent updated audit event`() {
     val lastModifiedAt = LocalDateTime.now().minusDays(1)
     val entity = alertEntity().apply {
       auditEvent(
@@ -163,7 +163,7 @@ class AlertTranslationTest {
   }
 
   @Test
-  fun `convert Alert entity to model converts alert comment`() {
+  fun `convert alert entity to model converts alert comment`() {
     var comment: CommentEntity
     val entity = alertEntity().apply {
       comment = addComment("Comment", LocalDateTime.now().minusDays(3), "COMMENT_BY", "COMMENT_BY_DISPLAY_NAME")
@@ -175,13 +175,13 @@ class AlertTranslationTest {
   }
 
   @Test
-  fun `convert Alert entity to model orders alert comment`() {
+  fun `convert alert entity to model orders alert comment`() {
     var comment1: CommentEntity
     var comment2: CommentEntity
     var comment3: CommentEntity
     val entity = alertEntity().apply {
-      comment2 = addComment("Comment 2", LocalDateTime.now().minusDays(2), "COMMENT_BY_1", "COMMENT_BY_DISPLAY_NAME_1")
-      comment3 = addComment("Comment 3", LocalDateTime.now().minusDays(1), "COMMENT_BY_1", "COMMENT_BY_DISPLAY_NAME_1")
+      comment2 = addComment("Comment 2", LocalDateTime.now().minusDays(2), "COMMENT_BY_2", "COMMENT_BY_DISPLAY_NAME_2")
+      comment3 = addComment("Comment 3", LocalDateTime.now().minusDays(1), "COMMENT_BY_3", "COMMENT_BY_DISPLAY_NAME_3")
       comment1 = addComment("Comment 1", LocalDateTime.now().minusDays(3), "COMMENT_BY_1", "COMMENT_BY_DISPLAY_NAME_1")
     }
 

@@ -35,15 +35,15 @@ data class Alert(
 
   val prisonNumber: String,
 
-  val description: String?,
+  var description: String?,
 
-  val authorisedBy: String?,
+  var authorisedBy: String?,
 
-  val activeFrom: LocalDate,
+  var activeFrom: LocalDate,
 
-  val activeTo: LocalDate?,
+  var activeTo: LocalDate?,
 ) {
-  fun isActive() = activeFrom.isBefore(LocalDate.now()) && activeTo?.isBefore(LocalDate.now()) != true
+  fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
 
   @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
   @Fetch(FetchMode.SUBSELECT)
@@ -100,6 +100,8 @@ data class Alert(
   fun lastModifiedAuditEvent() = auditEvents().firstOrNull { it.action == AuditEventAction.UPDATED }
 
   private var deletedAt: LocalDateTime? = null
+
+  fun deletedAt() = deletedAt
 
   fun delete(
     deletedAt: LocalDateTime = LocalDateTime.now(),
