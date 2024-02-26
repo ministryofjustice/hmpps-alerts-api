@@ -49,7 +49,7 @@ data class Alert(
   @Fetch(FetchMode.SUBSELECT)
   private val comments: MutableList<Comment> = mutableListOf()
 
-  fun comments() = comments.toList()
+  fun comments() = comments.toList().sortedByDescending { it.createdAt }
 
   fun addComment(
     comment: String,
@@ -74,7 +74,7 @@ data class Alert(
   @OrderBy("actioned_at DESC")
   private val auditEvents: MutableList<AuditEvent> = mutableListOf()
 
-  fun auditEvents() = auditEvents.toList()
+  fun auditEvents() = auditEvents.toList().sortedByDescending { it.actionedAt }
 
   fun auditEvent(
     action: AuditEventAction,
@@ -95,9 +95,9 @@ data class Alert(
     return auditEvent
   }
 
-  fun createdAuditEvent() = auditEvents.first { it.action == AuditEventAction.CREATED }
+  fun createdAuditEvent() = auditEvents().single { it.action == AuditEventAction.CREATED }
 
-  fun lastModifiedAuditEvent() = auditEvents.firstOrNull { it.action == AuditEventAction.UPDATED }
+  fun lastModifiedAuditEvent() = auditEvents().firstOrNull { it.action == AuditEventAction.UPDATED }
 
   private var deletedAt: LocalDateTime? = null
 
