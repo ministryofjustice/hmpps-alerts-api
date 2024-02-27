@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.NomisAlertStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.NomisCaseloadType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.UpsertStatus
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.testObjectMapper
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -20,7 +21,7 @@ class NomisAlertTranslationTest {
     alertDate = LocalDate.of(2023, 11, 27),
     offenderBookId = 3,
     rootOffenderId = 2,
-    offenderNo = "A1234AA",
+    offenderNo = PRISON_NUMBER,
     alertSeq = 1,
     alertType = "A",
     alertCode = "ABC",

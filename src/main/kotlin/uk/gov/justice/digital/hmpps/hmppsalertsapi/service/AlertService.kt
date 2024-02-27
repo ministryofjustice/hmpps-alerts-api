@@ -20,14 +20,16 @@ class AlertService(
 ) {
   fun createAlert(request: CreateAlert, context: AlertRequestContext): AlertModel {
     val prisoner = prisonerSearchClient.getPrisoner(request.prisonNumber)
-    require(prisoner != null) { "Prisoner not found for prison number: ${request.prisonNumber}" }
+    require(prisoner != null) { "Prison number '${request.prisonNumber}' not found" }
 
     val alertCode = alertCodeRepository.findByCode(request.alertCode)
-    require(alertCode != null) { "Alert code not found: ${request.alertCode}" }
-    require(alertCode.isActive()) { "Alert code is not active: ${request.alertCode}" }
-    return alertRepository.save(
+    require(alertCode != null) { "Alert code '${request.alertCode}' not found" }
+    require(alertCode.isActive()) { "Alert code '${request.alertCode}' is inactive" }
+
+    return alertRepository.saveAndFlush(
       request.toAlertEntity(
         alertCode = alertCode,
+        createdAt = context.requestAt,
         createdBy = context.username,
         createdByDisplayName = context.userDisplayName,
       ),

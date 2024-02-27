@@ -12,7 +12,6 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
-import java.util.*
 
 @Configuration
 class AlertRequestContextConfiguration(private val alertRequestContextInterceptor: AlertRequestContextInterceptor) : WebMvcConfigurer {
@@ -52,19 +51,14 @@ class AlertRequestContextInterceptor(
     authentication().let {
       it.tokenAttributes["user_name"] as String?
         ?: it.tokenAttributes["username"] as String?
-    }?.trim()?.takeUnless(String::isBlank)
+    }
 
   private fun HttpServletRequest.getUsername(): String =
-    getUsernameFromClaim()
-      ?: getHeader(USERNAME)?.trim()?.takeUnless(String::isBlank)?.also { if (it.length > 33) throw ValidationException("Created by must be <= 32 characters") }
+    (getUsernameFromClaim() ?: getHeader(USERNAME))
+      ?.trim()?.takeUnless(String::isBlank)?.also { if (it.length > 32) throw ValidationException("Created by must be <= 32 characters") }
       ?: throw ValidationException("Could not find non empty username from user_name or username token claims or Username header")
 
   private fun HttpServletRequest.getUserDetails() =
-    getUsername().let { username ->
-      try {
-        userService.getUserDetails(username)
-      } catch (e: Exception) {
-        throw DownstreamServiceException("Get user details request failed", e)
-      } ?: throw ValidationException("User details for supplied username not found")
-    }
+    getUsername().let { userService.getUserDetails(it) }
+      ?: throw ValidationException("User details for supplied username not found")
 }

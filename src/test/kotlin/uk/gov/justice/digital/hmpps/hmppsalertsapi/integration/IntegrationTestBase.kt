@@ -42,7 +42,8 @@ abstract class IntegrationTestBase {
     user: String? = null,
     client: String = CLIENT_ID,
     roles: List<String> = listOf(),
-  ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisation(user, client, roles)
+    isUserToken: Boolean = true,
+  ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisation(user, client, roles, isUserToken = isUserToken)
 
   internal fun setAlertRequestContext(
     username: String? = TEST_USER,

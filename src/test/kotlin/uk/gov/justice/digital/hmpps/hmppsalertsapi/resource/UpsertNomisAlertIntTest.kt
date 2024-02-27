@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.NomisAlertStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.NomisCaseloadType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.UpsertStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.NomisAlertRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -179,7 +180,7 @@ class UpsertNomisAlertIntTest : IntegrationTestBase() {
       offenderBookId = offenderBookId,
       rootOffenderId = 2,
       alertSeq = alertSeq,
-      offenderNo = "A1234AA",
+      offenderNo = PRISON_NUMBER,
       alertType = "A",
       alertCode = "ABC",
       authorizePersonText = "A. Authorizer",

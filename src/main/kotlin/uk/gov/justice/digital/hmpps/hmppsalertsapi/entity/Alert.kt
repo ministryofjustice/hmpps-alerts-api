@@ -35,21 +35,21 @@ data class Alert(
 
   val prisonNumber: String,
 
-  val description: String?,
+  var description: String?,
 
-  val authorisedBy: String?,
+  var authorisedBy: String?,
 
-  val activeFrom: LocalDate,
+  var activeFrom: LocalDate,
 
-  val activeTo: LocalDate?,
+  var activeTo: LocalDate?,
 ) {
-  fun isActive() = activeFrom.isBefore(LocalDate.now()) && activeTo?.isBefore(LocalDate.now()) != true
+  fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
 
-  @OneToMany(mappedBy = "alert", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
   @Fetch(FetchMode.SUBSELECT)
   private val comments: MutableList<Comment> = mutableListOf()
 
-  fun comments() = comments.toList()
+  fun comments() = comments.toList().sortedByDescending { it.createdAt }
 
   fun addComment(
     comment: String,
@@ -69,12 +69,12 @@ data class Alert(
     return commentEntity
   }
 
-  @OneToMany(mappedBy = "alert", cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
   @Fetch(FetchMode.SUBSELECT)
   @OrderBy("actioned_at DESC")
   private val auditEvents: MutableList<AuditEvent> = mutableListOf()
 
-  fun auditEvents() = auditEvents.toList()
+  fun auditEvents() = auditEvents.toList().sortedByDescending { it.actionedAt }
 
   fun auditEvent(
     action: AuditEventAction,
@@ -95,11 +95,13 @@ data class Alert(
     return auditEvent
   }
 
-  fun createdAuditEvent() = auditEvents.first { it.action == AuditEventAction.CREATED }
+  fun createdAuditEvent() = auditEvents().single { it.action == AuditEventAction.CREATED }
 
-  fun lastModifiedAuditEvent() = auditEvents.firstOrNull { it.action == AuditEventAction.UPDATED }
+  fun lastModifiedAuditEvent() = auditEvents().firstOrNull { it.action == AuditEventAction.UPDATED }
 
   private var deletedAt: LocalDateTime? = null
+
+  fun deletedAt() = deletedAt
 
   fun delete(
     deletedAt: LocalDateTime = LocalDateTime.now(),
