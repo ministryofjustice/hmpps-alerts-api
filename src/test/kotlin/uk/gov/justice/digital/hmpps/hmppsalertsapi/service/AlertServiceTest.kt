@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.InjectMocks
 import org.mockito.Mock
@@ -14,6 +15,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertNotFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ExistingActiveAlertWithCodeException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertCodeSummary
@@ -26,6 +28,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_N
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
@@ -205,6 +208,15 @@ class AlertServiceTest {
     assertThat(result).isEqualTo(alertCaptor.firstValue.toAlertModel())
   }
 
+  @Test
+  fun `should throw if cannot find alert to update`() {
+    whenever(alertRepository.findByAlertUuid(any(UUID::class.java))).thenReturn(null)
+    val request = updateAlertRequest()
+    assertThrows<AlertNotFoundException> {
+      underTest.updateAlert(UUID.randomUUID(), request, requestContext)
+    }
+  }
+
   private fun createAlertRequest(
     prisonNumber: String = PRISON_NUMBER,
     alertCode: String = ALERT_CODE_VICTIM,
@@ -216,6 +228,15 @@ class AlertServiceTest {
       authorisedBy = "A. Authorizer",
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = null,
+    )
+
+  private fun updateAlertRequest() =
+    UpdateAlert(
+      description = "new description",
+      authorisedBy = "B Bauthorizer",
+      activeFrom = LocalDate.now().minusDays(2),
+      activeTo = LocalDate.now().plusDays(10),
+      appendComment = "Update alert",
     )
 
   private fun prisoner() =

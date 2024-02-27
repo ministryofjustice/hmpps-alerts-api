@@ -174,5 +174,6 @@ data class ErrorResponse(
 }
 
 class DownstreamServiceException(message: String, cause: Throwable) : Exception(message, cause)
+class AlertNotFoundException(message: String) : Exception(message)
 
 class ExistingActiveAlertWithCodeException(prisonNumber: String, alertCode: String) : Exception("Active alert with code '$alertCode' already exists for prison number '$prisonNumber'")
