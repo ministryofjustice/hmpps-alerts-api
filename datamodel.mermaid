@@ -1,27 +1,32 @@
 erDiagram
-    ALERTS one to zero or more COMMENTS : writes
-    ALERTS one to one or more AUDIT_EVENTS : captures
-    ALERTS zero or one to one VERIFICATIONS : verifies
-    NOMIS_ALERTS zero or one to one ALERTS : "converts via sync"
-ALERTS {
-    long id PK
+    alert one to zero or more comment : writes
+    alert one to one or more audit_event : captures
+    alert_type one to one or more alert_code : categorises
+    alert many to one alert_code : "categorised by"
+
+alert {
+    long alert_id PK
     uuid alert_uuid "This is the ID we expose."
-    varchar alert_type
-    varchar alert_code
-    varchar offender_id
+    varchar prison_number
+    long alert_code_id FK
+    text description
     varchar authorised_by
-    timestamptz valid_from
-    timestamptz valid_to
-    timestamptz removed_at "This is how we distinguish a soft delete."
+    date active_from
+    date active_to
+    timestamp deleted_at "This is how we distinguish a soft delete."
 }
-VERIFICATIONS {
-    long id PK
+
+comment {
+    long comment_id PK
+    uuid comment_uuid
     long alert_id FK
-    text action
-    varchar verified_by
-    timestamptz verified_at
+    text comment
+    timestamp created_at
+    varchar created_by
+    varchar created_by_display_name
 }
-AUDIT_EVENTS {
+
+audit_event {
     long id PK
     long alert_id FK
     varchar event_description
@@ -29,23 +34,30 @@ AUDIT_EVENTS {
     varchar created_by
     varchar created_by_captured_name
 }
-COMMENTS {
-    long id PK
-    text comment
-    long alert_id FK
-    timestamptz created_at
+
+alert_type {
+    long alert_type_id PK
+    varchar code
+    varchar description
+    int list_sequence
+    timestamp created_at
     varchar created_by
+    timestamp modified_at
+    varchar modified_by
+    timestamp deactivated_at
+    varchar deactivated_by
 }
 
-NOMIS_ALERTS {
-    long nomis_alert_id PK
-    json nomis_alert_data
-    long alert_id FK
-    long offender_book_id
-    int alert_seq
-    timestamptz upserted_at
-    timestamptz removed_at
-
+alert_code {
+    long alert_code_id PK
+    long alert_type_id FK
+    varchar code
+    varchar description
+    int list_sequence
+    timestamp created_at
+    varchar created_by
+    timestamp modified_at
+    varchar modified_by
+    timestamp deactivated_at
+    varchar deactivated_by
 }
-
-
