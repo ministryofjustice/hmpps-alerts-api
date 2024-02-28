@@ -8,4 +8,6 @@ import java.util.UUID
 @Repository
 interface AlertRepository : JpaRepository<Alert, Long> {
   fun findByAlertUuid(alertUuid: UUID): Alert?
+
+  fun findByPrisonNumberAndAlertCodeCode(prisonNumber: String, alertCode: String): Collection<Alert>
 }

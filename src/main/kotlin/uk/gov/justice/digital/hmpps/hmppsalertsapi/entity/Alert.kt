@@ -45,6 +45,8 @@ data class Alert(
 ) {
   fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
 
+  fun willBecomeActive() = activeFrom > LocalDate.now()
+
   @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
   @Fetch(FetchMode.SUBSELECT)
   private val comments: MutableList<Comment> = mutableListOf()

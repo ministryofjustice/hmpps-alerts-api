@@ -53,17 +53,7 @@ class AlertServiceTest {
   )
 
   @Test
-  fun `Prisoner not found`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(null)
-    val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(createAlertRequest(), requestContext)
-    }
-    assertThat(error.message).isEqualTo("Prison number '${PRISON_NUMBER}' not found")
-  }
-
-  @Test
   fun `Alert code not found`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(null)
     val error = assertThrows<IllegalArgumentException> {
       underTest.createAlert(createAlertRequest(alertCode = "A"), requestContext)
@@ -73,7 +63,6 @@ class AlertServiceTest {
 
   @Test
   fun `Alert code not active`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(mockAlertCode.isActive()).thenReturn(false)
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(mockAlertCode)
     val error = assertThrows<IllegalArgumentException> {
@@ -83,9 +72,19 @@ class AlertServiceTest {
   }
 
   @Test
-  fun `uses alert code from request`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
+  fun `Prisoner not found`() {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(null)
+    val error = assertThrows<IllegalArgumentException> {
+      underTest.createAlert(createAlertRequest(), requestContext)
+    }
+    assertThat(error.message).isEqualTo("Prison number '${PRISON_NUMBER}' not found")
+  }
+
+  @Test
+  fun `uses alert code from request`() {
+    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     val request = createAlertRequest()
@@ -98,8 +97,8 @@ class AlertServiceTest {
 
   @Test
   fun `returns alert code from request`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
     val request = createAlertRequest()
     val result = underTest.createAlert(request, requestContext)
@@ -111,8 +110,8 @@ class AlertServiceTest {
 
   @Test
   fun `populates audit event from request context`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     val request = createAlertRequest()
@@ -128,8 +127,8 @@ class AlertServiceTest {
 
   @Test
   fun `returns properties from request context`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
     val request = createAlertRequest()
     val result = underTest.createAlert(request, requestContext)
@@ -142,8 +141,8 @@ class AlertServiceTest {
 
   @Test
   fun `converts request using toAlertEntity`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     val request = createAlertRequest()
@@ -160,8 +159,8 @@ class AlertServiceTest {
 
   @Test
   fun `converts alert entity to model`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     val request = createAlertRequest()

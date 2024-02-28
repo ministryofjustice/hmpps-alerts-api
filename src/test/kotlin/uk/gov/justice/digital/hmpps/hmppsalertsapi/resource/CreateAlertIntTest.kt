@@ -376,7 +376,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(409)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
+      assertThat(userMessage).isEqualTo("Duplicate failure: Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
       assertThat(developerMessage).isEqualTo("Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
       assertThat(moreInfo).isNull()
     }
@@ -414,7 +414,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(409)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
+      assertThat(userMessage).isEqualTo("Duplicate failure: Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
       assertThat(developerMessage).isEqualTo("Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
       assertThat(moreInfo).isNull()
     }
