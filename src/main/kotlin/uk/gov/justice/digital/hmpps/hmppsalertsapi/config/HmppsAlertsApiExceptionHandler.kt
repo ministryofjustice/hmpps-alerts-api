@@ -96,6 +96,17 @@ class HmppsAlertsApiExceptionHandler {
       ),
     ).also { log.info("Validation exception: {}", e.message) }
 
+  @ExceptionHandler(AlertNotFoundException::class)
+  fun handleAlertNotFoundException(e: AlertNotFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(NOT_FOUND)
+    .body(
+      ErrorResponse(
+        status = NOT_FOUND,
+        userMessage = "Alert not found: ${e.message}",
+        developerMessage = e.message,
+      ),
+    ).also { log.info("Alert not found exception: {}", e.message) }
+
   @ExceptionHandler(NoResourceFoundException::class)
   fun handleNoResourceFoundException(e: NoResourceFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(NOT_FOUND)

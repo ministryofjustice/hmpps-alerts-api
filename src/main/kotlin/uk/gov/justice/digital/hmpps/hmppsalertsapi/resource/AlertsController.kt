@@ -166,7 +166,8 @@ class AlertsController(
       required = true,
     )
     request: UpdateAlert,
-  ): Alert = throw NotImplementedError()
+    httpRequest: HttpServletRequest,
+  ): Alert = alertService.updateAlert(alertUuid, request, httpRequest.alertRequestContext())
 
   @DeleteMapping("/{alertUuid}")
   @Operation(

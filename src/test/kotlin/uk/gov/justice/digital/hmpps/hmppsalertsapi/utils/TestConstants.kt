@@ -21,7 +21,7 @@ const val ALERT_CODE_SECURE_ALERT_OCG_NOMINAL = "DOCGM"
 const val ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD = "URS"
 
 fun userDetailsDto(username: String = TEST_USER, name: String = TEST_USER_NAME, uuid: UUID? = UUID.randomUUID()) =
-  UserDetailsDto(username, true, name, "nomis", "123", null)
+  UserDetailsDto(username, true, name, "nomis", "123", uuid)
 
 fun alertTypeVulnerability() =
   AlertType(

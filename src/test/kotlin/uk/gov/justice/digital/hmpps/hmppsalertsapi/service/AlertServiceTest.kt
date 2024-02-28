@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.InjectMocks
 import org.mockito.Mock
@@ -210,11 +209,58 @@ class AlertServiceTest {
 
   @Test
   fun `should throw if cannot find alert to update`() {
-    whenever(alertRepository.findByAlertUuid(any(UUID::class.java))).thenReturn(null)
-    val request = updateAlertRequest()
-    assertThrows<AlertNotFoundException> {
-      underTest.updateAlert(UUID.randomUUID(), request, requestContext)
+    whenever(alertRepository.findByAlertUuid(any())).thenReturn(null)
+    val request = updateAlertRequestNoChange()
+    val alertUuid = UUID.randomUUID()
+    val exception = assertThrows<AlertNotFoundException> {
+      underTest.updateAlert(alertUuid, request, requestContext)
     }
+    assertThat(exception.message).isEqualTo("Could not find alert with ID $alertUuid")
+  }
+
+  @Test
+  fun `no audit event if nothing has changed`() {
+    val uuid = UUID.randomUUID()
+    val updateRequest = updateAlertRequestNoChange(comment = "")
+    val alert = alert(updateAlert = updateRequest, uuid = uuid)
+    whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
+    val alertCaptor = argumentCaptor<Alert>()
+    whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
+
+    underTest.updateAlert(uuid, updateRequest, requestContext)
+    val savedAlert = alertCaptor.firstValue
+    assertThat(savedAlert.auditEvents()).hasSize(1)
+    assertThat(savedAlert.auditEvents().first().action).isEqualTo(AuditEventAction.CREATED)
+  }
+
+  @Test
+  fun `change written successfully`() {
+    val uuid = UUID.randomUUID()
+    val updateRequest = updateAlertRequestChange()
+    val alert = alert(uuid = uuid)
+    val unchangedAlert = alert(uuid = uuid)
+    whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
+    val alertCaptor = argumentCaptor<Alert>()
+    whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
+    underTest.updateAlert(uuid, updateRequest, requestContext)
+    val savedAlert = alertCaptor.firstValue
+    assertThat(savedAlert.activeTo).isEqualTo(updateRequest.activeTo)
+    assertThat(savedAlert.activeFrom).isEqualTo(updateRequest.activeFrom)
+    assertThat(savedAlert.activeTo).isEqualTo(updateRequest.activeTo)
+    assertThat(savedAlert.description).isEqualTo(updateRequest.description)
+    assertThat(savedAlert.authorisedBy).isEqualTo(updateRequest.authorisedBy)
+    assertThat(savedAlert.comments()).hasSize(1)
+    assertThat(savedAlert.comments()[0].comment).isEqualTo("Another update alert")
+    assertThat(savedAlert.auditEvents()).hasSize(2)
+    assertThat(savedAlert.auditEvents()[1].action).isEqualTo(AuditEventAction.UPDATED)
+    assertThat(savedAlert.auditEvents()[1].description).isEqualTo(
+      """Updated alert description from ${unchangedAlert.description} to ${savedAlert.description}
+Updated authorised by from ${unchangedAlert.authorisedBy} to ${savedAlert.authorisedBy}
+Updated active from from ${unchangedAlert.activeFrom} to ${savedAlert.activeFrom}
+Updated active to from ${unchangedAlert.activeTo} to ${savedAlert.activeTo}
+A new comment was added
+""",
+    )
   }
 
   private fun createAlertRequest(
@@ -230,14 +276,37 @@ class AlertServiceTest {
       activeTo = null,
     )
 
-  private fun updateAlertRequest() =
+  private fun updateAlertRequestNoChange(comment: String = "Update alert") =
     UpdateAlert(
       description = "new description",
       authorisedBy = "B Bauthorizer",
       activeFrom = LocalDate.now().minusDays(2),
       activeTo = LocalDate.now().plusDays(10),
-      appendComment = "Update alert",
+      appendComment = comment,
     )
+
+  private fun updateAlertRequestChange(comment: String = "Another update alert") =
+    UpdateAlert(
+      description = "another new description",
+      authorisedBy = "C Cauthorizer",
+      activeFrom = LocalDate.now().minusMonths(2),
+      activeTo = LocalDate.now().plusMonths(10),
+      appendComment = comment,
+    )
+
+  private fun alert(uuid: UUID = UUID.randomUUID(), updateAlert: UpdateAlert = updateAlertRequestNoChange()): Alert {
+    return Alert(
+      alertId = 1,
+      alertUuid = uuid,
+      alertCode = alertCodeVictim(),
+      prisonNumber = PRISON_NUMBER,
+      description = "new description",
+      authorisedBy = "B Bauthorizer",
+      activeTo = updateAlert.activeTo,
+      activeFrom = updateAlert.activeFrom!!,
+
+    ).apply { auditEvent(AuditEventAction.CREATED, "Created", LocalDateTime.now(), "Test", "Test") }
+  }
 
   private fun prisoner() =
     PrisonerDto(
