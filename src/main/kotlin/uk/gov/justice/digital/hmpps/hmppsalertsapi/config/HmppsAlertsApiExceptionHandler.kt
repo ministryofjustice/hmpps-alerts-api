@@ -118,6 +118,17 @@ class HmppsAlertsApiExceptionHandler {
       ),
     ).also { log.info("Method not allowed exception: {}", e.message) }
 
+  @ExceptionHandler(ExistingActiveAlertWithCodeException::class)
+  fun handleExistingActiveAlertWithCodeException(e: ExistingActiveAlertWithCodeException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(HttpStatus.CONFLICT)
+    .body(
+      ErrorResponse(
+        status = HttpStatus.CONFLICT.value(),
+        userMessage = "Duplicate failure: ${e.message}",
+        developerMessage = e.message,
+      ),
+    ).also { log.info("Existing active alert with code exception: {}", e.message) }
+
   @ExceptionHandler(DownstreamServiceException::class)
   fun handleException(e: DownstreamServiceException): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(BAD_GATEWAY)
@@ -163,3 +174,5 @@ data class ErrorResponse(
 }
 
 class DownstreamServiceException(message: String, cause: Throwable) : Exception(message, cause)
+
+class ExistingActiveAlertWithCodeException(prisonNumber: String, alertCode: String) : Exception("Active alert with code '$alertCode' already exists for prison number '$prisonNumber'")

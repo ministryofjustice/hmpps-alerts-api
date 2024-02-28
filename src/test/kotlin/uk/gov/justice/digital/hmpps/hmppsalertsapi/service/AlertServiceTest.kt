@@ -10,10 +10,12 @@ import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ExistingActiveAlertWithCodeException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertCodeSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertModel
@@ -29,6 +31,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.UUID
 
 @ExtendWith(MockitoExtension::class)
 class AlertServiceTest {
@@ -53,17 +57,7 @@ class AlertServiceTest {
   )
 
   @Test
-  fun `Prisoner not found`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(null)
-    val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(createAlertRequest(), requestContext)
-    }
-    assertThat(error.message).isEqualTo("Prison number '${PRISON_NUMBER}' not found")
-  }
-
-  @Test
   fun `Alert code not found`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(null)
     val error = assertThrows<IllegalArgumentException> {
       underTest.createAlert(createAlertRequest(alertCode = "A"), requestContext)
@@ -73,7 +67,6 @@ class AlertServiceTest {
 
   @Test
   fun `Alert code not active`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(mockAlertCode.isActive()).thenReturn(false)
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(mockAlertCode)
     val error = assertThrows<IllegalArgumentException> {
@@ -83,9 +76,52 @@ class AlertServiceTest {
   }
 
   @Test
-  fun `uses alert code from request`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
+  fun `Existing active alert with code`() {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
+      .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now(), activeTo = null)))
+    val error = assertThrows<ExistingActiveAlertWithCodeException> {
+      underTest.createAlert(createAlertRequest(), requestContext)
+    }
+    assertThat(error.message).isEqualTo("Active alert with code '$ALERT_CODE_VICTIM' already exists for prison number '$PRISON_NUMBER'")
+  }
+
+  @Test
+  fun `Existing alert with code that will become active`() {
+    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
+      .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().plusDays(1), activeTo = null)))
+    val error = assertThrows<ExistingActiveAlertWithCodeException> {
+      underTest.createAlert(createAlertRequest(), requestContext)
+    }
+    assertThat(error.message).isEqualTo("Active alert with code '$ALERT_CODE_VICTIM' already exists for prison number '$PRISON_NUMBER'")
+  }
+
+  @Test
+  fun `Existing inactive alert with code`() {
+    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
+      .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().minusDays(1), activeTo = LocalDate.now())))
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
+    whenever(alertRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
+    underTest.createAlert(createAlertRequest(), requestContext)
+    verify(alertRepository).saveAndFlush(any<Alert>())
+  }
+
+  @Test
+  fun `Prisoner not found`() {
+    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(null)
+    val error = assertThrows<IllegalArgumentException> {
+      underTest.createAlert(createAlertRequest(), requestContext)
+    }
+    assertThat(error.message).isEqualTo("Prison number '${PRISON_NUMBER}' not found")
+  }
+
+  @Test
+  fun `uses alert code from request`() {
+    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     val request = createAlertRequest()
@@ -98,8 +134,8 @@ class AlertServiceTest {
 
   @Test
   fun `returns alert code from request`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
     val request = createAlertRequest()
     val result = underTest.createAlert(request, requestContext)
@@ -111,8 +147,8 @@ class AlertServiceTest {
 
   @Test
   fun `populates audit event from request context`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     val request = createAlertRequest()
@@ -128,8 +164,8 @@ class AlertServiceTest {
 
   @Test
   fun `returns properties from request context`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
     val request = createAlertRequest()
     val result = underTest.createAlert(request, requestContext)
@@ -142,8 +178,8 @@ class AlertServiceTest {
 
   @Test
   fun `converts request using toAlertEntity`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     val request = createAlertRequest()
@@ -160,8 +196,8 @@ class AlertServiceTest {
 
   @Test
   fun `converts alert entity to model`() {
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     val request = createAlertRequest()
@@ -191,4 +227,26 @@ class AlertServiceTest {
       "lastName",
       LocalDate.of(1988, 3, 4),
     )
+
+  private fun alertEntity(
+    activeFrom: LocalDate = LocalDate.now(),
+    activeTo: LocalDate? = null,
+  ) =
+    Alert(
+      alertUuid = UUID.randomUUID(),
+      alertCode = alertCodeVictim(),
+      prisonNumber = PRISON_NUMBER,
+      description = "Alert description",
+      authorisedBy = "A. Authorizer",
+      activeFrom = activeFrom,
+      activeTo = activeTo,
+    ).apply {
+      auditEvent(
+        action = AuditEventAction.CREATED,
+        description = "Alert created",
+        actionedAt = LocalDateTime.now(),
+        actionedBy = "CREATED_BY",
+        actionedByDisplayName = "CREATED_BY_DISPLAY_NAME",
+      )
+    }
 }

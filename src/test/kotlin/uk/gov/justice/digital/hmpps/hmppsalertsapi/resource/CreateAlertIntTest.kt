@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
@@ -21,7 +22,9 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THR
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_HIDDEN_DISABILITY
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_SOCIAL_CARE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
 import java.time.LocalDate
@@ -128,33 +131,26 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `400 bad request - prisoner not found`() {
     val request = createAlertRequest(prisonNumber = PRISON_NUMBER_NOT_FOUND)
-    val response = webTestClient.post()
-      .uri("/alerts")
-      .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
-      .exchange()
-      .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+
+    val response = webTestClient.createAlertResponseSpec(request)
+      .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody
 
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Prison number '${PRISON_NUMBER_NOT_FOUND}' not found")
-      assertThat(developerMessage).isEqualTo("Prison number '${PRISON_NUMBER_NOT_FOUND}' not found")
+      assertThat(userMessage).isEqualTo("Validation failure: Prison number '${request.prisonNumber}' not found")
+      assertThat(developerMessage).isEqualTo("Prison number '${request.prisonNumber}' not found")
       assertThat(moreInfo).isNull()
     }
   }
 
   @Test
   fun `400 bad request - alert code not found`() {
-    val response = webTestClient.post()
-      .uri("/alerts")
-      .bodyValue(createAlertRequest(alertCode = "NOT_FOUND"))
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
-      .exchange()
+    val request = createAlertRequest(alertCode = "NOT_FOUND")
+
+    val response = webTestClient.createAlertResponseSpec(request)
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody
@@ -162,20 +158,17 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Alert code 'NOT_FOUND' not found")
-      assertThat(developerMessage).isEqualTo("Alert code 'NOT_FOUND' not found")
+      assertThat(userMessage).isEqualTo("Validation failure: Alert code '${request.alertCode}' not found")
+      assertThat(developerMessage).isEqualTo("Alert code '${request.alertCode}' not found")
       assertThat(moreInfo).isNull()
     }
   }
 
   @Test
   fun `400 bad request - alert code is inactive`() {
-    val response = webTestClient.post()
-      .uri("/alerts")
-      .bodyValue(createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD))
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
-      .exchange()
+    val request = createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
+
+    val response = webTestClient.createAlertResponseSpec(request)
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody
@@ -183,8 +176,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Alert code '${ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD}' is inactive")
-      assertThat(developerMessage).isEqualTo("Alert code '${ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD}' is inactive")
+      assertThat(userMessage).isEqualTo("Validation failure: Alert code '${request.alertCode}' is inactive")
+      assertThat(developerMessage).isEqualTo("Alert code '${request.alertCode}' is inactive")
       assertThat(moreInfo).isNull()
     }
   }
@@ -370,6 +363,73 @@ class CreateAlertIntTest : IntegrationTestBase() {
     }
   }
 
+  @Test
+  @Sql("classpath:test_data/duplicate-checking-alerts.sql")
+  fun `409 conflict - active alert with code already exists for prison number - alert active from today with no active to date`() {
+    val request = createAlertRequest(alertCode = ALERT_CODE_HIDDEN_DISABILITY)
+
+    val response = webTestClient.createAlertResponseSpec(request)
+      .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(409)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Duplicate failure: Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
+      assertThat(developerMessage).isEqualTo("Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  @Sql("classpath:test_data/duplicate-checking-alerts.sql")
+  fun `400 bad request - active alert with code already exists for prison number - alert active from today with no active to date - alert code inactive`() {
+    val request = createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
+
+    val response = webTestClient.createAlertResponseSpec(request)
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: Alert code '${request.alertCode}' is inactive")
+      assertThat(developerMessage).isEqualTo("Alert code '${request.alertCode}' is inactive")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  @Sql("classpath:test_data/duplicate-checking-alerts.sql")
+  fun `409 conflict - active alert with code already exists for prison number - alert active from tomorrow with no active to date`() {
+    val request = createAlertRequest(alertCode = ALERT_CODE_SOCIAL_CARE)
+
+    val response = webTestClient.createAlertResponseSpec(request)
+      .expectStatus().isEqualTo(HttpStatus.CONFLICT)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(409)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Duplicate failure: Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
+      assertThat(developerMessage).isEqualTo("Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  @Sql("classpath:test_data/duplicate-checking-alerts.sql")
+  fun `201 created - alert with code already exists for inactive alert`() {
+    val request = createAlertRequest(alertCode = ALERT_CODE_VICTIM)
+
+    val alert = webTestClient.createAlert(request)
+
+    assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
+  }
+
   private fun createAlertRequest(
     prisonNumber: String = PRISON_NUMBER,
     alertCode: String = ALERT_CODE_VICTIM,
@@ -383,7 +443,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       activeTo = null,
     )
 
-  private fun WebTestClient.createAlert(
+  private fun WebTestClient.createAlertResponseSpec(
     request: CreateAlert,
   ) =
     post()
@@ -392,8 +452,13 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext())
       .exchange()
-      .expectStatus().isCreated
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
+
+  private fun WebTestClient.createAlert(
+    request: CreateAlert,
+  ) =
+    createAlertResponseSpec(request)
+      .expectStatus().isCreated
       .expectBody(AlertModel::class.java)
       .returnResult().responseBody!!
 }

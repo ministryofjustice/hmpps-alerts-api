@@ -41,6 +41,12 @@ class AlertTest {
   }
 
   @Test
+  fun `will become active when active from is tomorrow`() {
+    val alert = alertEntity().apply { activeFrom = LocalDate.now().plusDays(1) }
+    assertThat(alert.willBecomeActive()).isTrue
+  }
+
+  @Test
   fun `add comment`() {
     val createdAt = LocalDateTime.now().minusDays(3)
     var comment: Comment
