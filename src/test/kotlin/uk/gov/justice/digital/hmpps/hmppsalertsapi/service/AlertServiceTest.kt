@@ -10,10 +10,12 @@ import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ExistingActiveAlertWithCodeException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertCodeSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertModel
@@ -29,6 +31,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.UUID
 
 @ExtendWith(MockitoExtension::class)
 class AlertServiceTest {
@@ -69,6 +73,39 @@ class AlertServiceTest {
       underTest.createAlert(createAlertRequest(alertCode = "A"), requestContext)
     }
     assertThat(error.message).isEqualTo("Alert code 'A' is inactive")
+  }
+
+  @Test
+  fun `Existing active alert with code`() {
+    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
+      .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now(), activeTo = null)))
+    val error = assertThrows<ExistingActiveAlertWithCodeException> {
+      underTest.createAlert(createAlertRequest(), requestContext)
+    }
+    assertThat(error.message).isEqualTo("Active alert with code '$ALERT_CODE_VICTIM' already exists for prison number '$PRISON_NUMBER'")
+  }
+
+  @Test
+  fun `Existing alert with code that will become active`() {
+    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
+      .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().plusDays(1), activeTo = null)))
+    val error = assertThrows<ExistingActiveAlertWithCodeException> {
+      underTest.createAlert(createAlertRequest(), requestContext)
+    }
+    assertThat(error.message).isEqualTo("Active alert with code '$ALERT_CODE_VICTIM' already exists for prison number '$PRISON_NUMBER'")
+  }
+
+  @Test
+  fun `Existing inactive alert with code`() {
+    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
+      .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().minusDays(1), activeTo = LocalDate.now())))
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
+    whenever(alertRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
+    underTest.createAlert(createAlertRequest(), requestContext)
+    verify(alertRepository).saveAndFlush(any<Alert>())
   }
 
   @Test
@@ -190,4 +227,26 @@ class AlertServiceTest {
       "lastName",
       LocalDate.of(1988, 3, 4),
     )
+
+  private fun alertEntity(
+    activeFrom: LocalDate = LocalDate.now(),
+    activeTo: LocalDate? = null,
+  ) =
+    Alert(
+      alertUuid = UUID.randomUUID(),
+      alertCode = alertCodeVictim(),
+      prisonNumber = PRISON_NUMBER,
+      description = "Alert description",
+      authorisedBy = "A. Authorizer",
+      activeFrom = activeFrom,
+      activeTo = activeTo,
+    ).apply {
+      auditEvent(
+        action = AuditEventAction.CREATED,
+        description = "Alert created",
+        actionedAt = LocalDateTime.now(),
+        actionedBy = "CREATED_BY",
+        actionedByDisplayName = "CREATED_BY_DISPLAY_NAME",
+      )
+    }
 }
