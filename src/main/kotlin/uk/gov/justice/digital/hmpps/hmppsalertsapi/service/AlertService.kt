@@ -82,6 +82,9 @@ class AlertService(
     return alertRepository.saveAndFlush(alert).toAlertModel()
   }
 
+  fun getAlert(alertUuid: UUID): AlertModel =
+    alertRepository.findByAlertUuid(alertUuid)?.toAlertModel() ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
+
   private fun buildAuditDescription(alert: Alert, request: UpdateAlert): String {
     val sb = StringBuilder()
     if (alert.description != request.description) {

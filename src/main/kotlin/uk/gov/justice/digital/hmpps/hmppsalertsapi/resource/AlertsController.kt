@@ -119,8 +119,7 @@ class AlertsController(
       required = true,
     )
     alertUuid: UUID,
-    request: HttpServletRequest,
-  ): Alert = throw NotImplementedError()
+  ): Alert = alertService.getAlert(alertUuid)
 
   @ResponseStatus(HttpStatus.OK)
   @PutMapping("/{alertUuid}")
