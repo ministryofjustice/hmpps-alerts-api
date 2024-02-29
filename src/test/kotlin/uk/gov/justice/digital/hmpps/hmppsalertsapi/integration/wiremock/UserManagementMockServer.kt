@@ -19,30 +19,19 @@ internal const val TEST_USER_NAME = "Test User"
 internal const val USER_NOT_FOUND = "USER_NOT_FOUND"
 internal const val USER_THROW_EXCEPTION = "USER_THROW_EXCEPTION"
 
-class ManageUsersExtension : BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
-  companion object {
-    @JvmField
-    val manageUsersServer = ManageUsersServer()
-  }
-
-  override fun beforeAll(context: ExtensionContext) {
-    manageUsersServer.start()
-    manageUsersServer.stubGetUserDetails()
-    manageUsersServer.stubGetUserDetailsException()
-  }
-
-  override fun beforeEach(context: ExtensionContext) {
-    manageUsersServer.resetRequests()
-    manageUsersServer.stubGetUserDetails()
-  }
-
-  override fun afterAll(context: ExtensionContext) {
-    manageUsersServer.stop()
-  }
-}
-
 class ManageUsersServer : WireMockServer(8111) {
   private val mapper: ObjectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
+
+  fun stubHealthPing(status: Int) {
+    stubFor(
+      get("/health/ping").willReturn(
+        aResponse()
+          .withHeader("Content-Type", "application/json")
+          .withBody(if (status == 200) """{"status":"UP"}""" else """{"status":"DOWN"}""")
+          .withStatus(status),
+      ),
+    )
+  }
 
   fun stubGetUserDetails(username: String = TEST_USER, name: String = TEST_USER_NAME): StubMapping =
     stubFor(
@@ -68,4 +57,26 @@ class ManageUsersServer : WireMockServer(8111) {
 
   fun stubGetUserDetailsException(username: String = USER_THROW_EXCEPTION): StubMapping =
     stubFor(get("/users/$username").willReturn(aResponse().withStatus(500)))
+}
+
+class ManageUsersExtension : BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
+  companion object {
+    @JvmField
+    val manageUsers = ManageUsersServer()
+  }
+
+  override fun beforeAll(context: ExtensionContext) {
+    manageUsers.start()
+    manageUsers.stubGetUserDetails()
+    manageUsers.stubGetUserDetailsException()
+  }
+
+  override fun beforeEach(context: ExtensionContext) {
+    manageUsers.resetRequests()
+    manageUsers.stubGetUserDetails()
+  }
+
+  override fun afterAll(context: ExtensionContext) {
+    manageUsers.stop()
+  }
 }
