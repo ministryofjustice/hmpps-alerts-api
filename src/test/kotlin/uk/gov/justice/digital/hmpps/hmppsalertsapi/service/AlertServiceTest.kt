@@ -234,6 +234,22 @@ class AlertServiceTest {
   }
 
   @Test
+  fun `null activeFrom will not update value`() {
+    val uuid = UUID.randomUUID()
+    val updateRequest = updateAlertRequestNoChange(comment = "", activeFrom = null)
+    val alert = alert(uuid = uuid)
+    whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
+    val alertCaptor = argumentCaptor<Alert>()
+    whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
+
+    underTest.updateAlert(uuid, updateRequest, requestContext)
+    val savedAlert = alertCaptor.firstValue
+    with(savedAlert) {
+      assertThat(activeFrom).isEqualTo(alert.activeFrom)
+    }
+  }
+
+  @Test
   fun `change written successfully`() {
     val uuid = UUID.randomUUID()
     val updateRequest = updateAlertRequestChange()
@@ -276,11 +292,11 @@ A new comment was added
       activeTo = null,
     )
 
-  private fun updateAlertRequestNoChange(comment: String = "Update alert") =
+  private fun updateAlertRequestNoChange(comment: String = "Update alert", activeFrom: LocalDate? = LocalDate.now().minusDays(2)) =
     UpdateAlert(
       description = "new description",
       authorisedBy = "B Bauthorizer",
-      activeFrom = LocalDate.now().minusDays(2),
+      activeFrom = activeFrom,
       activeTo = LocalDate.now().plusDays(10),
       appendComment = comment,
     )

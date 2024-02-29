@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -78,13 +79,13 @@ class UpdateAlertIntTest : IntegrationTestBase() {
       .returnResult().responseBody
 
     with(response!!) {
-      Assertions.assertThat(status).isEqualTo(400)
-      Assertions.assertThat(errorCode).isNull()
-      Assertions.assertThat(userMessage)
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage)
         .isEqualTo("Validation failure: Could not find non empty username from user_name or username token claims or Username header")
-      Assertions.assertThat(developerMessage)
+      assertThat(developerMessage)
         .isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-      Assertions.assertThat(moreInfo).isNull()
+      assertThat(moreInfo).isNull()
     }
   }
 
@@ -101,11 +102,11 @@ class UpdateAlertIntTest : IntegrationTestBase() {
       .returnResult().responseBody
 
     with(response!!) {
-      Assertions.assertThat(status).isEqualTo(400)
-      Assertions.assertThat(errorCode).isNull()
-      Assertions.assertThat(userMessage).isEqualTo("Validation failure: User details for supplied username not found")
-      Assertions.assertThat(developerMessage).isEqualTo("User details for supplied username not found")
-      Assertions.assertThat(moreInfo).isNull()
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: User details for supplied username not found")
+      assertThat(developerMessage).isEqualTo("User details for supplied username not found")
+      assertThat(moreInfo).isNull()
     }
   }
 
@@ -121,12 +122,12 @@ class UpdateAlertIntTest : IntegrationTestBase() {
       .returnResult().responseBody
 
     with(response!!) {
-      Assertions.assertThat(status).isEqualTo(400)
-      Assertions.assertThat(errorCode).isNull()
-      Assertions.assertThat(userMessage).isEqualTo("Validation failure: Couldn't read request body")
-      Assertions.assertThat(developerMessage)
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: Couldn't read request body")
+      assertThat(developerMessage)
         .isEqualTo("Required request body is missing: public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertsController.updateAlert(java.util.UUID,uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert,jakarta.servlet.http.HttpServletRequest)")
-      Assertions.assertThat(moreInfo).isNull()
+      assertThat(moreInfo).isNull()
     }
   }
 
@@ -143,12 +144,12 @@ class UpdateAlertIntTest : IntegrationTestBase() {
       .returnResult().responseBody
 
     with(response!!) {
-      Assertions.assertThat(status).isEqualTo(404)
-      Assertions.assertThat(errorCode).isNull()
-      Assertions.assertThat(userMessage).isEqualTo("Alert not found: Could not find alert with ID $uuid")
-      Assertions.assertThat(developerMessage)
+      assertThat(status).isEqualTo(404)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Alert not found: Could not find alert with ID $uuid")
+      assertThat(developerMessage)
         .isEqualTo("Could not find alert with ID $uuid")
-      Assertions.assertThat(moreInfo).isNull()
+      assertThat(moreInfo).isNull()
     }
   }
 
@@ -168,7 +169,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
     val alertCode = alertCodeRepository.findByCode(alertEntity.alertCode.code)!!
 
     with(response!!) {
-      Assertions.assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+      assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
         uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert(
           1,
           alert.alertUuid,
@@ -183,25 +184,25 @@ class UpdateAlertIntTest : IntegrationTestBase() {
     }
 
     with(alertEntity.auditEvents()[0]) {
-      Assertions.assertThat(auditEventId).isEqualTo(2)
-      Assertions.assertThat(action).isEqualTo(AuditEventAction.UPDATED)
-      Assertions.assertThat(description).isEqualTo(
+      assertThat(auditEventId).isEqualTo(2)
+      assertThat(action).isEqualTo(AuditEventAction.UPDATED)
+      assertThat(description).isEqualTo(
         """Updated alert description from Alert description to another new description
 Updated authorised by from A. Authorizer to C Cauthorizer
-Updated active from from 2024-02-25 to 2023-12-28
-Updated active to from null to 2024-12-28
+Updated active from from ${alert.activeFrom} to ${response.activeFrom}
+Updated active to from null to ${response.activeTo}
 A new comment was added
 """,
       )
-      Assertions.assertThat(actionedAt).isCloseToUtcNow(Assertions.within(3, ChronoUnit.SECONDS))
-      Assertions.assertThat(actionedBy).isEqualTo(TEST_USER)
-      Assertions.assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+      assertThat(actionedAt).isCloseToUtcNow(Assertions.within(3, ChronoUnit.SECONDS))
+      assertThat(actionedBy).isEqualTo(TEST_USER)
+      assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
     }
     with(alertEntity.comments().single()) {
-      Assertions.assertThat(comment).isEqualTo("Another update alert")
-      Assertions.assertThat(createdAt).isCloseToUtcNow(Assertions.within(3, ChronoUnit.SECONDS))
-      Assertions.assertThat(createdBy).isEqualTo(TEST_USER)
-      Assertions.assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
+      assertThat(comment).isEqualTo("Another update alert")
+      assertThat(createdAt).isCloseToUtcNow(Assertions.within(3, ChronoUnit.SECONDS))
+      assertThat(createdBy).isEqualTo(TEST_USER)
+      assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
     }
   }
 
