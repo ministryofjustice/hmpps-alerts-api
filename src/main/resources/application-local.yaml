@@ -16,7 +16,10 @@ spring:
   jpa:
     show-sql: true
 
-# Container-provider local auth server
-hmpps:
-  auth:
-    url: http://localhost:8090/auth
+# Container-provider local services
+api:
+  base:
+    url:
+      hmpps-auth: http://localhost:8090/auth
+      manage-users: http://localhost:8111
+      prisoner-search: http://localhost:8112

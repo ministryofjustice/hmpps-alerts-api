@@ -3,46 +3,37 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.config
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.HttpHeaders
-import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.security.oauth2.jwt.Jwt
-import org.springframework.web.reactive.function.client.ClientRequest
-import org.springframework.web.reactive.function.client.ExchangeFilterFunction
-import org.springframework.web.reactive.function.client.ExchangeFunction
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
 import org.springframework.web.reactive.function.client.WebClient
+import uk.gov.justice.hmpps.kotlin.auth.authorisedWebClient
+import uk.gov.justice.hmpps.kotlin.auth.healthWebClient
+import java.time.Duration
 
 @Configuration
 class WebClientConfiguration(
-  @Value("\${user-management.api.url}") private val userManagementApiUri: String,
-  @Value("\${prisoner-search.api.url}") private val prisonerSearchApiUri: String,
+  @Value("\${api.base.url.hmpps-auth}") val hmppsAuthBaseUri: String,
+  @Value("\${api.base.url.manage-users}") private val manageUsersBaseUri: String,
+  @Value("\${api.base.url.prisoner-search}") private val prisonerSearchBaseUri: String,
+  @Value("\${api.health-timeout:2s}") val healthTimeout: Duration,
+  @Value("\${api.timeout:90s}") val timeout: Duration,
 ) {
+  @Bean
+  fun hmppsAuthHealthWebClient(builder: WebClient.Builder): WebClient =
+    builder.healthWebClient(hmppsAuthBaseUri, healthTimeout)
 
   @Bean
-  fun userManagementWebClient(webclientBuilder: WebClient.Builder): WebClient {
-    return webclientBuilder
-      .baseUrl(userManagementApiUri)
-      .filter(addAuthHeaderFilterFunction())
-      .build()
-  }
+  fun manageUsersHealthWebClient(builder: WebClient.Builder): WebClient =
+    builder.healthWebClient(manageUsersBaseUri, healthTimeout)
 
   @Bean
-  fun prisonerSearchWebClient(webclientBuilder: WebClient.Builder): WebClient {
-    return webclientBuilder
-      .baseUrl(prisonerSearchApiUri)
-      .filter(addAuthHeaderFilterFunction())
-      .build()
-  }
+  fun manageUsersWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder) =
+    builder.authorisedWebClient(authorizedClientManager, "manage-users-api", manageUsersBaseUri, timeout)
 
-  private fun addAuthHeaderFilterFunction(): ExchangeFilterFunction {
-    return ExchangeFilterFunction { request: ClientRequest, next: ExchangeFunction ->
-      val authenticationToken: Jwt = SecurityContextHolder.getContext()
-        .authentication
-        .credentials as Jwt
-      val tokenString: String = authenticationToken.tokenValue
-      val filtered = ClientRequest.from(request)
-        .header(HttpHeaders.AUTHORIZATION, "Bearer $tokenString")
-        .build()
-      next.exchange(filtered)
-    }
-  }
+  @Bean
+  fun prisonerSearchHealthWebClient(builder: WebClient.Builder): WebClient =
+    builder.healthWebClient(prisonerSearchBaseUri, healthTimeout)
+
+  @Bean
+  fun prisonerSearchWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder) =
+    builder.authorisedWebClient(authorizedClientManager, "prisoner-search-api", prisonerSearchBaseUri, timeout)
 }

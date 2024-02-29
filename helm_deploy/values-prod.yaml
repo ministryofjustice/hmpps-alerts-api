@@ -6,9 +6,9 @@ generic-service:
     host: alerts-api.hmpps.service.justice.gov.uk
 
   env:
-    HMPPS_AUTH_URL: https://sign-in.hmpps.service.justice.gov.uk/auth
-    USER_MANAGEMENT_API_URL: https://manage-users-api.hmpps.service.justice.gov.uk
-    PRISONER_SEARCH_API_URL: https://prisoner-search.prison.service.justice.gov.uk
+    API_BASE_URL_HMPPS_AUTH: "https://sign-in.hmpps.service.justice.gov.uk/auth"
+    API_BASE_URL_MANAGE_USERS: "https://manage-users-api.hmpps.service.justice.gov.uk"
+    API_BASE_URL_PRISONER_SEARCH: "https://prisoner-search.prison.service.justice.gov.uk"
 
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts

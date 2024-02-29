@@ -1,14 +1,14 @@
-package uk.gov.justice.digital.hmpps.hmppsalertsapi.client.usermanagement
+package uk.gov.justice.digital.hmpps.hmppsalertsapi.client.manageusers
 
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.usermanagement.dto.UserDetailsDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.manageusers.dto.UserDetailsDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.DownstreamServiceException
 
 @Component
-class UserManagementClient(@Qualifier("userManagementWebClient") private val webClient: WebClient) {
+class ManageUsersClient(@Qualifier("manageUsersWebClient") private val webClient: WebClient) {
   fun getUserDetails(username: String): UserDetailsDto? {
     return try {
       webClient

@@ -4,12 +4,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.kotlin.whenever
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.usermanagement.UserManagementClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.manageusers.ManageUsersClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.userDetailsDto
 
 class UserServiceTest {
-  private val client = mock<UserManagementClient>()
+  private val client = mock<ManageUsersClient>()
   private val service = UserService(client)
 
   @Test
