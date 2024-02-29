@@ -32,7 +32,7 @@ data class UpdateAlert(
 
   @Schema(
     description = "The date the alert should be active from. " +
-      "If set to null i.e. cleared, the alert will be active from the current date. " +
+      "If set to null the field will be ignored" +
       "The active from date can be in the past or the future, but must be before the active to date",
     example = "2021-09-27",
   )

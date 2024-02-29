@@ -17,7 +17,7 @@ data class Comment(
   @Id
   val commentId: Long = 0,
 
-  val commentUuid: UUID,
+  val commentUuid: UUID = UUID.randomUUID(),
 
   @ManyToOne
   @JoinColumn(name = "alert_id", nullable = false)
