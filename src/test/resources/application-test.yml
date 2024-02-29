@@ -11,15 +11,19 @@ management.endpoint:
   health.cache.time-to-live: 0
   info.cache.time-to-live: 0
 
-hmpps:
-  auth:
-    url: http://localhost:8090/auth
+api:
+  base:
+    url:
+      hmpps-auth: http://localhost:8090/auth
+      manage-users: http://localhost:8111
+      prisoner-search: http://localhost:8112
 
-user-management:
-  api:
-    url: http://localhost:8111
-
+manage-users:
+  client:
+    id: alerts-api
+    secret: clientsecret
 
 prisoner-search:
-  api:
-    url: http://localhost:8112
+  client:
+    id: alerts-api
+    secret: clientsecret

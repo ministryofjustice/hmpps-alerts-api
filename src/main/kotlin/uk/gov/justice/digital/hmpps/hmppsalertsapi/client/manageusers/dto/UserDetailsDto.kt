@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsalertsapi.client.usermanagement.dto
+package uk.gov.justice.digital.hmpps.hmppsalertsapi.client.manageusers.dto
 
 import java.util.UUID
 

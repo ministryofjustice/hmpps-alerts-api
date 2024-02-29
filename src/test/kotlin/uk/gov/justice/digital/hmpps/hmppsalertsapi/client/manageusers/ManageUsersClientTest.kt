@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.hmppsalertsapi.client.usermanagement
+package uk.gov.justice.digital.hmpps.hmppsalertsapi.client.manageusers
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
@@ -8,23 +8,23 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.usermanagement.dto.UserDetailsDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.manageusers.dto.UserDetailsDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.DownstreamServiceException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.ManageUsersServer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.UserManagementServer
 import java.util.UUID
 
-class UserManagementClientTest {
-  private lateinit var client: UserManagementClient
+class ManageUsersClientTest {
+  private lateinit var client: ManageUsersClient
 
   @BeforeEach
   fun resetMocks() {
     server.resetRequests()
     val webClient = WebClient.create("http://localhost:${server.port()}")
-    client = UserManagementClient(webClient)
+    client = ManageUsersClient(webClient)
   }
 
   @Test
@@ -67,7 +67,7 @@ class UserManagementClientTest {
 
   companion object {
     @JvmField
-    internal val server = UserManagementServer()
+    internal val server = ManageUsersServer()
 
     @BeforeAll
     @JvmStatic
