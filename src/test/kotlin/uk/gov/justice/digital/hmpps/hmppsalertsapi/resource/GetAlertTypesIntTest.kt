@@ -5,9 +5,9 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
+import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.util.Optional
 
 class GetAlertTypesIntTest : IntegrationTestBase() {

@@ -20,12 +20,12 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.SyncContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.UpsertStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.NomisAlertMapping
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.NomisAlertService
+import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.net.URI
 import java.util.UUID
 

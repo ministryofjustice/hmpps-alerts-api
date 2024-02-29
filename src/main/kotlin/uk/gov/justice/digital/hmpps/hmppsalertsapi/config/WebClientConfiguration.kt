@@ -22,8 +22,16 @@ class WebClientConfiguration(
     builder.healthWebClient(hmppsAuthBaseUri, healthTimeout)
 
   @Bean
+  fun manageUsersHealthWebClient(builder: WebClient.Builder): WebClient =
+    builder.healthWebClient(manageUsersBaseUri, healthTimeout)
+
+  @Bean
   fun manageUsersWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder) =
     builder.authorisedWebClient(authorizedClientManager, "manage-users-api", manageUsersBaseUri, timeout)
+
+  @Bean
+  fun prisonerSearchHealthWebClient(builder: WebClient.Builder): WebClient =
+    builder.healthWebClient(prisonerSearchBaseUri, healthTimeout)
 
   @Bean
   fun prisonerSearchWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder) =
