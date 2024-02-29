@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -194,13 +195,13 @@ Updated active to from null to ${response.activeTo}
 A new comment was added
 """,
       )
-      assertThat(actionedAt).isCloseToUtcNow(Assertions.within(3, ChronoUnit.SECONDS))
+      assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
       assertThat(actionedBy).isEqualTo(TEST_USER)
       assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
     }
     with(alertEntity.comments().single()) {
       assertThat(comment).isEqualTo("Another update alert")
-      assertThat(createdAt).isCloseToUtcNow(Assertions.within(3, ChronoUnit.SECONDS))
+      assertThat(createdAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
       assertThat(createdBy).isEqualTo(TEST_USER)
       assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
     }
