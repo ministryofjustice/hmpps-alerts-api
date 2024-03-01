@@ -194,12 +194,4 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
       .expectBody(Alert::class.java)
       .returnResult().responseBody!!
   }
-  private fun updateAlertRequest(comment: String = "Another update alert") =
-    UpdateAlert(
-      description = "another new description",
-      authorisedBy = "C Cauthorizer",
-      activeFrom = LocalDate.now().minusMonths(2),
-      activeTo = LocalDate.now().plusMonths(10),
-      appendComment = comment,
-    )
 }
