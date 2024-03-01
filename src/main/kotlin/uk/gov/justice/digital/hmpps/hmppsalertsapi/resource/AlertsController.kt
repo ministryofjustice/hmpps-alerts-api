@@ -205,7 +205,8 @@ class AlertsController(
       required = true,
     )
     alertUuid: UUID,
-  ): Unit = throw NotImplementedError()
+    httpRequest: HttpServletRequest,
+  ): Unit = alertService.deleteAlert(alertUuid, httpRequest.alertRequestContext())
 
   private fun HttpServletRequest.alertRequestContext() =
     getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
