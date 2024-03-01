@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
@@ -34,6 +35,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @ExtendWith(MockitoExtension::class)
@@ -297,6 +299,31 @@ A new comment was added
     assertThat(result).isEqualTo(alert.toAlertModel())
   }
 
+  @Test
+  fun `delete alert uuid not found throws exception`() {
+    whenever(alertRepository.findByAlertUuid(any())).thenReturn(null)
+    val alertUuid = UUID.randomUUID()
+    val exception = assertThrows<AlertNotFoundException> {
+      underTest.deleteAlert(alertUuid, requestContext)
+    }
+    assertThat(exception.message).isEqualTo("Could not find alert with uuid $alertUuid")
+  }
+
+  @Test
+  fun `delete alert should add audit event`() {
+    val uuid = UUID.randomUUID()
+    val alert = alert(uuid = uuid)
+    whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
+    val alertCaptor = argumentCaptor<Alert>()
+    whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
+    underTest.deleteAlert(uuid, requestContext)
+
+    val savedAlert = alertCaptor.firstValue
+    assertThat(savedAlert.deletedAt()).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+    assertThat(savedAlert.auditEvents()).hasSize(2)
+    assertThat(savedAlert.auditEvents()[0].action).isEqualTo(AuditEventAction.DELETED)
+    assertThat(savedAlert.auditEvents()[0].description).isEqualTo("Alert deleted")
+  }
   private fun createAlertRequest(
     prisonNumber: String = PRISON_NUMBER,
     alertCode: String = ALERT_CODE_VICTIM,

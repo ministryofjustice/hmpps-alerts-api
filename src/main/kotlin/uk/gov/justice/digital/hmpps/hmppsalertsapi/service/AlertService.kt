@@ -85,6 +85,14 @@ class AlertService(
   fun getAlert(alertUuid: UUID): AlertModel =
     alertRepository.findByAlertUuid(alertUuid)?.toAlertModel() ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
 
+  fun deleteAlert(alertUuid: UUID, requestContext: AlertRequestContext) {
+    val alert = alertRepository.findByAlertUuid(alertUuid) ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
+    with(alert) {
+      delete(deletedBy = requestContext.username, deletedByDisplayName = requestContext.userDisplayName)
+    }
+    alertRepository.saveAndFlush(alert)
+  }
+
   private fun buildAuditDescription(alert: Alert, request: UpdateAlert): String {
     val sb = StringBuilder()
     if (alert.description != request.description) {
