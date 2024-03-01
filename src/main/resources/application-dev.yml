@@ -1,0 +1,8 @@
+#
+# The "-dev" for use in the dev environment (profile enabled in the helm dev config).
+# Uses the common and dev migration scripts.
+#
+
+spring:
+  flyway:
+    locations: classpath:/migration/common,classpath:/migration/dev
