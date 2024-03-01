@@ -279,6 +279,24 @@ A new comment was added
     )
   }
 
+  @Test
+  fun `alert uuid not found`() {
+    whenever(alertRepository.findByAlertUuid(any())).thenReturn(null)
+    val alertUuid = UUID.randomUUID()
+    val exception = assertThrows<AlertNotFoundException> {
+      underTest.getAlert(alertUuid)
+    }
+    assertThat(exception.message).isEqualTo("Could not find alert with uuid $alertUuid")
+  }
+
+  @Test
+  fun `returns alert model if found`() {
+    val alert = alert()
+    whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
+    val result = underTest.getAlert(UUID.randomUUID())
+    assertThat(result).isEqualTo(alert.toAlertModel())
+  }
+
   private fun createAlertRequest(
     prisonNumber: String = PRISON_NUMBER,
     alertCode: String = ALERT_CODE_VICTIM,
