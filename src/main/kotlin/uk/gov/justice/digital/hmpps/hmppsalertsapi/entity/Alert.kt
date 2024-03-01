@@ -16,8 +16,11 @@ import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.SQLRestriction
 import org.springframework.data.domain.AbstractAggregateRoot
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDeletedEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertUpdatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import java.lang.StringBuilder
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -46,24 +49,6 @@ data class Alert(
 
   var activeTo: LocalDate?,
 ) : AbstractAggregateRoot<Alert>() {
-  fun create(
-    createdAt: LocalDateTime = LocalDateTime.now(),
-    createdBy: String,
-    createdByDisplayName: String,
-  ) = apply {
-    auditEvent(
-      action = AuditEventAction.CREATED,
-      description = "Alert created",
-      actionedAt = createdAt,
-      actionedBy = createdBy,
-      actionedByDisplayName = createdByDisplayName,
-    )
-
-    registerEvent(
-      AlertCreatedEvent(alertUuid, prisonNumber, alertCode.code, createdAt, Source.ALERTS_SERVICE, createdBy),
-    )
-  }
-
   fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
 
   fun willBecomeActive() = activeFrom > LocalDate.now()
@@ -126,18 +111,123 @@ data class Alert(
 
   fun deletedAt() = deletedAt
 
+  fun create(
+    createdAt: LocalDateTime = LocalDateTime.now(),
+    createdBy: String,
+    createdByDisplayName: String,
+  ) = apply {
+    auditEvent(
+      action = AuditEventAction.CREATED,
+      description = "Alert created",
+      actionedAt = createdAt,
+      actionedBy = createdBy,
+      actionedByDisplayName = createdByDisplayName,
+    )
+    registerEvent(
+      AlertCreatedEvent(
+        alertUuid = alertUuid,
+        prisonNumber = prisonNumber,
+        alertCode = alertCode.code,
+        occurredAt = createdAt,
+        source = Source.ALERTS_SERVICE,
+        createdBy = createdBy,
+      ),
+    )
+  }
+
+  fun update(
+    description: String?,
+    authorisedBy: String?,
+    activeFrom: LocalDate?,
+    activeTo: LocalDate?,
+    appendComment: String?,
+    updatedAt: LocalDateTime = LocalDateTime.now(),
+    updatedBy: String,
+    updatedByDisplayName: String,
+  ) = apply {
+    val descriptionUpdated = description != null && this.description != description
+    val authorisedByUpdated = authorisedBy != null && this.authorisedBy != authorisedBy
+    val activeFromUpdated = activeFrom != null && this.activeFrom != activeFrom
+    val activeToUpdated = this.activeTo != activeTo
+    val commentAppended = !appendComment.isNullOrEmpty()
+    var updated = false
+
+    val sb = StringBuilder()
+    if (descriptionUpdated) {
+      sb.appendLine("Updated alert description from '${this.description}' to '$description'")
+      this.description = description
+      updated = true
+    }
+    if (authorisedByUpdated) {
+      sb.appendLine("Updated authorised by from '${this.authorisedBy}' to '$authorisedBy'")
+      this.authorisedBy = authorisedBy
+      updated = true
+    }
+    if (activeFromUpdated) {
+      sb.appendLine("Updated active from from '${this.activeFrom}' to '$activeFrom'")
+      this.activeFrom = activeFrom!!
+      updated = true
+    }
+    if (activeToUpdated) {
+      sb.appendLine("Updated active to from '${this.activeTo}' to '$activeTo'")
+      this.activeTo = activeTo
+      updated = true
+    }
+    if (commentAppended) {
+      sb.appendLine("Comment '$appendComment' was added")
+      addComment(comment = appendComment!!, createdAt = updatedAt, createdBy = updatedBy, createdByDisplayName = updatedByDisplayName)
+      updated = true
+    }
+
+    if (updated) {
+      auditEvent(
+        action = AuditEventAction.UPDATED,
+        description = sb.toString(),
+        actionedAt = updatedAt,
+        actionedBy = updatedBy,
+        actionedByDisplayName = updatedByDisplayName,
+      )
+      registerEvent(
+        AlertUpdatedEvent(
+          alertUuid = alertUuid,
+          prisonNumber = prisonNumber,
+          alertCode = alertCode.code,
+          occurredAt = updatedAt,
+          source = Source.ALERTS_SERVICE,
+          updatedBy = updatedBy,
+          descriptionUpdated = descriptionUpdated,
+          authorisedByUpdated = authorisedByUpdated,
+          activeFromUpdated = activeFromUpdated,
+          activeToUpdated = activeToUpdated,
+          commentAppended = commentAppended,
+        ),
+      )
+    }
+  }
+
   fun delete(
     deletedAt: LocalDateTime = LocalDateTime.now(),
     deletedBy: String,
     deletedByDisplayName: String,
   ): AuditEvent {
     this.deletedAt = deletedAt
-    return auditEvent(
+    val auditEvent = auditEvent(
       action = AuditEventAction.DELETED,
       description = "Alert deleted",
       actionedAt = deletedAt,
       actionedBy = deletedBy,
       actionedByDisplayName = deletedByDisplayName,
     )
+    registerEvent(
+      AlertDeletedEvent(
+        alertUuid = alertUuid,
+        prisonNumber = prisonNumber,
+        alertCode = alertCode.code,
+        occurredAt = deletedAt,
+        source = Source.ALERTS_SERVICE,
+        deletedBy = deletedBy,
+      ),
+    )
+    return auditEvent
   }
 }

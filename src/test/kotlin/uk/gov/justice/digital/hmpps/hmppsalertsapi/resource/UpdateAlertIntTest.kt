@@ -187,11 +187,11 @@ class UpdateAlertIntTest : IntegrationTestBase() {
       assertThat(auditEventId).isEqualTo(2)
       assertThat(action).isEqualTo(AuditEventAction.UPDATED)
       assertThat(description).isEqualTo(
-        """Updated alert description from Alert description to another new description
-Updated authorised by from A. Authorizer to C Cauthorizer
-Updated active from from ${alert.activeFrom} to ${response.activeFrom}
-Updated active to from null to ${response.activeTo}
-A new comment was added
+        """Updated alert description from 'Alert description' to 'another new description'
+Updated authorised by from 'A. Authorizer' to 'C Cauthorizer'
+Updated active from from '${alert.activeFrom}' to '${response.activeFrom}'
+Updated active to from 'null' to '${response.activeTo}'
+Comment 'Another update alert' was added
 """,
       )
       assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))

@@ -19,4 +19,60 @@ data class AlertCreatedEvent(
   override val occurredAt: LocalDateTime,
   override val source: Source,
   val createdBy: String,
-) : AlertEvent()
+) : AlertEvent() {
+  override fun toString(): String {
+    return "Alert with UUID '$alertUuid' " +
+      "created for prison number '$prisonNumber' " +
+      "with alert code '$alertCode' " +
+      "at '$occurredAt' " +
+      "by '$createdBy' " +
+      "from source '$source'."
+  }
+}
+
+data class AlertUpdatedEvent(
+  override val alertUuid: UUID,
+  override val prisonNumber: String,
+  override val alertCode: String,
+  override val occurredAt: LocalDateTime,
+  override val source: Source,
+  val updatedBy: String,
+  val descriptionUpdated: Boolean,
+  val authorisedByUpdated: Boolean,
+  val activeFromUpdated: Boolean,
+  val activeToUpdated: Boolean,
+  val commentAppended: Boolean,
+) : AlertEvent() {
+  override fun toString(): String {
+    return "Alert with UUID '$alertUuid' " +
+      "updated for prison number '$prisonNumber' " +
+      "with alert code '$alertCode' " +
+      "at '$occurredAt' " +
+      "by '$updatedBy' " +
+      "from source '$source'. " +
+      "Properties updated: " +
+      "description: $descriptionUpdated, " +
+      "authorisedBy: $authorisedByUpdated, " +
+      "activeFrom: $activeFromUpdated, " +
+      "activeTo: $activeToUpdated, " +
+      "comment appended: $commentAppended."
+  }
+}
+
+data class AlertDeletedEvent(
+  override val alertUuid: UUID,
+  override val prisonNumber: String,
+  override val alertCode: String,
+  override val occurredAt: LocalDateTime,
+  override val source: Source,
+  val deletedBy: String,
+) : AlertEvent() {
+  override fun toString(): String {
+    return "Alert with UUID '$alertUuid' " +
+      "deleted for prison number '$prisonNumber' " +
+      "with alert code '$alertCode' " +
+      "at '$occurredAt' " +
+      "by '$deletedBy' " +
+      "from source '$source'."
+  }
+}

@@ -120,7 +120,7 @@ class AlertsController(
       required = true,
     )
     alertUuid: UUID,
-  ): Alert = alertService.getAlert(alertUuid)
+  ): Alert = alertService.retrieveAlert(alertUuid)
 
   @ResponseStatus(HttpStatus.OK)
   @PutMapping("/{alertUuid}")

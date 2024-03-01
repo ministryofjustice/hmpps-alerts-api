@@ -272,11 +272,11 @@ class AlertServiceTest {
     assertThat(savedAlert.auditEvents()).hasSize(2)
     assertThat(savedAlert.auditEvents()[1].action).isEqualTo(AuditEventAction.UPDATED)
     assertThat(savedAlert.auditEvents()[1].description).isEqualTo(
-      """Updated alert description from ${unchangedAlert.description} to ${savedAlert.description}
-Updated authorised by from ${unchangedAlert.authorisedBy} to ${savedAlert.authorisedBy}
-Updated active from from ${unchangedAlert.activeFrom} to ${savedAlert.activeFrom}
-Updated active to from ${unchangedAlert.activeTo} to ${savedAlert.activeTo}
-A new comment was added
+      """Updated alert description from '${unchangedAlert.description}' to '${savedAlert.description}'
+Updated authorised by from '${unchangedAlert.authorisedBy}' to '${savedAlert.authorisedBy}'
+Updated active from from '${unchangedAlert.activeFrom}' to '${savedAlert.activeFrom}'
+Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'
+Comment '${updateRequest.appendComment}' was added
 """,
     )
   }
@@ -286,7 +286,7 @@ A new comment was added
     whenever(alertRepository.findByAlertUuid(any())).thenReturn(null)
     val alertUuid = UUID.randomUUID()
     val exception = assertThrows<AlertNotFoundException> {
-      underTest.getAlert(alertUuid)
+      underTest.retrieveAlert(alertUuid)
     }
     assertThat(exception.message).isEqualTo("Could not find alert with uuid $alertUuid")
   }
@@ -295,7 +295,7 @@ A new comment was added
   fun `returns alert model if found`() {
     val alert = alert()
     whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
-    val result = underTest.getAlert(UUID.randomUUID())
+    val result = underTest.retrieveAlert(UUID.randomUUID())
     assertThat(result).isEqualTo(alert.toAlertModel())
   }
 
