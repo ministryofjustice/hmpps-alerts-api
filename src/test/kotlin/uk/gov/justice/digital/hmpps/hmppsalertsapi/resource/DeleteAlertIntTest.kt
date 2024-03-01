@@ -27,9 +27,6 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   @Autowired
   lateinit var alertRepository: AlertRepository
 
-  @Autowired
-  lateinit var alertCodeRepository: AlertCodeRepository
-
   var uuid: UUID? = null
 
   @BeforeEach
@@ -130,7 +127,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   @Test
   fun `alert deleted`() {
     val alert = createAlert()
-    val response = webTestClient.delete()
+    webTestClient.delete()
       .uri("/alerts/${alert.alertUuid}")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext())

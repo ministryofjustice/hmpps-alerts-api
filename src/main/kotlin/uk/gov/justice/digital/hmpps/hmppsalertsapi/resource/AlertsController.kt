@@ -196,6 +196,7 @@ class AlertsController(
       ApiResponse(
         responseCode = "404",
         description = "Alert was not found or already deleted",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
