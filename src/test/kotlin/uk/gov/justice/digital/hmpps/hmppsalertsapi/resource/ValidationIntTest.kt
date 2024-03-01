@@ -4,8 +4,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.util.UUID
@@ -34,6 +36,77 @@ class ValidationIntTest : IntegrationTestBase() {
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody!!
     assertThat(response.developerMessage).contains("Active from must be before active to")
+  }
+
+  @Test
+  fun `Validate active from is equal to active to should pass on creation`() {
+    val response = webTestClient.post()
+      .uri("/alerts")
+      .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAlertRequestContext())
+      .accept(MediaType.APPLICATION_JSON)
+      .bodyValue(
+        CreateAlert(
+          prisonNumber = "A1234AA",
+          alertCode = ALERT_CODE_VICTIM,
+          description = "description",
+          authorisedBy = "A. Authorised",
+          activeFrom = LocalDate.now(),
+          activeTo = LocalDate.now(),
+        ),
+      )
+      .exchange()
+      .expectStatus().isCreated
+      .expectBody(Alert::class.java)
+      .returnResult().responseBody
+    with(response!!) {
+      assertThat(activeFrom).isEqualTo(activeTo)
+    }
+  }
+
+  @Test
+  fun `Validate active from is equal to active to should pass on update`() {
+    val response = webTestClient.post()
+      .uri("/alerts")
+      .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAlertRequestContext())
+      .accept(MediaType.APPLICATION_JSON)
+      .bodyValue(
+        CreateAlert(
+          prisonNumber = "A1234AA",
+          alertCode = ALERT_CODE_VICTIM,
+          description = "description",
+          authorisedBy = "A. Authorised",
+          activeFrom = LocalDate.now(),
+          activeTo = LocalDate.now(),
+        ),
+      )
+      .exchange()
+      .expectStatus().isCreated
+      .expectBody(Alert::class.java)
+      .returnResult().responseBody!!
+
+    val updateResponse = webTestClient.put()
+      .uri("/alerts/${response.alertUuid}")
+      .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAlertRequestContext())
+      .accept(MediaType.APPLICATION_JSON)
+      .bodyValue(
+        UpdateAlert(
+          description = "description",
+          authorisedBy = "A. Authorised",
+          activeFrom = LocalDate.now(),
+          activeTo = LocalDate.now(),
+          appendComment = null,
+        ),
+      )
+      .exchange()
+      .expectStatus().isOk
+      .expectBody(Alert::class.java)
+      .returnResult().responseBody
+    with(updateResponse!!) {
+      assertThat(activeFrom).isEqualTo(activeTo)
+    }
   }
 
   @Test
