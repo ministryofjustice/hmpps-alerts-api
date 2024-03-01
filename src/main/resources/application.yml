@@ -55,7 +55,7 @@ spring:
       maximumPoolSize: 10
 
   flyway:
-    locations: classpath:/migration/common
+    locations: classpath:/migration/common,classpath:/migration/prod
     placeholders:
       dpr_user: ${DPR_USER}
       dpr_password: ${DPR_PASSWORD}

@@ -8,6 +8,7 @@ generic-service:
     host: alerts-api-dev.hmpps.service.justice.gov.uk
 
   env:
+    SPRING_PROFILES_ACTIVE: dev
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
     API_BASE_URL_HMPPS_AUTH: "https://sign-in-dev.hmpps.service.justice.gov.uk/auth"
     API_BASE_URL_MANAGE_USERS: "https://manage-users-api-dev.hmpps.service.justice.gov.uk"
