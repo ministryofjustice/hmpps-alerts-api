@@ -14,7 +14,10 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.Fetch
 import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.SQLRestriction
+import org.springframework.data.domain.AbstractAggregateRoot
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -42,7 +45,25 @@ data class Alert(
   var activeFrom: LocalDate,
 
   var activeTo: LocalDate?,
-) {
+) : AbstractAggregateRoot<Alert>() {
+  fun create(
+    createdAt: LocalDateTime = LocalDateTime.now(),
+    createdBy: String,
+    createdByDisplayName: String,
+  ) = apply {
+    auditEvent(
+      action = AuditEventAction.CREATED,
+      description = "Alert created",
+      actionedAt = createdAt,
+      actionedBy = createdBy,
+      actionedByDisplayName = createdByDisplayName,
+    )
+
+    registerEvent(
+      AlertCreatedEvent(alertUuid, prisonNumber, alertCode.code, createdAt, Source.ALERTS_SERVICE, createdBy),
+    )
+  }
+
   fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
 
   fun willBecomeActive() = activeFrom > LocalDate.now()
