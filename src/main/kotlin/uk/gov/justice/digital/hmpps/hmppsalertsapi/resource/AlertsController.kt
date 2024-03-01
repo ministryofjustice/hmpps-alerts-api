@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatus.NO_CONTENT
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -169,6 +170,7 @@ class AlertsController(
   ): Alert = alertService.updateAlert(alertUuid, request, httpRequest.alertRequestContext())
 
   @DeleteMapping("/{alertUuid}")
+  @ResponseStatus(NO_CONTENT)
   @Operation(
     summary = "Delete an alert",
     description = "This endpoint fully removes the alert from the system. It is used when an alert " +
@@ -177,10 +179,6 @@ class AlertsController(
   )
   @ApiResponses(
     value = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Alert was not found or already deleted",
-      ),
       ApiResponse(
         responseCode = "204",
         description = "Alert deleted",
@@ -194,6 +192,10 @@ class AlertsController(
         responseCode = "403",
         description = "Forbidden, requires an appropriate role",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Alert was not found or already deleted",
       ),
     ],
   )

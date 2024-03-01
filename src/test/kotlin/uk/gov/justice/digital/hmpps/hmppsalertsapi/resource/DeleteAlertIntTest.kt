@@ -135,7 +135,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext())
       .exchange()
-      .expectStatus().isOk
+      .expectStatus().isNoContent
       .expectBody(Alert::class.java)
       .returnResult().responseBody
     val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
