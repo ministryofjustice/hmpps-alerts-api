@@ -17,4 +17,6 @@ interface AlertRepository : JpaRepository<Alert, Long> {
     nativeQuery = true,
   )
   fun findByAlertUuidIncludingSoftDelete(alertUuid: UUID): Alert?
+
+  fun findAllByPrisonNumber(prsionNumber: String): Collection<Alert>
 }
