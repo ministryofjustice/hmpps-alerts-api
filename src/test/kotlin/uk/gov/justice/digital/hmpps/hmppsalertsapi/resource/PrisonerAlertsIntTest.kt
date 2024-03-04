@@ -47,7 +47,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `empty response if no alerts not found`() {
+  fun `empty response if no alerts found`() {
     val response = webTestClient.get()
       .uri("/prisoner/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
