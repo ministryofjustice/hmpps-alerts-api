@@ -79,7 +79,7 @@ class AlertService(
     }
     alertRepository.saveAndFlush(alert)
   }
+
   fun getAlertsForPrisonNumber(prisonNumber: String): Collection<AlertModel> =
     alertRepository.findAllByPrisonNumber(prisonNumber).map { it.toAlertModel() }
-
 }

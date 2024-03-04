@@ -9,18 +9,33 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.EventProperties
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDeletedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertUpdatedEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEvent
 
 @Service
 class AlertEventService(
   private val eventProperties: EventProperties,
   // private val telemetryClient: TelemetryClient,
+  private val domainEventPublisher: DomainEventPublisher,
 ) {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   fun handleAlertEvent(event: AlertCreatedEvent) {
     log.info(event.toString())
 
     // TODO: Publish create alert domain event
+    val domainEvent = AlertDomainEvent(
+      eventType = DomainEvent.ALERT_CREATED.eventType,
+      additionalInformation = AlertAdditionalInformation(
+        url = "${eventProperties.baseUrl}/alerts/${event.alertUuid}",
+        alertUuid = event.alertUuid,
+        prisonNumber = event.prisonNumber,
+        alertCode = event.alertCode,
+        source = event.source,
+      ),
+      description = DomainEvent.ALERT_CREATED.description,
+      occurredAt = event.occurredAt,
+    )
 
+    domainEventPublisher.publish(domainEvent)
     // TODO: Track event for metrics
   }
 

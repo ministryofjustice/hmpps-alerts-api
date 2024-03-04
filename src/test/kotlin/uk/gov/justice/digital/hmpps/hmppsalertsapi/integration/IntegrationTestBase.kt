@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -21,6 +22,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.Prisoner
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SYNC_SUPPRESS_EVENTS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
+import uk.gov.justice.hmpps.sqs.HmppsQueueService
+import uk.gov.justice.hmpps.sqs.MissingQueueException
 
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 @Sql("classpath:test_data/reset-database.sql")
@@ -37,6 +40,21 @@ abstract class IntegrationTestBase {
 
   @Autowired
   lateinit var objectMapper: ObjectMapper
+
+  @SpyBean
+  lateinit var hmppsQueueService: HmppsQueueService
+
+  internal val hmppsDomainQueue by lazy { hmppsQueueService.findByQueueId("hmppsdomainqueue") ?: throw MissingQueueException("HmppsQueue hmppsdomainqueue not found") }
+  internal val hmppsDomainSqsClient by lazy { hmppsDomainQueue.sqsClient }
+  internal val hmppsDomainQueueUrl by lazy { hmppsDomainQueue.queueUrl }
+
+  internal val hmppsEventsQueue by lazy { hmppsQueueService.findByQueueId("hmppseventtestqueue") ?: throw MissingQueueException("hmppseventtestqueue queue not found") }
+
+  internal val publishQueue by lazy { hmppsQueueService.findByQueueId("publish") ?: throw MissingQueueException("HmppsQueue publish not found") }
+  internal val publishSqsClient by lazy { publishQueue.sqsClient }
+  internal val publishQueueUrl by lazy { publishQueue.queueUrl }
+
+  internal val hmppsEventTopic by lazy { hmppsQueueService.findByTopicId("hmppseventtopic") ?: throw MissingQueueException("HmppsTopic hmpps event topic not found") }
 
   internal fun setAuthorisation(
     user: String? = null,
