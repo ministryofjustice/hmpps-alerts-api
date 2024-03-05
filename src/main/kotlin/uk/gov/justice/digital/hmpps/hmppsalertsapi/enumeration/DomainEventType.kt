@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration
 
-enum class DomainEvent(
+enum class DomainEventType(
   val eventType: String,
   val description: String,
 ) {

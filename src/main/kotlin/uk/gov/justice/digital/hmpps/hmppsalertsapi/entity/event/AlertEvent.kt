@@ -1,5 +1,9 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event
 
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import java.time.LocalDateTime
 import java.util.UUID
@@ -10,6 +14,22 @@ abstract class AlertEvent {
   abstract val alertCode: String
   abstract val occurredAt: LocalDateTime
   abstract val source: Source
+
+  abstract fun toDomainEvent(baseUrl: String): AlertDomainEvent
+
+  protected fun toDomainEvent(type: DomainEventType, baseUrl: String): AlertDomainEvent =
+    AlertDomainEvent(
+      eventType = type.eventType,
+      additionalInformation = AlertAdditionalInformation(
+        url = "$baseUrl/alerts/$alertUuid",
+        alertUuid = alertUuid,
+        prisonNumber = prisonNumber,
+        alertCode = alertCode,
+        source = source,
+      ),
+      description = type.description,
+      occurredAt = occurredAt,
+    )
 }
 
 data class AlertCreatedEvent(
@@ -28,6 +48,9 @@ data class AlertCreatedEvent(
       "by '$createdBy' " +
       "from source '$source'."
   }
+
+  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
+    toDomainEvent(ALERT_CREATED, baseUrl)
 }
 
 data class AlertUpdatedEvent(
@@ -57,6 +80,9 @@ data class AlertUpdatedEvent(
       "activeTo: $activeToUpdated, " +
       "comment appended: $commentAppended."
   }
+
+  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
+    toDomainEvent(ALERT_UPDATED, baseUrl)
 }
 
 data class AlertDeletedEvent(
@@ -75,4 +101,7 @@ data class AlertDeletedEvent(
       "by '$deletedBy' " +
       "from source '$source'."
   }
+
+  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
+    toDomainEvent(ALERT_DELETED, baseUrl)
 }

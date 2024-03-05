@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.integration
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -13,6 +14,8 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.context.jdbc.SqlMergeMode
 import org.springframework.test.web.reactive.server.WebTestClient
+import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer.setLocalStackProperties
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.PostgresContainer
@@ -22,8 +25,10 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.Prisoner
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SYNC_SUPPRESS_EVENTS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
+import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
+import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
 
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 @Sql("classpath:test_data/reset-database.sql")
@@ -45,16 +50,17 @@ abstract class IntegrationTestBase {
   lateinit var hmppsQueueService: HmppsQueueService
 
   internal val hmppsDomainQueue by lazy { hmppsQueueService.findByQueueId("hmppsdomainqueue") ?: throw MissingQueueException("HmppsQueue hmppsdomainqueue not found") }
-  internal val hmppsDomainSqsClient by lazy { hmppsDomainQueue.sqsClient }
-  internal val hmppsDomainQueueUrl by lazy { hmppsDomainQueue.queueUrl }
-
   internal val hmppsEventsQueue by lazy { hmppsQueueService.findByQueueId("hmppseventtestqueue") ?: throw MissingQueueException("hmppseventtestqueue queue not found") }
-
   internal val publishQueue by lazy { hmppsQueueService.findByQueueId("publish") ?: throw MissingQueueException("HmppsQueue publish not found") }
-  internal val publishSqsClient by lazy { publishQueue.sqsClient }
-  internal val publishQueueUrl by lazy { publishQueue.queueUrl }
 
   internal val hmppsEventTopic by lazy { hmppsQueueService.findByTopicId("hmppseventtopic") ?: throw MissingQueueException("HmppsTopic hmpps event topic not found") }
+
+  @BeforeEach
+  fun `clear queues`() {
+    hmppsDomainQueue.sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(hmppsDomainQueue.queueUrl).build()).get()
+    hmppsEventsQueue.sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(hmppsEventsQueue.queueUrl).build()).get()
+    publishQueue.sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(publishQueue.queueUrl).build()).get()
+  }
 
   internal fun setAuthorisation(
     user: String? = null,
@@ -74,6 +80,12 @@ abstract class IntegrationTestBase {
   ): (HttpHeaders) -> Unit = {
     it.set(SYNC_SUPPRESS_EVENTS, suppressEvents.toString())
   }
+
+  internal fun HmppsQueue.countAllMessagesOnQueue() =
+    sqsClient.countAllMessagesOnQueue(queueUrl).get()
+
+  internal fun HmppsQueue.receiveMessageOnQueue() =
+    sqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build()).get().messages().single()
 
   companion object {
     private val pgContainer = PostgresContainer.instance

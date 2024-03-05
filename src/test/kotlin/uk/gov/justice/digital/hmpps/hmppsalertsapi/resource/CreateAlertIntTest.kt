@@ -12,10 +12,11 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
-import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -28,8 +29,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THR
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.event.AlertAdditionalInformation
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_HIDDEN_DISABILITY
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_SOCIAL_CARE
@@ -379,15 +378,12 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
     val alert = webTestClient.createAlert(request)
 
-    await untilCallTo { publishQueue.sqsClient.countAllMessagesOnQueue(publishQueue.queueUrl).get() } matches { it == 1 }
-
-    val message = publishQueue.sqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(publishQueue.queueUrl).build()).get().messages().first()
-
-    val event = objectMapper.readValue<AlertDomainEvent>(message.body())
+    await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    val event = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
 
     assertThat(event).isEqualTo(
       AlertDomainEvent(
-        DomainEvent.ALERT_CREATED.eventType,
+        ALERT_CREATED.eventType,
         AlertAdditionalInformation(
           "http://localhost:8080/alerts/${alert.alertUuid}",
           alert.alertUuid,
@@ -396,7 +392,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
           Source.ALERTS_SERVICE,
         ),
         1,
-        DomainEvent.ALERT_CREATED.description,
+        ALERT_CREATED.description,
         alert.createdAt.withNano(event.occurredAt.nano),
       ),
     )

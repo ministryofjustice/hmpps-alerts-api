@@ -329,7 +329,7 @@ Comment '${updateRequest.appendComment}' was added
   fun `retrieve all alerts`() {
     val alert = alert()
     whenever(alertRepository.findAllByPrisonNumber(any())).thenReturn(listOf(alert))
-    val result = underTest.getAlertsForPrisonNumber("ABC123AA")
+    val result = underTest.retrieveAlertsForPrisonNumber("ABC123AA")
     assertThat(result).containsExactly(alert.toAlertModel())
   }
   private fun createAlertRequest(
