@@ -1,7 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
+import org.awaitility.kotlin.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -9,7 +13,11 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
@@ -361,6 +369,32 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(actionedBy).isEqualTo(TEST_USER)
       assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
     }
+  }
+
+  @Test
+  fun `should publish alert created event`() {
+    val request = createAlertRequest()
+
+    val alert = webTestClient.createAlert(request)
+
+    await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    val event = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+
+    assertThat(event).isEqualTo(
+      AlertDomainEvent(
+        ALERT_CREATED.eventType,
+        AlertAdditionalInformation(
+          "http://localhost:8080/alerts/${alert.alertUuid}",
+          alert.alertUuid,
+          request.prisonNumber,
+          request.alertCode,
+          NOMIS,
+        ),
+        1,
+        ALERT_CREATED.description,
+        alert.createdAt.withNano(event.occurredAt.nano),
+      ),
+    )
   }
 
   @Test

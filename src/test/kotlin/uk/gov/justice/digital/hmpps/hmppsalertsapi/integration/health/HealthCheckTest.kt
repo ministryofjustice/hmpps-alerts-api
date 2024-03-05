@@ -27,6 +27,8 @@ class HealthCheckTest : IntegrationTestBase() {
       .jsonPath("components.hmppsAuth.status").isEqualTo("UP")
       .jsonPath("components.manageUsers.status").isEqualTo("UP")
       .jsonPath("components.prisonerSearch.status").isEqualTo("UP")
+      .jsonPath("components.hmppseventtopic-health.status").isEqualTo("UP")
+      .jsonPath("components.publish-health.status").isEqualTo("UP")
   }
 
   @Test
@@ -90,6 +92,58 @@ class HealthCheckTest : IntegrationTestBase() {
       .isOk
       .expectBody()
       .jsonPath("status").isEqualTo("UP")
+  }
+
+  @Test
+  fun `Database reports UP`() {
+    stubPingWithResponse(200)
+
+    webTestClient.get()
+      .uri("/health")
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("status").isEqualTo("UP")
+      .jsonPath("components.db.status").isEqualTo("UP")
+      .jsonPath("components.db.details.database").isEqualTo("PostgreSQL")
+  }
+
+  @Test
+  fun `HMPPS Domain events topic health reports UP`() {
+    stubPingWithResponse(200)
+
+    webTestClient.get()
+      .uri("/health")
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("status").isEqualTo("UP")
+      .jsonPath("components.hmppseventtopic-health.status").isEqualTo("UP")
+      .jsonPath("components.hmppseventtopic-health.details.topicArn").isEqualTo(hmppsEventTopic.arn)
+      .jsonPath("components.hmppseventtopic-health.details.subscriptionsConfirmed").isEqualTo(0)
+      .jsonPath("components.hmppseventtopic-health.details.subscriptionsPending").isEqualTo(0)
+  }
+
+  @Test
+  fun `Publish queue health reports UP`() {
+    stubPingWithResponse(200)
+
+    webTestClient.get()
+      .uri("/health")
+      .exchange()
+      .expectStatus()
+      .isOk
+      .expectBody()
+      .jsonPath("status").isEqualTo("UP")
+      .jsonPath("components.publish-health.status").isEqualTo("UP")
+      .jsonPath("components.publish-health.details.queueName").isEqualTo(publishQueue.queueName)
+      .jsonPath("components.publish-health.details.messagesOnQueue").isEqualTo(0)
+      .jsonPath("components.publish-health.details.messagesInFlight").isEqualTo(0)
+      .jsonPath("components.publish-health.details.dlqName").isEqualTo(publishQueue.dlqName!!)
+      .jsonPath("components.publish-health.details.dlqStatus").isEqualTo("UP")
+      .jsonPath("components.publish-health.details.messagesOnDlq").isEqualTo(0)
   }
 
   private fun stubPingWithResponse(status: Int) {

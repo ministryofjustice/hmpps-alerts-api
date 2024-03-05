@@ -1,12 +1,22 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
+import org.awaitility.kotlin.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
@@ -126,13 +136,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   @Test
   fun `alert deleted`() {
     val alert = createAlert()
-    webTestClient.delete()
-      .uri("/alerts/${alert.alertUuid}")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
-      .exchange()
-      .expectStatus().isNoContent
-      .expectBody().isEmpty
+    webTestClient.deleteAlert(alert.alertUuid)
     val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
 
     with(alertEntity) {
@@ -146,6 +150,36 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       assertThat(actionedBy).isEqualTo(TEST_USER)
       assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
     }
+  }
+
+  @Test
+  fun `should publish alert deleted event`() {
+    val alert = createAlert()
+
+    webTestClient.deleteAlert(alert.alertUuid)
+
+    await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val createAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+    val deleteAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+
+    assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
+    assertThat(createAlertEvent.additionalInformation.alertUuid).isEqualTo(deleteAlertEvent.additionalInformation.alertUuid)
+    assertThat(deleteAlertEvent).isEqualTo(
+      AlertDomainEvent(
+        ALERT_DELETED.eventType,
+        AlertAdditionalInformation(
+          "http://localhost:8080/alerts/${alert.alertUuid}",
+          alert.alertUuid,
+          alert.prisonNumber,
+          alert.alertCode.code,
+          NOMIS,
+        ),
+        1,
+        ALERT_DELETED.description,
+        deleteAlertEvent.occurredAt,
+      ),
+    )
+    assertThat(deleteAlertEvent.occurredAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
   }
 
   private fun createAlertRequest(
@@ -173,4 +207,15 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       .expectBody(Alert::class.java)
       .returnResult().responseBody!!
   }
+
+  private fun WebTestClient.deleteAlert(
+    alertUuid: UUID,
+  ) =
+    delete()
+      .uri("/alerts/$alertUuid")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAlertRequestContext())
+      .exchange()
+      .expectStatus().isNoContent
+      .expectBody().isEmpty
 }

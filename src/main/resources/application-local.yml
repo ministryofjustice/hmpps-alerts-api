@@ -23,3 +23,14 @@ api:
       hmpps-auth: http://localhost:8090/auth
       manage-users: http://localhost:8111
       prisoner-search: http://localhost:8112
+
+hmpps.sqs:
+  provider: localstack
+  localstackUrl: http://localhost:4567
+  queues:
+    publish:
+      queueName: publish-queue
+      dlqName: publish-dlq
+  topics:
+    hmppseventtopic:
+      arn: arn:aws:sns:eu-west-2:000000000000:hmpps-event-topic

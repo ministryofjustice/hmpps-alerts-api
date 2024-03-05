@@ -54,5 +54,5 @@ class PrisonerAlertsController(val alertService: AlertService) {
       required = true,
     )
     prisonNumber: String,
-  ): Collection<Alert> = alertService.getAlertsForPrisonNumber(prisonNumber)
+  ): Collection<Alert> = alertService.retrieveAlertsForPrisonNumber(prisonNumber)
 }

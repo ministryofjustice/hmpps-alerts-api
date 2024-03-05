@@ -1,12 +1,22 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
+import org.awaitility.kotlin.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
@@ -156,15 +166,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `alert updated`() {
     val alert = createAlert()
-    val response = webTestClient.put()
-      .uri("/alerts/${alert.alertUuid}")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
-      .bodyValue(updateAlertRequest())
-      .exchange()
-      .expectStatus().isOk
-      .expectBody(Alert::class.java)
-      .returnResult().responseBody
+    val response = webTestClient.updateAlert(alert.alertUuid, updateAlertRequest())
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(alertEntity.alertCode.code)!!
 
@@ -187,11 +189,11 @@ class UpdateAlertIntTest : IntegrationTestBase() {
       assertThat(auditEventId).isEqualTo(2)
       assertThat(action).isEqualTo(AuditEventAction.UPDATED)
       assertThat(description).isEqualTo(
-        """Updated alert description from Alert description to another new description
-Updated authorised by from A. Authorizer to C Cauthorizer
-Updated active from from ${alert.activeFrom} to ${response.activeFrom}
-Updated active to from null to ${response.activeTo}
-A new comment was added
+        """Updated alert description from 'Alert description' to 'another new description'
+Updated authorised by from 'A. Authorizer' to 'C Cauthorizer'
+Updated active from from '${alert.activeFrom}' to '${response.activeFrom}'
+Updated active to from 'null' to '${response.activeTo}'
+Comment 'Another update alert' was added
 """,
       )
       assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
@@ -204,6 +206,36 @@ A new comment was added
       assertThat(createdBy).isEqualTo(TEST_USER)
       assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
     }
+  }
+
+  @Test
+  fun `should publish alert updated event`() {
+    val alert = createAlert()
+
+    webTestClient.updateAlert(alert.alertUuid, updateAlertRequest())
+
+    await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val createAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+    val updateAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+
+    assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
+    assertThat(createAlertEvent.additionalInformation.alertUuid).isEqualTo(updateAlertEvent.additionalInformation.alertUuid)
+    assertThat(updateAlertEvent).isEqualTo(
+      AlertDomainEvent(
+        ALERT_UPDATED.eventType,
+        AlertAdditionalInformation(
+          "http://localhost:8080/alerts/${alert.alertUuid}",
+          alert.alertUuid,
+          alert.prisonNumber,
+          alert.alertCode.code,
+          NOMIS,
+        ),
+        1,
+        ALERT_UPDATED.description,
+        updateAlertEvent.occurredAt,
+      ),
+    )
+    assertThat(updateAlertEvent.occurredAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
   }
 
   private fun createAlertRequest(
@@ -231,6 +263,7 @@ A new comment was added
       .expectBody(Alert::class.java)
       .returnResult().responseBody!!
   }
+
   private fun updateAlertRequest(comment: String = "Another update alert") =
     UpdateAlert(
       description = "another new description",
@@ -239,4 +272,18 @@ A new comment was added
       activeTo = LocalDate.now().plusMonths(10),
       appendComment = comment,
     )
+
+  private fun WebTestClient.updateAlert(
+    alertUuid: UUID,
+    request: UpdateAlert,
+  ) =
+    put()
+      .uri("/alerts/$alertUuid")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAlertRequestContext())
+      .bodyValue(request)
+      .exchange()
+      .expectStatus().isOk
+      .expectBody(Alert::class.java)
+      .returnResult().responseBody
 }

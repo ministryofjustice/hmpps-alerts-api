@@ -14,7 +14,13 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.Fetch
 import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.SQLRestriction
+import org.springframework.data.domain.AbstractAggregateRoot
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDeletedEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertUpdatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
+import java.lang.StringBuilder
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -42,7 +48,7 @@ data class Alert(
   var activeFrom: LocalDate,
 
   var activeTo: LocalDate?,
-) {
+) : AbstractAggregateRoot<Alert>() {
   fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
 
   fun willBecomeActive() = activeFrom > LocalDate.now()
@@ -105,6 +111,100 @@ data class Alert(
 
   fun deletedAt() = deletedAt
 
+  fun create(
+    createdAt: LocalDateTime = LocalDateTime.now(),
+    createdBy: String,
+    createdByDisplayName: String,
+  ) = apply {
+    auditEvent(
+      action = AuditEventAction.CREATED,
+      description = "Alert created",
+      actionedAt = createdAt,
+      actionedBy = createdBy,
+      actionedByDisplayName = createdByDisplayName,
+    )
+    registerEvent(
+      AlertCreatedEvent(
+        alertUuid = alertUuid,
+        prisonNumber = prisonNumber,
+        alertCode = alertCode.code,
+        occurredAt = createdAt,
+        source = NOMIS,
+        createdBy = createdBy,
+      ),
+    )
+  }
+
+  fun update(
+    description: String?,
+    authorisedBy: String?,
+    activeFrom: LocalDate?,
+    activeTo: LocalDate?,
+    appendComment: String?,
+    updatedAt: LocalDateTime = LocalDateTime.now(),
+    updatedBy: String,
+    updatedByDisplayName: String,
+  ) = apply {
+    val descriptionUpdated = description != null && this.description != description
+    val authorisedByUpdated = authorisedBy != null && this.authorisedBy != authorisedBy
+    val activeFromUpdated = activeFrom != null && this.activeFrom != activeFrom
+    val activeToUpdated = this.activeTo != activeTo
+    val commentAppended = !appendComment.isNullOrEmpty()
+    var updated = false
+
+    val sb = StringBuilder()
+    if (descriptionUpdated) {
+      sb.appendLine("Updated alert description from '${this.description}' to '$description'")
+      this.description = description
+      updated = true
+    }
+    if (authorisedByUpdated) {
+      sb.appendLine("Updated authorised by from '${this.authorisedBy}' to '$authorisedBy'")
+      this.authorisedBy = authorisedBy
+      updated = true
+    }
+    if (activeFromUpdated) {
+      sb.appendLine("Updated active from from '${this.activeFrom}' to '$activeFrom'")
+      this.activeFrom = activeFrom!!
+      updated = true
+    }
+    if (activeToUpdated) {
+      sb.appendLine("Updated active to from '${this.activeTo}' to '$activeTo'")
+      this.activeTo = activeTo
+      updated = true
+    }
+    if (commentAppended) {
+      sb.appendLine("Comment '$appendComment' was added")
+      addComment(comment = appendComment!!, createdAt = updatedAt, createdBy = updatedBy, createdByDisplayName = updatedByDisplayName)
+      updated = true
+    }
+
+    if (updated) {
+      auditEvent(
+        action = AuditEventAction.UPDATED,
+        description = sb.toString(),
+        actionedAt = updatedAt,
+        actionedBy = updatedBy,
+        actionedByDisplayName = updatedByDisplayName,
+      )
+      registerEvent(
+        AlertUpdatedEvent(
+          alertUuid = alertUuid,
+          prisonNumber = prisonNumber,
+          alertCode = alertCode.code,
+          occurredAt = updatedAt,
+          source = NOMIS,
+          updatedBy = updatedBy,
+          descriptionUpdated = descriptionUpdated,
+          authorisedByUpdated = authorisedByUpdated,
+          activeFromUpdated = activeFromUpdated,
+          activeToUpdated = activeToUpdated,
+          commentAppended = commentAppended,
+        ),
+      )
+    }
+  }
+
   fun delete(
     deletedAt: LocalDateTime = LocalDateTime.now(),
     deletedBy: String,
@@ -117,6 +217,17 @@ data class Alert(
       actionedAt = deletedAt,
       actionedBy = deletedBy,
       actionedByDisplayName = deletedByDisplayName,
-    )
+    ).also {
+      registerEvent(
+        AlertDeletedEvent(
+          alertUuid = alertUuid,
+          prisonNumber = prisonNumber,
+          alertCode = alertCode.code,
+          occurredAt = deletedAt,
+          source = NOMIS,
+          deletedBy = deletedBy,
+        ),
+      )
+    }
   }
 }
