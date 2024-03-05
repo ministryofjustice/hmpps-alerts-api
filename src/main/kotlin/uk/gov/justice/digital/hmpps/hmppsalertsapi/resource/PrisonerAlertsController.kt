@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -17,11 +16,12 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @RestController
 @RequestMapping("/prisoner/{prisonNumber}/alerts", produces = [MediaType.APPLICATION_JSON_VALUE])
-class PrisonerAlertsController {
+class PrisonerAlertsController(val alertService: AlertService) {
   @ResponseStatus(HttpStatus.OK)
   @GetMapping()
   @Operation(
@@ -44,11 +44,6 @@ class PrisonerAlertsController {
         description = "Forbidden, requires an appropriate role",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
-      ApiResponse(
-        responseCode = "404",
-        description = "The alert associated with this identifier was not found.",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_ALERTS_ADMIN', '$PRISON')")
@@ -59,6 +54,5 @@ class PrisonerAlertsController {
       required = true,
     )
     prisonNumber: String,
-    request: HttpServletRequest,
-  ): Collection<Alert> = throw NotImplementedError()
+  ): Collection<Alert> = alertService.getAlertsForPrisonNumber(prisonNumber)
 }

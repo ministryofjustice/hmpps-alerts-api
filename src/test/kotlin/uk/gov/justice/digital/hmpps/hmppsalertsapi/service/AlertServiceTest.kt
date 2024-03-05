@@ -324,6 +324,14 @@ A new comment was added
     assertThat(savedAlert.auditEvents()[0].action).isEqualTo(AuditEventAction.DELETED)
     assertThat(savedAlert.auditEvents()[0].description).isEqualTo("Alert deleted")
   }
+
+  @Test
+  fun `retrieve all alerts`() {
+    val alert = alert()
+    whenever(alertRepository.findAllByPrisonNumber(any())).thenReturn(listOf(alert))
+    val result = underTest.getAlertsForPrisonNumber("ABC123AA")
+    assertThat(result).containsExactly(alert.toAlertModel())
+  }
   private fun createAlertRequest(
     prisonNumber: String = PRISON_NUMBER,
     alertCode: String = ALERT_CODE_VICTIM,
