@@ -10,6 +10,12 @@ abstract class DomainEvent<T : AdditionalInformation> {
   abstract val version: Int
   abstract val description: String
   abstract val occurredAt: LocalDateTime
+
+  override fun toString(): String {
+    return "v$version domain event '$eventType' " +
+      "for resource '${additionalInformation.url}' " +
+      "from source '${additionalInformation.source}'"
+  }
 }
 
 abstract class AdditionalInformation {
@@ -23,7 +29,15 @@ data class AlertDomainEvent(
   override val version: Int = 1,
   override val description: String,
   override val occurredAt: LocalDateTime = LocalDateTime.now(),
-) : DomainEvent<AlertAdditionalInformation>()
+) : DomainEvent<AlertAdditionalInformation>() {
+  override fun toString(): String {
+    return "v$version alert domain event '$eventType' " +
+      "for alert with UUID '${additionalInformation.alertUuid}' " +
+      "for prison number '${additionalInformation.prisonNumber}' " +
+      "with alert code '${additionalInformation.alertCode}' " +
+      "from source '${additionalInformation.source}'"
+  }
+}
 
 data class AlertAdditionalInformation(
   override val url: String,

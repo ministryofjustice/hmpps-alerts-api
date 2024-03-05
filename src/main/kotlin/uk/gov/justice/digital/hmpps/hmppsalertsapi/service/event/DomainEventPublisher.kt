@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service.event
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AdditionalInformation
@@ -22,6 +24,14 @@ class DomainEventPublisher(
       .messageBody(objectMapper.writeValueAsString(domainEvent))
       .build()
 
-    publishSqsClient.sendMessage(request).get()
+    runCatching {
+      publishSqsClient.sendMessage(request).get()
+    }.onFailure {
+      log.error("Failed to publish '$domainEvent'", it)
+    }
+  }
+
+  private companion object {
+    private val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }
