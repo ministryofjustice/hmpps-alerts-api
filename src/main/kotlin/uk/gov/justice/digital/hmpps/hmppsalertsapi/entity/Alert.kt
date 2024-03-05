@@ -211,23 +211,23 @@ data class Alert(
     deletedByDisplayName: String,
   ): AuditEvent {
     this.deletedAt = deletedAt
-    val auditEvent = auditEvent(
+    return auditEvent(
       action = AuditEventAction.DELETED,
       description = "Alert deleted",
       actionedAt = deletedAt,
       actionedBy = deletedBy,
       actionedByDisplayName = deletedByDisplayName,
-    )
-    registerEvent(
-      AlertDeletedEvent(
-        alertUuid = alertUuid,
-        prisonNumber = prisonNumber,
-        alertCode = alertCode.code,
-        occurredAt = deletedAt,
-        source = NOMIS,
-        deletedBy = deletedBy,
-      ),
-    )
-    return auditEvent
+    ).also {
+      registerEvent(
+        AlertDeletedEvent(
+          alertUuid = alertUuid,
+          prisonNumber = prisonNumber,
+          alertCode = alertCode.code,
+          occurredAt = deletedAt,
+          source = NOMIS,
+          deletedBy = deletedBy,
+        ),
+      )
+    }
   }
 }
