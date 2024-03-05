@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalI
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
@@ -35,7 +35,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_SOCIAL_CARE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
-import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
@@ -389,7 +388,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
           alert.alertUuid,
           request.prisonNumber,
           request.alertCode,
-          Source.ALERTS_SERVICE,
+          NOMIS,
         ),
         1,
         ALERT_CREATED.description,

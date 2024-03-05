@@ -19,7 +19,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEven
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDeletedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertUpdatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import java.lang.StringBuilder
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -129,7 +129,7 @@ data class Alert(
         prisonNumber = prisonNumber,
         alertCode = alertCode.code,
         occurredAt = createdAt,
-        source = Source.ALERTS_SERVICE,
+        source = NOMIS,
         createdBy = createdBy,
       ),
     )
@@ -193,7 +193,7 @@ data class Alert(
           prisonNumber = prisonNumber,
           alertCode = alertCode.code,
           occurredAt = updatedAt,
-          source = Source.ALERTS_SERVICE,
+          source = NOMIS,
           updatedBy = updatedBy,
           descriptionUpdated = descriptionUpdated,
           authorisedByUpdated = authorisedByUpdated,
@@ -224,7 +224,7 @@ data class Alert(
         prisonNumber = prisonNumber,
         alertCode = alertCode.code,
         occurredAt = deletedAt,
-        source = Source.ALERTS_SERVICE,
+        source = NOMIS,
         deletedBy = deletedBy,
       ),
     )

@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
@@ -172,7 +172,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
           alert.alertUuid,
           alert.prisonNumber,
           alert.alertCode.code,
-          Source.ALERTS_SERVICE,
+          NOMIS,
         ),
         1,
         ALERT_DELETED.description,
