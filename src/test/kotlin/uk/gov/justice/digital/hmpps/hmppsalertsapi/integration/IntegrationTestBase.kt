@@ -49,7 +49,6 @@ abstract class IntegrationTestBase {
   @SpyBean
   lateinit var hmppsQueueService: HmppsQueueService
 
-  internal val hmppsDomainQueue by lazy { hmppsQueueService.findByQueueId("hmppsdomainqueue") ?: throw MissingQueueException("HmppsQueue hmppsdomainqueue not found") }
   internal val hmppsEventsQueue by lazy { hmppsQueueService.findByQueueId("hmppseventtestqueue") ?: throw MissingQueueException("hmppseventtestqueue queue not found") }
   internal val publishQueue by lazy { hmppsQueueService.findByQueueId("publish") ?: throw MissingQueueException("HmppsQueue publish not found") }
 
@@ -57,7 +56,6 @@ abstract class IntegrationTestBase {
 
   @BeforeEach
   fun `clear queues`() {
-    hmppsDomainQueue.sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(hmppsDomainQueue.queueUrl).build()).get()
     hmppsEventsQueue.sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(hmppsEventsQueue.queueUrl).build()).get()
     publishQueue.sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(publishQueue.queueUrl).build()).get()
   }

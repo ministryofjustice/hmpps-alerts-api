@@ -26,10 +26,8 @@ api:
 
 hmpps.sqs:
   provider: localstack
+  localstackUrl: http://localhost:4567
   queues:
-    hmppsdomainqueue:
-      queueName: hmpps-domain-queue
-      dlqName: hmpps-domain-dlq
     publish:
       queueName: publish-queue
       dlqName: publish-dlq
