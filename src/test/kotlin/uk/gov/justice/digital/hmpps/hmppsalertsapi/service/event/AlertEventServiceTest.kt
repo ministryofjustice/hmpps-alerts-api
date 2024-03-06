@@ -21,13 +21,14 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 class AlertEventServiceTest {
+  private val telemetryClient = mock<TelemetryClient>()
+  private val domainEventPublisher = mock<DomainEventPublisher>()
+
   private val baseUrl = "http://localhost:8080"
 
   @Test
   fun `handle alert event - publish enabled`() {
     val eventProperties = EventProperties(true, baseUrl)
-    val telemetryClient = mock<TelemetryClient>()
-    val domainEventPublisher = mock<DomainEventPublisher>()
     val alertEventService = AlertEventService(eventProperties, telemetryClient, domainEventPublisher)
     val alertEvent = AlertCreatedEvent(
       UUID.randomUUID(),
@@ -61,8 +62,6 @@ class AlertEventServiceTest {
   @Test
   fun `handle alert event - publish disabled`() {
     val eventProperties = EventProperties(false, baseUrl)
-    val telemetryClient = mock<TelemetryClient>()
-    val domainEventPublisher = mock<DomainEventPublisher>()
     val alertEventService = AlertEventService(eventProperties, telemetryClient, domainEventPublisher)
     val alertEvent = AlertCreatedEvent(
       UUID.randomUUID(),

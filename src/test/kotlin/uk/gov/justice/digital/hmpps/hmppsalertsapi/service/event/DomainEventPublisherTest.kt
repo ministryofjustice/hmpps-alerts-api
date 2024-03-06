@@ -20,16 +20,16 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 class DomainEventPublisherTest {
+  private val hmppsQueueService = mock<HmppsQueueService>()
+  private val publishQueue = mock<HmppsQueue>()
+  private val publishSqsClient = mock<SqsAsyncClient>()
   private val objectMapper = testObjectMapper()
 
+  private val publishQueueUrl = "publish-queue-url"
   private val baseUrl = "http://localhost:8080"
 
   @Test
   fun `publish alert event`() {
-    val hmppsQueueService = mock<HmppsQueueService>()
-    val publishQueue = mock<HmppsQueue>()
-    val publishSqsClient = mock<SqsAsyncClient>()
-    val publishQueueUrl = "publish-queue-url"
     whenever(hmppsQueueService.findByQueueId("publish")).thenReturn(publishQueue)
     whenever(publishQueue.sqsClient).thenReturn(publishSqsClient)
     whenever(publishQueue.queueUrl).thenReturn(publishQueueUrl)
@@ -60,10 +60,6 @@ class DomainEventPublisherTest {
 
   @Test
   fun `publish alert event - failure`() {
-    val hmppsQueueService = mock<HmppsQueueService>()
-    val publishQueue = mock<HmppsQueue>()
-    val publishSqsClient = mock<SqsAsyncClient>()
-    val publishQueueUrl = "publish-queue-url"
     whenever(hmppsQueueService.findByQueueId("publish")).thenReturn(publishQueue)
     whenever(publishQueue.sqsClient).thenReturn(publishSqsClient)
     whenever(publishQueue.queueUrl).thenReturn(publishQueueUrl)
