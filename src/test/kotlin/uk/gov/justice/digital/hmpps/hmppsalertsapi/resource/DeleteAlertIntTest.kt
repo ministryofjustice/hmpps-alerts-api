@@ -16,8 +16,11 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.ALERTS_SERVICE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
@@ -69,6 +72,26 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
+  }
+
+  @Test
+  fun `400 bad request - invalid source`() {
+    val response = webTestClient.delete()
+      .uri("/alerts/$uuid")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers { it.set(SOURCE, "INVALID") }
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: No enum constant uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.INVALID")
+      assertThat(developerMessage).isEqualTo("No enum constant uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.INVALID")
+      assertThat(moreInfo).isNull()
+    }
   }
 
   @Test
@@ -153,10 +176,60 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should publish alert deleted event`() {
+  fun `should populate deleted by display name using Username header when source is NOMIS`() {
     val alert = createAlert()
 
-    webTestClient.deleteAlert(alert.alertUuid)
+    webTestClient.delete()
+      .uri("/alerts/${alert.alertUuid}")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAlertRequestContext(source = NOMIS, username = NOMIS_SYS_USER))
+      .exchange()
+      .expectStatus().isNoContent
+      .expectBody().isEmpty
+
+    val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
+
+    with(alertEntity.auditEvents()[0]) {
+      assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
+      assertThat(actionedByDisplayName).isEqualTo(NOMIS_SYS_USER)
+    }
+  }
+
+  @Test
+  fun `should publish alert deleted event with ALERTS_SERVICE source`() {
+    val alert = createAlert()
+
+    webTestClient.deleteAlert(alert.alertUuid, ALERTS_SERVICE)
+
+    await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val createAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+    val deleteAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+
+    assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
+    assertThat(createAlertEvent.additionalInformation.alertUuid).isEqualTo(deleteAlertEvent.additionalInformation.alertUuid)
+    assertThat(deleteAlertEvent).isEqualTo(
+      AlertDomainEvent(
+        ALERT_DELETED.eventType,
+        AlertAdditionalInformation(
+          "http://localhost:8080/alerts/${alert.alertUuid}",
+          alert.alertUuid,
+          alert.prisonNumber,
+          alert.alertCode.code,
+          ALERTS_SERVICE,
+        ),
+        1,
+        ALERT_DELETED.description,
+        deleteAlertEvent.occurredAt,
+      ),
+    )
+    assertThat(deleteAlertEvent.occurredAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+  }
+
+  @Test
+  fun `should publish alert deleted event with NOMIS source`() {
+    val alert = createAlert()
+
+    webTestClient.deleteAlert(alert.alertUuid, NOMIS)
 
     await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val createAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
@@ -210,11 +283,12 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
   private fun WebTestClient.deleteAlert(
     alertUuid: UUID,
+    source: Source = ALERTS_SERVICE,
   ) =
     delete()
       .uri("/alerts/$alertUuid")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
+      .headers(setAlertRequestContext(source = source))
       .exchange()
       .expectStatus().isNoContent
       .expectBody().isEmpty

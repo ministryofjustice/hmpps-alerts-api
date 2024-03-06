@@ -17,8 +17,11 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalI
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.ALERTS_SERVICE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_THROW_EXCEPTION
@@ -74,6 +77,26 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
+  }
+
+  @Test
+  fun `400 bad request - invalid source`() {
+    val response = webTestClient.post()
+      .uri("/alerts")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers { it.set(SOURCE, "INVALID") }
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: No enum constant uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.INVALID")
+      assertThat(developerMessage).isEqualTo("No enum constant uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.INVALID")
+      assertThat(moreInfo).isNull()
+    }
   }
 
   @Test
@@ -140,7 +163,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `400 bad request - prisoner not found`() {
     val request = createAlertRequest(prisonNumber = PRISON_NUMBER_NOT_FOUND)
 
-    val response = webTestClient.createAlertResponseSpec(request)
+    val response = webTestClient.createAlertResponseSpec(request = request)
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody
@@ -158,7 +181,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `400 bad request - alert code not found`() {
     val request = createAlertRequest(alertCode = "NOT_FOUND")
 
-    val response = webTestClient.createAlertResponseSpec(request)
+    val response = webTestClient.createAlertResponseSpec(request = request)
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody
@@ -176,7 +199,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `400 bad request - alert code is inactive`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
 
-    val response = webTestClient.createAlertResponseSpec(request)
+    val response = webTestClient.createAlertResponseSpec(request = request)
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody
@@ -313,10 +336,31 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `should populate created by display name using Username header when source is NOMIS`() {
+    val request = createAlertRequest()
+
+    val alert = webTestClient.post()
+      .uri("/alerts")
+      .bodyValue(request)
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAlertRequestContext(source = NOMIS, username = NOMIS_SYS_USER))
+      .exchange()
+      .expectStatus().isCreated
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody(AlertModel::class.java)
+      .returnResult().responseBody!!
+
+    with(alert) {
+      assertThat(createdBy).isEqualTo(NOMIS_SYS_USER)
+      assertThat(createdByDisplayName).isEqualTo(NOMIS_SYS_USER)
+    }
+  }
+
+  @Test
   fun `should return populated alert model`() {
     val request = createAlertRequest()
 
-    val alert = webTestClient.createAlert(request)
+    val alert = webTestClient.createAlert(request = request)
 
     assertThat(alert).isEqualTo(
       AlertModel(
@@ -344,7 +388,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `should create new alert`() {
     val request = createAlertRequest()
 
-    val alert = webTestClient.createAlert(request)
+    val alert = webTestClient.createAlert(request = request)
 
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
@@ -372,10 +416,36 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should publish alert created event`() {
+  fun `should publish alert created event with ALERTS_SERVICE source`() {
     val request = createAlertRequest()
 
-    val alert = webTestClient.createAlert(request)
+    val alert = webTestClient.createAlert(source = ALERTS_SERVICE, request = request)
+
+    await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    val event = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+
+    assertThat(event).isEqualTo(
+      AlertDomainEvent(
+        ALERT_CREATED.eventType,
+        AlertAdditionalInformation(
+          "http://localhost:8080/alerts/${alert.alertUuid}",
+          alert.alertUuid,
+          request.prisonNumber,
+          request.alertCode,
+          ALERTS_SERVICE,
+        ),
+        1,
+        ALERT_CREATED.description,
+        alert.createdAt.withNano(event.occurredAt.nano),
+      ),
+    )
+  }
+
+  @Test
+  fun `should publish alert created event with NOMIS source`() {
+    val request = createAlertRequest()
+
+    val alert = webTestClient.createAlert(source = NOMIS, request = request)
 
     await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val event = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
@@ -402,7 +472,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `409 conflict - active alert with code already exists for prison number - alert active from today with no active to date`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_HIDDEN_DISABILITY)
 
-    val response = webTestClient.createAlertResponseSpec(request)
+    val response = webTestClient.createAlertResponseSpec(request = request)
       .expectStatus().isEqualTo(HttpStatus.CONFLICT)
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody
@@ -421,7 +491,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `400 bad request - active alert with code already exists for prison number - alert active from today with no active to date - alert code inactive`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
 
-    val response = webTestClient.createAlertResponseSpec(request)
+    val response = webTestClient.createAlertResponseSpec(request = request)
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody
@@ -440,7 +510,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `409 conflict - active alert with code already exists for prison number - alert active from tomorrow with no active to date`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_SOCIAL_CARE)
 
-    val response = webTestClient.createAlertResponseSpec(request)
+    val response = webTestClient.createAlertResponseSpec(request = request)
       .expectStatus().isEqualTo(HttpStatus.CONFLICT)
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody
@@ -459,7 +529,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `201 created - alert with code already exists for inactive alert`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_VICTIM)
 
-    val alert = webTestClient.createAlert(request)
+    val alert = webTestClient.createAlert(request = request)
 
     assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
   }
@@ -478,20 +548,22 @@ class CreateAlertIntTest : IntegrationTestBase() {
     )
 
   private fun WebTestClient.createAlertResponseSpec(
+    source: Source = ALERTS_SERVICE,
     request: CreateAlert,
   ) =
     post()
       .uri("/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
+      .headers(setAlertRequestContext(source = source))
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
   private fun WebTestClient.createAlert(
+    source: Source = ALERTS_SERVICE,
     request: CreateAlert,
   ) =
-    createAlertResponseSpec(request)
+    createAlertResponseSpec(source, request)
       .expectStatus().isCreated
       .expectBody(AlertModel::class.java)
       .returnResult().responseBody!!

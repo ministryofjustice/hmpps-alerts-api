@@ -16,8 +16,11 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.ALERTS_SERVICE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
@@ -76,6 +79,26 @@ class UpdateAlertIntTest : IntegrationTestBase() {
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
+  }
+
+  @Test
+  fun `400 bad request - invalid source`() {
+    val response = webTestClient.put()
+      .uri("/alerts/$uuid")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers { it.set(SOURCE, "INVALID") }
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: No enum constant uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.INVALID")
+      assertThat(developerMessage).isEqualTo("No enum constant uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.INVALID")
+      assertThat(moreInfo).isNull()
+    }
   }
 
   @Test
@@ -166,7 +189,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `alert updated`() {
     val alert = createAlert()
-    val response = webTestClient.updateAlert(alert.alertUuid, updateAlertRequest())
+    val response = webTestClient.updateAlert(alert.alertUuid, request = updateAlertRequest())
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(alertEntity.alertCode.code)!!
 
@@ -209,10 +232,62 @@ Comment 'Another update alert' was added
   }
 
   @Test
-  fun `should publish alert updated event`() {
+  fun `should populate updated by display name using Username header when source is NOMIS`() {
     val alert = createAlert()
 
-    webTestClient.updateAlert(alert.alertUuid, updateAlertRequest())
+    webTestClient.put()
+      .uri("/alerts/${alert.alertUuid}")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAlertRequestContext(source = NOMIS, username = NOMIS_SYS_USER))
+      .bodyValue(updateAlertRequest())
+      .exchange()
+      .expectStatus().isOk
+      .expectBody(Alert::class.java)
+      .returnResult().responseBody
+
+    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+
+    with(alertEntity.auditEvents()[0]) {
+      assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
+      assertThat(actionedByDisplayName).isEqualTo(NOMIS_SYS_USER)
+    }
+  }
+
+  @Test
+  fun `should publish alert updated event with ALERTS_SERVICE source`() {
+    val alert = createAlert()
+
+    webTestClient.updateAlert(alert.alertUuid, ALERTS_SERVICE, updateAlertRequest())
+
+    await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val createAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+    val updateAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+
+    assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
+    assertThat(createAlertEvent.additionalInformation.alertUuid).isEqualTo(updateAlertEvent.additionalInformation.alertUuid)
+    assertThat(updateAlertEvent).isEqualTo(
+      AlertDomainEvent(
+        ALERT_UPDATED.eventType,
+        AlertAdditionalInformation(
+          "http://localhost:8080/alerts/${alert.alertUuid}",
+          alert.alertUuid,
+          alert.prisonNumber,
+          alert.alertCode.code,
+          ALERTS_SERVICE,
+        ),
+        1,
+        ALERT_UPDATED.description,
+        updateAlertEvent.occurredAt,
+      ),
+    )
+    assertThat(updateAlertEvent.occurredAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+  }
+
+  @Test
+  fun `should publish alert updated event with NOMIS source`() {
+    val alert = createAlert()
+
+    webTestClient.updateAlert(alert.alertUuid, NOMIS, updateAlertRequest())
 
     await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val createAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
@@ -275,12 +350,13 @@ Comment 'Another update alert' was added
 
   private fun WebTestClient.updateAlert(
     alertUuid: UUID,
+    source: Source = ALERTS_SERVICE,
     request: UpdateAlert,
   ) =
     put()
       .uri("/alerts/$alertUuid")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
+      .headers(setAlertRequestContext(source = source))
       .bodyValue(request)
       .exchange()
       .expectStatus().isOk

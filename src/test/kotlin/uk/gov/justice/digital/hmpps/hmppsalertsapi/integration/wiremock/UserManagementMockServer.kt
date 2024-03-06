@@ -18,6 +18,7 @@ internal const val TEST_USER = "TEST_USER"
 internal const val TEST_USER_NAME = "Test User"
 internal const val USER_NOT_FOUND = "USER_NOT_FOUND"
 internal const val USER_THROW_EXCEPTION = "USER_THROW_EXCEPTION"
+internal const val NOMIS_SYS_USER = "SYS"
 
 class ManageUsersServer : WireMockServer(8111) {
   private val mapper: ObjectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
