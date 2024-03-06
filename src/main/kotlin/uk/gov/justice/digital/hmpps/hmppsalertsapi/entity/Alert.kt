@@ -149,7 +149,8 @@ data class Alert(
     val authorisedByUpdated = authorisedBy != null && this.authorisedBy != authorisedBy
     val activeFromUpdated = activeFrom != null && this.activeFrom != activeFrom
     val activeToUpdated = this.activeTo != activeTo
-    val commentAppended = !appendComment.isNullOrEmpty()
+    val trimmedAppendComment = appendComment?.trim()
+    val commentAppended = !trimmedAppendComment.isNullOrEmpty()
     var updated = false
 
     val sb = StringBuilder()
@@ -174,8 +175,8 @@ data class Alert(
       updated = true
     }
     if (commentAppended) {
-      sb.appendLine("Comment '$appendComment' was added")
-      addComment(comment = appendComment!!, createdAt = updatedAt, createdBy = updatedBy, createdByDisplayName = updatedByDisplayName)
+      sb.appendLine("Comment '$trimmedAppendComment' was added")
+      addComment(comment = trimmedAppendComment!!, createdAt = updatedAt, createdBy = updatedBy, createdByDisplayName = updatedByDisplayName)
       updated = true
     }
 
@@ -230,4 +231,10 @@ data class Alert(
       )
     }
   }
+
+  /**
+   * Function exists for testing purposes. The AbstractAggregateRoot.domainEvents() function is protected so this
+   * function supports testing the correct domain events have been registered
+   */
+  internal fun publishedDomainEvents() = this.domainEvents()
 }
