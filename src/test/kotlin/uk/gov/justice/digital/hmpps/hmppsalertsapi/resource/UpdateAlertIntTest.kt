@@ -105,7 +105,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
       .uri("/alerts/$uuid")
       .bodyValue(updateAlertRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext(USER_NOT_FOUND))
+      .headers(setAlertRequestContext(username = USER_NOT_FOUND))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)

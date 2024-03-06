@@ -97,7 +97,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
     val response = webTestClient.delete()
       .uri("/alerts/$uuid")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext(USER_NOT_FOUND))
+      .headers(setAlertRequestContext(username = USER_NOT_FOUND))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)

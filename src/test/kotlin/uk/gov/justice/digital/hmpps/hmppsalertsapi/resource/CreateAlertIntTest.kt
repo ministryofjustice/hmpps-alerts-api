@@ -101,7 +101,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .uri("/alerts")
       .bodyValue(createAlertRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext(USER_NOT_FOUND))
+      .headers(setAlertRequestContext(username = USER_NOT_FOUND))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
@@ -215,7 +215,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .uri("/alerts")
       .bodyValue(createAlertRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext(USER_THROW_EXCEPTION))
+      .headers(setAlertRequestContext(username = USER_THROW_EXCEPTION))
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
       .expectBody(ErrorResponse::class.java)
