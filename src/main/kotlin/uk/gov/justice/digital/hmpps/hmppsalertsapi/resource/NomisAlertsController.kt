@@ -119,7 +119,6 @@ class NomisAlertsController(
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_NOMIS_ALERTS', '$ROLE_ALERTS_ADMIN')")
-  @SyncSuppressEventsHeader
   fun upsertNomisAlert(
     @Valid
     @RequestBody
