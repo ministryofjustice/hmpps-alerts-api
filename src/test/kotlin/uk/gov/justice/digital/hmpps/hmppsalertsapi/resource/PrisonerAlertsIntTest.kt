@@ -2,22 +2,16 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import java.time.LocalDate
 
 class PrisonerAlertsIntTest : IntegrationTestBase() {
-
-  @Autowired
-  lateinit var alertRepository: AlertRepository
-
   @Test
   fun `401 unauthorised`() {
     webTestClient.get()
@@ -70,7 +64,6 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
       .expectStatus().isOk
       .expectBodyList(Alert::class.java)
       .returnResult().responseBody
-    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val compareTo = objectMapper.readValue(objectMapper.writeValueAsString(alert), Alert::class.java)
     with(response!!) {
       assertThat(this).containsExactly(

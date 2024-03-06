@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertUpdatedEven
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.UPDATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.ALERTS_SERVICE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
@@ -237,7 +238,7 @@ class AlertTest {
       authorisedBy = "A. Authorizer",
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
-    ).create(createdAt, createdBy, createdByDisplayName)
+    ).create(createdAt, createdBy, createdByDisplayName, ALERTS_SERVICE)
 
     assertThat(entity.auditEvents().single()).isEqualTo(
       AuditEvent(
@@ -256,6 +257,7 @@ class AlertTest {
     val createdAt = LocalDateTime.now()
     val createdBy = "CREATED_BY"
     val createdByDisplayName = "CREATED_BY_DISPLAY_NAME"
+    val source = ALERTS_SERVICE
 
     val entity = Alert(
       alertUuid = UUID.randomUUID(),
@@ -265,7 +267,7 @@ class AlertTest {
       authorisedBy = "A. Authorizer",
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
-    ).create(createdAt, createdBy, createdByDisplayName)
+    ).create(createdAt, createdBy, createdByDisplayName, source)
 
     assertThat(entity.publishedDomainEvents().single()).isEqualTo(
       AlertCreatedEvent(
@@ -273,7 +275,7 @@ class AlertTest {
         prisonNumber = entity.prisonNumber,
         alertCode = entity.alertCode.code,
         occurredAt = createdAt,
-        source = NOMIS,
+        source = source,
         createdBy = createdBy,
       ),
     )
@@ -308,6 +310,7 @@ class AlertTest {
       updatedAt = updatedAt,
       updatedBy = updatedBy,
       updatedByDisplayName = updatedByDisplayName,
+      source = ALERTS_SERVICE,
     )
 
     assertThat(entity.auditEvents().single { it.action == UPDATED }).isEqualTo(
@@ -328,6 +331,7 @@ class AlertTest {
     val updatedAt = LocalDateTime.now()
     val updatedBy = "UPDATED_BY"
     val updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME"
+    val source = NOMIS
 
     entity.update(
       description = "Updated description",
@@ -338,6 +342,7 @@ class AlertTest {
       updatedAt = updatedAt,
       updatedBy = updatedBy,
       updatedByDisplayName = updatedByDisplayName,
+      source = source,
     )
 
     assertThat(entity.publishedDomainEvents().single()).isEqualTo(
@@ -346,7 +351,7 @@ class AlertTest {
         prisonNumber = entity.prisonNumber,
         alertCode = entity.alertCode.code,
         occurredAt = updatedAt,
-        source = NOMIS,
+        source = source,
         updatedBy = updatedBy,
         descriptionUpdated = true,
         authorisedByUpdated = true,
@@ -369,6 +374,7 @@ class AlertTest {
       appendComment = null,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+      source = ALERTS_SERVICE,
     )
 
     assertThat(entity.description).isNotNull()
@@ -388,6 +394,7 @@ class AlertTest {
       appendComment = null,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+      source = NOMIS,
     )
 
     assertThat(entity.description).isNotNull()
@@ -407,6 +414,7 @@ class AlertTest {
       appendComment = null,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+      source = ALERTS_SERVICE,
     )
 
     assertThat(entity.description).isNotNull()
@@ -426,6 +434,7 @@ class AlertTest {
       appendComment = null,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+      source = NOMIS,
     )
 
     assertThat(entity.description).isNotNull()
@@ -445,6 +454,7 @@ class AlertTest {
       appendComment = null,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+      source = ALERTS_SERVICE,
     )
 
     assertThat(entity.description).isNotNull()
@@ -464,6 +474,7 @@ class AlertTest {
       appendComment = "",
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+      source = NOMIS,
     )
 
     assertThat(entity.description).isNotNull()
@@ -483,6 +494,7 @@ class AlertTest {
       appendComment = "     ",
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+      source = ALERTS_SERVICE,
     )
 
     assertThat(entity.description).isNotNull()
@@ -494,6 +506,7 @@ class AlertTest {
   fun `update alert description only`() {
     val entity = alertEntity()
     val updatedDescription = "Updated description"
+    val source = NOMIS
     val expectedDescription = "Updated alert description from '${entity.description}' to '$updatedDescription'\n"
 
     entity.update(
@@ -504,10 +517,12 @@ class AlertTest {
       appendComment = null,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+      source = source,
     )
 
     assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
+      assertThat(source).isEqualTo(source)
       assertThat(descriptionUpdated).isTrue
       assertThat(authorisedByUpdated).isFalse
       assertThat(activeFromUpdated).isFalse
@@ -520,6 +535,7 @@ class AlertTest {
   fun `update alert authorised by only`() {
     val entity = alertEntity()
     val updatedAuthorisedBy = "Updated authorised by"
+    val source = ALERTS_SERVICE
     val expectedDescription = "Updated authorised by from '${entity.authorisedBy}' to '$updatedAuthorisedBy'\n"
 
     entity.update(
@@ -530,10 +546,12 @@ class AlertTest {
       appendComment = null,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+      source = source,
     )
 
     assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
+      assertThat(source).isEqualTo(source)
       assertThat(descriptionUpdated).isFalse
       assertThat(authorisedByUpdated).isTrue
       assertThat(activeFromUpdated).isFalse
@@ -546,6 +564,7 @@ class AlertTest {
   fun `update alert active from only`() {
     val entity = alertEntity()
     val updatedActiveFrom = entity.activeFrom.plusDays(1)
+    val source = NOMIS
     val expectedDescription = "Updated active from from '${entity.activeFrom}' to '$updatedActiveFrom'\n"
 
     entity.update(
@@ -556,10 +575,12 @@ class AlertTest {
       appendComment = null,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+      source = source,
     )
 
     assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
+      assertThat(source).isEqualTo(source)
       assertThat(descriptionUpdated).isFalse
       assertThat(authorisedByUpdated).isFalse
       assertThat(activeFromUpdated).isTrue
@@ -572,6 +593,7 @@ class AlertTest {
   fun `update alert active to only`() {
     val entity = alertEntity()
     val updatedActiveTo = entity.activeTo!!.plusDays(1)
+    val source = ALERTS_SERVICE
     val expectedDescription = "Updated active to from '${entity.activeTo}' to '$updatedActiveTo'\n"
 
     entity.update(
@@ -582,10 +604,12 @@ class AlertTest {
       appendComment = null,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+      source = source,
     )
 
     assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
+      assertThat(source).isEqualTo(source)
       assertThat(descriptionUpdated).isFalse
       assertThat(authorisedByUpdated).isFalse
       assertThat(activeFromUpdated).isFalse
@@ -601,6 +625,7 @@ class AlertTest {
     val updatedAt = LocalDateTime.now()
     val updatedBy = "UPDATED_BY"
     val updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME"
+    val source = NOMIS
     val expectedDescription = "Comment '$updatedAppendComment' was added\n"
 
     entity.update(
@@ -612,6 +637,7 @@ class AlertTest {
       updatedAt = updatedAt,
       updatedBy = updatedBy,
       updatedByDisplayName = updatedByDisplayName,
+      source = source,
     )
 
     with(entity.comments().single()) {
@@ -622,6 +648,7 @@ class AlertTest {
     }
     assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
+      assertThat(source).isEqualTo(source)
       assertThat(descriptionUpdated).isFalse
       assertThat(authorisedByUpdated).isFalse
       assertThat(activeFromUpdated).isFalse
@@ -634,6 +661,7 @@ class AlertTest {
   fun `update alert append comment trims comment`() {
     val entity = alertEntity()
     val updatedAppendComment = " Appended comment  "
+    val source = ALERTS_SERVICE
     val expectedDescription = "Comment '${updatedAppendComment.trim()}' was added\n"
 
     entity.update(
@@ -644,6 +672,7 @@ class AlertTest {
       appendComment = updatedAppendComment,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+      source = source,
     )
 
     assertThat(entity.comments().single().comment).isEqualTo(updatedAppendComment.trim())
@@ -655,7 +684,7 @@ class AlertTest {
     val entity = alertEntity()
     val deletedAt = LocalDateTime.now()
 
-    entity.delete(deletedAt, "DELETED_BY", "DELETED_BY_DISPLAY_NAME")
+    entity.delete(deletedAt, "DELETED_BY", "DELETED_BY_DISPLAY_NAME", NOMIS)
 
     assertThat(entity.deletedAt()).isEqualTo(deletedAt)
     assertThat(entity.auditEvents().single { it.action == DELETED }).isEqualTo(
@@ -675,8 +704,9 @@ class AlertTest {
     val entity = alertEntity()
     val deletedAt = LocalDateTime.now()
     val deletedBy = "DELETED_BY"
+    val source = ALERTS_SERVICE
 
-    entity.delete(deletedAt, deletedBy, "DELETED_BY_DISPLAY_NAME")
+    entity.delete(deletedAt, deletedBy, "DELETED_BY_DISPLAY_NAME", source)
 
     assertThat(entity.publishedDomainEvents().single()).isEqualTo(
       AlertDeletedEvent(
@@ -684,7 +714,7 @@ class AlertTest {
         prisonNumber = entity.prisonNumber,
         alertCode = entity.alertCode.code,
         occurredAt = deletedAt,
-        source = NOMIS,
+        source = source,
         deletedBy = deletedBy,
       ),
     )

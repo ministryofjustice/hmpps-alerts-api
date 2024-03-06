@@ -37,6 +37,7 @@ class AlertService(
           createdAt = context.requestAt,
           createdBy = context.username,
           createdByDisplayName = context.userDisplayName,
+          source = context.source,
         ),
       ).toAlertModel()
     }
@@ -56,7 +57,7 @@ class AlertService(
   fun retrieveAlert(alertUuid: UUID): AlertModel =
     alertRepository.findByAlertUuid(alertUuid)?.toAlertModel() ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
 
-  fun updateAlert(alertUuid: UUID, request: UpdateAlert, requestContext: AlertRequestContext) =
+  fun updateAlert(alertUuid: UUID, request: UpdateAlert, context: AlertRequestContext) =
     alertRepository.findByAlertUuid(alertUuid)?.let {
       alertRepository.saveAndFlush(
         it.update(
@@ -65,17 +66,23 @@ class AlertService(
           activeFrom = request.activeFrom,
           activeTo = request.activeTo,
           appendComment = request.appendComment,
-          updatedAt = requestContext.requestAt,
-          updatedBy = requestContext.username,
-          updatedByDisplayName = requestContext.userDisplayName,
+          updatedAt = context.requestAt,
+          updatedBy = context.username,
+          updatedByDisplayName = context.userDisplayName,
+          source = context.source,
         ),
       ).toAlertModel()
     } ?: throw AlertNotFoundException("Could not find alert with ID $alertUuid")
 
-  fun deleteAlert(alertUuid: UUID, requestContext: AlertRequestContext) {
+  fun deleteAlert(alertUuid: UUID, context: AlertRequestContext) {
     val alert = alertRepository.findByAlertUuid(alertUuid) ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
     with(alert) {
-      delete(deletedBy = requestContext.username, deletedByDisplayName = requestContext.userDisplayName)
+      delete(
+        deletedAt = context.requestAt,
+        deletedBy = context.username,
+        deletedByDisplayName = context.userDisplayName,
+        source = context.source,
+      )
     }
     alertRepository.saveAndFlush(alert)
   }

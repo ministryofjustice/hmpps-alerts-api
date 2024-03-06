@@ -29,12 +29,12 @@ class AlertTranslationTest {
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
     )
-    val requestContext = AlertRequestContext(
+    val context = AlertRequestContext(
       username = TEST_USER,
       userDisplayName = TEST_USER_NAME,
     )
 
-    val entity = request.toAlertEntity(alertCodeVictim(), requestContext.requestAt, requestContext.username, requestContext.userDisplayName)
+    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source)
 
     assertThat(entity).isEqualTo(
       AlertEntity(
@@ -49,9 +49,9 @@ class AlertTranslationTest {
         auditEvent(
           action = AuditEventAction.CREATED,
           description = "Alert created",
-          actionedAt = requestContext.requestAt,
-          actionedBy = requestContext.username,
-          actionedByDisplayName = requestContext.userDisplayName,
+          actionedAt = context.requestAt,
+          actionedBy = context.username,
+          actionedByDisplayName = context.userDisplayName,
         )
       },
     )
@@ -67,12 +67,12 @@ class AlertTranslationTest {
       activeFrom = null,
       activeTo = LocalDate.now().plusDays(3),
     )
-    val requestContext = AlertRequestContext(
+    val context = AlertRequestContext(
       username = TEST_USER,
       userDisplayName = TEST_USER_NAME,
     )
 
-    val entity = request.toAlertEntity(alertCodeVictim(), requestContext.requestAt, requestContext.username, requestContext.userDisplayName)
+    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source)
 
     assertThat(entity.activeFrom).isEqualTo(LocalDate.now())
   }

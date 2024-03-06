@@ -19,7 +19,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEven
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDeletedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertUpdatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import java.lang.StringBuilder
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -115,6 +115,7 @@ data class Alert(
     createdAt: LocalDateTime = LocalDateTime.now(),
     createdBy: String,
     createdByDisplayName: String,
+    source: Source,
   ) = apply {
     auditEvent(
       action = AuditEventAction.CREATED,
@@ -129,7 +130,7 @@ data class Alert(
         prisonNumber = prisonNumber,
         alertCode = alertCode.code,
         occurredAt = createdAt,
-        source = NOMIS,
+        source = source,
         createdBy = createdBy,
       ),
     )
@@ -144,6 +145,7 @@ data class Alert(
     updatedAt: LocalDateTime = LocalDateTime.now(),
     updatedBy: String,
     updatedByDisplayName: String,
+    source: Source,
   ) = apply {
     val descriptionUpdated = description != null && this.description != description
     val authorisedByUpdated = authorisedBy != null && this.authorisedBy != authorisedBy
@@ -194,7 +196,7 @@ data class Alert(
           prisonNumber = prisonNumber,
           alertCode = alertCode.code,
           occurredAt = updatedAt,
-          source = NOMIS,
+          source = source,
           updatedBy = updatedBy,
           descriptionUpdated = descriptionUpdated,
           authorisedByUpdated = authorisedByUpdated,
@@ -210,6 +212,7 @@ data class Alert(
     deletedAt: LocalDateTime = LocalDateTime.now(),
     deletedBy: String,
     deletedByDisplayName: String,
+    source: Source,
   ): AuditEvent {
     this.deletedAt = deletedAt
     return auditEvent(
@@ -225,7 +228,7 @@ data class Alert(
           prisonNumber = prisonNumber,
           alertCode = alertCode.code,
           occurredAt = deletedAt,
-          source = NOMIS,
+          source = source,
           deletedBy = deletedBy,
         ),
       )
