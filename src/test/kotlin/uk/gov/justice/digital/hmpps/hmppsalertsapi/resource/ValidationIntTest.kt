@@ -190,7 +190,7 @@ class ValidationIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
-      .headers(setAlertRequestContext("C. ReatedC. ReatedC. ReatedC. Rea"))
+      .headers(setAlertRequestContext(username = "C. ReatedC. ReatedC. ReatedC. Rea"))
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(

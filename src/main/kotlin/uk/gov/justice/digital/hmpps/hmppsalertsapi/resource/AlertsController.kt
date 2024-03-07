@@ -70,7 +70,7 @@ class AlertsController(
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_WRITER', '$ROLE_ALERTS_ADMIN', '$UPDATE_ALERT', '$ROLE_NOMIS_ALERTS')")
-  @SyncSuppressEventsHeader
+  @SourceHeader
   fun createAlert(
     @Valid
     @RequestBody
@@ -152,6 +152,7 @@ class AlertsController(
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_WRITER', '$ROLE_ALERTS_ADMIN', '$UPDATE_ALERT', '$ROLE_NOMIS_ALERTS')")
+  @SourceHeader
   fun updateAlert(
     @PathVariable
     @Parameter(
@@ -201,6 +202,7 @@ class AlertsController(
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_WRITER', '$ROLE_ALERTS_ADMIN', '$UPDATE_ALERT', '$ROLE_NOMIS_ALERTS')")
+  @SourceHeader
   fun deleteAlert(
     @PathVariable
     @Parameter(

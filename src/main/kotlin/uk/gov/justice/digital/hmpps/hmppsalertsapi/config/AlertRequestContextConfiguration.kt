@@ -10,6 +10,10 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.servlet.HandlerInterceptor
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.manageusers.dto.UserDetailsDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.ALERTS_SERVICE
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
 
@@ -30,11 +34,13 @@ class AlertRequestContextInterceptor(
   private val userService: UserService,
 ) : HandlerInterceptor {
   override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-    val userDetails = request.getUserDetails()
+    val source = request.getSource()
+    val userDetails = request.getUserDetails(source)
 
     request.setAttribute(
       AlertRequestContext::class.simpleName,
       AlertRequestContext(
+        source = source,
         username = userDetails.username,
         userDisplayName = userDetails.name,
       ),
@@ -42,6 +48,10 @@ class AlertRequestContextInterceptor(
 
     return true
   }
+
+  private fun HttpServletRequest.getSource(): Source =
+    getHeader(SOURCE)?.let { Source.valueOf(it) }
+      ?: ALERTS_SERVICE
 
   private fun authentication(): AuthAwareAuthenticationToken =
     SecurityContextHolder.getContext().authentication as AuthAwareAuthenticationToken?
@@ -58,7 +68,13 @@ class AlertRequestContextInterceptor(
       ?.trim()?.takeUnless(String::isBlank)?.also { if (it.length > 32) throw ValidationException("Created by must be <= 32 characters") }
       ?: throw ValidationException("Could not find non empty username from user_name or username token claims or Username header")
 
-  private fun HttpServletRequest.getUserDetails() =
-    getUsername().let { userService.getUserDetails(it) }
-      ?: throw ValidationException("User details for supplied username not found")
+  private fun HttpServletRequest.getUserDetails(source: Source) =
+    getUsername().let {
+      userService.getUserDetails(it)
+        ?: if (source != ALERTS_SERVICE) {
+          UserDetailsDto(username = it, active = true, name = it, authSource = it, userId = it, uuid = null)
+        } else {
+          null
+        }
+    } ?: throw ValidationException("User details for supplied username not found")
 }

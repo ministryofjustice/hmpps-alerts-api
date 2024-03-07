@@ -66,6 +66,26 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `400 bad request - invalid source`() {
+    val response = webTestClient.get()
+      .uri("/alerts/$uuid")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers { it.set(SOURCE, "INVALID") }
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: No enum constant uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.INVALID")
+      assertThat(developerMessage).isEqualTo("No enum constant uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.INVALID")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
   fun `400 bad request - username not supplied`() {
     val response = webTestClient.get()
       .uri("/alerts/$uuid")
@@ -91,7 +111,7 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
     val response = webTestClient.get()
       .uri("/alerts/$uuid")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
-      .headers(setAlertRequestContext(USER_NOT_FOUND))
+      .headers(setAlertRequestContext(username = USER_NOT_FOUND))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)

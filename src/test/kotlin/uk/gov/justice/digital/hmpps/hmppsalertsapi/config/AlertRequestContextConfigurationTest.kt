@@ -6,6 +6,9 @@ import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
@@ -13,9 +16,14 @@ import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.context.SecurityContextHolder
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.ALERTS_SERVICE
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.MIGRATION
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.userDetailsDto
@@ -42,6 +50,44 @@ class AlertRequestContextConfigurationTest {
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
 
     assertThat(context.requestAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+  }
+
+  @Test
+  fun `throws IllegalArgumentException when source value is invalid`() {
+    req.addHeader(SOURCE, "INVALID")
+    val exception = assertThrows<IllegalArgumentException> { interceptor.preHandle(req, res, "null") }
+    assertThat(exception.message).isEqualTo("No enum constant uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.INVALID")
+  }
+
+  @Test
+  fun `uses ALERTS_SERVICE as default value for source`() {
+    setSecurityContext(mapOf("user_name" to TEST_USER))
+
+    interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(context.source).isEqualTo(ALERTS_SERVICE)
+  }
+
+  @ParameterizedTest
+  @MethodSource("sourceParameters")
+  fun `parses source header as value for source`(sourceValue: String, expectedSource: Source) {
+    req.addHeader(SOURCE, sourceValue)
+    setSecurityContext(mapOf("user_name" to TEST_USER))
+
+    interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(context.source).isEqualTo(expectedSource)
+  }
+
+  companion object {
+    @JvmStatic
+    fun sourceParameters(): List<Arguments> = listOf(
+      Arguments.of(ALERTS_SERVICE.name, ALERTS_SERVICE),
+      Arguments.of(NOMIS.name, NOMIS),
+      Arguments.of(MIGRATION.name, MIGRATION),
+    )
   }
 
   @Test
@@ -93,10 +139,23 @@ class AlertRequestContextConfigurationTest {
   }
 
   @Test
-  fun `throws ValidationException when username from user_name claim is not found`() {
+  fun `throws ValidationException when source is ALERTS_SERVICE and username from user_name claim is not found`() {
+    req.addHeader(SOURCE, ALERTS_SERVICE.name)
     setSecurityContext(mapOf("user_name" to USER_NOT_FOUND))
     val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
     assertThat(exception.message).isEqualTo("User details for supplied username not found")
+  }
+
+  @Test
+  fun `uses username from user_name claim as display name when source is NOMIS and username is not found`() {
+    req.addHeader(SOURCE, NOMIS.name)
+    setSecurityContext(mapOf("user_name" to USER_NOT_FOUND))
+
+    interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(context.username).isEqualTo(USER_NOT_FOUND)
+    assertThat(context.userDisplayName).isEqualTo(USER_NOT_FOUND)
   }
 
   @Test
@@ -156,10 +215,23 @@ class AlertRequestContextConfigurationTest {
   }
 
   @Test
-  fun `throws ValidationException when username from username claim is not found`() {
+  fun `throws ValidationException when source is ALERTS_SERVICE and username from username claim is not found`() {
+    req.addHeader(SOURCE, ALERTS_SERVICE.name)
     setSecurityContext(mapOf("username" to USER_NOT_FOUND))
     val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
     assertThat(exception.message).isEqualTo("User details for supplied username not found")
+  }
+
+  @Test
+  fun `uses username from username claim as display name when source is NOMIS and username is not found`() {
+    req.addHeader(SOURCE, NOMIS.name)
+    setSecurityContext(mapOf("username" to USER_NOT_FOUND))
+
+    interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(context.username).isEqualTo(USER_NOT_FOUND)
+    assertThat(context.userDisplayName).isEqualTo(USER_NOT_FOUND)
   }
 
   @Test
@@ -223,11 +295,25 @@ class AlertRequestContextConfigurationTest {
   }
 
   @Test
-  fun `throws ValidationException when username from Username header is not found`() {
+  fun `throws ValidationException when source is ALERTS_SERVICE and username from Username header is not found`() {
     setSecurityContext(emptyMap())
+    req.addHeader(SOURCE, ALERTS_SERVICE.name)
     req.addHeader(USERNAME, USER_NOT_FOUND)
     val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
     assertThat(exception.message).isEqualTo("User details for supplied username not found")
+  }
+
+  @Test
+  fun `uses username from Username header as display name when source is NOMIS and username is not found`() {
+    setSecurityContext(emptyMap())
+    req.addHeader(SOURCE, NOMIS.name)
+    req.addHeader(USERNAME, USER_NOT_FOUND)
+
+    interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(context.username).isEqualTo(USER_NOT_FOUND)
+    assertThat(context.userDisplayName).isEqualTo(USER_NOT_FOUND)
   }
 
   @Test

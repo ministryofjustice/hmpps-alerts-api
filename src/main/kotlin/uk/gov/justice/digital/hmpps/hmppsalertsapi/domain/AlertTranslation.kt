@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.domain
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Comment
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -15,6 +16,7 @@ fun CreateAlert.toAlertEntity(
   createdAt: LocalDateTime = LocalDateTime.now(),
   createdBy: String,
   createdByDisplayName: String,
+  source: Source,
 ) =
   Alert(
     alertUuid = UUID.randomUUID(),
@@ -24,7 +26,7 @@ fun CreateAlert.toAlertEntity(
     authorisedBy = this.authorisedBy,
     activeFrom = this.activeFrom ?: LocalDate.now(),
     activeTo = this.activeTo,
-  ).create(createdAt, createdBy, createdByDisplayName)
+  ).create(createdAt, createdBy, createdByDisplayName, source)
 
 fun Alert.toAlertModel(): AlertModel {
   val createdAuditEvent = createdAuditEvent()
