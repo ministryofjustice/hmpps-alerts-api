@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.userDetailsDto
+import uk.gov.justice.hmpps.kotlin.auth.AuthAwareAuthenticationToken
 import java.time.temporal.ChronoUnit
 
 class AlertRequestContextConfigurationTest {

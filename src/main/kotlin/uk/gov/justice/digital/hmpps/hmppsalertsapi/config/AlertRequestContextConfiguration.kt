@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.ALERTS_SER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
+import uk.gov.justice.hmpps.kotlin.auth.AuthAwareAuthenticationToken
 
 @Configuration
 class AlertRequestContextConfiguration(private val alertRequestContextInterceptor: AlertRequestContextInterceptor) : WebMvcConfigurer {
