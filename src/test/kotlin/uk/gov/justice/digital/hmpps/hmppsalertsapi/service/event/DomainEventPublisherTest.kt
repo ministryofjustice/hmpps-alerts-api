@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service.event
 
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
@@ -28,6 +30,14 @@ class DomainEventPublisherTest {
 
   private val domainEventsTopicArn = "arn:aws:sns:eu-west-2:000000000000:${UUID.randomUUID()}"
   private val baseUrl = "http://localhost:8080"
+
+  @Test
+  fun `throws IllegalStateException when topic not found`() {
+    whenever(hmppsQueueService.findByTopicId("hmppseventtopic")).thenReturn(null)
+    val domainEventPublisher = DomainEventPublisher(hmppsQueueService, objectMapper)
+    val exception = assertThrows<IllegalStateException> { domainEventPublisher.publish(mock<AlertDomainEvent>()) }
+    Assertions.assertThat(exception.message).isEqualTo("hmppseventtopic not found")
+  }
 
   @Test
   fun `publish alert event`() {
