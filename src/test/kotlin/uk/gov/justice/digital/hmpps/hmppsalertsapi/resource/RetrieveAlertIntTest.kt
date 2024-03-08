@@ -170,7 +170,7 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
           prisonNumber,
           description,
           authorisedBy,
-          activeFrom!!,
+          activeFrom,
           activeTo,
         ),
       )

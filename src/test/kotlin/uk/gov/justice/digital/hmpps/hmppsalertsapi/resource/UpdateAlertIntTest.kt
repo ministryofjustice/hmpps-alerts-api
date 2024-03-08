@@ -202,7 +202,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
           prisonNumber,
           description,
           authorisedBy,
-          activeFrom!!,
+          activeFrom,
           activeTo,
         ),
       )

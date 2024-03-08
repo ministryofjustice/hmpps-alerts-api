@@ -51,7 +51,7 @@ data class Alert(
     example = "2021-09-27",
   )
   @JsonFormat(pattern = "yyyy-MM-dd")
-  val activeFrom: LocalDate?,
+  val activeFrom: LocalDate,
 
   @Schema(
     description = "The date the alert should be active until. " +

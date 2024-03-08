@@ -369,7 +369,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         alertCodeVictimSummary(),
         request.description,
         request.authorisedBy,
-        request.activeFrom,
+        request.activeFrom!!,
         request.activeTo,
         true,
         emptyList(),
