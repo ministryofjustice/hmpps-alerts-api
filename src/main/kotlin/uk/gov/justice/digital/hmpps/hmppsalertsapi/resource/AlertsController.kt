@@ -30,7 +30,6 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.util.UUID
 
 @RestController
-@UsernameHeader
 @RequestMapping("/alerts", produces = [MediaType.APPLICATION_JSON_VALUE])
 class AlertsController(
   private val alertService: AlertService,
@@ -70,6 +69,7 @@ class AlertsController(
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_WRITER', '$ROLE_ALERTS_ADMIN', '$UPDATE_ALERT', '$ROLE_NOMIS_ALERTS')")
+  @UsernameHeader
   @SourceHeader
   fun createAlert(
     @Valid
@@ -152,6 +152,7 @@ class AlertsController(
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_WRITER', '$ROLE_ALERTS_ADMIN', '$UPDATE_ALERT', '$ROLE_NOMIS_ALERTS')")
+  @UsernameHeader
   @SourceHeader
   fun updateAlert(
     @PathVariable
@@ -202,6 +203,7 @@ class AlertsController(
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_WRITER', '$ROLE_ALERTS_ADMIN', '$UPDATE_ALERT', '$ROLE_NOMIS_ALERTS')")
+  @UsernameHeader
   @SourceHeader
   fun deleteAlert(
     @PathVariable

@@ -11,7 +11,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
@@ -50,7 +49,6 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
     webTestClient.get()
       .uri("/alerts/$uuid")
       .headers(setAuthorisation())
-      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
   }
@@ -60,70 +58,8 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
     webTestClient.get()
       .uri("/alerts/$uuid")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
-  }
-
-  @Test
-  fun `400 bad request - invalid source`() {
-    val response = webTestClient.get()
-      .uri("/alerts/$uuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
-      .headers { it.set(SOURCE, "INVALID") }
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-
-    with(response!!) {
-      assertThat(status).isEqualTo(400)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: No enum constant uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.INVALID")
-      assertThat(developerMessage).isEqualTo("No enum constant uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.INVALID")
-      assertThat(moreInfo).isNull()
-    }
-  }
-
-  @Test
-  fun `400 bad request - username not supplied`() {
-    val response = webTestClient.get()
-      .uri("/alerts/$uuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-
-    with(response!!) {
-      assertThat(status).isEqualTo(400)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage)
-        .isEqualTo("Validation failure: Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(developerMessage)
-        .isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(moreInfo).isNull()
-    }
-  }
-
-  @Test
-  fun `400 bad request - username not found`() {
-    val response = webTestClient.get()
-      .uri("/alerts/$uuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
-      .headers(setAlertRequestContext(username = USER_NOT_FOUND))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-
-    with(response!!) {
-      assertThat(status).isEqualTo(400)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: User details for supplied username not found")
-      assertThat(developerMessage).isEqualTo("User details for supplied username not found")
-      assertThat(moreInfo).isNull()
-    }
   }
 
   @Test
@@ -131,7 +67,6 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
     val response = webTestClient.get()
       .uri("/alerts/$uuid")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
-      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isNotFound
       .expectBody(ErrorResponse::class.java)
@@ -153,7 +88,6 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
     val response = webTestClient.get()
       .uri("/alerts/${alert.alertUuid}")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
-      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isOk
       .expectBody(Alert::class.java)

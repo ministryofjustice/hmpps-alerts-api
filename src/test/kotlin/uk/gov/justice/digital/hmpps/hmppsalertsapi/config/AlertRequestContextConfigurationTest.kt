@@ -39,6 +39,7 @@ class AlertRequestContextConfigurationTest {
 
   @BeforeEach
   fun beforeEach() {
+    req.method = "POST"
     SecurityContextHolder.clearContext()
     whenever(userService.getUserDetails(TEST_USER)).thenReturn(userDetailsDto())
   }
