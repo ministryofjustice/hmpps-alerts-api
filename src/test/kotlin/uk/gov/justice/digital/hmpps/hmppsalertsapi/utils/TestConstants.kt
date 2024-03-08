@@ -3,9 +3,13 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.utils
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.manageusers.dto.UserDetailsDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCodeSummary
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateCommentRequest
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -88,4 +92,24 @@ fun alertCodeVictimSummary() =
     "Victim",
     6,
     true,
+  )
+fun migrateAlertRequest(
+  comments: Collection<MigrateCommentRequest> = emptyList(),
+  includeUpdate: Boolean = false,
+  alertCode: String = ALERT_CODE_VICTIM,
+): MigrateAlertRequest =
+  MigrateAlertRequest(
+    prisonNumber = PRISON_NUMBER,
+    alertCode = alertCode,
+    description = "Alert description",
+    authorisedBy = "A. Authorizer",
+    activeFrom = LocalDate.now().minusDays(2),
+    activeTo = LocalDate.now().plusDays(3),
+    comments = comments,
+    createdAt = LocalDateTime.now().minusDays(2),
+    createdBy = "AG111QD",
+    createdByDisplayName = "A Creator",
+    updatedAt = if (includeUpdate) LocalDateTime.now().minusDays(1) else null,
+    updatedBy = if (includeUpdate) "AG1221GG" else null,
+    updatedByDisplayName = if (includeUpdate) "Up Dated" else null,
   )
