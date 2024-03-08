@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.awaitility.kotlin.await
@@ -201,9 +200,9 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
     webTestClient.deleteAlert(alert.alertUuid, ALERTS_SERVICE)
 
-    await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
-    val deleteAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
     assertThat(createAlertEvent.additionalInformation.alertUuid).isEqualTo(deleteAlertEvent.additionalInformation.alertUuid)
@@ -231,9 +230,9 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
     webTestClient.deleteAlert(alert.alertUuid, NOMIS)
 
-    await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
-    val deleteAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
     assertThat(createAlertEvent.additionalInformation.alertUuid).isEqualTo(deleteAlertEvent.additionalInformation.alertUuid)

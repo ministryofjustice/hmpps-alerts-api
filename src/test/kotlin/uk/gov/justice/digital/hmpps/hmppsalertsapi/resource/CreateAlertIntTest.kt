@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.awaitility.kotlin.await
@@ -369,7 +368,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         alertCodeVictimSummary(),
         request.description,
         request.authorisedBy,
-        request.activeFrom,
+        request.activeFrom!!,
         request.activeTo,
         true,
         emptyList(),
@@ -421,8 +420,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
     val alert = webTestClient.createAlert(source = ALERTS_SERVICE, request = request)
 
-    await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 1 }
-    val event = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
 
     assertThat(event).isEqualTo(
       AlertDomainEvent(
@@ -447,8 +446,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
     val alert = webTestClient.createAlert(source = NOMIS, request = request)
 
-    await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 1 }
-    val event = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
 
     assertThat(event).isEqualTo(
       AlertDomainEvent(

@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
-import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.awaitility.kotlin.await
@@ -202,7 +201,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
           prisonNumber,
           description,
           authorisedBy,
-          activeFrom!!,
+          activeFrom,
           activeTo,
         ),
       )
@@ -259,9 +258,9 @@ Comment 'Another update alert' was added
 
     webTestClient.updateAlert(alert.alertUuid, ALERTS_SERVICE, updateAlertRequest())
 
-    await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
-    val updateAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
     assertThat(createAlertEvent.additionalInformation.alertUuid).isEqualTo(updateAlertEvent.additionalInformation.alertUuid)
@@ -289,9 +288,9 @@ Comment 'Another update alert' was added
 
     webTestClient.updateAlert(alert.alertUuid, NOMIS, updateAlertRequest())
 
-    await untilCallTo { publishQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
-    val updateAlertEvent = objectMapper.readValue<AlertDomainEvent>(publishQueue.receiveMessageOnQueue().body())
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
     assertThat(createAlertEvent.additionalInformation.alertUuid).isEqualTo(updateAlertEvent.additionalInformation.alertUuid)

@@ -47,10 +47,6 @@ generic-service:
       DB_PASS: "database_password"
     hmpps-domain-events-topic:
       HMPPS_SQS_TOPICS_HMPPSEVENTTOPIC_ARN: "topic_arn"
-    hmpps-alerts-publish-queue:
-      HMPPS_SQS_QUEUES_PUBLISH_QUEUE_NAME: "sqs_queue_name"
-    hmpps-alerts-publish-dlq:
-      HMPPS_SQS_QUEUES_PUBLISH_DLQ_NAME: "sqs_queue_name"
 
   allowlist:
     groups:
