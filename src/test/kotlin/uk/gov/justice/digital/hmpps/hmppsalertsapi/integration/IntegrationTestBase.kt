@@ -1,6 +1,9 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.integration
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.databind.annotation.JsonNaming
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -16,6 +19,7 @@ import org.springframework.test.context.jdbc.SqlMergeMode
 import org.springframework.test.web.reactive.server.WebTestClient
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer.setLocalStackProperties
@@ -38,7 +42,6 @@ import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 abstract class IntegrationTestBase {
-  @Suppress("SpringJavaInjectionPointsAutowiringInspection")
   @Autowired
   lateinit var webTestClient: WebTestClient
 
@@ -52,14 +55,12 @@ abstract class IntegrationTestBase {
   lateinit var hmppsQueueService: HmppsQueueService
 
   internal val hmppsEventsQueue by lazy { hmppsQueueService.findByQueueId("hmppseventtestqueue") ?: throw MissingQueueException("hmppseventtestqueue queue not found") }
-  internal val publishQueue by lazy { hmppsQueueService.findByQueueId("publish") ?: throw MissingQueueException("HmppsQueue publish not found") }
 
   internal val hmppsEventTopic by lazy { hmppsQueueService.findByTopicId("hmppseventtopic") ?: throw MissingQueueException("HmppsTopic hmpps event topic not found") }
 
   @BeforeEach
   fun `clear queues`() {
     hmppsEventsQueue.sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(hmppsEventsQueue.queueUrl).build()).get()
-    publishQueue.sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(publishQueue.queueUrl).build()).get()
   }
 
   internal fun setAuthorisation(
@@ -88,6 +89,14 @@ abstract class IntegrationTestBase {
 
   internal fun HmppsQueue.receiveMessageOnQueue() =
     sqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build()).get().messages().single()
+
+  internal fun HmppsQueue.receiveAlertDomainEventOnQueue() =
+    receiveMessageOnQueue()
+      .let { objectMapper.readValue<MsgBody>(it.body()) }
+      .let { objectMapper.readValue<AlertDomainEvent>(it.Message) }
+
+  @JsonNaming(value = PropertyNamingStrategies.UpperCamelCaseStrategy::class)
+  private data class MsgBody(val Message: String)
 
   companion object {
     private val pgContainer = PostgresContainer.instance
