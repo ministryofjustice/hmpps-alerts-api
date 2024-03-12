@@ -48,6 +48,8 @@ data class Alert(
   var activeFrom: LocalDate,
 
   var activeTo: LocalDate?,
+
+  var migratedAt: LocalDateTime? = null,
 ) : AbstractAggregateRoot<Alert>() {
   fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
 
