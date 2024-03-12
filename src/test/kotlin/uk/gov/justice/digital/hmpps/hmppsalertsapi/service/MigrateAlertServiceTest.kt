@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_N
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeRefusingToShieldInactive
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlertRequest
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
@@ -73,6 +74,40 @@ class MigrateAlertServiceTest {
       assertThat(alertUuid).isNotNull()
       assertThat(auditEvents()).hasSize(1)
       assertThat(alertCode).isEqualTo(alertCodeRefusingToShieldInactive())
+      assertThat(migratedAt).isCloseToUtcNow(within(3, SECONDS))
+      assertThat(publishedDomainEvents()).isEmpty()
+    }
+  }
+
+  @Test
+  fun `will save if code active`() {
+    whenever(alertCodeRepository.findByCode(any())).thenReturn(alertCodeVictim())
+    val migrateAlertRequest = migrateAlertRequest()
+    whenever(alertRepository.saveAndFlush(any())).thenReturn(
+      Alert(
+        alertUuid = UUID.randomUUID(),
+        alertCode = alertCodeVictim(),
+        prisonNumber = PRISON_NUMBER,
+        description = "Alert description",
+        authorisedBy = "A. Authorizer",
+        activeFrom = migrateAlertRequest.activeFrom,
+        activeTo = migrateAlertRequest.activeTo,
+      ).apply {
+        auditEvent(
+          action = AuditEventAction.CREATED,
+          description = "Migrated alert created",
+          actionedAt = migrateAlertRequest.createdAt,
+          actionedBy = migrateAlertRequest.createdBy,
+          actionedByDisplayName = migrateAlertRequest.createdByDisplayName,
+        )
+      },
+    )
+    underTest.migrateAlert(migrateAlertRequest)
+    verify(alertRepository).saveAndFlush(argumentCaptor.capture())
+    with(argumentCaptor.firstValue) {
+      assertThat(alertUuid).isNotNull()
+      assertThat(auditEvents()).hasSize(1)
+      assertThat(alertCode).isEqualTo(alertCodeVictim())
       assertThat(migratedAt).isCloseToUtcNow(within(3, SECONDS))
       assertThat(publishedDomainEvents()).isEmpty()
     }
