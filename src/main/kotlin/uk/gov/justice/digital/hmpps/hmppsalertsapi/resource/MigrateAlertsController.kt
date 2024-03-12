@@ -61,7 +61,7 @@ class MigrateAlertsController(
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_WRITER', '$ROLE_ALERTS_ADMIN', '$UPDATE_ALERT', '$ROLE_NOMIS_ALERTS')")
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_NOMIS_ALERTS')")
   fun createAlert(
     @Valid
     @RequestBody

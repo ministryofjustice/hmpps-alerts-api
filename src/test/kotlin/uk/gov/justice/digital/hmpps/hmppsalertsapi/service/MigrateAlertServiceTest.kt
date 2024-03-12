@@ -74,6 +74,7 @@ class MigrateAlertServiceTest {
       assertThat(auditEvents()).hasSize(1)
       assertThat(alertCode).isEqualTo(alertCodeRefusingToShieldInactive())
       assertThat(migratedAt).isCloseToUtcNow(within(3, SECONDS))
+      assertThat(publishedDomainEvents()).isEmpty()
     }
   }
 }

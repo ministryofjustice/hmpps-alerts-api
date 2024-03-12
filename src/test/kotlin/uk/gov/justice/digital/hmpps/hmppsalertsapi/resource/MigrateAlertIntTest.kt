@@ -200,6 +200,7 @@ class MigrateAlertIntTest : IntegrationTestBase() {
     val request = migrateAlertRequest()
 
     webTestClient.migrateAlert(request = request)
+    Thread.sleep(1000)
     verify(hmppsQueueService, never()).findByTopicId(any())
   }
 
@@ -277,7 +278,7 @@ class MigrateAlertIntTest : IntegrationTestBase() {
     post()
       .uri("/migrate/alerts")
       .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
       .headers(setAlertRequestContext(source = source))
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
