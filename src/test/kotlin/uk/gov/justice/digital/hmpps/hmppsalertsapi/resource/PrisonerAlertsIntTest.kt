@@ -85,7 +85,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
-  fun `retrieve pages of alerts for prison number`() {
+  fun `retrieve pages of all alerts for prison number`() {
     val firstPage = webTestClient.getPrisonerAlerts(PRISON_NUMBER, page = 0, size = 3)
     val lastPage = webTestClient.getPrisonerAlerts(PRISON_NUMBER, page = 1, size = 3)
     assertThat(firstPage).isEqualTo(
@@ -128,6 +128,32 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     }
   }
 
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `retrieve all active alerts for prison number`() {
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, isActive = true)
+    with(response.content) {
+      assertThat(this).hasSize(3)
+      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertContainsOnlyActive()
+      assertDoesNotContainDeletedAlert()
+      assertOrderedByActiveFromDesc()
+    }
+  }
+
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `retrieve all inactive alerts for prison number`() {
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, isActive = false)
+    with(response.content) {
+      assertThat(this).hasSize(2)
+      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertContainsOnlyInactive()
+      assertDoesNotContainDeletedAlert()
+      assertOrderedByActiveFromDesc()
+    }
+  }
+
   private fun Collection<Alert>.assertAllForPrisonNumber(prisonNumber: String) =
     assertThat(all { it.prisonNumber == prisonNumber }).isTrue
 
@@ -137,16 +163,22 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
       assertThat(any { !it.alertCode.isActive }).isTrue
     }
 
-  private fun Collection<Alert>.assertDoesNotContainDeletedAlert() =
-    alertRepository.findByAlertUuidIncludingSoftDelete(deletedAlertUuid)!!.also { deletedAlert ->
-      assertThat(deletedAlert.prisonNumber == map { it.prisonNumber }.distinct().single()).isTrue
-      assertThat(none { it.alertUuid == deletedAlert.alertUuid }).isTrue
-    }
-
   private fun Collection<Alert>.assertContainsActiveAndInactive() =
     with(this) {
       assertThat(any { it.isActive }).isTrue
       assertThat(any { !it.isActive }).isTrue
+    }
+
+  private fun Collection<Alert>.assertContainsOnlyActive() =
+    assertThat(all { it.isActive }).isTrue
+
+  private fun Collection<Alert>.assertContainsOnlyInactive() =
+    assertThat(none { it.isActive }).isTrue
+
+  private fun Collection<Alert>.assertDoesNotContainDeletedAlert() =
+    alertRepository.findByAlertUuidIncludingSoftDelete(deletedAlertUuid)!!.also { deletedAlert ->
+      assertThat(deletedAlert.prisonNumber == map { it.prisonNumber }.distinct().single()).isTrue
+      assertThat(none { it.alertUuid == deletedAlert.alertUuid }).isTrue
     }
 
   private fun List<Alert>.assertOrderedByActiveFromDesc() =
@@ -154,6 +186,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
 
   private fun WebTestClient.getPrisonerAlerts(
     prisonNumber: String,
+    isActive: Boolean? = null,
     page: Int? = null,
     size: Int? = null,
   ) =
@@ -161,6 +194,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
       .uri { builder ->
         builder
           .path("/prisoner/$prisonNumber/alerts")
+          .queryParamIfPresent("isActive", Optional.ofNullable(isActive))
           .queryParamIfPresent("page", Optional.ofNullable(page))
           .queryParamIfPresent("size", Optional.ofNullable(size))
           .build()

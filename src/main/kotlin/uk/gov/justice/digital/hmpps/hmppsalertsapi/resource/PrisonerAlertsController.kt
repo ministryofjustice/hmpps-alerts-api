@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
@@ -58,8 +59,14 @@ class PrisonerAlertsController(val alertService: AlertService) {
       required = true,
     )
     prisonNumber: String,
+    @RequestParam
+    @Parameter(
+      description = "Return only active (true) or inactive (false) alerts. If not provided or a null value is supplied, all alerts are returned",
+      example = "true",
+    )
+    isActive: Boolean?,
     @ParameterObject
     @PageableDefault(sort = ["activeFrom"], direction = Direction.DESC)
     pageable: Pageable,
-  ): Page<Alert> = alertService.retrieveAlertsForPrisonNumber(prisonNumber, pageable)
+  ): Page<Alert> = alertService.retrieveAlertsForPrisonNumber(prisonNumber, isActive, pageable)
 }

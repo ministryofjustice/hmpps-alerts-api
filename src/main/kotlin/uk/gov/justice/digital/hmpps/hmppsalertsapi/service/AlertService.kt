@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertsFilter
 import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
@@ -91,8 +92,8 @@ class AlertService(
     alertRepository.saveAndFlush(alert)
   }
 
-  fun retrieveAlertsForPrisonNumber(prisonNumber: String, pageable: Pageable): Page<AlertModel> =
-    alertRepository.findAllByPrisonNumber(prisonNumber, pageable).map { it.toAlertModel() }
+  fun retrieveAlertsForPrisonNumber(prisonNumber: String, isActive: Boolean?, pageable: Pageable): Page<AlertModel> =
+    alertRepository.findAll(AlertsFilter(prisonNumber, isActive), pageable).map { it.toAlertModel() }
 
   fun retrieveAuditEventsForAlert(alertUuid: UUID): Collection<AuditEvent> =
     alertRepository.findByAlertUuid(alertUuid)?.let { alert ->
