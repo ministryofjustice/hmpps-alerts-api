@@ -57,6 +57,6 @@ values
     'Deleted active Ready For Work alert which would have been active from today with no active to date. Alert code is active',
     null,
     now(),
-    now(),
-    null
+    null,
+    now()
 );
