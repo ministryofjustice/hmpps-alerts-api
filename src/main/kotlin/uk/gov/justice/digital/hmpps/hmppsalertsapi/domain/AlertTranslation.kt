@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.domain
 
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Comment
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
@@ -9,6 +10,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent as AuditEventModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Comment as CommentModel
 
 fun CreateAlert.toAlertEntity(
@@ -58,4 +60,13 @@ fun Comment.toAlertCommentModel() =
     createdAt = createdAt,
     createdBy = createdBy,
     createdByDisplayName = createdByDisplayName,
+  )
+
+fun AuditEvent.toAuditEventModel() =
+  AuditEventModel(
+    action = action,
+    description = description,
+    actionedAt = actionedAt,
+    actionedBy = actionedBy,
+    actionedByDisplayName = actionedByDisplayName,
   )
