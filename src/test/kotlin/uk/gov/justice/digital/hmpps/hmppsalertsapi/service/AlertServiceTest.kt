@@ -12,6 +12,8 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertNotFoundException
@@ -327,8 +329,8 @@ Comment '${updateRequest.appendComment}' was added
   @Test
   fun `retrieve all alerts`() {
     val alert = alert()
-    whenever(alertRepository.findAllByPrisonNumber(any())).thenReturn(listOf(alert))
-    val result = underTest.retrieveAlertsForPrisonNumber("ABC123AA")
+    whenever(alertRepository.findAllByPrisonNumber(any(), any())).thenReturn(PageImpl(listOf(alert)))
+    val result = underTest.retrieveAlertsForPrisonNumber("ABC123AA", PageRequest.of(0, 10))
     assertThat(result).containsExactly(alert.toAlertModel())
   }
 

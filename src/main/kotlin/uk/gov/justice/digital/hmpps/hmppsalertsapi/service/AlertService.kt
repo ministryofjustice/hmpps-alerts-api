@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
@@ -89,8 +91,8 @@ class AlertService(
     alertRepository.saveAndFlush(alert)
   }
 
-  fun retrieveAlertsForPrisonNumber(prisonNumber: String): Collection<AlertModel> =
-    alertRepository.findAllByPrisonNumber(prisonNumber).map { it.toAlertModel() }
+  fun retrieveAlertsForPrisonNumber(prisonNumber: String, pageable: Pageable): Page<AlertModel> =
+    alertRepository.findAllByPrisonNumber(prisonNumber, pageable).map { it.toAlertModel() }
 
   fun retrieveAuditEventsForAlert(alertUuid: UUID): Collection<AuditEvent> =
     alertRepository.findByAlertUuid(alertUuid)?.let { alert ->

@@ -49,21 +49,20 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
   @Test
   fun `empty response if no alerts found for prison number`() {
     val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER)
-    assertThat(response).isEmpty()
+    assertThat(response.content).isEmpty()
   }
 
   @Test
   @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve all alerts for prison number`() {
     val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER)
-    val deletedAlert = alertRepository.findByAlertUuidIncludingSoftDelete(deletedAlertUuid)!!
-    assertThat(deletedAlert.prisonNumber == PRISON_NUMBER).isTrue
-    with(response) {
+    with(response.content) {
       assertThat(this).isNotEmpty
       assertAllForPrisonNumber(PRISON_NUMBER)
       assertContainsActiveAndInactiveAlertCodes()
       assertContainsActiveAndInactive()
-      assertThat(none { it.alertUuid == deletedAlert.alertUuid }).isTrue
+      assertDoesNotContainDeletedAlert()
+      assertOrderedByActiveFromDesc()
     }
   }
 
@@ -76,11 +75,20 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
       assertThat(any { !it.alertCode.isActive }).isTrue
     }
 
+  private fun Collection<Alert>.assertDoesNotContainDeletedAlert() =
+    alertRepository.findByAlertUuidIncludingSoftDelete(deletedAlertUuid)!!.also { deletedAlert ->
+      assertThat(deletedAlert.prisonNumber == map { it.prisonNumber }.distinct().single()).isTrue
+      assertThat(none { it.alertUuid == deletedAlert.alertUuid }).isTrue
+    }
+
   private fun Collection<Alert>.assertContainsActiveAndInactive() =
     with(this) {
       assertThat(any { it.isActive }).isTrue
       assertThat(any { !it.isActive }).isTrue
     }
+
+  private fun List<Alert>.assertOrderedByActiveFromDesc() =
+    assertThat(this).isSortedAccordingTo(compareByDescending { it.activeFrom })
 
   private fun WebTestClient.getPrisonerAlerts(
     prisonNumber: String,
@@ -96,6 +104,37 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBodyList(Alert::class.java)
+      .expectBody(AlertsPage::class.java)
       .returnResult().responseBody!!
+
+  data class AlertsPage(
+    val content: List<Alert>,
+    /*content: TPagedListItem[]
+    pageable?: {
+    sort: {
+      empty: boolean
+      sorted: boolean
+      unsorted: boolean
+    }
+    offset: number
+    pageSize: number
+    pageNumber: number
+    paged: boolean
+    unpaged: boolean
+  }
+  totalPages: number
+  last: boolean
+  totalElements: number
+  size: number
+  number: number
+  sort: {
+    empty: boolean
+    sorted: boolean
+    unsorted: boolean
+  }
+  first: boolean
+  numberOfElements: number
+  empty: boolean
+  )*/
+  )
 }
