@@ -2,16 +2,22 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.test.context.jdbc.Sql
+import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
-import java.time.LocalDate
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import java.util.UUID
 
 class PrisonerAlertsIntTest : IntegrationTestBase() {
+  @Autowired
+  lateinit var alertRepository: AlertRepository
+
+  private val deletedAlertUuid = UUID.fromString("84856971-0072-40a9-ba5d-e994b0a9754f")
+
   @Test
   fun `401 unauthorised`() {
     webTestClient.get()
@@ -41,60 +47,55 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `empty response if no alerts found`() {
-    val response = webTestClient.get()
-      .uri("/prisoner/$PRISON_NUMBER/alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
-      .headers(setAlertRequestContext())
-      .exchange()
-      .expectStatus().isOk
-      .expectBodyList(Alert::class.java)
-      .returnResult().responseBody
+  fun `empty response if no alerts found for prison number`() {
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER)
     assertThat(response).isEmpty()
   }
 
   @Test
-  fun `retrieve alert`() {
-    val alert = createAlert()
-    val response = webTestClient.get()
-      .uri("/alerts/${alert.alertUuid}")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
-      .headers(setAlertRequestContext())
-      .exchange()
-      .expectStatus().isOk
-      .expectBodyList(Alert::class.java)
-      .returnResult().responseBody
-    val compareTo = objectMapper.readValue(objectMapper.writeValueAsString(alert), Alert::class.java)
-    with(response!!) {
-      assertThat(this).containsExactly(
-        compareTo,
-      )
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `retrieve all alerts for prison number`() {
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER)
+    val deletedAlert = alertRepository.findByAlertUuidIncludingSoftDelete(deletedAlertUuid)!!
+    assertThat(deletedAlert.prisonNumber == PRISON_NUMBER).isTrue
+    with(response) {
+      assertThat(this).isNotEmpty
+      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertContainsActiveAndInactiveAlertCodes()
+      assertContainsActiveAndInactive()
+      assertThat(none { it.alertUuid == deletedAlert.alertUuid }).isTrue
     }
   }
 
-  private fun createAlertRequest(
-    prisonNumber: String = PRISON_NUMBER,
-    alertCode: String = ALERT_CODE_VICTIM,
-  ) =
-    CreateAlert(
-      prisonNumber = prisonNumber,
-      alertCode = alertCode,
-      description = "Alert description",
-      authorisedBy = "A. Authorizer",
-      activeFrom = LocalDate.now().minusDays(3),
-      activeTo = null,
-    )
+  private fun Collection<Alert>.assertAllForPrisonNumber(prisonNumber: String) =
+    assertThat(all { it.prisonNumber == prisonNumber }).isTrue
 
-  private fun createAlert(): Alert {
-    val request = createAlertRequest()
-    return webTestClient.post()
-      .uri("/alerts")
-      .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_WRITER), isUserToken = true))
+  private fun Collection<Alert>.assertContainsActiveAndInactiveAlertCodes() =
+    with(this) {
+      assertThat(any { it.alertCode.isActive }).isTrue
+      assertThat(any { !it.alertCode.isActive }).isTrue
+    }
+
+  private fun Collection<Alert>.assertContainsActiveAndInactive() =
+    with(this) {
+      assertThat(any { it.isActive }).isTrue
+      assertThat(any { !it.isActive }).isTrue
+    }
+
+  private fun WebTestClient.getPrisonerAlerts(
+    prisonNumber: String,
+  ) =
+    get()
+      .uri { builder ->
+        builder
+          .path("/prisoner/$prisonNumber/alerts")
+          // .queryParamIfPresent("includeInactive", Optional.ofNullable(includeInactive))
+          .build()
+      }
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
       .exchange()
-      .expectStatus().isCreated
+      .expectStatus().isOk
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(Alert::class.java)
+      .expectBodyList(Alert::class.java)
       .returnResult().responseBody!!
-  }
 }

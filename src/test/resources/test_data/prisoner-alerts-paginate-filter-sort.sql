@@ -68,7 +68,7 @@ values
 ),
 (
     6,
-    gen_random_uuid(),
+    '84856971-0072-40a9-ba5d-e994b0a9754f',
     (SELECT alert_code_id FROM alert_code WHERE code = 'ORFW'),
     'A1234AA',
     'Deleted active alert type ''O'' - ''Other'' code ''ORFW'' - ''Ready For Work'' alert for prison number ''A1234AA'' which would have been active from today with no active to date. Alert code is active. Created today and not modified since',
