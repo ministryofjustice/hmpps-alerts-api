@@ -54,6 +54,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
     @PathVariable
     @Parameter(
       description = "Prison number of the prisoner. Also referred to as the offender number, offender id or NOMS id",
+      example = "A1234AA",
       required = true,
     )
     prisonNumber: String,
