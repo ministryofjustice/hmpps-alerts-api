@@ -28,4 +28,14 @@ class InfoTest : IntegrationTestBase() {
         assertThat(it).startsWith(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE))
       }
   }
+
+  @Test
+  fun `has active prisons`() {
+    webTestClient.get().uri("/info")
+      .exchange()
+      .expectStatus().isOk
+      .expectBody().jsonPath("activeAgencies").value<List<String>> {
+        assertThat(it.contains("***")).isTrue
+      }
+  }
 }

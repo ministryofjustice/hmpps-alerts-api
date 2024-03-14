@@ -11,7 +11,7 @@ generic-service:
     API_BASE_URL_PRISONER_SEARCH: "https://prisoner-search.prison.service.justice.gov.uk"
     EVENTS_PUBLISH: false
     EVENTS_BASE_URL: "https://alerts-api.hmpps.service.justice.gov.uk"
-
+    SERVICE_ACTIVE_PRISONS:
   postgresDatabaseRestore:
     enabled: true
     namespace_secrets:
