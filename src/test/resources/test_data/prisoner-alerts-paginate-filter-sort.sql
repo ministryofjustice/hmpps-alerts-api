@@ -17,7 +17,7 @@ values
     (SELECT alert_code_id FROM alert_code WHERE code = 'ADSC'),
     'A1234AA',
     'Active alert type ''A'' - ''Social Care'' code ''ADSC'' - ''Adult Social Care'' alert for prison number ''A1234AA'' active from yesterday with no active to date. Alert code is active. Created yesterday and not modified since',
-    null,
+    'A. Approver',
     now() - interval '1 day',
     null,
     null
@@ -28,7 +28,7 @@ values
     (SELECT alert_code_id FROM alert_code WHERE code = 'AS'),
     'A1234AA',
     'Active alert type ''A'' - ''Social Care'' code ''AS'' - ''Social Care'' alert for prison number ''A1234AA'' active from today with no active to date. Alert code is active. Created two days ago and modified yesterday and today',
-    null,
+    'External Provider',
     now(),
     null,
     null
@@ -50,7 +50,7 @@ values
     (SELECT alert_code_id FROM alert_code WHERE code = 'MAS'),
     'A1234AA',
     'Inactive alert type ''M'' - ''Medical'' code ''MAS'' - ''Asthmatic'' alert for prison number ''A1234AA'' active from tomorrow with no active to date. Alert code is active. Created three days ago and not modified since',
-    null,
+    'B. Approver',
     now() + interval '1 day',
     null,
     null
@@ -72,7 +72,7 @@ values
     (SELECT alert_code_id FROM alert_code WHERE code = 'ORFW'),
     'A1234AA',
     'Deleted active alert type ''O'' - ''Other'' code ''ORFW'' - ''Ready For Work'' alert for prison number ''A1234AA'' which would have been active from today with no active to date. Alert code is active. Created today and not modified since',
-    null,
+    'C. Approver',
     now(),
     null,
     now()
@@ -184,6 +184,57 @@ values
     'CREATED',
     'Alert created',
     now() - interval '1 day',
+    'TEST_USER',
+    'Test User'
+);
+
+insert into comment
+(
+    comment_uuid,
+    alert_id,
+    comment,
+    created_at,
+    created_by,
+    created_by_display_name
+)
+values
+(
+    gen_random_uuid(),
+    2,
+    'First and only comment for alert 2. Search for ''Search Comment'' to find alert with this comment',
+    now(),
+    'TEST_USER',
+    'Test User'
+),
+(
+    gen_random_uuid(),
+    5,
+    'First comment for alert 5',
+    now() - interval '3 hours',
+    'TEST_USER',
+    'Test User'
+),
+(
+    gen_random_uuid(),
+    5,
+    'Second comment for alert 5. Search for ''Search Comment'' to find alert with this comment',
+    now() - interval '2 hours',
+    'TEST_USER',
+    'Test User'
+),
+(
+    gen_random_uuid(),
+    5,
+    'Third comment for alert 5',
+    now() - interval '1 hour',
+    'TEST_USER',
+    'Test User'
+),
+(
+    gen_random_uuid(),
+    6,
+    'Comment for deleted alert. Search for ''Search Comment'' to find alert with this comment',
+    now(),
     'TEST_USER',
     'Test User'
 );

@@ -2,12 +2,14 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.repository
 
 import jakarta.persistence.criteria.CriteriaBuilder
 import jakarta.persistence.criteria.CriteriaQuery
+import jakarta.persistence.criteria.JoinType
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
 import org.springframework.data.jpa.domain.Specification
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Comment
 import java.time.LocalDate
 
 class AlertsFilter(
@@ -42,6 +44,16 @@ class AlertsFilter(
 
     alertCode?.let {
       predicates.add(root.get<AlertCode>("alertCode").get<String>("code").`in`(alertCode.split(",")))
+    }
+
+    search?.let {
+      predicates.add(
+        criteriaBuilder.or(
+          criteriaBuilder.like(criteriaBuilder.lower(root.get("description")), "%${it.lowercase()}%"),
+          criteriaBuilder.like(criteriaBuilder.lower(root.get("authorisedBy")), "%${it.lowercase()}%"),
+          criteriaBuilder.like(criteriaBuilder.lower(root.join<Alert, Comment>("comments", JoinType.LEFT).get("comment")), "%${it.lowercase()}%"),
+        ),
+      )
     }
 
     activeFromStart?.let {
