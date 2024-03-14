@@ -294,6 +294,27 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     }
   }
 
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `sort all alerts for prison number by active from in ascending order`() {
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("activeFrom,asc"))
+    response.content.assertOrderedByActiveFromAsc()
+  }
+
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `sort all alerts for prison number by active to in ascending order`() {
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("activeTo,asc"))
+    response.content.assertOrderedByActiveToAsc()
+  }
+
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `sort all alerts for prison number by active to in descending order`() {
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("activeTo,desc"))
+    response.content.assertOrderedByActiveToDesc()
+  }
+
   private fun Collection<Alert>.assertAllForPrisonNumber(prisonNumber: String) =
     assertThat(all { it.prisonNumber == prisonNumber }).isTrue
 
@@ -342,8 +363,17 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
       assertThat(none { it.alertUuid == deletedAlert.alertUuid }).isTrue
     }
 
+  private fun List<Alert>.assertOrderedByActiveFromAsc() =
+    assertThat(this).isSortedAccordingTo(compareBy { it.activeFrom })
+
   private fun List<Alert>.assertOrderedByActiveFromDesc() =
     assertThat(this).isSortedAccordingTo(compareByDescending { it.activeFrom })
+
+  private fun List<Alert>.assertOrderedByActiveToAsc() =
+    assertThat(this).isSortedAccordingTo(compareBy(nullsLast()) { it.activeTo })
+
+  private fun List<Alert>.assertOrderedByActiveToDesc() =
+    assertThat(this).isSortedAccordingTo(compareByDescending(nullsLast()) { it.activeTo })
 
   private fun WebTestClient.getPrisonerAlerts(
     prisonNumber: String,
@@ -355,6 +385,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     search: String? = null,
     page: Int? = null,
     size: Int? = null,
+    sort: Array<String>? = null,
   ) =
     get()
       .uri { builder ->
@@ -368,6 +399,11 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
           .queryParamIfPresent("search", Optional.ofNullable(search))
           .queryParamIfPresent("page", Optional.ofNullable(page))
           .queryParamIfPresent("size", Optional.ofNullable(size))
+          .also {
+            sort?.forEach {
+              builder.queryParam("sort", it)
+            }
+          }
           .build()
       }
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
