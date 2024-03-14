@@ -92,8 +92,13 @@ class AlertService(
     alertRepository.saveAndFlush(alert)
   }
 
-  fun retrieveAlertsForPrisonNumber(prisonNumber: String, isActive: Boolean?, pageable: Pageable): Page<AlertModel> =
-    alertRepository.findAll(AlertsFilter(prisonNumber, isActive), pageable).map { it.toAlertModel() }
+  fun retrieveAlertsForPrisonNumber(
+    prisonNumber: String,
+    isActive: Boolean?,
+    alertType: String?,
+    pageable: Pageable,
+  ): Page<AlertModel> =
+    alertRepository.findAll(AlertsFilter(prisonNumber, isActive, alertType), pageable).map { it.toAlertModel() }
 
   fun retrieveAuditEventsForAlert(alertUuid: UUID): Collection<AuditEvent> =
     alertRepository.findByAlertUuid(alertUuid)?.let { alert ->

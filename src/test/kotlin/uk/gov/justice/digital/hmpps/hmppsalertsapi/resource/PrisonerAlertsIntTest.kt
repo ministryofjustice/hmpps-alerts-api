@@ -10,6 +10,9 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_MEDICAL
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_OTHER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_SOCIAL_CARE
 import java.util.Optional
 import java.util.UUID
 
@@ -154,8 +157,40 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     }
   }
 
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `retrieve all 'M' - 'Medical' type alerts for prison number`() {
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, alertType = ALERT_TYPE_CODE_MEDICAL)
+    with(response.content) {
+      assertThat(this).hasSize(2)
+      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllOfAlertType(ALERT_TYPE_CODE_MEDICAL)
+      assertOrderedByActiveFromDesc()
+    }
+  }
+
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `retrieve all 'A' - 'Social Care' (all active), 'M' - 'Medical' (all inactive) and 'O' - 'Other' (alert deleted) type alerts for prison number`() {
+    val response = webTestClient.getPrisonerAlerts(
+      PRISON_NUMBER,
+      alertType = listOf(ALERT_TYPE_SOCIAL_CARE, ALERT_TYPE_CODE_MEDICAL, ALERT_TYPE_CODE_OTHER).joinToString(","),
+    )
+    with(response.content) {
+      assertThat(this).hasSize(4)
+      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllOfAlertType(ALERT_TYPE_SOCIAL_CARE, ALERT_TYPE_CODE_MEDICAL)
+      assertContainsActiveAndInactive()
+      assertDoesNotContainDeletedAlert()
+      assertOrderedByActiveFromDesc()
+    }
+  }
+
   private fun Collection<Alert>.assertAllForPrisonNumber(prisonNumber: String) =
     assertThat(all { it.prisonNumber == prisonNumber }).isTrue
+
+  private fun Collection<Alert>.assertAllOfAlertType(vararg alertType: String) =
+    assertThat(all { alertType.contains(it.alertCode.alertTypeCode) }).isTrue
 
   private fun Collection<Alert>.assertContainsActiveAndInactiveAlertCodes() =
     with(this) {
@@ -187,6 +222,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
   private fun WebTestClient.getPrisonerAlerts(
     prisonNumber: String,
     isActive: Boolean? = null,
+    alertType: String? = null,
     page: Int? = null,
     size: Int? = null,
   ) =
@@ -195,6 +231,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
         builder
           .path("/prisoner/$prisonNumber/alerts")
           .queryParamIfPresent("isActive", Optional.ofNullable(isActive))
+          .queryParamIfPresent("alertType", Optional.ofNullable(alertType))
           .queryParamIfPresent("page", Optional.ofNullable(page))
           .queryParamIfPresent("size", Optional.ofNullable(size))
           .build()

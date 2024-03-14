@@ -13,6 +13,10 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
 
+const val ALERT_TYPE_SOCIAL_CARE = "A"
+const val ALERT_TYPE_CODE_MEDICAL = "M"
+const val ALERT_TYPE_CODE_OTHER = "O"
+
 const val ALERT_CODE_ADULT_AT_RISK = "AAR"
 const val ALERT_CODE_SOCIAL_CARE = "AS"
 const val ALERT_CODE_VICTIM = "VI"

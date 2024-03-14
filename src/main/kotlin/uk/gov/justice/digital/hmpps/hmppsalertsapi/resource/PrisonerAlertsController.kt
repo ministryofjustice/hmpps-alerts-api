@@ -65,8 +65,14 @@ class PrisonerAlertsController(val alertService: AlertService) {
       example = "true",
     )
     isActive: Boolean?,
+    @RequestParam
+    @Parameter(
+      description = "Filter by alert type code or codes. Supply a comma separated list of alert type codes to filter by more than one code",
+      example = "M",
+    )
+    alertType: String?,
     @ParameterObject
     @PageableDefault(sort = ["activeFrom"], direction = Direction.DESC)
     pageable: Pageable,
-  ): Page<Alert> = alertService.retrieveAlertsForPrisonNumber(prisonNumber, isActive, pageable)
+  ): Page<Alert> = alertService.retrieveAlertsForPrisonNumber(prisonNumber, isActive, alertType, pageable)
 }
