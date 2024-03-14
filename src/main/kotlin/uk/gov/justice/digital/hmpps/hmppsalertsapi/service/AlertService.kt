@@ -97,8 +97,10 @@ class AlertService(
     prisonNumber: String,
     isActive: Boolean?,
     alertType: String?,
+    alertCode: String?,
     activeFromStart: LocalDate?,
     activeFromEnd: LocalDate?,
+    search: String?,
     pageable: Pageable,
   ): Page<AlertModel> =
     alertRepository.findAll(
@@ -106,10 +108,12 @@ class AlertService(
         prisonNumber = prisonNumber,
         isActive = isActive,
         alertType = alertType,
+        alertCode = alertCode,
         activeFromStart = activeFromStart,
         activeFromEnd = activeFromEnd,
+        search = search,
       ),
-      pageable = pageable
+      pageable = pageable,
     ).map { it.toAlertModel() }
 
   fun retrieveAuditEventsForAlert(alertUuid: UUID): Collection<AuditEvent> =

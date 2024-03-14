@@ -14,8 +14,10 @@ class AlertsFilter(
   val prisonNumber: String,
   val isActive: Boolean? = null,
   val alertType: String? = null,
+  val alertCode: String? = null,
   val activeFromStart: LocalDate? = null,
   val activeFromEnd: LocalDate? = null,
+  val search: String? = null,
 ) : Specification<Alert> {
   override fun toPredicate(root: Root<Alert>, query: CriteriaQuery<*>, criteriaBuilder: CriteriaBuilder): Predicate? {
     val predicates = MutableList<Predicate>(4) { criteriaBuilder.conjunction() }
@@ -36,6 +38,10 @@ class AlertsFilter(
 
     alertType?.let {
       predicates.add(root.get<AlertCode>("alertCode").get<AlertType>("alertType").get<String>("code").`in`(alertType.split(",")))
+    }
+
+    alertCode?.let {
+      predicates.add(root.get<AlertCode>("alertCode").get<String>("code").`in`(alertCode.split(",")))
     }
 
     activeFromStart?.let {

@@ -74,6 +74,12 @@ class PrisonerAlertsController(val alertService: AlertService) {
     alertType: String?,
     @RequestParam
     @Parameter(
+      description = "Filter by alert code or codes. Supply a comma separated list of alert codes to filter by more than one code",
+      example = "AS",
+    )
+    alertCode: String?,
+    @RequestParam
+    @Parameter(
       description = "Filter alerts that have an active on date or after the supplied date",
       example = "2023-09-27",
     )
@@ -84,15 +90,23 @@ class PrisonerAlertsController(val alertService: AlertService) {
       example = "2021-11-15",
     )
     activeFromEnd: LocalDate?,
+    @RequestParam
+    @Parameter(
+      description = "Filter alerts that contain the search text in their description, authorised by or comments. The search is case insensitive and will match any part of the description, authorised by or comment text",
+      example = "Search text",
+    )
+    search: String?,
     @ParameterObject
     @PageableDefault(sort = ["activeFrom"], direction = Direction.DESC)
     pageable: Pageable,
   ): Page<Alert> = alertService.retrieveAlertsForPrisonNumber(
-    prisonNumber,
-    isActive,
-    alertType,
-    activeFromStart,
-    activeFromEnd,
-    pageable
+    prisonNumber = prisonNumber,
+    isActive = isActive,
+    alertType = alertType,
+    alertCode = alertCode,
+    activeFromStart = activeFromStart,
+    activeFromEnd = activeFromEnd,
+    search = search,
+    pageable = pageable,
   )
 }

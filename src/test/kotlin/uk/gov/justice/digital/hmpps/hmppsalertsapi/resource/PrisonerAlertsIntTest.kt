@@ -12,6 +12,9 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_READY_FOR_WORK
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_SOCIAL_CARE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_MEDICAL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_OTHER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_SOCIAL_CARE
@@ -191,6 +194,35 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `retrieve all 'ADSC' - 'Adult Social Care' code alerts for prison number`() {
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, alertCode = ALERT_CODE_SOCIAL_CARE)
+    with(response.content) {
+      assertThat(this).hasSize(1)
+      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllOfAlertCode(ALERT_CODE_SOCIAL_CARE)
+      assertOrderedByActiveFromDesc()
+    }
+  }
+
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `retrieve all 'ADSC' - 'Adult Social Care' (active), 'URS' - 'Refusing to shield' (active, inactive code) and 'ORFW' - 'Ready For Work' (alert deleted) code alerts for prison number`() {
+    val response = webTestClient.getPrisonerAlerts(
+      PRISON_NUMBER,
+      alertCode = listOf(ALERT_CODE_SOCIAL_CARE, ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD, ALERT_CODE_READY_FOR_WORK).joinToString(","),
+    )
+    with(response.content) {
+      assertThat(this).hasSize(2)
+      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllOfAlertCode(ALERT_CODE_SOCIAL_CARE, ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
+      assertContainsOnlyActive()
+      assertDoesNotContainDeletedAlert()
+      assertOrderedByActiveFromDesc()
+    }
+  }
+
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve all alerts for prison number active from on or after today`() {
     val activeFromStart = LocalDate.now()
     val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, activeFromStart = activeFromStart)
@@ -224,6 +256,9 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
 
   private fun Collection<Alert>.assertAllOfAlertType(vararg alertType: String) =
     assertThat(all { alertType.contains(it.alertCode.alertTypeCode) }).isTrue
+
+  private fun Collection<Alert>.assertAllOfAlertCode(vararg alertCode: String) =
+    assertThat(all { alertCode.contains(it.alertCode.code) }).isTrue
 
   private fun Collection<Alert>.assertActiveFromOnOrAfter(activeFrom: LocalDate) =
     assertThat(all { it.activeFrom.onOrAfter(activeFrom) }).isTrue
@@ -262,6 +297,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     prisonNumber: String,
     isActive: Boolean? = null,
     alertType: String? = null,
+    alertCode: String? = null,
     activeFromStart: LocalDate? = null,
     activeFromEnd: LocalDate? = null,
     page: Int? = null,
@@ -273,6 +309,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
           .path("/prisoner/$prisonNumber/alerts")
           .queryParamIfPresent("isActive", Optional.ofNullable(isActive))
           .queryParamIfPresent("alertType", Optional.ofNullable(alertType))
+          .queryParamIfPresent("alertCode", Optional.ofNullable(alertCode))
           .queryParamIfPresent("activeFromStart", Optional.ofNullable(activeFromStart))
           .queryParamIfPresent("activeFromEnd", Optional.ofNullable(activeFromEnd))
           .queryParamIfPresent("page", Optional.ofNullable(page))
