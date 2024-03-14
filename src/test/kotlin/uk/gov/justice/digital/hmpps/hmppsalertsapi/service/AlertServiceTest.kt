@@ -331,6 +331,33 @@ Comment '${updateRequest.appendComment}' was added
     val result = underTest.retrieveAlertsForPrisonNumber("ABC123AA")
     assertThat(result).containsExactly(alert.toAlertModel())
   }
+
+  @Test
+  fun `should throw exception if alert not found when retrieving audit events`() {
+    whenever(alertRepository.findByAlertUuid(any())).thenReturn(null)
+    val alertUuid = UUID.randomUUID()
+    val exception = assertThrows<AlertNotFoundException> {
+      underTest.retrieveAuditEventsForAlert(alertUuid)
+    }
+    assertThat(exception.message).isEqualTo("Could not find alert with uuid $alertUuid")
+  }
+
+  @Test
+  fun `should return models if exist`() {
+    val alertEntity = alertEntity()
+    whenever(alertRepository.findByAlertUuid(any())).thenReturn(alertEntity)
+    val alertUuid = UUID.randomUUID()
+    val result = underTest.retrieveAuditEventsForAlert(alertUuid)
+    assertThat(result).isNotEmpty()
+    with(result.single()) {
+      assertThat(action).isEqualTo(alertEntity.auditEvents().single().action)
+      assertThat(description).isEqualTo(alertEntity.auditEvents().single().description)
+      assertThat(actionedAt).isEqualTo(alertEntity.auditEvents().single().actionedAt)
+      assertThat(actionedBy).isEqualTo(alertEntity.auditEvents().single().actionedBy)
+      assertThat(actionedByDisplayName).isEqualTo(alertEntity.auditEvents().single().actionedByDisplayName)
+    }
+  }
+
   private fun createAlertRequest(
     prisonNumber: String = PRISON_NUMBER,
     alertCode: String = ALERT_CODE_VICTIM,

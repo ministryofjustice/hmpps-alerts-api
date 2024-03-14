@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
@@ -214,6 +215,45 @@ class AlertsController(
     alertUuid: UUID,
     httpRequest: HttpServletRequest,
   ): Unit = alertService.deleteAlert(alertUuid, httpRequest.alertRequestContext())
+
+  @GetMapping("/{alertUuid}/auditEvents")
+  @Operation(
+    summary = "Get audit events for an alert",
+    description = "This endpoint retrieves all the audit events for a given alert",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Audit events retrieved for a given alert",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Alert was not found or already deleted",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_ALERTS_ADMIN', '$PRISON', '$ROLE_NOMIS_ALERTS')")
+  @SourceHeader
+  fun retrieveAlertAuditEvents(
+    @PathVariable
+    @Parameter(
+      description = "Alert unique identifier",
+      required = true,
+    )
+    alertUuid: UUID,
+  ): Collection<AuditEvent> = alertService.retrieveAuditEventsForAlert(alertUuid)
 
   private fun HttpServletRequest.alertRequestContext() =
     getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
