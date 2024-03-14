@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
@@ -14,6 +16,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertsFilter
+import java.time.LocalDate
 import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
@@ -89,8 +93,28 @@ class AlertService(
     alertRepository.saveAndFlush(alert)
   }
 
-  fun retrieveAlertsForPrisonNumber(prisonNumber: String): Collection<AlertModel> =
-    alertRepository.findAllByPrisonNumber(prisonNumber).map { it.toAlertModel() }
+  fun retrieveAlertsForPrisonNumber(
+    prisonNumber: String,
+    isActive: Boolean?,
+    alertType: String?,
+    alertCode: String?,
+    activeFromStart: LocalDate?,
+    activeFromEnd: LocalDate?,
+    search: String?,
+    pageable: Pageable,
+  ): Page<AlertModel> =
+    alertRepository.findAll(
+      AlertsFilter(
+        prisonNumber = prisonNumber,
+        isActive = isActive,
+        alertType = alertType,
+        alertCode = alertCode,
+        activeFromStart = activeFromStart,
+        activeFromEnd = activeFromEnd,
+        search = search,
+      ),
+      pageable = pageable,
+    ).map { it.toAlertModel() }
 
   fun retrieveAuditEventsForAlert(alertUuid: UUID): Collection<AuditEvent> =
     alertRepository.findByAlertUuid(alertUuid)?.let { alert ->

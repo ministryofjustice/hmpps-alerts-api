@@ -2,22 +2,28 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
-import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import org.springdoc.core.annotations.ParameterObject
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort.Direction
+import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
+import java.time.LocalDate
 
 @RestController
 @RequestMapping("/prisoner/{prisonNumber}/alerts", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -32,7 +38,6 @@ class PrisonerAlertsController(val alertService: AlertService) {
       ApiResponse(
         responseCode = "200",
         description = "Alerts found",
-        content = [Content(array = ArraySchema(schema = Schema(implementation = Alert::class)))],
       ),
       ApiResponse(
         responseCode = "401",
@@ -51,8 +56,57 @@ class PrisonerAlertsController(val alertService: AlertService) {
     @PathVariable
     @Parameter(
       description = "Prison number of the prisoner. Also referred to as the offender number, offender id or NOMS id",
+      example = "A1234AA",
       required = true,
     )
     prisonNumber: String,
-  ): Collection<Alert> = alertService.retrieveAlertsForPrisonNumber(prisonNumber)
+    @RequestParam
+    @Parameter(
+      description = "Return only active (true) or inactive (false) alerts. If not provided or a null value is supplied, all alerts are returned",
+      example = "true",
+    )
+    isActive: Boolean?,
+    @RequestParam
+    @Parameter(
+      description = "Filter by alert type code or codes. Supply a comma separated list of alert type codes to filter by more than one code",
+      example = "M",
+    )
+    alertType: String?,
+    @RequestParam
+    @Parameter(
+      description = "Filter by alert code or codes. Supply a comma separated list of alert codes to filter by more than one code",
+      example = "AS",
+    )
+    alertCode: String?,
+    @RequestParam
+    @Parameter(
+      description = "Filter alerts that have an active on date or after the supplied date",
+      example = "2023-09-27",
+    )
+    activeFromStart: LocalDate?,
+    @RequestParam
+    @Parameter(
+      description = "Filter alerts that have an active on date up to or before the supplied date",
+      example = "2021-11-15",
+    )
+    activeFromEnd: LocalDate?,
+    @RequestParam
+    @Parameter(
+      description = "Filter alerts that contain the search text in their description, authorised by or comments. The search is case insensitive and will match any part of the description, authorised by or comment text",
+      example = "Search text",
+    )
+    search: String?,
+    @ParameterObject
+    @PageableDefault(sort = ["activeFrom"], direction = Direction.DESC)
+    pageable: Pageable,
+  ): Page<Alert> = alertService.retrieveAlertsForPrisonNumber(
+    prisonNumber = prisonNumber,
+    isActive = isActive,
+    alertType = alertType,
+    alertCode = alertCode,
+    activeFromStart = activeFromStart,
+    activeFromEnd = activeFromEnd,
+    search = search,
+    pageable = pageable,
+  )
 }
