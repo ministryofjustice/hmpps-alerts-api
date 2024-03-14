@@ -38,3 +38,7 @@ hmpps.sqs:
   topics:
     hmppseventtopic:
       arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
+
+service:
+  active:
+    prisons: ${SERVICE_ACTIVE_PRISONS:***}
