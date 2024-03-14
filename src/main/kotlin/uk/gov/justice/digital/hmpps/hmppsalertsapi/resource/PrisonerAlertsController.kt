@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
+import java.time.LocalDate
 
 @RestController
 @RequestMapping("/prisoner/{prisonNumber}/alerts", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -71,8 +72,27 @@ class PrisonerAlertsController(val alertService: AlertService) {
       example = "M",
     )
     alertType: String?,
+    @RequestParam
+    @Parameter(
+      description = "Filter alerts that have an active on date or after the supplied date",
+      example = "2023-09-27",
+    )
+    activeFromStart: LocalDate?,
+    @RequestParam
+    @Parameter(
+      description = "Filter alerts that have an active on date up to or before the supplied date",
+      example = "2021-11-15",
+    )
+    activeFromEnd: LocalDate?,
     @ParameterObject
     @PageableDefault(sort = ["activeFrom"], direction = Direction.DESC)
     pageable: Pageable,
-  ): Page<Alert> = alertService.retrieveAlertsForPrisonNumber(prisonNumber, isActive, alertType, pageable)
+  ): Page<Alert> = alertService.retrieveAlertsForPrisonNumber(
+    prisonNumber,
+    isActive,
+    alertType,
+    activeFromStart,
+    activeFromEnd,
+    pageable
+  )
 }

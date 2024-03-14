@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.onOrAfter
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.onOrBefore
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
@@ -13,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_MEDICAL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_OTHER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_SOCIAL_CARE
+import java.time.LocalDate
 import java.util.Optional
 import java.util.UUID
 
@@ -186,11 +189,47 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     }
   }
 
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `retrieve all alerts for prison number active from on or after today`() {
+    val activeFromStart = LocalDate.now()
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, activeFromStart = activeFromStart)
+    with(response.content) {
+      assertThat(this).hasSize(3)
+      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertActiveFromOnOrAfter(activeFromStart)
+      assertContainsActiveAndInactive()
+      assertDoesNotContainDeletedAlert()
+      assertOrderedByActiveFromDesc()
+    }
+  }
+
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `retrieve all alerts for prison number active from up to or before today`() {
+    val activeFromStart = LocalDate.now()
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, activeFromEnd = activeFromStart)
+    with(response.content) {
+      assertThat(this).hasSize(4)
+      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertActiveFromOnOrBefore(activeFromStart)
+      assertContainsActiveAndInactive()
+      assertDoesNotContainDeletedAlert()
+      assertOrderedByActiveFromDesc()
+    }
+  }
+
   private fun Collection<Alert>.assertAllForPrisonNumber(prisonNumber: String) =
     assertThat(all { it.prisonNumber == prisonNumber }).isTrue
 
   private fun Collection<Alert>.assertAllOfAlertType(vararg alertType: String) =
     assertThat(all { alertType.contains(it.alertCode.alertTypeCode) }).isTrue
+
+  private fun Collection<Alert>.assertActiveFromOnOrAfter(activeFrom: LocalDate) =
+    assertThat(all { it.activeFrom.onOrAfter(activeFrom) }).isTrue
+
+  private fun Collection<Alert>.assertActiveFromOnOrBefore(activeFrom: LocalDate) =
+    assertThat(all { it.activeFrom.onOrBefore(activeFrom) }).isTrue
 
   private fun Collection<Alert>.assertContainsActiveAndInactiveAlertCodes() =
     with(this) {
@@ -223,6 +262,8 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     prisonNumber: String,
     isActive: Boolean? = null,
     alertType: String? = null,
+    activeFromStart: LocalDate? = null,
+    activeFromEnd: LocalDate? = null,
     page: Int? = null,
     size: Int? = null,
   ) =
@@ -232,6 +273,8 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
           .path("/prisoner/$prisonNumber/alerts")
           .queryParamIfPresent("isActive", Optional.ofNullable(isActive))
           .queryParamIfPresent("alertType", Optional.ofNullable(alertType))
+          .queryParamIfPresent("activeFromStart", Optional.ofNullable(activeFromStart))
+          .queryParamIfPresent("activeFromEnd", Optional.ofNullable(activeFromEnd))
           .queryParamIfPresent("page", Optional.ofNullable(page))
           .queryParamIfPresent("size", Optional.ofNullable(size))
           .build()
