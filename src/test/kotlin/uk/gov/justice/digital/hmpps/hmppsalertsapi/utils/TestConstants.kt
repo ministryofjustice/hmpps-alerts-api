@@ -16,6 +16,7 @@ import java.util.UUID
 const val ALERT_TYPE_SOCIAL_CARE = "A"
 const val ALERT_TYPE_CODE_MEDICAL = "M"
 const val ALERT_TYPE_CODE_OTHER = "O"
+const val ALERT_TYPE_CODE_VULNERABILITY = "V"
 
 const val ALERT_CODE_ADULT_AT_RISK = "AAR"
 const val ALERT_CODE_SOCIAL_CARE = "AS"
@@ -92,12 +93,12 @@ fun alertCodeRefusingToShieldInactive() =
 
 fun alertCodeVictimSummary() =
   AlertCodeSummary(
-    "V",
+    ALERT_TYPE_CODE_VULNERABILITY,
+    "Vulnerability",
     ALERT_CODE_VICTIM,
     "Victim",
-    6,
-    true,
   )
+
 fun migrateAlertRequest(
   comments: Collection<MigrateCommentRequest> = emptyList(),
   includeUpdate: Boolean = false,
