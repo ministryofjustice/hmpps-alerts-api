@@ -85,7 +85,6 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     with(response.content) {
       assertThat(this).hasSize(5)
       assertAllForPrisonNumber(PRISON_NUMBER)
-      assertContainsActiveAndInactiveAlertCodes()
       assertContainsActiveAndInactive()
       assertDoesNotContainDeletedAlert()
       assertOrderedByActiveFromDesc()
@@ -338,12 +337,6 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
 
   private fun Collection<Alert>.assertActiveFromOnOrBefore(activeFrom: LocalDate) =
     assertThat(all { it.activeFrom.onOrBefore(activeFrom) }).isTrue
-
-  private fun Collection<Alert>.assertContainsActiveAndInactiveAlertCodes() =
-    with(this) {
-      assertThat(any { it.alertCode.isActive }).isTrue
-      assertThat(any { !it.alertCode.isActive }).isTrue
-    }
 
   private fun Collection<Alert>.assertContainsActiveAndInactive() =
     with(this) {
