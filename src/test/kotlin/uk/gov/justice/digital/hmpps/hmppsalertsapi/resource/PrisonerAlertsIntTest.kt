@@ -41,7 +41,6 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     webTestClient.get()
       .uri("/prisoner/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation())
-      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
   }
@@ -51,7 +50,6 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     webTestClient.get()
       .uri("/prisoner/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
   }
