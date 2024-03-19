@@ -1,5 +1,6 @@
 insert into alert
 (
+    alert_id,
     alert_uuid,
     alert_code_id,
     prison_number,
@@ -13,6 +14,7 @@ insert into alert
 )
 values
 (
+    1,
     gen_random_uuid(),
     (SELECT alert_code_id FROM alert_code WHERE code = 'ADSC'),
     'A1234AA',
@@ -25,6 +27,7 @@ values
     null
 ),
 (
+    2,
     gen_random_uuid(),
     (SELECT alert_code_id FROM alert_code WHERE code = 'AS'),
     'B2345BB',
@@ -37,6 +40,7 @@ values
     null
 ),
 (
+    3,
     gen_random_uuid(),
     (SELECT alert_code_id FROM alert_code WHERE code = 'URS'),
     'C3456CC',
@@ -49,6 +53,7 @@ values
     null
 ),
 (
+    4,
     gen_random_uuid(),
     (SELECT alert_code_id FROM alert_code WHERE code = 'MAS'),
     'A1234AA',
@@ -61,6 +66,7 @@ values
     null
 ),
 (
+    5,
     gen_random_uuid(),
     (SELECT alert_code_id FROM alert_code WHERE code = 'MEP'),
     'B2345BB',
@@ -73,6 +79,7 @@ values
     null
 ),
 (
+    6,
     'a2c6af2c-9e70-4fd7-bac3-f3029cfad9b8',
     (SELECT alert_code_id FROM alert_code WHERE code = 'ORFW'),
     'A1234AA',
@@ -85,6 +92,7 @@ values
     now()
 ),
 (
+    7,
     gen_random_uuid(),
     (SELECT alert_code_id FROM alert_code WHERE code = 'ADSC'),
     'B2345BB',
@@ -95,4 +103,111 @@ values
     now() - interval '1 day',
     null,
     null
+);
+
+insert into audit_event
+(
+    alert_id,
+    action,
+    description,
+    actioned_at,
+    actioned_by,
+    actioned_by_display_name
+)
+values
+(
+    1,
+    'CREATED',
+    'Alert created',
+    now() - interval '1 day',
+    'TEST_USER',
+    'Test User'
+),
+(
+    2,
+    'CREATED',
+    'Alert created',
+    now() - interval '2 days',
+    'TEST_USER',
+    'Test User'
+),
+(
+    2,
+    'UPDATED',
+    'First alert update',
+    now() - interval '1 day',
+    'TEST_USER',
+    'Test User'
+),
+(
+    2,
+    'UPDATED',
+    'Second alert update',
+    now(),
+    'TEST_USER',
+    'Test User'
+),
+(
+    3,
+    'CREATED',
+    'Alert created',
+    now() - interval '1 hour',
+    'TEST_USER',
+    'Test User'
+),
+(
+    3,
+    'UPDATED',
+    'Alert updated',
+    now() - interval '1 minute',
+    'TEST_USER',
+    'Test User'
+),
+(
+    4,
+    'CREATED',
+    'Alert created',
+    now() - interval '3 days',
+    'TEST_USER',
+    'Test User'
+),
+(
+    5,
+    'CREATED',
+    'Alert created',
+    now() - interval '4 days',
+    'TEST_USER',
+    'Test User'
+),
+(
+    5,
+    'UPDATED',
+    'Alert updated',
+    now() - interval '1 day',
+    'TEST_USER',
+    'Test User'
+),
+(
+    6,
+    'CREATED',
+    'Alert created',
+    now(),
+    'TEST_USER',
+    'Test User'
+),
+(
+    6,
+    'DELETED',
+    'Alert deleted',
+    now(),
+    'TEST_USER',
+    'Test User'
+),
+(
+    7,
+    'CREATED',
+    'Alert created',
+    now() - interval '1 day',
+    'TEST_USER',
+    'Test User'
 );

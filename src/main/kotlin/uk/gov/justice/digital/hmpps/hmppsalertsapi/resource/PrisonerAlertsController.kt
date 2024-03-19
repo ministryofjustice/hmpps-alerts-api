@@ -145,5 +145,5 @@ class PrisonerAlertsController(val alertService: AlertService) {
       required = true,
     )
     prisonNumbers: Collection<String>,
-  ): PrisonersAlerts = TODO()
+  ): PrisonersAlerts = alertService.retrieveAlertsForPrisonNumbers(prisonNumbers)
 }

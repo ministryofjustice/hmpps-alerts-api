@@ -23,5 +23,5 @@ interface AlertRepository : JpaRepository<Alert, Long> {
   )
   fun findByAlertUuidIncludingSoftDelete(alertUuid: UUID): Alert?
 
-  fun findAllByPrisonNumber(prisonNumber: String, filter: Specification<Alert>, pageable: Pageable): Page<Alert>
+  fun findByPrisonNumberInOrderByActiveFromDesc(prisonNumbers: Collection<String>): Collection<Alert>
 }
