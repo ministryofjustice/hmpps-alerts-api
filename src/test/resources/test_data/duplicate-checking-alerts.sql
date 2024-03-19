@@ -7,6 +7,8 @@ insert into alert
     authorised_by,
     active_from,
     active_to,
+    created_at,
+    last_modified_at,
     deleted_at
 )
 values
@@ -15,6 +17,8 @@ values
     (SELECT alert_code_id FROM alert_code WHERE code = 'HID'),
     'A1234AA',
     'Active Hidden Disability alert active from today with no active to date. Alert code is active',
+    null,
+    now(),
     null,
     now(),
     null,
@@ -28,6 +32,8 @@ values
     null,
     now(),
     null,
+    now(),
+    null,
     null
 ),
 (
@@ -37,6 +43,8 @@ values
     'Inactive Social Care alert active from tomorrow with no active to date. Alert code is active',
     null,
     now() + interval '1 day',
+    null,
+    now(),
     null,
     null
 ),
@@ -48,6 +56,8 @@ values
     null,
     now() - interval '1 day',
     now(),
+    now(),
+    null,
     null
 ),
 (
@@ -55,6 +65,8 @@ values
     (SELECT alert_code_id FROM alert_code WHERE code = 'ORFW'),
     'A1234AA',
     'Deleted active Ready For Work alert which would have been active from today with no active to date. Alert code is active',
+    null,
+    now(),
     null,
     now(),
     null,

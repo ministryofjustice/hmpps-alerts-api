@@ -314,6 +314,34 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     response.content.assertOrderedByActiveToDesc()
   }
 
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `sort all alerts for prison number by created at in ascending order`() {
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("createdAt,asc"))
+    response.content.assertOrderedByCreatedAtAsc()
+  }
+
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `sort all alerts for prison number by created at in descending order`() {
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("createdAt,desc"))
+    response.content.assertOrderedByCreatedAtDesc()
+  }
+
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `sort all alerts for prison number by last modified at in ascending order`() {
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("lastModifiedAt,asc"))
+    response.content.assertOrderedByLastModifiedAtAsc()
+  }
+
+  @Test
+  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
+  fun `sort all alerts for prison number by last modified at in descending order`() {
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("lastModifiedAt,desc"))
+    response.content.assertOrderedByLastModifiedAtDesc()
+  }
+
   private fun Collection<Alert>.assertAllForPrisonNumber(prisonNumber: String) =
     assertThat(all { it.prisonNumber == prisonNumber }).isTrue
 
@@ -367,6 +395,18 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
 
   private fun List<Alert>.assertOrderedByActiveToDesc() =
     assertThat(this).isSortedAccordingTo(compareByDescending(nullsLast()) { it.activeTo })
+
+  private fun List<Alert>.assertOrderedByCreatedAtAsc() =
+    assertThat(this).isSortedAccordingTo(compareBy(nullsLast()) { it.createdAt })
+
+  private fun List<Alert>.assertOrderedByCreatedAtDesc() =
+    assertThat(this).isSortedAccordingTo(compareByDescending(nullsLast()) { it.createdAt })
+
+  private fun List<Alert>.assertOrderedByLastModifiedAtAsc() =
+    assertThat(this).isSortedAccordingTo(compareBy(nullsLast()) { it.lastModifiedAt })
+
+  private fun List<Alert>.assertOrderedByLastModifiedAtDesc() =
+    assertThat(this).isSortedAccordingTo(compareByDescending(nullsLast()) { it.lastModifiedAt })
 
   private fun WebTestClient.getPrisonerAlerts(
     prisonNumber: String,

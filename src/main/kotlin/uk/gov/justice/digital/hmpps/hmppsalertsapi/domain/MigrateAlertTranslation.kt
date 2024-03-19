@@ -8,16 +8,17 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertReq
 import java.time.LocalDateTime
 import java.util.UUID
 
-fun MigrateAlertRequest.toAlertEntity(alertCode: AlertCode): Alert {
+fun MigrateAlertRequest.toAlertEntity(alertCode: AlertCode, migratedAt: LocalDateTime = LocalDateTime.now()): Alert {
   val alert = Alert(
+    alertUuid = UUID.randomUUID(),
     alertCode = alertCode,
     prisonNumber = this.prisonNumber,
     description = this.description,
     authorisedBy = this.authorisedBy,
     activeFrom = this.activeFrom,
     activeTo = this.activeTo,
-    alertUuid = UUID.randomUUID(),
-    migratedAt = LocalDateTime.now(),
+    createdAt = this.createdAt,
+    migratedAt = migratedAt,
   )
   alert.also { al: Alert ->
     al.auditEvent(

@@ -18,7 +18,7 @@ data class UpdateAlert(
     example = "Alert description",
   )
   @field:Size(max = 1000, message = "Description must be <= 1000 characters")
-  val description: String?,
+  val description: String? = null,
 
   @Schema(
     description = "The updated user, staff member, approving person or organisation that authorised the alert to be added. " +
@@ -28,7 +28,7 @@ data class UpdateAlert(
     example = "A. Nurse, An Agency",
   )
   @field:Size(max = 40, message = "Authorised by must be <= 40 characters")
-  val authorisedBy: String?,
+  val authorisedBy: String? = null,
 
   @Schema(
     description = "The date the alert should be active from. " +
@@ -37,7 +37,7 @@ data class UpdateAlert(
     example = "2021-09-27",
   )
   @JsonFormat(pattern = "yyyy-MM-dd")
-  val activeFrom: LocalDate?,
+  val activeFrom: LocalDate? = null,
 
   @Schema(
     description = "The date the alert should be active until. " +
@@ -46,7 +46,7 @@ data class UpdateAlert(
     example = "2022-07-15",
   )
   @JsonFormat(pattern = "yyyy-MM-dd")
-  val activeTo: LocalDate?,
+  val activeTo: LocalDate? = null,
 
   @Schema(
     description = "An additional comment to append to comments thread associated with the alert. Will be ignored if null or empty. " +
@@ -54,5 +54,5 @@ data class UpdateAlert(
     example = "Additional user comment on the alert comment thread",
   )
   @field:Size(max = 1000, message = "Append comment must be <= 1000 characters")
-  val appendComment: String?,
+  val appendComment: String? = null,
 )

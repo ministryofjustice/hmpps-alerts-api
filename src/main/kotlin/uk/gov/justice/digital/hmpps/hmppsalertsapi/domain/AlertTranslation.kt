@@ -28,6 +28,7 @@ fun CreateAlert.toAlertEntity(
     authorisedBy = this.authorisedBy,
     activeFrom = this.activeFrom ?: LocalDate.now(),
     activeTo = this.activeTo,
+    createdAt = createdAt,
   ).create(createdAt, createdBy, createdByDisplayName, source)
 
 fun Alert.toAlertModel(): AlertModel {

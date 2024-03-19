@@ -391,19 +391,20 @@ Comment '${updateRequest.appendComment}' was added
       appendComment = comment,
     )
 
-  private fun alert(uuid: UUID = UUID.randomUUID(), updateAlert: UpdateAlert = updateAlertRequestNoChange()): Alert {
-    return Alert(
-      alertId = 1,
-      alertUuid = uuid,
-      alertCode = alertCodeVictim(),
-      prisonNumber = PRISON_NUMBER,
-      description = "new description",
-      authorisedBy = "B Bauthorizer",
-      activeTo = updateAlert.activeTo,
-      activeFrom = updateAlert.activeFrom!!,
-
-    ).apply { auditEvent(AuditEventAction.CREATED, "Created", LocalDateTime.now().minusDays(1), "Test", "Test") }
-  }
+  private fun alert(uuid: UUID = UUID.randomUUID(), updateAlert: UpdateAlert = updateAlertRequestNoChange()) =
+    LocalDateTime.now().minusDays(1).let {
+      Alert(
+        alertId = 1,
+        alertUuid = uuid,
+        alertCode = alertCodeVictim(),
+        prisonNumber = PRISON_NUMBER,
+        description = "new description",
+        authorisedBy = "B Bauthorizer",
+        activeTo = updateAlert.activeTo,
+        activeFrom = updateAlert.activeFrom!!,
+        createdAt = it,
+      ).apply { auditEvent(AuditEventAction.CREATED, "Alert created", it, "CREATED_BY", "CREATED_BY_DISPLAY_NAME") }
+    }
 
   private fun prisoner() =
     PrisonerDto(
@@ -418,6 +419,7 @@ Comment '${updateRequest.appendComment}' was added
   private fun alertEntity(
     activeFrom: LocalDate = LocalDate.now(),
     activeTo: LocalDate? = null,
+    createdAt: LocalDateTime = LocalDateTime.now(),
   ) =
     Alert(
       alertUuid = UUID.randomUUID(),
@@ -427,6 +429,7 @@ Comment '${updateRequest.appendComment}' was added
       authorisedBy = "A. Authorizer",
       activeFrom = activeFrom,
       activeTo = activeTo,
+      createdAt = createdAt,
     ).apply {
       auditEvent(
         action = AuditEventAction.CREATED,

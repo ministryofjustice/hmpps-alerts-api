@@ -394,14 +394,15 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
     assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
       Alert(
-        1,
-        alert.alertUuid,
-        alertCode,
-        request.prisonNumber,
-        request.description,
-        request.authorisedBy,
-        request.activeFrom!!,
-        request.activeTo,
+        alertId = 1,
+        alertUuid = alert.alertUuid,
+        alertCode = alertCode,
+        prisonNumber = request.prisonNumber,
+        description = request.description,
+        authorisedBy = request.authorisedBy,
+        activeFrom = request.activeFrom!!,
+        activeTo = request.activeTo,
+        createdAt = alertEntity.createdAt,
       ),
     )
     with(alertEntity.auditEvents().single()) {
@@ -409,6 +410,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(action).isEqualTo(AuditEventAction.CREATED)
       assertThat(description).isEqualTo("Alert created")
       assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+      assertThat(alertEntity.createdAt).isEqualTo(actionedAt)
       assertThat(actionedBy).isEqualTo(TEST_USER)
       assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
     }

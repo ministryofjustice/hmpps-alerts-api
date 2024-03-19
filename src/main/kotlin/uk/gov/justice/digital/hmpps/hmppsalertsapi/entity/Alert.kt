@@ -49,8 +49,12 @@ data class Alert(
 
   var activeTo: LocalDate?,
 
+  val createdAt: LocalDateTime,
+
   var migratedAt: LocalDateTime? = null,
 ) : AbstractAggregateRoot<Alert>() {
+  var lastModifiedAt: LocalDateTime? = null
+
   fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
 
   fun willBecomeActive() = activeFrom > LocalDate.now()
@@ -185,6 +189,7 @@ data class Alert(
     }
 
     if (updated) {
+      lastModifiedAt = updatedAt
       auditEvent(
         action = AuditEventAction.UPDATED,
         description = sb.toString(),
@@ -216,6 +221,7 @@ data class Alert(
     deletedByDisplayName: String,
     source: Source,
   ): AuditEvent {
+    lastModifiedAt = deletedAt
     this.deletedAt = deletedAt
     return auditEvent(
       action = AuditEventAction.DELETED,
