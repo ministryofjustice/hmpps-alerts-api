@@ -9,6 +9,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
@@ -340,6 +341,31 @@ class AlertRequestContextConfigurationTest {
 
     assertThat(context.username).isEqualTo(TEST_USER)
     assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["POST", "PUT", "DELETE"])
+  fun `modifying request methods populates context`(method: String) {
+    setSecurityContext(mapOf("user_name" to TEST_USER))
+    req.method = method
+
+    val result = interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(result).isTrue()
+    assertThat(context).isNotNull()
+  }
+
+  @Test
+  fun `get request method does not require username populates context`() {
+    setSecurityContext(emptyMap())
+    req.method = "GET"
+
+    val result = interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext?
+
+    assertThat(result).isTrue()
+    assertThat(context).isNull()
   }
 
   private fun setSecurityContext(claims: Map<String, Any>) =
