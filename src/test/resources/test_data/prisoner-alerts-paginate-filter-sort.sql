@@ -8,6 +8,8 @@ insert into alert
     authorised_by,
     active_from,
     active_to,
+    created_at,
+    last_modified_at,
     deleted_at
 )
 values
@@ -18,6 +20,8 @@ values
     'A1234AA',
     'Active alert type ''A'' - ''Social Care'' code ''ADSC'' - ''Adult Social Care'' alert for prison number ''A1234AA'' active from yesterday with no active to date. Alert code is active. Created yesterday and not modified since',
     'A. Approver',
+    now() - interval '1 day',
+    null,
     now() - interval '1 day',
     null,
     null
@@ -31,6 +35,8 @@ values
     'External Provider',
     now(),
     null,
+    now() - interval '2 day',
+    now(),
     null
 ),
 (
@@ -42,6 +48,8 @@ values
     null,
     now(),
     null,
+    now() - interval '1 hour',
+    now() - interval '1 minute',
     null
 ),
 (
@@ -52,6 +60,8 @@ values
     'Inactive alert type ''M'' - ''Medical'' code ''MAS'' - ''Asthmatic'' alert for prison number ''A1234AA'' active from tomorrow with no active to date. Alert code is active. Created three days ago and not modified since',
     'B. Approver',
     now() + interval '1 day',
+    null,
+    now() - interval '3 days',
     null,
     null
 ),
@@ -64,6 +74,8 @@ values
     null,
     now() - interval '1 day',
     now(),
+    now() - interval '4 days',
+    now() - interval '1 day',
     null
 ),
 (
@@ -75,6 +87,8 @@ values
     'C. Approver',
     now(),
     null,
+    now(),
+    now(),
     now()
 ),
 (
@@ -83,6 +97,8 @@ values
     (SELECT alert_code_id FROM alert_code WHERE code = 'ADSC'),
     'B2345BB',
     'Active alert type ''A'' - ''Social Care'' code ''ADSC'' - ''Adult Social Care'' alert for prison number ''B2345BB'' active from yesterday with no active to date. Alert code is active. Created yesterday and not modified since',
+    null,
+    now() - interval '1 day',
     null,
     now() - interval '1 day',
     null,
@@ -175,6 +191,14 @@ values
     6,
     'CREATED',
     'Alert created',
+    now(),
+    'TEST_USER',
+    'Test User'
+),
+(
+    6,
+    'DELETED',
+    'Alert deleted',
     now(),
     'TEST_USER',
     'Test User'
