@@ -25,6 +25,7 @@ class MigrateAlertTranslationTest {
         authorisedBy = request.authorisedBy,
         activeFrom = request.activeFrom,
         activeTo = request.activeTo,
+        createdAt = request.createdAt,
         migratedAt = entity.migratedAt,
       ).apply {
         auditEvent(
@@ -51,6 +52,7 @@ class MigrateAlertTranslationTest {
         authorisedBy = request.authorisedBy,
         activeFrom = request.activeFrom,
         activeTo = request.activeTo,
+        createdAt = request.createdAt,
         migratedAt = entity.migratedAt,
       ).apply {
         auditEvent(
@@ -85,6 +87,7 @@ class MigrateAlertTranslationTest {
         authorisedBy = request.authorisedBy,
         activeFrom = request.activeFrom,
         activeTo = request.activeTo,
+        createdAt = request.createdAt,
         migratedAt = entity.migratedAt,
       ).apply {
         auditEvent(

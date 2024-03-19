@@ -51,13 +51,13 @@ data class Alert(
 
   var activeTo: LocalDate?,
 
+  @CreatedDate
+  val createdAt: LocalDateTime,
+
   var migratedAt: LocalDateTime? = null,
 
-  @CreatedDate
-  private val createdAt: LocalDateTime = LocalDateTime.now(),
-
   @LastModifiedDate
-  private var lastModifiedAt: LocalDateTime? = null
+  var lastModifiedAt: LocalDateTime? = null,
 ) : AbstractAggregateRoot<Alert>() {
   fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
 

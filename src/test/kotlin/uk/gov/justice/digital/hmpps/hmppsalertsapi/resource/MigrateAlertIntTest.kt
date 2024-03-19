@@ -172,15 +172,16 @@ class MigrateAlertIntTest : IntegrationTestBase() {
 
     assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
       Alert(
-        1,
-        alert.alertUuid,
-        alertCode,
-        request.prisonNumber,
-        request.description,
-        request.authorisedBy,
-        request.activeFrom,
-        request.activeTo,
-        alertEntity.migratedAt,
+        alertId = 1,
+        alertUuid = alert.alertUuid,
+        alertCode = alertCode,
+        prisonNumber = request.prisonNumber,
+        description = request.description,
+        authorisedBy = request.authorisedBy,
+        activeFrom = request.activeFrom,
+        activeTo = request.activeTo,
+        createdAt = alert.createdAt,
+        migratedAt = alertEntity.migratedAt,
       ),
     )
     with(alertEntity.auditEvents().single()) {

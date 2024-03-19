@@ -45,6 +45,7 @@ class AlertTranslationTest {
         authorisedBy = request.authorisedBy,
         activeFrom = request.activeFrom!!,
         activeTo = request.activeTo,
+        createdAt = context.requestAt,
       ).apply {
         auditEvent(
           action = AuditEventAction.CREATED,
@@ -224,6 +225,7 @@ class AlertTranslationTest {
       authorisedBy = "A. Authorizer",
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
+      createdAt = createdAt,
     ).apply {
       auditEvent(
         action = AuditEventAction.CREATED,

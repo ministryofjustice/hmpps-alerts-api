@@ -58,6 +58,8 @@ class MigrateAlertServiceTest {
         authorisedBy = "A. Authorizer",
         activeFrom = migrateAlertRequest.activeFrom,
         activeTo = migrateAlertRequest.activeTo,
+        createdAt = migrateAlertRequest.createdAt,
+        migratedAt = migrateAlertRequest.createdAt,
       ).apply {
         auditEvent(
           action = AuditEventAction.CREATED,
@@ -92,6 +94,8 @@ class MigrateAlertServiceTest {
         authorisedBy = "A. Authorizer",
         activeFrom = migrateAlertRequest.activeFrom,
         activeTo = migrateAlertRequest.activeTo,
+        createdAt = migrateAlertRequest.createdAt,
+        migratedAt = migrateAlertRequest.createdAt,
       ).apply {
         auditEvent(
           action = AuditEventAction.CREATED,

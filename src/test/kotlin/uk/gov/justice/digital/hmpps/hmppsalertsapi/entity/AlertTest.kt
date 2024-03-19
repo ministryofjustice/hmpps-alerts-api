@@ -238,6 +238,7 @@ class AlertTest {
       authorisedBy = "A. Authorizer",
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
+      createdAt = createdAt,
     ).create(createdAt, createdBy, createdByDisplayName, ALERTS_SERVICE)
 
     assertThat(entity.auditEvents().single()).isEqualTo(
@@ -267,6 +268,7 @@ class AlertTest {
       authorisedBy = "A. Authorizer",
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
+      createdAt = createdAt,
     ).create(createdAt, createdBy, createdByDisplayName, source)
 
     assertThat(entity.publishedDomainEvents().single()).isEqualTo(
@@ -733,6 +735,7 @@ class AlertTest {
       authorisedBy = "A. Authorizer",
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
+      createdAt = createdAt,
     ).apply {
       auditEvent(
         action = CREATED,

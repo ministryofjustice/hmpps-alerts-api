@@ -20,6 +20,7 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.UUID
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert as AlertModel
 
 class RetrieveAlertIntTest : IntegrationTestBase() {
 
@@ -97,26 +98,25 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
 
     with(response!!) {
       assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
-        uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert(
-          1,
-          alert.alertUuid,
-          alertCode,
-          prisonNumber,
-          description,
-          authorisedBy,
-          activeFrom,
-          activeTo,
+        AlertModel(
+          alertId = 1,
+          alertUuid = alert.alertUuid,
+          alertCode = alertCode,
+          prisonNumber = prisonNumber,
+          description = description,
+          authorisedBy = authorisedBy,
+          activeFrom = activeFrom,
+          activeTo = activeTo,
+          createdAt = alertEntity.createdAt,
         ),
       )
     }
-
     with(alertEntity.auditEvents()[0]) {
       assertThat(auditEventId).isEqualTo(1)
       assertThat(action).isEqualTo(AuditEventAction.CREATED)
-      assertThat(description).isEqualTo(
-        "Alert created",
-      )
+      assertThat(description).isEqualTo("Alert created")
       assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+      assertThat(alertEntity.createdAt).isEqualTo(actionedAt)
       assertThat(actionedBy).isEqualTo(TEST_USER)
       assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
     }
