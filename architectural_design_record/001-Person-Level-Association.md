@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved by @AliceNoakes as Product Owner
+Approved by @AliceNoakes as Service Owner
 
 ## Context
 
@@ -30,5 +30,3 @@ The decision to associate alerts at the person level introduces several conseque
 - **Potential for Initial Overload:** Initially surfacing more alerts than staff are accustomed to, which may require adjustments in operational procedures.
 
 Despite these challenges, the benefits of a more accurate, person-centric view of alerts are expected to significantly outweigh the downsides. This change aligns with best practices for data management and will improve our service delivery. Mark Nettleton, our Business Analyst, is reviewing data analysis around a potential business rule to inform the flattening of booking alerts into a single value.
-
-The decision is currently Awaiting Decision, and further discussions and approvals are required to proceed.
