@@ -178,7 +178,7 @@ class MigrateAlertIntTest : IntegrationTestBase() {
         request.prisonNumber,
         request.description,
         request.authorisedBy,
-        request.activeFrom!!,
+        request.activeFrom,
         request.activeTo,
         alertEntity.migratedAt,
       ),
