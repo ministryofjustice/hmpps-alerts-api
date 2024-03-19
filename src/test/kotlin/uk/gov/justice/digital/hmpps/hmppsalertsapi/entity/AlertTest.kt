@@ -315,6 +315,7 @@ class AlertTest {
       source = ALERTS_SERVICE,
     )
 
+    assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
     assertThat(entity.auditEvents().single { it.action == UPDATED }).isEqualTo(
       AuditEvent(
         alert = entity,
@@ -379,7 +380,7 @@ class AlertTest {
       source = ALERTS_SERVICE,
     )
 
-    assertThat(entity.description).isNotNull()
+    assertThat(entity.lastModifiedAt).isNull()
     assertThat(entity.auditEvents().none { it.action == UPDATED }).isTrue
     assertThat(entity.publishedDomainEvents()).isEmpty()
   }
@@ -400,6 +401,7 @@ class AlertTest {
     )
 
     assertThat(entity.description).isNotNull()
+    assertThat(entity.lastModifiedAt).isNull()
     assertThat(entity.auditEvents().none { it.action == UPDATED }).isTrue
     assertThat(entity.publishedDomainEvents()).isEmpty()
   }
@@ -419,7 +421,8 @@ class AlertTest {
       source = ALERTS_SERVICE,
     )
 
-    assertThat(entity.description).isNotNull()
+    assertThat(entity.authorisedBy).isNotNull()
+    assertThat(entity.lastModifiedAt).isNull()
     assertThat(entity.auditEvents().none { it.action == UPDATED }).isTrue
     assertThat(entity.publishedDomainEvents()).isEmpty()
   }
@@ -439,7 +442,8 @@ class AlertTest {
       source = NOMIS,
     )
 
-    assertThat(entity.description).isNotNull()
+    assertThat(entity.activeFrom).isNotNull()
+    assertThat(entity.lastModifiedAt).isNull()
     assertThat(entity.auditEvents().none { it.action == UPDATED }).isTrue
     assertThat(entity.publishedDomainEvents()).isEmpty()
   }
@@ -459,7 +463,7 @@ class AlertTest {
       source = ALERTS_SERVICE,
     )
 
-    assertThat(entity.description).isNotNull()
+    assertThat(entity.lastModifiedAt).isNull()
     assertThat(entity.auditEvents().none { it.action == UPDATED }).isTrue
     assertThat(entity.publishedDomainEvents()).isEmpty()
   }
@@ -479,7 +483,7 @@ class AlertTest {
       source = NOMIS,
     )
 
-    assertThat(entity.description).isNotNull()
+    assertThat(entity.lastModifiedAt).isNull()
     assertThat(entity.auditEvents().none { it.action == UPDATED }).isTrue
     assertThat(entity.publishedDomainEvents()).isEmpty()
   }
@@ -499,7 +503,7 @@ class AlertTest {
       source = ALERTS_SERVICE,
     )
 
-    assertThat(entity.description).isNotNull()
+    assertThat(entity.lastModifiedAt).isNull()
     assertThat(entity.auditEvents().none { it.action == UPDATED }).isTrue
     assertThat(entity.publishedDomainEvents()).isEmpty()
   }
@@ -508,6 +512,7 @@ class AlertTest {
   fun `update alert description only`() {
     val entity = alertEntity()
     val updatedDescription = "Updated description"
+    val updatedAt = LocalDateTime.now()
     val source = NOMIS
     val expectedDescription = "Updated alert description from '${entity.description}' to '$updatedDescription'\n"
 
@@ -517,11 +522,13 @@ class AlertTest {
       activeFrom = entity.activeFrom,
       activeTo = entity.activeTo,
       appendComment = null,
+      updatedAt = updatedAt,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = source,
     )
 
+    assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
     assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
       assertThat(source).isEqualTo(source)
@@ -537,6 +544,7 @@ class AlertTest {
   fun `update alert authorised by only`() {
     val entity = alertEntity()
     val updatedAuthorisedBy = "Updated authorised by"
+    val updatedAt = LocalDateTime.now()
     val source = ALERTS_SERVICE
     val expectedDescription = "Updated authorised by from '${entity.authorisedBy}' to '$updatedAuthorisedBy'\n"
 
@@ -546,11 +554,13 @@ class AlertTest {
       activeFrom = entity.activeFrom,
       activeTo = entity.activeTo,
       appendComment = null,
+      updatedAt = updatedAt,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = source,
     )
 
+    assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
     assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
       assertThat(source).isEqualTo(source)
@@ -566,6 +576,7 @@ class AlertTest {
   fun `update alert active from only`() {
     val entity = alertEntity()
     val updatedActiveFrom = entity.activeFrom.plusDays(1)
+    val updatedAt = LocalDateTime.now()
     val source = NOMIS
     val expectedDescription = "Updated active from from '${entity.activeFrom}' to '$updatedActiveFrom'\n"
 
@@ -575,11 +586,13 @@ class AlertTest {
       activeFrom = updatedActiveFrom,
       activeTo = entity.activeTo,
       appendComment = null,
+      updatedAt = updatedAt,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = source,
     )
 
+    assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
     assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
       assertThat(source).isEqualTo(source)
@@ -595,6 +608,7 @@ class AlertTest {
   fun `update alert active to only`() {
     val entity = alertEntity()
     val updatedActiveTo = entity.activeTo!!.plusDays(1)
+    val updatedAt = LocalDateTime.now()
     val source = ALERTS_SERVICE
     val expectedDescription = "Updated active to from '${entity.activeTo}' to '$updatedActiveTo'\n"
 
@@ -604,11 +618,13 @@ class AlertTest {
       activeFrom = entity.activeFrom,
       activeTo = updatedActiveTo,
       appendComment = null,
+      updatedAt = updatedAt,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = source,
     )
 
+    assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
     assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
       assertThat(source).isEqualTo(source)
@@ -642,6 +658,7 @@ class AlertTest {
       source = source,
     )
 
+    assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
     with(entity.comments().single()) {
       assertThat(comment).isEqualTo(updatedAppendComment)
       assertThat(createdAt).isEqualTo(updatedAt)
@@ -688,6 +705,7 @@ class AlertTest {
 
     entity.delete(deletedAt, "DELETED_BY", "DELETED_BY_DISPLAY_NAME", NOMIS)
 
+    assertThat(entity.lastModifiedAt).isEqualTo(deletedAt)
     assertThat(entity.deletedAt()).isEqualTo(deletedAt)
     assertThat(entity.auditEvents().single { it.action == DELETED }).isEqualTo(
       AuditEvent(

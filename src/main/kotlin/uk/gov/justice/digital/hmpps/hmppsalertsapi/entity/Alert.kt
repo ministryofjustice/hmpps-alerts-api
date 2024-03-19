@@ -14,8 +14,6 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.Fetch
 import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.SQLRestriction
-import org.springframework.data.annotation.CreatedDate
-import org.springframework.data.annotation.LastModifiedDate
 import org.springframework.data.domain.AbstractAggregateRoot
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDeletedEvent
@@ -51,14 +49,12 @@ data class Alert(
 
   var activeTo: LocalDate?,
 
-  @CreatedDate
   val createdAt: LocalDateTime,
 
   var migratedAt: LocalDateTime? = null,
-
-  @LastModifiedDate
-  var lastModifiedAt: LocalDateTime? = null,
 ) : AbstractAggregateRoot<Alert>() {
+  var lastModifiedAt: LocalDateTime? = null
+
   fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
 
   fun willBecomeActive() = activeFrom > LocalDate.now()
@@ -193,6 +189,7 @@ data class Alert(
     }
 
     if (updated) {
+      lastModifiedAt = updatedAt
       auditEvent(
         action = AuditEventAction.UPDATED,
         description = sb.toString(),
@@ -224,6 +221,7 @@ data class Alert(
     deletedByDisplayName: String,
     source: Source,
   ): AuditEvent {
+    lastModifiedAt = deletedAt
     this.deletedAt = deletedAt
     return auditEvent(
       action = AuditEventAction.DELETED,

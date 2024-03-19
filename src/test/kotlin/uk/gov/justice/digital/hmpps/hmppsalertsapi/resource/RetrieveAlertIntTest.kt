@@ -1,12 +1,10 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
@@ -16,11 +14,10 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 import java.util.UUID
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert as AlertModel
 
 class RetrieveAlertIntTest : IntegrationTestBase() {
 
@@ -93,32 +90,27 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
       .expectStatus().isOk
       .expectBody(Alert::class.java)
       .returnResult().responseBody
-    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
-    val alertCode = alertCodeRepository.findByCode(alertEntity.alertCode.code)!!
 
-    with(response!!) {
-      assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
-        AlertModel(
-          alertId = 1,
-          alertUuid = alert.alertUuid,
-          alertCode = alertCode,
-          prisonNumber = prisonNumber,
-          description = description,
-          authorisedBy = authorisedBy,
-          activeFrom = activeFrom,
-          activeTo = activeTo,
-          createdAt = alertEntity.createdAt,
+    with(alert) {
+      assertThat(response).isEqualTo(
+        Alert(
+          alert.alertUuid,
+          alert.prisonNumber,
+          alertCodeVictimSummary(),
+          description,
+          authorisedBy,
+          activeFrom,
+          activeTo,
+          true,
+          emptyList(),
+          alert.createdAt,
+          TEST_USER,
+          TEST_USER_NAME,
+          null,
+          null,
+          null,
         ),
       )
-    }
-    with(alertEntity.auditEvents()[0]) {
-      assertThat(auditEventId).isEqualTo(1)
-      assertThat(action).isEqualTo(AuditEventAction.CREATED)
-      assertThat(description).isEqualTo("Alert created")
-      assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
-      assertThat(alertEntity.createdAt).isEqualTo(actionedAt)
-      assertThat(actionedBy).isEqualTo(TEST_USER)
-      assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
     }
   }
 
