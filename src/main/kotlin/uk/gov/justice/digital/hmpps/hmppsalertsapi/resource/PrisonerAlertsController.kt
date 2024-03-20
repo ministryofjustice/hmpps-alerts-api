@@ -27,10 +27,10 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 
 @RestController
-@RequestMapping(produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping("/prisoners", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PrisonerAlertsController(val alertService: AlertService) {
   @ResponseStatus(HttpStatus.OK)
-  @GetMapping("/prisoner/{prisonNumber}/alerts")
+  @GetMapping("/{prisonNumber}/alerts")
   @Operation(
     summary = "Gets all the alerts for a prisoner by their prison number",
   )
@@ -112,7 +112,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
   )
 
   @ResponseStatus(HttpStatus.OK)
-  @GetMapping("/prisoners/alerts")
+  @GetMapping("/alerts")
   @Operation(
     summary = "Gets all the alerts for prisoners by their prison numbers",
     description = "Returns all the alerts for the supplied prison numbers. The alerts are returned along with counts.",
