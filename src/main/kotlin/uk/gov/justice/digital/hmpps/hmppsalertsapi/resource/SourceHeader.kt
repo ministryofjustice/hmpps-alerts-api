@@ -9,11 +9,12 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 @Parameter(
   name = SOURCE,
   `in` = ParameterIn.HEADER,
-  description = "The source of the request. Will default to 'ALERTS_SERVICE' if not supplied" +
+  description = "The source of the request. Will default to 'DPS' if not supplied" +
     "This value will be assigned to the additionalInformation.source property in published domain events. " +
     "A source value of 'NOMIS' will allow any username value that is less than 32 characters to be supplied. " +
     "If this username is not found, its value will be used for the user display name property. " +
-    "A source value of 'MIGRATION' will suppress all domain event publishing.",
+    "A source value of 'NOMIS' will also allow no username value to be supplied and will use 'NOMIS' for both " +
+    "the username and display name properties.",
   required = false,
   content = [Content(schema = Schema(implementation = Source::class))],
 )

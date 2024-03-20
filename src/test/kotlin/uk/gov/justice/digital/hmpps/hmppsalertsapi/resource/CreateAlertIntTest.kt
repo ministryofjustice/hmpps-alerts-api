@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.ALERTS_SERVICE
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER
@@ -356,6 +356,27 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `should populate created by username and display name as 'NOMIS' when source is NOMIS and no username is supplied`() {
+    val request = createAlertRequest()
+
+    val alert = webTestClient.post()
+      .uri("/alerts")
+      .bodyValue(request)
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .header(SOURCE, NOMIS.name)
+      .exchange()
+      .expectStatus().isCreated
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody(AlertModel::class.java)
+      .returnResult().responseBody!!
+
+    with(alert) {
+      assertThat(createdBy).isEqualTo("NOMIS")
+      assertThat(createdByDisplayName).isEqualTo("NOMIS")
+    }
+  }
+
+  @Test
   fun `should return populated alert model`() {
     val request = createAlertRequest()
 
@@ -417,10 +438,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should publish alert created event with ALERTS_SERVICE source`() {
+  fun `should publish alert created event with DPS source`() {
     val request = createAlertRequest()
 
-    val alert = webTestClient.createAlert(source = ALERTS_SERVICE, request = request)
+    val alert = webTestClient.createAlert(source = DPS, request = request)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -433,7 +454,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
           alert.alertUuid,
           request.prisonNumber,
           request.alertCode,
-          ALERTS_SERVICE,
+          DPS,
         ),
         1,
         ALERT_CREATED.description,
@@ -549,7 +570,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     )
 
   private fun WebTestClient.createAlertResponseSpec(
-    source: Source = ALERTS_SERVICE,
+    source: Source = DPS,
     request: CreateAlert,
   ) =
     post()
@@ -561,7 +582,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
   private fun WebTestClient.createAlert(
-    source: Source = ALERTS_SERVICE,
+    source: Source = DPS,
     request: CreateAlert,
   ) =
     createAlertResponseSpec(source, request)

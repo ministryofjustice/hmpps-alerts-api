@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.ALERTS_SERVICE
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER
@@ -317,10 +317,32 @@ Comment '$appendComment' was added
   }
 
   @Test
-  fun `should publish alert updated event with ALERTS_SERVICE source`() {
+  fun `should populate updated by username and display name as 'NOMIS' when source is NOMIS and no username is supplied`() {
     val alert = createAlert()
 
-    webTestClient.updateAlert(alert.alertUuid, ALERTS_SERVICE, updateAlertRequest())
+    webTestClient.put()
+      .uri("/alerts/${alert.alertUuid}")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .header(SOURCE, NOMIS.name)
+      .bodyValue(updateAlertRequest())
+      .exchange()
+      .expectStatus().isOk
+      .expectBody(Alert::class.java)
+      .returnResult().responseBody
+
+    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+
+    with(alertEntity.auditEvents()[0]) {
+      assertThat(actionedBy).isEqualTo("NOMIS")
+      assertThat(actionedByDisplayName).isEqualTo("NOMIS")
+    }
+  }
+
+  @Test
+  fun `should publish alert updated event with DPS source`() {
+    val alert = createAlert()
+
+    webTestClient.updateAlert(alert.alertUuid, DPS, updateAlertRequest())
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -336,7 +358,7 @@ Comment '$appendComment' was added
           alert.alertUuid,
           alert.prisonNumber,
           alert.alertCode.code,
-          ALERTS_SERVICE,
+          DPS,
         ),
         1,
         ALERT_UPDATED.description,
@@ -411,7 +433,7 @@ Comment '$appendComment' was added
 
   private fun WebTestClient.updateAlert(
     alertUuid: UUID,
-    source: Source = ALERTS_SERVICE,
+    source: Source = DPS,
     request: UpdateAlert,
   ) =
     put()

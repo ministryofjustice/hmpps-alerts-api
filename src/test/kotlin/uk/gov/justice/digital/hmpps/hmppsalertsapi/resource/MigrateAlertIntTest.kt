@@ -13,8 +13,6 @@ import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.MIGRATION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
@@ -272,23 +270,16 @@ class MigrateAlertIntTest : IntegrationTestBase() {
     assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
   }
 
-  private fun WebTestClient.migrateResponseSpec(
-    source: Source = MIGRATION,
-    request: MigrateAlertRequest,
-  ) =
+  private fun WebTestClient.migrateResponseSpec(request: MigrateAlertRequest) =
     post()
       .uri("/migrate/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
-      .headers(setAlertRequestContext(source = source))
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
-  private fun WebTestClient.migrateAlert(
-    source: Source = MIGRATION,
-    request: MigrateAlertRequest,
-  ) =
-    migrateResponseSpec(source, request)
+  private fun WebTestClient.migrateAlert(request: MigrateAlertRequest) =
+    migrateResponseSpec(request)
       .expectStatus().isCreated
       .expectBody(AlertModel::class.java)
       .returnResult().responseBody!!

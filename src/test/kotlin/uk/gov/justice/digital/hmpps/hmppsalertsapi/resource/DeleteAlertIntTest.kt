@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.ALERTS_SERVICE
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER
@@ -195,10 +195,30 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should publish alert deleted event with ALERTS_SERVICE source`() {
+  fun `should populate deleted by username and display name as 'NOMIS' when source is NOMIS and no username is supplied`() {
     val alert = createAlert()
 
-    webTestClient.deleteAlert(alert.alertUuid, ALERTS_SERVICE)
+    webTestClient.delete()
+      .uri("/alerts/${alert.alertUuid}")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .header(SOURCE, NOMIS.name)
+      .exchange()
+      .expectStatus().isNoContent
+      .expectBody().isEmpty
+
+    val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
+
+    with(alertEntity.auditEvents()[0]) {
+      assertThat(actionedBy).isEqualTo("NOMIS")
+      assertThat(actionedByDisplayName).isEqualTo("NOMIS")
+    }
+  }
+
+  @Test
+  fun `should publish alert deleted event with DPS source`() {
+    val alert = createAlert()
+
+    webTestClient.deleteAlert(alert.alertUuid, DPS)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -214,7 +234,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
           alert.alertUuid,
           alert.prisonNumber,
           alert.alertCode.code,
-          ALERTS_SERVICE,
+          DPS,
         ),
         1,
         ALERT_DELETED.description,
@@ -282,7 +302,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
   private fun WebTestClient.deleteAlert(
     alertUuid: UUID,
-    source: Source = ALERTS_SERVICE,
+    source: Source = DPS,
   ) =
     delete()
       .uri("/alerts/$alertUuid")
