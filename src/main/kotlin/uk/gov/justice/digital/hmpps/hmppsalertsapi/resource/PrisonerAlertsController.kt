@@ -21,15 +21,16 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.response.PrisonersAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 
 @RestController
-@RequestMapping("/prisoner/{prisonNumber}/alerts", produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping("/prisoners", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PrisonerAlertsController(val alertService: AlertService) {
   @ResponseStatus(HttpStatus.OK)
-  @GetMapping()
+  @GetMapping("/{prisonNumber}/alerts")
   @Operation(
     summary = "Gets all the alerts for a prisoner by their prison number",
   )
@@ -109,4 +110,38 @@ class PrisonerAlertsController(val alertService: AlertService) {
     search = search,
     pageable = pageable,
   )
+
+  @ResponseStatus(HttpStatus.OK)
+  @GetMapping("/alerts")
+  @Operation(
+    summary = "Gets all the alerts for prisoners by their prison numbers",
+    description = "Returns all the alerts for the supplied prison numbers. The alerts are returned along with counts.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Alerts found",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_ALERTS_ADMIN', '$PRISON')")
+  fun retrievePrisonerAlerts(
+    @RequestParam
+    @Parameter(
+      description = "The prison numbers of the prisoners",
+      required = true,
+    )
+    prisonNumbers: Collection<String>,
+  ): PrisonersAlerts = alertService.retrieveAlertsForPrisonNumbers(prisonNumbers)
 }

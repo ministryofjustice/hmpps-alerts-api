@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
@@ -358,6 +359,15 @@ Comment '${updateRequest.appendComment}' was added
       assertThat(actionedBy).isEqualTo(alertEntity.auditEvents().single().actionedBy)
       assertThat(actionedByDisplayName).isEqualTo(alertEntity.auditEvents().single().actionedByDisplayName)
     }
+  }
+
+  @Test
+  fun `retrieve alerts for prison numbers`() {
+    val alert = alert()
+    whenever(alertRepository.findByPrisonNumberInOrderByActiveFromDesc(any())).thenReturn(listOf(alert))
+    val result = underTest.retrieveAlertsForPrisonNumbers(listOf(PRISON_NUMBER, PRISON_NUMBER_NOT_FOUND))
+    assertThat(result.prisonNumbers).containsExactly(PRISON_NUMBER)
+    assertThat(result.alerts).containsExactly(alert.toAlertModel())
   }
 
   private fun createAlertRequest(

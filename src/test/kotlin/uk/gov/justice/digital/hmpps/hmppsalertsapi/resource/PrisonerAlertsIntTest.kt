@@ -31,7 +31,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
   @Test
   fun `401 unauthorised`() {
     webTestClient.get()
-      .uri("/prisoner/$PRISON_NUMBER/alerts")
+      .uri("/prisoners/$PRISON_NUMBER/alerts")
       .exchange()
       .expectStatus().isUnauthorized
   }
@@ -39,9 +39,8 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
   @Test
   fun `403 forbidden - no roles`() {
     webTestClient.get()
-      .uri("/prisoner/$PRISON_NUMBER/alerts")
+      .uri("/prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation())
-      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
   }
@@ -49,9 +48,8 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
   @Test
   fun `403 forbidden - alerts writer`() {
     webTestClient.get()
-      .uri("/prisoner/$PRISON_NUMBER/alerts")
+      .uri("/prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
   }
@@ -423,7 +421,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     get()
       .uri { builder ->
         builder
-          .path("/prisoner/$prisonNumber/alerts")
+          .path("/prisoners/$prisonNumber/alerts")
           .queryParamIfPresent("isActive", Optional.ofNullable(isActive))
           .queryParamIfPresent("alertType", Optional.ofNullable(alertType))
           .queryParamIfPresent("alertCode", Optional.ofNullable(alertCode))

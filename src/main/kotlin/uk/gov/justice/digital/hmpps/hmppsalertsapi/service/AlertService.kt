@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAuditEventModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.response.PrisonersAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertsFilter
@@ -120,4 +121,12 @@ class AlertService(
     alertRepository.findByAlertUuid(alertUuid)?.let { alert ->
       alert.auditEvents().map { it.toAuditEventModel() }
     } ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
+
+  fun retrieveAlertsForPrisonNumbers(prisonNumbers: Collection<String>) =
+    alertRepository.findByPrisonNumberInOrderByActiveFromDesc(prisonNumbers).let { alerts ->
+      PrisonersAlerts(
+        prisonNumbers = alerts.map { it.prisonNumber }.distinct(),
+        alerts = alerts.map { it.toAlertModel() },
+      )
+    }
 }
