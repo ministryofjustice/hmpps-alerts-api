@@ -19,18 +19,16 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
 
   @Test
   fun `401 unauthorised`() {
-    webTestClient.post()
-      .uri("/prisoners/alerts")
-      .bodyValue(emptyList<String>())
+    webTestClient.get()
+      .uri("/prisoners/alerts?prisonNumbers=A1234AA")
       .exchange()
       .expectStatus().isUnauthorized
   }
 
   @Test
   fun `403 forbidden - no roles`() {
-    webTestClient.post()
-      .uri("/prisoners/alerts")
-      .bodyValue(emptyList<String>())
+    webTestClient.get()
+      .uri("/prisoners/alerts?prisonNumbers=A1234AA")
       .headers(setAuthorisation())
       .exchange()
       .expectStatus().isForbidden
@@ -38,17 +36,16 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
 
   @Test
   fun `403 forbidden - alerts writer`() {
-    webTestClient.post()
-      .uri("/prisoners/alerts")
-      .bodyValue(emptyList<String>())
+    webTestClient.get()
+      .uri("/prisoners/alerts?prisonNumbers=A1234AA")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .exchange()
       .expectStatus().isForbidden
   }
 
   @Test
-  fun `400 bad request - no body`() {
-    val response = webTestClient.post()
+  fun `400 bad request - no prison numbers`() {
+    val response = webTestClient.get()
       .uri("/prisoners/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
       .exchange()
@@ -59,8 +56,8 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Couldn't read request body")
-      assertThat(developerMessage).isEqualTo("Required request body is missing: public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.response.PrisonersAlerts uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.PrisonerAlertsController.retrievePrisonerAlerts(java.util.Collection<java.lang.String>)")
+      assertThat(userMessage).isEqualTo("Validation failure: Required request parameter 'prisonNumbers' for method parameter type Collection is not present")
+      assertThat(developerMessage).isEqualTo("Required request parameter 'prisonNumbers' for method parameter type Collection is not present")
       assertThat(moreInfo).isNull()
     }
   }
@@ -99,9 +96,13 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
     assertThat(alerts).isSortedAccordingTo(compareByDescending { it.activeFrom })
 
   private fun getPrisonerAlerts(prisonNumbers: List<String>) =
-    webTestClient.post()
-      .uri("/prisoners/alerts")
-      .bodyValue(prisonNumbers)
+    webTestClient.get()
+      .uri { builder ->
+        builder
+          .path("/prisoners/alerts")
+          .queryParam("prisonNumbers", prisonNumbers)
+          .build()
+      }
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
       .exchange()
       .expectStatus().isOk

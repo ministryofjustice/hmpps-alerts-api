@@ -16,8 +16,6 @@ import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -114,7 +112,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
   )
 
   @ResponseStatus(HttpStatus.OK)
-  @PostMapping("/prisoners/alerts")
+  @GetMapping("/prisoners/alerts")
   @Operation(
     summary = "Gets all the alerts for prisoners by their prison numbers",
     description = "Returns all the alerts for the supplied prison numbers. The alerts are returned along with counts.",
@@ -139,7 +137,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
   )
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_ALERTS_ADMIN', '$PRISON')")
   fun retrievePrisonerAlerts(
-    @RequestBody
+    @RequestParam
     @Parameter(
       description = "The prison numbers of the prisoners",
       required = true,
