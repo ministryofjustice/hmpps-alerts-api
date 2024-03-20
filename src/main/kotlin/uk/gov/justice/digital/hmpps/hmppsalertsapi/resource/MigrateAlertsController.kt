@@ -30,13 +30,13 @@ class MigrateAlertsController(
   @ResponseStatus(HttpStatus.CREATED)
   @PostMapping
   @Operation(
-    summary = "Create an alert",
+    summary = "Migrate an alert from NOMIS",
   )
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "201",
-        description = "Alert created successfully",
+        description = "Alert migrated successfully",
         content = [Content(schema = Schema(implementation = Alert::class))],
       ),
       ApiResponse(
