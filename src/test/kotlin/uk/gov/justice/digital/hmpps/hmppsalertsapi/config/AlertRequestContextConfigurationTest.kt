@@ -19,7 +19,6 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.context.SecurityContextHolder
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.ALERTS_SERVICE
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.MIGRATION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
@@ -89,7 +88,6 @@ class AlertRequestContextConfigurationTest {
     fun sourceParameters(): List<Arguments> = listOf(
       Arguments.of(ALERTS_SERVICE.name, ALERTS_SERVICE),
       Arguments.of(NOMIS.name, NOMIS),
-      Arguments.of(MIGRATION.name, MIGRATION),
     )
   }
 
