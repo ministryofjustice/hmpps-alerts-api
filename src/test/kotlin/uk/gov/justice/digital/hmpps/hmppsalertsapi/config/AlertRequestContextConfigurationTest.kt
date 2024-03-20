@@ -366,6 +366,18 @@ class AlertRequestContextConfigurationTest {
     assertThat(context).isNull()
   }
 
+  @Test
+  fun `uses 'NOMIS' as username and display name when source is NOMIS and username is not supplied`() {
+    req.addHeader(SOURCE, NOMIS.name)
+    setSecurityContext(emptyMap())
+
+    interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(context.username).isEqualTo("NOMIS")
+    assertThat(context.userDisplayName).isEqualTo("NOMIS")
+  }
+
   private fun setSecurityContext(claims: Map<String, Any>) =
     mock<AuthAwareAuthenticationToken> { on { tokenAttributes } doReturn claims }.also {
         token ->

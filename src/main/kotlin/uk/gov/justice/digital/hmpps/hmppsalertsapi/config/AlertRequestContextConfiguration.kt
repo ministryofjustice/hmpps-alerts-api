@@ -65,13 +65,17 @@ class AlertRequestContextInterceptor(
         ?: it.tokenAttributes["username"] as String?
     }
 
-  private fun HttpServletRequest.getUsername(): String =
+  private fun HttpServletRequest.getUsername(source: Source): String =
     (getUsernameFromClaim() ?: getHeader(USERNAME))
       ?.trim()?.takeUnless(String::isBlank)?.also { if (it.length > 32) throw ValidationException("Created by must be <= 32 characters") }
-      ?: throw ValidationException("Could not find non empty username from user_name or username token claims or Username header")
+      ?: if (source != DPS) {
+        source.name
+      } else {
+        throw ValidationException("Could not find non empty username from user_name or username token claims or Username header")
+      }
 
   private fun HttpServletRequest.getUserDetails(source: Source) =
-    getUsername().let {
+    getUsername(source).let {
       userService.getUserDetails(it)
         ?: if (source != DPS) {
           UserDetailsDto(username = it, active = true, name = it, authSource = it, userId = it, uuid = null)

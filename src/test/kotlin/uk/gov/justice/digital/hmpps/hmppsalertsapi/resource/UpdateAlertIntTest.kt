@@ -317,6 +317,28 @@ Comment '$appendComment' was added
   }
 
   @Test
+  fun `should populate updated by username and display name as 'NOMIS' when source is NOMIS and no username is supplied`() {
+    val alert = createAlert()
+
+    webTestClient.put()
+      .uri("/alerts/${alert.alertUuid}")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .header(SOURCE, NOMIS.name)
+      .bodyValue(updateAlertRequest())
+      .exchange()
+      .expectStatus().isOk
+      .expectBody(Alert::class.java)
+      .returnResult().responseBody
+
+    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+
+    with(alertEntity.auditEvents()[0]) {
+      assertThat(actionedBy).isEqualTo("NOMIS")
+      assertThat(actionedByDisplayName).isEqualTo("NOMIS")
+    }
+  }
+
+  @Test
   fun `should publish alert updated event with DPS source`() {
     val alert = createAlert()
 

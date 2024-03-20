@@ -356,6 +356,27 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `should populate created by username and display name as 'NOMIS' when source is NOMIS and no username is supplied`() {
+    val request = createAlertRequest()
+
+    val alert = webTestClient.post()
+      .uri("/alerts")
+      .bodyValue(request)
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .header(SOURCE, NOMIS.name)
+      .exchange()
+      .expectStatus().isCreated
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody(AlertModel::class.java)
+      .returnResult().responseBody!!
+
+    with(alert) {
+      assertThat(createdBy).isEqualTo("NOMIS")
+      assertThat(createdByDisplayName).isEqualTo("NOMIS")
+    }
+  }
+
+  @Test
   fun `should return populated alert model`() {
     val request = createAlertRequest()
 

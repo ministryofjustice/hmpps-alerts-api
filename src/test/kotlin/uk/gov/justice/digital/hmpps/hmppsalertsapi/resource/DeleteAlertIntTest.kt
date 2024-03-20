@@ -195,6 +195,26 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `should populate deleted by username and display name as 'NOMIS' when source is NOMIS and no username is supplied`() {
+    val alert = createAlert()
+
+    webTestClient.delete()
+      .uri("/alerts/${alert.alertUuid}")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .header(SOURCE, NOMIS.name)
+      .exchange()
+      .expectStatus().isNoContent
+      .expectBody().isEmpty
+
+    val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
+
+    with(alertEntity.auditEvents()[0]) {
+      assertThat(actionedBy).isEqualTo("NOMIS")
+      assertThat(actionedByDisplayName).isEqualTo("NOMIS")
+    }
+  }
+
+  @Test
   fun `should publish alert deleted event with DPS source`() {
     val alert = createAlert()
 
