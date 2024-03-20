@@ -12,7 +12,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.manageusers.dto.UserDetailsDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.ALERTS_SERVICE
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
@@ -53,8 +53,7 @@ class AlertRequestContextInterceptor(
   }
 
   private fun HttpServletRequest.getSource(): Source =
-    getHeader(SOURCE)?.let { Source.valueOf(it) }
-      ?: ALERTS_SERVICE
+    getHeader(SOURCE)?.let { Source.valueOf(it) } ?: DPS
 
   private fun authentication(): AuthAwareAuthenticationToken =
     SecurityContextHolder.getContext().authentication as AuthAwareAuthenticationToken?
@@ -74,7 +73,7 @@ class AlertRequestContextInterceptor(
   private fun HttpServletRequest.getUserDetails(source: Source) =
     getUsername().let {
       userService.getUserDetails(it)
-        ?: if (source != ALERTS_SERVICE) {
+        ?: if (source != DPS) {
           UserDetailsDto(username = it, active = true, name = it, authSource = it, userId = it, uuid = null)
         } else {
           null
