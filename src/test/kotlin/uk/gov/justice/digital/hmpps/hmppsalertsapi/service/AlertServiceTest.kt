@@ -26,6 +26,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_MOORLANDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
@@ -60,6 +62,7 @@ class AlertServiceTest {
   private val context = AlertRequestContext(
     username = TEST_USER,
     userDisplayName = TEST_USER_NAME,
+    activeCaseLoadId = PRISON_CODE_LEEDS,
   )
 
   @Test
@@ -166,6 +169,7 @@ class AlertServiceTest {
       assertThat(actionedBy).isEqualTo(context.username)
       assertThat(actionedByDisplayName).isEqualTo(context.userDisplayName)
       assertThat(source).isEqualTo(context.source)
+      assertThat(activeCaseLoadId).isEqualTo(context.activeCaseLoadId)
     }
   }
 
@@ -198,6 +202,7 @@ class AlertServiceTest {
         createdBy = context.username,
         createdByDisplayName = context.userDisplayName,
         source = context.source,
+        activeCaseLoadId = context.activeCaseLoadId,
       ).copy(alertUuid = result.alertUuid),
     )
   }
@@ -288,6 +293,7 @@ Comment '${updateRequest.appendComment}' was added
       assertThat(actionedBy).isEqualTo(context.username)
       assertThat(actionedByDisplayName).isEqualTo(context.userDisplayName)
       assertThat(source).isEqualTo(context.source)
+      assertThat(activeCaseLoadId).isEqualTo(context.activeCaseLoadId)
     }
   }
 
@@ -338,6 +344,7 @@ Comment '${updateRequest.appendComment}' was added
       assertThat(actionedBy).isEqualTo(context.username)
       assertThat(actionedByDisplayName).isEqualTo(context.userDisplayName)
       assertThat(source).isEqualTo(context.source)
+      assertThat(activeCaseLoadId).isEqualTo(context.activeCaseLoadId)
     }
   }
 
@@ -428,7 +435,7 @@ Comment '${updateRequest.appendComment}' was added
         activeTo = updateAlert.activeTo,
         activeFrom = updateAlert.activeFrom!!,
         createdAt = it,
-      ).apply { auditEvent(AuditEventAction.CREATED, "Alert created", it, "CREATED_BY", "CREATED_BY_DISPLAY_NAME", DPS) }
+      ).apply { auditEvent(AuditEventAction.CREATED, "Alert created", it, "CREATED_BY", "CREATED_BY_DISPLAY_NAME", DPS, PRISON_CODE_LEEDS) }
     }
 
   private fun prisoner() =
@@ -463,6 +470,7 @@ Comment '${updateRequest.appendComment}' was added
         actionedBy = "CREATED_BY",
         actionedByDisplayName = "CREATED_BY_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       )
     }
 }

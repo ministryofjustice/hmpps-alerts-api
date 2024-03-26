@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_THROW_EXCEPTION
@@ -360,6 +361,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
       assertThat(actionedByDisplayName).isEqualTo(NOMIS_SYS_USER)
       assertThat(source).isEqualTo(NOMIS)
+      assertThat(activeCaseLoadId).isNull()
     }
   }
 
@@ -389,6 +391,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(actionedBy).isEqualTo("NOMIS")
       assertThat(actionedByDisplayName).isEqualTo("NOMIS")
       assertThat(source).isEqualTo(NOMIS)
+      assertThat(activeCaseLoadId).isNull()
     }
   }
 
@@ -451,6 +454,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(actionedBy).isEqualTo(TEST_USER)
       assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
       assertThat(source).isEqualTo(DPS)
+      assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
     }
   }
 
@@ -485,6 +489,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(actionedBy).isEqualTo(TEST_USER)
       assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
       assertThat(source).isEqualTo(NOMIS)
+      assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
     }
   }
 

@@ -20,6 +20,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_MOORLANDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
@@ -160,6 +161,17 @@ class AlertRequestContextConfigurationTest {
   }
 
   @Test
+  fun `does not set active case load id when source is NOMIS and username from user_name claim is not found`() {
+    req.addHeader(SOURCE, NOMIS.name)
+    setSecurityContext(mapOf("user_name" to USER_NOT_FOUND))
+
+    interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(context.activeCaseLoadId).isNull()
+  }
+
+  @Test
   fun `takes username from user_name claim`() {
     setSecurityContext(mapOf("user_name" to TEST_USER))
 
@@ -179,6 +191,16 @@ class AlertRequestContextConfigurationTest {
 
     assertThat(context.username).isEqualTo(TEST_USER)
     assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
+  }
+
+  @Test
+  fun `takes active case load id from user associated with user_name claim`() {
+    setSecurityContext(mapOf("user_name" to TEST_USER))
+
+    interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(context.activeCaseLoadId).isEqualTo(PRISON_CODE_MOORLANDS)
   }
 
   @Test
@@ -236,6 +258,17 @@ class AlertRequestContextConfigurationTest {
   }
 
   @Test
+  fun `does not set active case load id when source is NOMIS and username from username claim is not found`() {
+    req.addHeader(SOURCE, NOMIS.name)
+    setSecurityContext(mapOf("username" to USER_NOT_FOUND))
+
+    interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(context.activeCaseLoadId).isNull()
+  }
+
+  @Test
   fun `takes username from username claim`() {
     setSecurityContext(mapOf("username" to TEST_USER))
 
@@ -255,6 +288,16 @@ class AlertRequestContextConfigurationTest {
 
     assertThat(context.username).isEqualTo(TEST_USER)
     assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
+  }
+
+  @Test
+  fun `takes active case load id from user associated with username claim`() {
+    setSecurityContext(mapOf("username" to TEST_USER))
+
+    interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(context.activeCaseLoadId).isEqualTo(PRISON_CODE_MOORLANDS)
   }
 
   @Test
@@ -318,6 +361,18 @@ class AlertRequestContextConfigurationTest {
   }
 
   @Test
+  fun `does not set active case load id when source is NOMIS and username from Username header is not found`() {
+    setSecurityContext(emptyMap())
+    req.addHeader(SOURCE, NOMIS.name)
+    req.addHeader(USERNAME, USER_NOT_FOUND)
+
+    interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(context.activeCaseLoadId).isNull()
+  }
+
+  @Test
   fun `takes username from Username header`() {
     setSecurityContext(emptyMap())
     req.addHeader(USERNAME, TEST_USER)
@@ -339,6 +394,17 @@ class AlertRequestContextConfigurationTest {
 
     assertThat(context.username).isEqualTo(TEST_USER)
     assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
+  }
+
+  @Test
+  fun `takes active case load id from user associated with Username header`() {
+    setSecurityContext(emptyMap())
+    req.addHeader(USERNAME, TEST_USER)
+
+    interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(context.activeCaseLoadId).isEqualTo(PRISON_CODE_MOORLANDS)
   }
 
   @ParameterizedTest
@@ -376,6 +442,17 @@ class AlertRequestContextConfigurationTest {
 
     assertThat(context.username).isEqualTo("NOMIS")
     assertThat(context.userDisplayName).isEqualTo("NOMIS")
+  }
+
+  @Test
+  fun `does not set active case load id when source is NOMIS and username is not supplied`() {
+    req.addHeader(SOURCE, NOMIS.name)
+    setSecurityContext(emptyMap())
+
+    interceptor.preHandle(req, res, "null")
+    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
+
+    assertThat(context.activeCaseLoadId).isNull()
   }
 
   private fun setSecurityContext(claims: Map<String, Any>) =

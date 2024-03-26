@@ -97,6 +97,7 @@ data class Alert(
     actionedBy: String,
     actionedByDisplayName: String,
     source: Source,
+    activeCaseLoadId: String?,
   ): AuditEvent {
     val auditEvent = AuditEvent(
       alert = this,
@@ -106,6 +107,7 @@ data class Alert(
       actionedBy = actionedBy,
       actionedByDisplayName = actionedByDisplayName,
       source = source,
+      activeCaseLoadId = activeCaseLoadId,
     )
     auditEvents.add(auditEvent)
     return auditEvent
@@ -124,6 +126,7 @@ data class Alert(
     createdBy: String,
     createdByDisplayName: String,
     source: Source,
+    activeCaseLoadId: String?,
   ) = apply {
     auditEvent(
       action = AuditEventAction.CREATED,
@@ -132,6 +135,7 @@ data class Alert(
       actionedBy = createdBy,
       actionedByDisplayName = createdByDisplayName,
       source = source,
+      activeCaseLoadId = activeCaseLoadId,
     )
     registerEvent(
       AlertCreatedEvent(
@@ -155,6 +159,7 @@ data class Alert(
     updatedBy: String,
     updatedByDisplayName: String,
     source: Source,
+    activeCaseLoadId: String?,
   ) = apply {
     val descriptionUpdated = description != null && this.description != description
     val authorisedByUpdated = authorisedBy != null && this.authorisedBy != authorisedBy
@@ -200,6 +205,7 @@ data class Alert(
         actionedBy = updatedBy,
         actionedByDisplayName = updatedByDisplayName,
         source = source,
+        activeCaseLoadId = activeCaseLoadId,
       )
       registerEvent(
         AlertUpdatedEvent(
@@ -224,6 +230,7 @@ data class Alert(
     deletedBy: String,
     deletedByDisplayName: String,
     source: Source,
+    activeCaseLoadId: String?,
   ): AuditEvent {
     lastModifiedAt = deletedAt
     this.deletedAt = deletedAt
@@ -234,6 +241,7 @@ data class Alert(
       actionedBy = deletedBy,
       actionedByDisplayName = deletedByDisplayName,
       source = source,
+      activeCaseLoadId = activeCaseLoadId,
     ).also {
       registerEvent(
         AlertDeletedEvent(

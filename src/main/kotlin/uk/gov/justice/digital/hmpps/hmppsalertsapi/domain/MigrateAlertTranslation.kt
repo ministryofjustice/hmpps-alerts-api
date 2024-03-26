@@ -29,6 +29,7 @@ fun MigrateAlertRequest.toAlertEntity(alertCode: AlertCode, migratedAt: LocalDat
       actionedBy = this.createdBy,
       actionedByDisplayName = this.createdByDisplayName,
       source = NOMIS,
+      activeCaseLoadId = null,
     )
     comments.forEach { al.addComment(it.comment, it.createdAt, it.createdBy, it.createdByDisplayName) }
     if (this.updatedAt != null) {
@@ -39,6 +40,7 @@ fun MigrateAlertRequest.toAlertEntity(alertCode: AlertCode, migratedAt: LocalDat
         actionedBy = this.updatedBy!!,
         actionedByDisplayName = this.updatedByDisplayName!!,
         source = NOMIS,
+        activeCaseLoadId = null,
       )
     }
   }

@@ -6,6 +6,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_MOORLANDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
@@ -34,9 +36,10 @@ class AlertTranslationTest {
     val context = AlertRequestContext(
       username = TEST_USER,
       userDisplayName = TEST_USER_NAME,
+      activeCaseLoadId = PRISON_CODE_MOORLANDS,
     )
 
-    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source)
+    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source, context.activeCaseLoadId)
 
     assertThat(entity).isEqualTo(
       AlertEntity(
@@ -56,6 +59,7 @@ class AlertTranslationTest {
           actionedBy = context.username,
           actionedByDisplayName = context.userDisplayName,
           source = context.source,
+          activeCaseLoadId = context.activeCaseLoadId,
         )
       },
     )
@@ -74,9 +78,10 @@ class AlertTranslationTest {
     val context = AlertRequestContext(
       username = TEST_USER,
       userDisplayName = TEST_USER_NAME,
+      activeCaseLoadId = PRISON_CODE_LEEDS,
     )
 
-    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source)
+    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source, context.activeCaseLoadId)
 
     assertThat(entity.activeFrom).isEqualTo(LocalDate.now())
   }
@@ -120,6 +125,7 @@ class AlertTranslationTest {
         actionedBy = "UPDATED_BY",
         actionedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_LEEDS,
       )
     }
 
@@ -143,6 +149,7 @@ class AlertTranslationTest {
         actionedBy = "UPDATED_BY_2",
         actionedByDisplayName = "UPDATED_BY_2_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       )
       auditEvent(
         action = AuditEventAction.UPDATED,
@@ -151,6 +158,7 @@ class AlertTranslationTest {
         actionedBy = "UPDATED_BY_3",
         actionedByDisplayName = "UPDATED_BY_3_DISPLAY_NAME",
         source = NOMIS,
+        activeCaseLoadId = PRISON_CODE_LEEDS,
       )
       auditEvent(
         action = AuditEventAction.UPDATED,
@@ -159,6 +167,7 @@ class AlertTranslationTest {
         actionedBy = "UPDATED_BY_1",
         actionedByDisplayName = "UPDATED_BY_1_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       )
     }
 
@@ -241,6 +250,7 @@ class AlertTranslationTest {
         actionedBy = "CREATED_BY",
         actionedByDisplayName = "CREATED_BY_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_LEEDS,
       )
     }
 }

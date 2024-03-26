@@ -44,6 +44,7 @@ class AlertService(
           createdBy = context.username,
           createdByDisplayName = context.userDisplayName,
           source = context.source,
+          activeCaseLoadId = context.activeCaseLoadId,
         ),
       ).toAlertModel()
     }
@@ -76,6 +77,7 @@ class AlertService(
           updatedBy = context.username,
           updatedByDisplayName = context.userDisplayName,
           source = context.source,
+          activeCaseLoadId = context.activeCaseLoadId,
         ),
       ).toAlertModel()
     } ?: throw AlertNotFoundException("Could not find alert with ID $alertUuid")
@@ -88,6 +90,7 @@ class AlertService(
         deletedBy = context.username,
         deletedByDisplayName = context.userDisplayName,
         source = context.source,
+        activeCaseLoadId = context.activeCaseLoadId,
       )
     }
     alertRepository.saveAndFlush(alert)

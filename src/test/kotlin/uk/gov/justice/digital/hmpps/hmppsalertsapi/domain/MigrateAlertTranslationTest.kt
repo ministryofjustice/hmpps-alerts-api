@@ -36,6 +36,7 @@ class MigrateAlertTranslationTest {
           actionedBy = request.createdBy,
           actionedByDisplayName = request.createdByDisplayName,
           source = NOMIS,
+          activeCaseLoadId = null,
         )
       },
     )
@@ -64,6 +65,7 @@ class MigrateAlertTranslationTest {
           actionedBy = request.createdBy,
           actionedByDisplayName = request.createdByDisplayName,
           source = NOMIS,
+          activeCaseLoadId = null,
         )
         auditEvent(
           action = UPDATED,
@@ -72,6 +74,7 @@ class MigrateAlertTranslationTest {
           actionedBy = request.updatedBy!!,
           actionedByDisplayName = request.updatedByDisplayName!!,
           source = NOMIS,
+          activeCaseLoadId = null,
         )
       },
     )
@@ -101,6 +104,7 @@ class MigrateAlertTranslationTest {
           actionedBy = request.createdBy,
           actionedByDisplayName = request.createdByDisplayName,
           source = NOMIS,
+          activeCaseLoadId = null,
         )
         addComment(
           comments.single().comment,

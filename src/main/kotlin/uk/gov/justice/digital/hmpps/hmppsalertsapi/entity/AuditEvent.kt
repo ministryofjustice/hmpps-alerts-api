@@ -34,4 +34,6 @@ data class AuditEvent(
 
   @Enumerated(EnumType.STRING)
   val source: Source,
+
+  val activeCaseLoadId: String?,
 )

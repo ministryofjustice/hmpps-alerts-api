@@ -45,6 +45,7 @@ class AlertRequestContextInterceptor(
           source = source,
           username = userDetails.username,
           userDisplayName = userDetails.name,
+          activeCaseLoadId = userDetails.activeCaseLoadId,
         ),
       )
     }
@@ -78,7 +79,7 @@ class AlertRequestContextInterceptor(
     getUsername(source).let {
       userService.getUserDetails(it)
         ?: if (source != DPS) {
-          UserDetailsDto(username = it, active = true, name = it, authSource = it, userId = it, uuid = null)
+          UserDetailsDto(username = it, active = true, name = it, authSource = it, userId = it, activeCaseLoadId = null, uuid = null)
         } else {
           null
         }
