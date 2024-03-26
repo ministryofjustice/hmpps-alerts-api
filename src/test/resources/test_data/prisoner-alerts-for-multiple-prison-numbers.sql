@@ -112,7 +112,8 @@ insert into audit_event
     description,
     actioned_at,
     actioned_by,
-    actioned_by_display_name
+    actioned_by_display_name,
+    source
 )
 values
 (
@@ -121,7 +122,8 @@ values
     'Alert created',
     now() - interval '1 day',
     'TEST_USER',
-    'Test User'
+    'Test User',
+    'DPS'
 ),
 (
     2,
@@ -129,7 +131,8 @@ values
     'Alert created',
     now() - interval '2 days',
     'TEST_USER',
-    'Test User'
+    'Test User',
+    'DPS'
 ),
 (
     2,
@@ -137,7 +140,8 @@ values
     'First alert update',
     now() - interval '1 day',
     'TEST_USER',
-    'Test User'
+    'Test User',
+    'DPS'
 ),
 (
     2,
@@ -145,7 +149,8 @@ values
     'Second alert update',
     now(),
     'TEST_USER',
-    'Test User'
+    'Test User',
+    'DPS'
 ),
 (
     3,
@@ -153,7 +158,8 @@ values
     'Alert created',
     now() - interval '1 hour',
     'TEST_USER',
-    'Test User'
+    'Test User',
+    'DPS'
 ),
 (
     3,
@@ -161,7 +167,8 @@ values
     'Alert updated',
     now() - interval '1 minute',
     'TEST_USER',
-    'Test User'
+    'Test User',
+    'DPS'
 ),
 (
     4,
@@ -169,7 +176,8 @@ values
     'Alert created',
     now() - interval '3 days',
     'TEST_USER',
-    'Test User'
+    'Test User',
+    'DPS'
 ),
 (
     5,
@@ -177,7 +185,8 @@ values
     'Alert created',
     now() - interval '4 days',
     'TEST_USER',
-    'Test User'
+    'Test User',
+    'DPS'
 ),
 (
     5,
@@ -185,7 +194,8 @@ values
     'Alert updated',
     now() - interval '1 day',
     'TEST_USER',
-    'Test User'
+    'Test User',
+    'DPS'
 ),
 (
     6,
@@ -193,7 +203,8 @@ values
     'Alert created',
     now(),
     'TEST_USER',
-    'Test User'
+    'Test User',
+    'DPS'
 ),
 (
     6,
@@ -201,7 +212,8 @@ values
     'Alert deleted',
     now(),
     'TEST_USER',
-    'Test User'
+    'Test User',
+    'DPS'
 ),
 (
     7,
@@ -209,5 +221,6 @@ values
     'Alert created',
     now() - interval '1 day',
     'TEST_USER',
-    'Test User'
+    'Test User',
+    'DPS'
 );

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.UPDATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateCommentRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlertRequest
@@ -34,6 +35,7 @@ class MigrateAlertTranslationTest {
           actionedAt = request.createdAt,
           actionedBy = request.createdBy,
           actionedByDisplayName = request.createdByDisplayName,
+          source = NOMIS,
         )
       },
     )
@@ -61,6 +63,7 @@ class MigrateAlertTranslationTest {
           actionedAt = request.createdAt,
           actionedBy = request.createdBy,
           actionedByDisplayName = request.createdByDisplayName,
+          source = NOMIS,
         )
         auditEvent(
           action = UPDATED,
@@ -68,6 +71,7 @@ class MigrateAlertTranslationTest {
           actionedAt = request.updatedAt!!,
           actionedBy = request.updatedBy!!,
           actionedByDisplayName = request.updatedByDisplayName!!,
+          source = NOMIS,
         )
       },
     )
@@ -96,6 +100,7 @@ class MigrateAlertTranslationTest {
           actionedAt = request.createdAt,
           actionedBy = request.createdBy,
           actionedByDisplayName = request.createdByDisplayName,
+          source = NOMIS,
         )
         addComment(
           comments.single().comment,

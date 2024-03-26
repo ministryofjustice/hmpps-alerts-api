@@ -96,6 +96,7 @@ data class Alert(
     actionedAt: LocalDateTime = LocalDateTime.now(),
     actionedBy: String,
     actionedByDisplayName: String,
+    source: Source,
   ): AuditEvent {
     val auditEvent = AuditEvent(
       alert = this,
@@ -104,6 +105,7 @@ data class Alert(
       actionedAt = actionedAt,
       actionedBy = actionedBy,
       actionedByDisplayName = actionedByDisplayName,
+      source = source,
     )
     auditEvents.add(auditEvent)
     return auditEvent
@@ -129,6 +131,7 @@ data class Alert(
       actionedAt = createdAt,
       actionedBy = createdBy,
       actionedByDisplayName = createdByDisplayName,
+      source = source,
     )
     registerEvent(
       AlertCreatedEvent(
@@ -196,6 +199,7 @@ data class Alert(
         actionedAt = updatedAt,
         actionedBy = updatedBy,
         actionedByDisplayName = updatedByDisplayName,
+        source = source,
       )
       registerEvent(
         AlertUpdatedEvent(
@@ -229,6 +233,7 @@ data class Alert(
       actionedAt = deletedAt,
       actionedBy = deletedBy,
       actionedByDisplayName = deletedByDisplayName,
+      source = source,
     ).also {
       registerEvent(
         AlertDeletedEvent(

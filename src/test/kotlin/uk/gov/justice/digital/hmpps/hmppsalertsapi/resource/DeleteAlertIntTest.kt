@@ -156,9 +156,9 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `alert deleted`() {
+  fun `alert deleted via DPS`() {
     val alert = createAlert()
-    webTestClient.deleteAlert(alert.alertUuid)
+    webTestClient.deleteAlert(alert.alertUuid, source = DPS)
     val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
 
     with(alertEntity) {
@@ -171,6 +171,27 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
       assertThat(actionedBy).isEqualTo(TEST_USER)
       assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+      assertThat(source).isEqualTo(DPS)
+    }
+  }
+
+  @Test
+  fun `alert deleted via NOMIS`() {
+    val alert = createAlert()
+    webTestClient.deleteAlert(alert.alertUuid, source = NOMIS)
+    val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
+
+    with(alertEntity) {
+      assertThat(deletedAt()).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+    }
+    with(alertEntity.auditEvents()[0]) {
+      assertThat(auditEventId).isEqualTo(2)
+      assertThat(action).isEqualTo(AuditEventAction.DELETED)
+      assertThat(description).isEqualTo("Alert deleted")
+      assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+      assertThat(actionedBy).isEqualTo(TEST_USER)
+      assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+      assertThat(source).isEqualTo(NOMIS)
     }
   }
 
@@ -191,6 +212,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
     with(alertEntity.auditEvents()[0]) {
       assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
       assertThat(actionedByDisplayName).isEqualTo(NOMIS_SYS_USER)
+      assertThat(source).isEqualTo(NOMIS)
     }
   }
 
@@ -211,6 +233,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
     with(alertEntity.auditEvents()[0]) {
       assertThat(actionedBy).isEqualTo("NOMIS")
       assertThat(actionedByDisplayName).isEqualTo("NOMIS")
+      assertThat(source).isEqualTo(NOMIS)
     }
   }
 

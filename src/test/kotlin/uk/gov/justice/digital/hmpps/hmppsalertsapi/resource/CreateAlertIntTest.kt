@@ -353,6 +353,14 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(createdBy).isEqualTo(NOMIS_SYS_USER)
       assertThat(createdByDisplayName).isEqualTo(NOMIS_SYS_USER)
     }
+
+    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+
+    with(alertEntity.auditEvents()[0]) {
+      assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
+      assertThat(actionedByDisplayName).isEqualTo(NOMIS_SYS_USER)
+      assertThat(source).isEqualTo(NOMIS)
+    }
   }
 
   @Test
@@ -373,6 +381,14 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(alert) {
       assertThat(createdBy).isEqualTo("NOMIS")
       assertThat(createdByDisplayName).isEqualTo("NOMIS")
+    }
+
+    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+
+    with(alertEntity.auditEvents()[0]) {
+      assertThat(actionedBy).isEqualTo("NOMIS")
+      assertThat(actionedByDisplayName).isEqualTo("NOMIS")
+      assertThat(source).isEqualTo(NOMIS)
     }
   }
 
@@ -405,10 +421,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should create new alert`() {
+  fun `should create new alert via DPS`() {
     val request = createAlertRequest()
 
-    val alert = webTestClient.createAlert(request = request)
+    val alert = webTestClient.createAlert(source = DPS, request = request)
 
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
@@ -431,9 +447,44 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(action).isEqualTo(AuditEventAction.CREATED)
       assertThat(description).isEqualTo("Alert created")
       assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
-      assertThat(alertEntity.createdAt).isEqualTo(actionedAt)
+      assertThat(actionedAt).isEqualTo(alertEntity.createdAt)
       assertThat(actionedBy).isEqualTo(TEST_USER)
       assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+      assertThat(source).isEqualTo(DPS)
+    }
+  }
+
+  @Test
+  fun `should create new alert via NOMIS`() {
+    val request = createAlertRequest()
+
+    val alert = webTestClient.createAlert(source = NOMIS, request = request)
+
+    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+    val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
+
+    assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+      Alert(
+        alertId = 1,
+        alertUuid = alert.alertUuid,
+        alertCode = alertCode,
+        prisonNumber = request.prisonNumber,
+        description = request.description,
+        authorisedBy = request.authorisedBy,
+        activeFrom = request.activeFrom!!,
+        activeTo = request.activeTo,
+        createdAt = alertEntity.createdAt,
+      ),
+    )
+    with(alertEntity.auditEvents().single()) {
+      assertThat(auditEventId).isEqualTo(1)
+      assertThat(action).isEqualTo(AuditEventAction.CREATED)
+      assertThat(description).isEqualTo("Alert created")
+      assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+      assertThat(actionedAt).isEqualTo(alertEntity.createdAt)
+      assertThat(actionedBy).isEqualTo(TEST_USER)
+      assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+      assertThat(source).isEqualTo(NOMIS)
     }
   }
 
