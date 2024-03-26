@@ -19,6 +19,8 @@ internal const val TEST_USER_NAME = "Test User"
 internal const val USER_NOT_FOUND = "USER_NOT_FOUND"
 internal const val USER_THROW_EXCEPTION = "USER_THROW_EXCEPTION"
 internal const val NOMIS_SYS_USER = "SYS"
+internal const val PRISON_CODE_LEEDS = "LEI"
+internal const val PRISON_CODE_MOORLANDS = "MDI"
 
 class ManageUsersServer : WireMockServer(8111) {
   private val mapper: ObjectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
@@ -47,6 +49,7 @@ class ManageUsersServer : WireMockServer(8111) {
                   active = true,
                   name = name,
                   authSource = "nomis",
+                  activeCaseLoadId = PRISON_CODE_LEEDS,
                   userId = "123",
                   uuid = UUID.randomUUID(),
                 ),

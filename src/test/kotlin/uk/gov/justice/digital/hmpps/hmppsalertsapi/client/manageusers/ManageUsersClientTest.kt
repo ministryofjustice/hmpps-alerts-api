@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.manageusers.dto.UserDetailsDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.DownstreamServiceException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.ManageUsersServer
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
@@ -39,6 +40,7 @@ class ManageUsersClientTest {
         true,
         TEST_USER_NAME,
         "nomis",
+        PRISON_CODE_LEEDS,
         "123",
         result.uuid,
       ),

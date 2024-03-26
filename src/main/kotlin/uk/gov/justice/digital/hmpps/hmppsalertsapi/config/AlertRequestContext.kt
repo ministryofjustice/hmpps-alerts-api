@@ -9,4 +9,5 @@ data class AlertRequestContext(
   val source: Source = DPS,
   val username: String,
   val userDisplayName: String,
+  val activeCaseLoadId: String?,
 )

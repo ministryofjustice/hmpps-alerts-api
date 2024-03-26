@@ -6,6 +6,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_MOORLANDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
@@ -34,6 +36,7 @@ class AlertTranslationTest {
     val context = AlertRequestContext(
       username = TEST_USER,
       userDisplayName = TEST_USER_NAME,
+      activeCaseLoadId = PRISON_CODE_MOORLANDS,
     )
 
     val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source)
@@ -74,6 +77,7 @@ class AlertTranslationTest {
     val context = AlertRequestContext(
       username = TEST_USER,
       userDisplayName = TEST_USER_NAME,
+      activeCaseLoadId = PRISON_CODE_LEEDS,
     )
 
     val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source)
