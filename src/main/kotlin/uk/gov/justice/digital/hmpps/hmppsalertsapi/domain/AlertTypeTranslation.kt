@@ -1,8 +1,10 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.domain
 
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCodeSummary
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode as AlertCodeModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType as AlertTypeModel
 
@@ -52,3 +54,12 @@ fun Collection<AlertType>.toAlertTypeModels(includeInactive: Boolean) =
   filter { includeInactive || it.isActive() }
     .sortedWith(compareBy({ it.listSequence }, { it.code }))
     .map { it.toAlertTypeModel(includeInactive) }
+
+fun CreateAlertTypeRequest.toEntity(context: AlertRequestContext): AlertType =
+  AlertType(
+    code = code,
+    description = description,
+    listSequence = 0,
+    createdAt = context.requestAt,
+    createdBy = context.username,
+  )
