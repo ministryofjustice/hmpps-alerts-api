@@ -3,10 +3,11 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.ParameterizedTypeReference
 import org.springframework.test.context.jdbc.Sql
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.response.PrisonersAlerts
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.util.UUID
@@ -78,22 +79,28 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
     }
   }
 
-  private fun PrisonersAlerts.assertOnlyContainsAlertsForPrisonNumbers(prisonNumbers: List<String>) {
-    assertThat(prisonNumbers).isEqualTo(prisonNumbers)
-    assertThat(alerts.map { it.prisonNumber }.distinct()).isEqualTo(prisonNumbers)
+  private fun Map<String, List<Alert>>.prisonNumbers() = keys.toList()
+  private fun Map<String, List<Alert>>.alerts() = values.flatten()
+
+  private fun Map<String, List<Alert>>.assertOnlyContainsAlertsForPrisonNumbers(prisonNumbers: List<String>) {
+    assertThat(prisonNumbers()).isEqualTo(prisonNumbers)
+    assertThat(alerts().map { it.prisonNumber }.distinct()).isEqualTo(prisonNumbers)
   }
 
-  private fun PrisonersAlerts.assertAlertCountForPrisonNumber(prisonNumber: String, expectedCount: Int) =
-    assertThat(alerts.filter { it.prisonNumber == prisonNumber }).hasSize(expectedCount)
+  private fun Map<String, List<Alert>>.assertAlertCountForPrisonNumber(prisonNumber: String, expectedCount: Int) {
+    assertThat(containsKey(prisonNumber))
+    assertThat(this[prisonNumber]!!.filter { it.prisonNumber == prisonNumber }).hasSize(expectedCount)
+  }
 
-  private fun PrisonersAlerts.assertDoesNotContainDeletedAlert() =
+  private fun Map<String, List<Alert>>.assertDoesNotContainDeletedAlert() =
     alertRepository.findByAlertUuidIncludingSoftDelete(deletedAlertUuid)!!.also { deletedAlert ->
-      assertThat(alerts.firstOrNull { it.prisonNumber == deletedAlert.prisonNumber }).isNotNull
-      assertThat(alerts.none { it.alertUuid == deletedAlert.alertUuid }).isTrue
+      assertThat(alerts().associateBy { it.alertUuid }.containsKey(deletedAlert.alertUuid)).isFalse()
     }
 
-  private fun PrisonersAlerts.assertOrderedByActiveFromDesc() =
-    assertThat(alerts).isSortedAccordingTo(compareByDescending { it.activeFrom })
+  private fun Map<String, List<Alert>>.assertOrderedByActiveFromDesc() =
+    values.forEach { alerts ->
+      assertThat(alerts).isSortedAccordingTo(compareByDescending { it.activeFrom })
+    }
 
   private fun getPrisonerAlerts(prisonNumbers: List<String>) =
     webTestClient.get()
@@ -106,6 +113,6 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
       .exchange()
       .expectStatus().isOk
-      .expectBody(PrisonersAlerts::class.java)
+      .expectBody(object : ParameterizedTypeReference<Map<String, List<Alert>>>() {})
       .returnResult().responseBody!!
 }

@@ -366,8 +366,8 @@ Comment '${updateRequest.appendComment}' was added
     val alert = alert()
     whenever(alertRepository.findByPrisonNumberInOrderByActiveFromDesc(any())).thenReturn(listOf(alert))
     val result = underTest.retrieveAlertsForPrisonNumbers(listOf(PRISON_NUMBER, PRISON_NUMBER_NOT_FOUND))
-    assertThat(result.prisonNumbers).containsExactly(PRISON_NUMBER)
-    assertThat(result.alerts).containsExactly(alert.toAlertModel())
+    assertThat(result.keys).containsExactly(PRISON_NUMBER)
+    assertThat(result.values).containsExactly(listOf(alert.toAlertModel()))
   }
 
   private fun createAlertRequest(
