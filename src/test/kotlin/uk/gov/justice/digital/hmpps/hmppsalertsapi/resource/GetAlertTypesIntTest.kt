@@ -2,12 +2,10 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
-import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.util.Optional
 
 class GetAlertTypesIntTest : IntegrationTestBase() {
@@ -35,25 +33,6 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .exchange()
       .expectStatus().isForbidden
-  }
-
-  @Test
-  fun `405 method not allowed`() {
-    val response = webTestClient.post()
-      .uri("/alert-types")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
-      .exchange()
-      .expectStatus().isEqualTo(HttpStatus.METHOD_NOT_ALLOWED)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-
-    with(response!!) {
-      assertThat(status).isEqualTo(405)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Method not allowed failure: Request method 'POST' is not supported")
-      assertThat(developerMessage).isEqualTo("Request method 'POST' is not supported")
-      assertThat(moreInfo).isNull()
-    }
   }
 
   @Test

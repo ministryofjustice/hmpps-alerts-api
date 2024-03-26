@@ -23,7 +23,7 @@ object PostgresContainer {
       withUsername("alerts")
       withPassword("alerts")
       setWaitStrategy(Wait.forListeningPort())
-      withReuse(true)
+      withReuse(false)
       start()
       followOutput(logConsumer)
     }

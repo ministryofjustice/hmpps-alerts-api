@@ -2,16 +2,23 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertTypeModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertTypeModels
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import java.time.LocalDateTime
 
 class AlertTypeServiceTest {
+
+  private val entityCaptor = argumentCaptor<AlertType>()
   private val alertTypeRepository: AlertTypeRepository = mock()
 
   private val service = AlertTypeService(alertTypeRepository)
@@ -58,6 +65,21 @@ class AlertTypeServiceTest {
     val alertTypes = service.getAlertTypes(includeInactive)
 
     assertThat(alertTypes).isEqualTo(listOf(activeAlertType, inactiveAlertType).toAlertTypeModels(includeInactive))
+  }
+
+  @Test
+  fun `save an alert type`() {
+    whenever(alertTypeRepository.saveAndFlush(any())).thenReturn(alertType())
+    service.createAlertType(
+      CreateAlertTypeRequest(code = "A", description = "Alert type A"),
+      AlertRequestContext(username = "USER", userDisplayName = "USER"),
+    )
+    verify(alertTypeRepository).saveAndFlush(entityCaptor.capture())
+    val value = entityCaptor.firstValue
+    assertThat(value).isNotNull
+    assertThat(value.createdBy).isEqualTo("USER")
+    assertThat(value.code).isEqualTo("A")
+    assertThat(value.description).isEqualTo("Alert type A")
   }
 
   private fun alertType(alertTypeId: Long = 1, code: String = "A") =

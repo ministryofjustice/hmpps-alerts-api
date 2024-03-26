@@ -19,10 +19,24 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.servlet.resource.NoResourceFoundException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.ExistingActiveAlertTypeWithCodeException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @RestControllerAdvice
 class HmppsAlertsApiExceptionHandler {
+
+  @ExceptionHandler(ExistingActiveAlertTypeWithCodeException::class)
+  fun handleExistingActiveAlertTypeWithCodeException(e: ExistingActiveAlertTypeWithCodeException): ResponseEntity<ErrorResponse> =
+    ResponseEntity
+      .status(409)
+      .body(
+        ErrorResponse(
+          status = HttpStatus.CONFLICT.value(),
+          userMessage = "Duplicate failure: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
+
   @ExceptionHandler(AccessDeniedException::class)
   fun handleAccessDeniedException(e: AccessDeniedException): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(HttpStatus.FORBIDDEN)

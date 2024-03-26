@@ -23,6 +23,7 @@ class AlertRequestContextConfiguration(private val alertRequestContextIntercepto
   override fun addInterceptors(registry: InterceptorRegistry) {
     log.info("Adding alert request context interceptor")
     registry.addInterceptor(alertRequestContextInterceptor).addPathPatterns("/alerts/**")
+    registry.addInterceptor(alertRequestContextInterceptor).addPathPatterns("/alert-types/**")
   }
 
   companion object {
