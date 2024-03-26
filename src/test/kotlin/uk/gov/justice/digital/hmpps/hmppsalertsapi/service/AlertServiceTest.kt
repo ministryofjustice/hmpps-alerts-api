@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
@@ -164,6 +165,7 @@ class AlertServiceTest {
       assertThat(actionedAt).isEqualTo(context.requestAt)
       assertThat(actionedBy).isEqualTo(context.username)
       assertThat(actionedByDisplayName).isEqualTo(context.userDisplayName)
+      assertThat(source).isEqualTo(context.source)
     }
   }
 
@@ -272,15 +274,21 @@ class AlertServiceTest {
     assertThat(savedAlert.comments()).hasSize(1)
     assertThat(savedAlert.comments()[0].comment).isEqualTo("Another update alert")
     assertThat(savedAlert.auditEvents()).hasSize(2)
-    assertThat(savedAlert.auditEvents()[0].action).isEqualTo(AuditEventAction.UPDATED)
-    assertThat(savedAlert.auditEvents()[0].description).isEqualTo(
-      """Updated alert description from '${unchangedAlert.description}' to '${savedAlert.description}'
+    with(savedAlert.auditEvents()[0]) {
+      assertThat(action).isEqualTo(AuditEventAction.UPDATED)
+      assertThat(description).isEqualTo(
+        """Updated alert description from '${unchangedAlert.description}' to '${savedAlert.description}'
 Updated authorised by from '${unchangedAlert.authorisedBy}' to '${savedAlert.authorisedBy}'
 Updated active from from '${unchangedAlert.activeFrom}' to '${savedAlert.activeFrom}'
 Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'
 Comment '${updateRequest.appendComment}' was added
 """,
-    )
+      )
+      assertThat(actionedAt).isEqualTo(context.requestAt)
+      assertThat(actionedBy).isEqualTo(context.username)
+      assertThat(actionedByDisplayName).isEqualTo(context.userDisplayName)
+      assertThat(source).isEqualTo(context.source)
+    }
   }
 
   @Test
@@ -323,8 +331,14 @@ Comment '${updateRequest.appendComment}' was added
     val savedAlert = alertCaptor.firstValue
     assertThat(savedAlert.deletedAt()).isEqualTo(context.requestAt)
     assertThat(savedAlert.auditEvents()).hasSize(2)
-    assertThat(savedAlert.auditEvents()[0].action).isEqualTo(AuditEventAction.DELETED)
-    assertThat(savedAlert.auditEvents()[0].description).isEqualTo("Alert deleted")
+    with(savedAlert.auditEvents()[0]) {
+      assertThat(action).isEqualTo(AuditEventAction.DELETED)
+      assertThat(description).isEqualTo("Alert deleted")
+      assertThat(actionedAt).isEqualTo(context.requestAt)
+      assertThat(actionedBy).isEqualTo(context.username)
+      assertThat(actionedByDisplayName).isEqualTo(context.userDisplayName)
+      assertThat(source).isEqualTo(context.source)
+    }
   }
 
   @Test
@@ -353,11 +367,12 @@ Comment '${updateRequest.appendComment}' was added
     val result = underTest.retrieveAuditEventsForAlert(alertUuid)
     assertThat(result).isNotEmpty()
     with(result.single()) {
-      assertThat(action).isEqualTo(alertEntity.auditEvents().single().action)
-      assertThat(description).isEqualTo(alertEntity.auditEvents().single().description)
-      assertThat(actionedAt).isEqualTo(alertEntity.auditEvents().single().actionedAt)
-      assertThat(actionedBy).isEqualTo(alertEntity.auditEvents().single().actionedBy)
-      assertThat(actionedByDisplayName).isEqualTo(alertEntity.auditEvents().single().actionedByDisplayName)
+      val comparisonAuditEvent = alertEntity.auditEvents().single()
+      assertThat(action).isEqualTo(comparisonAuditEvent.action)
+      assertThat(description).isEqualTo(comparisonAuditEvent.description)
+      assertThat(actionedAt).isEqualTo(comparisonAuditEvent.actionedAt)
+      assertThat(actionedBy).isEqualTo(comparisonAuditEvent.actionedBy)
+      assertThat(actionedByDisplayName).isEqualTo(comparisonAuditEvent.actionedByDisplayName)
     }
   }
 
@@ -413,7 +428,7 @@ Comment '${updateRequest.appendComment}' was added
         activeTo = updateAlert.activeTo,
         activeFrom = updateAlert.activeFrom!!,
         createdAt = it,
-      ).apply { auditEvent(AuditEventAction.CREATED, "Alert created", it, "CREATED_BY", "CREATED_BY_DISPLAY_NAME") }
+      ).apply { auditEvent(AuditEventAction.CREATED, "Alert created", it, "CREATED_BY", "CREATED_BY_DISPLAY_NAME", DPS) }
     }
 
   private fun prisoner() =
@@ -447,6 +462,7 @@ Comment '${updateRequest.appendComment}' was added
         actionedAt = LocalDateTime.now(),
         actionedBy = "CREATED_BY",
         actionedByDisplayName = "CREATED_BY_DISPLAY_NAME",
+        source = DPS,
       )
     }
 }

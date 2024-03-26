@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.UPDATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest
 import java.time.LocalDateTime
 import java.util.UUID
@@ -27,6 +28,7 @@ fun MigrateAlertRequest.toAlertEntity(alertCode: AlertCode, migratedAt: LocalDat
       actionedAt = this.createdAt,
       actionedBy = this.createdBy,
       actionedByDisplayName = this.createdByDisplayName,
+      source = NOMIS,
     )
     comments.forEach { al.addComment(it.comment, it.createdAt, it.createdBy, it.createdByDisplayName) }
     if (this.updatedAt != null) {
@@ -36,6 +38,7 @@ fun MigrateAlertRequest.toAlertEntity(alertCode: AlertCode, migratedAt: LocalDat
         actionedAt = this.updatedAt,
         actionedBy = this.updatedBy!!,
         actionedByDisplayName = this.updatedByDisplayName!!,
+        source = NOMIS,
       )
     }
   }

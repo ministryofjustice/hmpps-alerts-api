@@ -4,6 +4,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
@@ -53,6 +55,7 @@ class AlertTranslationTest {
           actionedAt = context.requestAt,
           actionedBy = context.username,
           actionedByDisplayName = context.userDisplayName,
+          source = context.source,
         )
       },
     )
@@ -116,6 +119,7 @@ class AlertTranslationTest {
         actionedAt = lastModifiedAt,
         actionedBy = "UPDATED_BY",
         actionedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+        source = DPS,
       )
     }
 
@@ -138,6 +142,7 @@ class AlertTranslationTest {
         actionedAt = LocalDateTime.now().minusDays(2),
         actionedBy = "UPDATED_BY_2",
         actionedByDisplayName = "UPDATED_BY_2_DISPLAY_NAME",
+        source = DPS,
       )
       auditEvent(
         action = AuditEventAction.UPDATED,
@@ -145,6 +150,7 @@ class AlertTranslationTest {
         actionedAt = lastModifiedAt,
         actionedBy = "UPDATED_BY_3",
         actionedByDisplayName = "UPDATED_BY_3_DISPLAY_NAME",
+        source = NOMIS,
       )
       auditEvent(
         action = AuditEventAction.UPDATED,
@@ -152,6 +158,7 @@ class AlertTranslationTest {
         actionedAt = LocalDateTime.now().minusDays(3),
         actionedBy = "UPDATED_BY_1",
         actionedByDisplayName = "UPDATED_BY_1_DISPLAY_NAME",
+        source = DPS,
       )
     }
 
@@ -233,6 +240,7 @@ class AlertTranslationTest {
         actionedAt = createdAt,
         actionedBy = "CREATED_BY",
         actionedByDisplayName = "CREATED_BY_DISPLAY_NAME",
+        source = DPS,
       )
     }
 }

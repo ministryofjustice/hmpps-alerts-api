@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import java.time.LocalDateTime
 
 @Entity
@@ -30,4 +31,7 @@ data class AuditEvent(
   val actionedAt: LocalDateTime,
   val actionedBy: String,
   val actionedByDisplayName: String,
+
+  @Enumerated(EnumType.STRING)
+  val source: Source,
 )

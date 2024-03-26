@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertUpdatedEven
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.UPDATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -95,6 +96,7 @@ class AlertTest {
         actionedAt = actionedAt,
         actionedBy = "UPDATED_BY",
         actionedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+        source = DPS,
       )
     }
 
@@ -106,6 +108,7 @@ class AlertTest {
         actionedAt = actionedAt,
         actionedBy = "UPDATED_BY",
         actionedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+        source = DPS,
       ),
     )
   }
@@ -119,6 +122,7 @@ class AlertTest {
         actionedAt = LocalDateTime.now().minusDays(2),
         actionedBy = "UPDATED_BY_2",
         actionedByDisplayName = "UPDATED_BY_2_DISPLAY_NAME",
+        source = DPS,
       )
       auditEvent(
         action = DELETED,
@@ -126,6 +130,7 @@ class AlertTest {
         actionedAt = LocalDateTime.now(),
         actionedBy = "DELETED_BY",
         actionedByDisplayName = "DELETED_BY_DISPLAY_NAME",
+        source = NOMIS,
       )
       auditEvent(
         action = UPDATED,
@@ -133,6 +138,7 @@ class AlertTest {
         actionedAt = LocalDateTime.now().minusDays(1),
         actionedBy = "UPDATED_BY_3",
         actionedByDisplayName = "UPDATED_BY_3_DISPLAY_NAME",
+        source = DPS,
       )
       auditEvent(
         action = UPDATED,
@@ -140,6 +146,7 @@ class AlertTest {
         actionedAt = LocalDateTime.now().minusDays(3),
         actionedBy = "UPDATED_BY_1",
         actionedByDisplayName = "UPDATED_BY_1_DISPLAY_NAME",
+        source = NOMIS,
       )
     }
 
@@ -156,6 +163,7 @@ class AlertTest {
         actionedAt = LocalDateTime.now().minusDays(2),
         actionedBy = "UPDATED_BY",
         actionedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+        source = NOMIS,
       )
       auditEvent(
         action = DELETED,
@@ -163,6 +171,7 @@ class AlertTest {
         actionedAt = LocalDateTime.now(),
         actionedBy = "DELETED_BY",
         actionedByDisplayName = "DELETED_BY_DISPLAY_NAME",
+        source = DPS,
       )
     }
 
@@ -174,6 +183,7 @@ class AlertTest {
         actionedAt = createdAt,
         actionedBy = "CREATED_BY",
         actionedByDisplayName = "CREATED_BY_DISPLAY_NAME",
+        source = DPS,
       ),
     )
   }
@@ -188,6 +198,7 @@ class AlertTest {
         actionedAt = LocalDateTime.now().minusDays(2),
         actionedBy = "UPDATED_BY_2",
         actionedByDisplayName = "UPDATED_BY_2_DISPLAY_NAME",
+        source = DPS,
       )
       auditEvent(
         action = DELETED,
@@ -195,6 +206,7 @@ class AlertTest {
         actionedAt = LocalDateTime.now(),
         actionedBy = "DELETED_BY",
         actionedByDisplayName = "DELETED_BY_DISPLAY_NAME",
+        source = NOMIS,
       )
       auditEvent(
         action = UPDATED,
@@ -202,6 +214,7 @@ class AlertTest {
         actionedAt = lastModifiedAt,
         actionedBy = "UPDATED_BY_3",
         actionedByDisplayName = "UPDATED_BY_3_DISPLAY_NAME",
+        source = DPS,
       )
       auditEvent(
         action = UPDATED,
@@ -209,6 +222,7 @@ class AlertTest {
         actionedAt = LocalDateTime.now().minusDays(3),
         actionedBy = "UPDATED_BY_1",
         actionedByDisplayName = "UPDATED_BY_1_DISPLAY_NAME",
+        source = NOMIS,
       )
     }
 
@@ -220,6 +234,7 @@ class AlertTest {
         actionedAt = lastModifiedAt,
         actionedBy = "UPDATED_BY_3",
         actionedByDisplayName = "UPDATED_BY_3_DISPLAY_NAME",
+        source = DPS,
       ),
     )
   }
@@ -229,6 +244,7 @@ class AlertTest {
     val createdAt = LocalDateTime.now()
     val createdBy = "CREATED_BY"
     val createdByDisplayName = "CREATED_BY_DISPLAY_NAME"
+    val source = DPS
 
     val entity = Alert(
       alertUuid = UUID.randomUUID(),
@@ -239,7 +255,7 @@ class AlertTest {
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
       createdAt = createdAt,
-    ).create(createdAt, createdBy, createdByDisplayName, DPS)
+    ).create(createdAt, createdBy, createdByDisplayName, source)
 
     assertThat(entity.auditEvents().single()).isEqualTo(
       AuditEvent(
@@ -249,6 +265,7 @@ class AlertTest {
         actionedAt = createdAt,
         actionedBy = createdBy,
         actionedByDisplayName = createdByDisplayName,
+        source = source,
       ),
     )
   }
@@ -294,6 +311,7 @@ class AlertTest {
     val updatedAt = LocalDateTime.now()
     val updatedBy = "UPDATED_BY"
     val updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME"
+    val source = DPS
 
     val sb = StringBuilder()
     sb.appendLine("Updated alert description from '${entity.description}' to '$updatedDescription'")
@@ -312,7 +330,7 @@ class AlertTest {
       updatedAt = updatedAt,
       updatedBy = updatedBy,
       updatedByDisplayName = updatedByDisplayName,
-      source = DPS,
+      source = source,
     )
 
     assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
@@ -324,6 +342,7 @@ class AlertTest {
         actionedAt = updatedAt,
         actionedBy = updatedBy,
         actionedByDisplayName = updatedByDisplayName,
+        source = source,
       ),
     )
   }
@@ -702,8 +721,9 @@ class AlertTest {
   fun `delete audits event`() {
     val entity = alertEntity()
     val deletedAt = LocalDateTime.now()
+    val source = NOMIS
 
-    entity.delete(deletedAt, "DELETED_BY", "DELETED_BY_DISPLAY_NAME", NOMIS)
+    entity.delete(deletedAt, "DELETED_BY", "DELETED_BY_DISPLAY_NAME", source)
 
     assertThat(entity.lastModifiedAt).isEqualTo(deletedAt)
     assertThat(entity.deletedAt()).isEqualTo(deletedAt)
@@ -715,6 +735,7 @@ class AlertTest {
         actionedAt = deletedAt,
         actionedBy = "DELETED_BY",
         actionedByDisplayName = "DELETED_BY_DISPLAY_NAME",
+        source = source,
       ),
     )
   }
@@ -744,6 +765,7 @@ class AlertTest {
     createdAt: LocalDateTime = LocalDateTime.now().minusDays(3),
     createdBy: String = "CREATED_BY",
     createdByDisplayName: String = "CREATED_BY_DISPLAY_NAME",
+    source: Source = DPS,
   ) =
     Alert(
       alertUuid = UUID.randomUUID(),
@@ -761,6 +783,7 @@ class AlertTest {
         actionedAt = createdAt,
         actionedBy = createdBy,
         actionedByDisplayName = createdByDisplayName,
+        source = source,
       )
     }
 }

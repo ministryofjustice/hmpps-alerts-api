@@ -16,6 +16,7 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
@@ -67,6 +68,7 @@ class MigrateAlertServiceTest {
           actionedAt = migrateAlertRequest.createdAt,
           actionedBy = migrateAlertRequest.createdBy,
           actionedByDisplayName = migrateAlertRequest.createdByDisplayName,
+          source = NOMIS,
         )
       },
     )
@@ -103,6 +105,7 @@ class MigrateAlertServiceTest {
           actionedAt = migrateAlertRequest.createdAt,
           actionedBy = migrateAlertRequest.createdBy,
           actionedByDisplayName = migrateAlertRequest.createdByDisplayName,
+          source = NOMIS,
         )
       },
     )

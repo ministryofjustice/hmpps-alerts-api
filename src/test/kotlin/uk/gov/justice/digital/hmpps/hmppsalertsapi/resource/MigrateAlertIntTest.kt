@@ -13,6 +13,7 @@ import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
@@ -189,6 +190,7 @@ class MigrateAlertIntTest : IntegrationTestBase() {
       assertThat(actionedAt).isEqualToIgnoringNanos(request.createdAt)
       assertThat(actionedBy).isEqualTo("AG111QD")
       assertThat(actionedByDisplayName).isEqualTo("A Creator")
+      assertThat(source).isEqualTo(NOMIS)
     }
 
     assertThat(alertEntity.migratedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))

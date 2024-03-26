@@ -188,10 +188,10 @@ class UpdateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `alert updated`() {
+  fun `alert updated via DPS`() {
     val alert = createAlert()
     val request = updateAlertRequest()
-    val updatedAlert = webTestClient.updateAlert(alert.alertUuid, request = request)
+    val updatedAlert = webTestClient.updateAlert(alert.alertUuid, source = DPS, request = request)
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(alertEntity.alertCode.code)!!
     val lastModifiedAuditEvent = alertEntity.lastModifiedAuditEvent()!!
@@ -249,6 +249,80 @@ Comment '$appendComment' was added
         assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
         assertThat(actionedBy).isEqualTo(TEST_USER)
         assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+        assertThat(source).isEqualTo(DPS)
+      }
+      with(alertEntity.comments().single()) {
+        assertThat(comment).isEqualTo(appendComment)
+        assertThat(createdAt).isEqualTo(lastModifiedAuditEvent.actionedAt)
+        assertThat(createdBy).isEqualTo(TEST_USER)
+        assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
+      }
+    }
+  }
+
+  @Test
+  fun `alert updated via NOMIS`() {
+    val alert = createAlert()
+    val request = updateAlertRequest()
+    val updatedAlert = webTestClient.updateAlert(alert.alertUuid, source = NOMIS, request = request)
+    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+    val alertCode = alertCodeRepository.findByCode(alertEntity.alertCode.code)!!
+    val lastModifiedAuditEvent = alertEntity.lastModifiedAuditEvent()!!
+
+    with(request) {
+      assertThat(updatedAlert).isEqualTo(
+        Alert(
+          alert.alertUuid,
+          alert.prisonNumber,
+          alertCodeVictimSummary(),
+          description,
+          authorisedBy,
+          activeFrom!!,
+          activeTo,
+          true,
+          updatedAlert.comments,
+          alert.createdAt,
+          TEST_USER,
+          TEST_USER_NAME,
+          lastModifiedAuditEvent.actionedAt.withNano(0),
+          TEST_USER,
+          TEST_USER_NAME,
+        ),
+      )
+      with(updatedAlert.comments.single()) {
+        assertThat(comment).isEqualTo(appendComment)
+        assertThat(createdAt).isEqualTo(lastModifiedAuditEvent.actionedAt.withNano(0))
+        assertThat(createdBy).isEqualTo(TEST_USER)
+        assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
+      }
+
+      assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+        AlertEntity(
+          alertId = alertEntity.alertId,
+          alertUuid = alertEntity.alertUuid,
+          alertCode = alertCode,
+          prisonNumber = alertEntity.prisonNumber,
+          description = description,
+          authorisedBy = authorisedBy,
+          activeFrom = activeFrom!!,
+          activeTo = activeTo,
+          createdAt = alertEntity.createdAt,
+        ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
+      )
+      with(lastModifiedAuditEvent) {
+        assertThat(action).isEqualTo(AuditEventAction.UPDATED)
+        assertThat(description).isEqualTo(
+          """Updated alert description from '${alert.description}' to '${request.description}'
+Updated authorised by from '${alert.authorisedBy}' to '$authorisedBy'
+Updated active from from '${alert.activeFrom}' to '$activeFrom'
+Updated active to from '${alert.activeTo}' to '$activeTo'
+Comment '$appendComment' was added
+""",
+        )
+        assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+        assertThat(actionedBy).isEqualTo(TEST_USER)
+        assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+        assertThat(source).isEqualTo(NOMIS)
       }
       with(alertEntity.comments().single()) {
         assertThat(comment).isEqualTo(appendComment)
@@ -290,6 +364,7 @@ Comment '$appendComment' was added
         assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
         assertThat(actionedBy).isEqualTo(TEST_USER)
         assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+        assertThat(source).isEqualTo(DPS)
       }
     }
   }
@@ -298,7 +373,7 @@ Comment '$appendComment' was added
   fun `should populate updated by display name using Username header when source is NOMIS`() {
     val alert = createAlert()
 
-    webTestClient.put()
+    val updatedAlert = webTestClient.put()
       .uri("/alerts/${alert.alertUuid}")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext(source = NOMIS, username = NOMIS_SYS_USER))
@@ -306,13 +381,19 @@ Comment '$appendComment' was added
       .exchange()
       .expectStatus().isOk
       .expectBody(Alert::class.java)
-      .returnResult().responseBody
+      .returnResult().responseBody!!
+
+    with(updatedAlert) {
+      assertThat(lastModifiedBy).isEqualTo(NOMIS_SYS_USER)
+      assertThat(lastModifiedByDisplayName).isEqualTo(NOMIS_SYS_USER)
+    }
 
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
 
     with(alertEntity.auditEvents()[0]) {
       assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
       assertThat(actionedByDisplayName).isEqualTo(NOMIS_SYS_USER)
+      assertThat(source).isEqualTo(NOMIS)
     }
   }
 
@@ -320,7 +401,7 @@ Comment '$appendComment' was added
   fun `should populate updated by username and display name as 'NOMIS' when source is NOMIS and no username is supplied`() {
     val alert = createAlert()
 
-    webTestClient.put()
+    val updatedAlert = webTestClient.put()
       .uri("/alerts/${alert.alertUuid}")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .header(SOURCE, NOMIS.name)
@@ -328,13 +409,19 @@ Comment '$appendComment' was added
       .exchange()
       .expectStatus().isOk
       .expectBody(Alert::class.java)
-      .returnResult().responseBody
+      .returnResult().responseBody!!
+
+    with(updatedAlert) {
+      assertThat(lastModifiedBy).isEqualTo("NOMIS")
+      assertThat(lastModifiedByDisplayName).isEqualTo("NOMIS")
+    }
 
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
 
     with(alertEntity.auditEvents()[0]) {
       assertThat(actionedBy).isEqualTo("NOMIS")
       assertThat(actionedByDisplayName).isEqualTo("NOMIS")
+      assertThat(source).isEqualTo(NOMIS)
     }
   }
 
