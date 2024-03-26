@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.response.PrisonersAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
@@ -115,7 +114,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
   @GetMapping("/alerts")
   @Operation(
     summary = "Gets all the alerts for prisoners by their prison numbers",
-    description = "Returns all the alerts for the supplied prison numbers. The alerts are returned along with counts.",
+    description = "Returns all the alerts for the supplied prison numbers. The alerts for each prisoner are mapped to their prison number.",
   )
   @ApiResponses(
     value = [
@@ -143,5 +142,5 @@ class PrisonerAlertsController(val alertService: AlertService) {
       required = true,
     )
     prisonNumbers: Collection<String>,
-  ): PrisonersAlerts = alertService.retrieveAlertsForPrisonNumbers(prisonNumbers)
+  ): Map<String, List<Alert>> = alertService.retrieveAlertsForPrisonNumbers(prisonNumbers)
 }
