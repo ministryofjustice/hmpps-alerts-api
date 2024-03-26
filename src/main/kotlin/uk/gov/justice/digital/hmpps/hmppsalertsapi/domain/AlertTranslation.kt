@@ -19,6 +19,7 @@ fun CreateAlert.toAlertEntity(
   createdBy: String,
   createdByDisplayName: String,
   source: Source,
+  activeCaseLoadId: String?,
 ) =
   Alert(
     alertUuid = UUID.randomUUID(),
@@ -29,7 +30,7 @@ fun CreateAlert.toAlertEntity(
     activeFrom = this.activeFrom ?: LocalDate.now(),
     activeTo = this.activeTo,
     createdAt = createdAt,
-  ).create(createdAt, createdBy, createdByDisplayName, source)
+  ).create(createdAt, createdBy, createdByDisplayName, source, activeCaseLoadId)
 
 fun Alert.toAlertModel(): AlertModel {
   val createdAuditEvent = createdAuditEvent()

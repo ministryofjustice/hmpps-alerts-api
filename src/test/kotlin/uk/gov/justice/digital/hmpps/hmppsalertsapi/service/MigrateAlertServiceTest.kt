@@ -69,6 +69,7 @@ class MigrateAlertServiceTest {
           actionedBy = migrateAlertRequest.createdBy,
           actionedByDisplayName = migrateAlertRequest.createdByDisplayName,
           source = NOMIS,
+          activeCaseLoadId = null,
         )
       },
     )
@@ -106,6 +107,7 @@ class MigrateAlertServiceTest {
           actionedBy = migrateAlertRequest.createdBy,
           actionedByDisplayName = migrateAlertRequest.createdByDisplayName,
           source = NOMIS,
+          activeCaseLoadId = null,
         )
       },
     )

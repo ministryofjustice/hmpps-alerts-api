@@ -39,7 +39,7 @@ class AlertTranslationTest {
       activeCaseLoadId = PRISON_CODE_MOORLANDS,
     )
 
-    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source)
+    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source, context.activeCaseLoadId)
 
     assertThat(entity).isEqualTo(
       AlertEntity(
@@ -59,6 +59,7 @@ class AlertTranslationTest {
           actionedBy = context.username,
           actionedByDisplayName = context.userDisplayName,
           source = context.source,
+          activeCaseLoadId = context.activeCaseLoadId,
         )
       },
     )
@@ -80,7 +81,7 @@ class AlertTranslationTest {
       activeCaseLoadId = PRISON_CODE_LEEDS,
     )
 
-    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source)
+    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source, context.activeCaseLoadId)
 
     assertThat(entity.activeFrom).isEqualTo(LocalDate.now())
   }
@@ -124,6 +125,7 @@ class AlertTranslationTest {
         actionedBy = "UPDATED_BY",
         actionedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_LEEDS,
       )
     }
 
@@ -147,6 +149,7 @@ class AlertTranslationTest {
         actionedBy = "UPDATED_BY_2",
         actionedByDisplayName = "UPDATED_BY_2_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       )
       auditEvent(
         action = AuditEventAction.UPDATED,
@@ -155,6 +158,7 @@ class AlertTranslationTest {
         actionedBy = "UPDATED_BY_3",
         actionedByDisplayName = "UPDATED_BY_3_DISPLAY_NAME",
         source = NOMIS,
+        activeCaseLoadId = PRISON_CODE_LEEDS,
       )
       auditEvent(
         action = AuditEventAction.UPDATED,
@@ -163,6 +167,7 @@ class AlertTranslationTest {
         actionedBy = "UPDATED_BY_1",
         actionedByDisplayName = "UPDATED_BY_1_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       )
     }
 
@@ -245,6 +250,7 @@ class AlertTranslationTest {
         actionedBy = "CREATED_BY",
         actionedByDisplayName = "CREATED_BY_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_LEEDS,
       )
     }
 }

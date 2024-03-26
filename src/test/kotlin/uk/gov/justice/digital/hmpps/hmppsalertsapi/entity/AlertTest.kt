@@ -11,6 +11,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_MOORLANDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
 import java.lang.StringBuilder
@@ -97,6 +99,7 @@ class AlertTest {
         actionedBy = "UPDATED_BY",
         actionedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       )
     }
 
@@ -109,6 +112,7 @@ class AlertTest {
         actionedBy = "UPDATED_BY",
         actionedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       ),
     )
   }
@@ -123,6 +127,7 @@ class AlertTest {
         actionedBy = "UPDATED_BY_2",
         actionedByDisplayName = "UPDATED_BY_2_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_LEEDS,
       )
       auditEvent(
         action = DELETED,
@@ -131,6 +136,7 @@ class AlertTest {
         actionedBy = "DELETED_BY",
         actionedByDisplayName = "DELETED_BY_DISPLAY_NAME",
         source = NOMIS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       )
       auditEvent(
         action = UPDATED,
@@ -139,6 +145,7 @@ class AlertTest {
         actionedBy = "UPDATED_BY_3",
         actionedByDisplayName = "UPDATED_BY_3_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       )
       auditEvent(
         action = UPDATED,
@@ -147,6 +154,7 @@ class AlertTest {
         actionedBy = "UPDATED_BY_1",
         actionedByDisplayName = "UPDATED_BY_1_DISPLAY_NAME",
         source = NOMIS,
+        activeCaseLoadId = PRISON_CODE_LEEDS,
       )
     }
 
@@ -164,6 +172,7 @@ class AlertTest {
         actionedBy = "UPDATED_BY",
         actionedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
         source = NOMIS,
+        activeCaseLoadId = PRISON_CODE_LEEDS,
       )
       auditEvent(
         action = DELETED,
@@ -172,6 +181,7 @@ class AlertTest {
         actionedBy = "DELETED_BY",
         actionedByDisplayName = "DELETED_BY_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       )
     }
 
@@ -184,6 +194,7 @@ class AlertTest {
         actionedBy = "CREATED_BY",
         actionedByDisplayName = "CREATED_BY_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       ),
     )
   }
@@ -199,6 +210,7 @@ class AlertTest {
         actionedBy = "UPDATED_BY_2",
         actionedByDisplayName = "UPDATED_BY_2_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       )
       auditEvent(
         action = DELETED,
@@ -207,6 +219,7 @@ class AlertTest {
         actionedBy = "DELETED_BY",
         actionedByDisplayName = "DELETED_BY_DISPLAY_NAME",
         source = NOMIS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       )
       auditEvent(
         action = UPDATED,
@@ -215,6 +228,7 @@ class AlertTest {
         actionedBy = "UPDATED_BY_3",
         actionedByDisplayName = "UPDATED_BY_3_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_LEEDS,
       )
       auditEvent(
         action = UPDATED,
@@ -223,6 +237,7 @@ class AlertTest {
         actionedBy = "UPDATED_BY_1",
         actionedByDisplayName = "UPDATED_BY_1_DISPLAY_NAME",
         source = NOMIS,
+        activeCaseLoadId = PRISON_CODE_LEEDS,
       )
     }
 
@@ -235,6 +250,7 @@ class AlertTest {
         actionedBy = "UPDATED_BY_3",
         actionedByDisplayName = "UPDATED_BY_3_DISPLAY_NAME",
         source = DPS,
+        activeCaseLoadId = PRISON_CODE_LEEDS,
       ),
     )
   }
@@ -245,6 +261,7 @@ class AlertTest {
     val createdBy = "CREATED_BY"
     val createdByDisplayName = "CREATED_BY_DISPLAY_NAME"
     val source = DPS
+    val activeCaseLoadId = PRISON_CODE_LEEDS
 
     val entity = Alert(
       alertUuid = UUID.randomUUID(),
@@ -255,7 +272,7 @@ class AlertTest {
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
       createdAt = createdAt,
-    ).create(createdAt, createdBy, createdByDisplayName, source)
+    ).create(createdAt, createdBy, createdByDisplayName, source, activeCaseLoadId)
 
     assertThat(entity.auditEvents().single()).isEqualTo(
       AuditEvent(
@@ -266,6 +283,7 @@ class AlertTest {
         actionedBy = createdBy,
         actionedByDisplayName = createdByDisplayName,
         source = source,
+        activeCaseLoadId = activeCaseLoadId,
       ),
     )
   }
@@ -286,7 +304,7 @@ class AlertTest {
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
       createdAt = createdAt,
-    ).create(createdAt, createdBy, createdByDisplayName, source)
+    ).create(createdAt, createdBy, createdByDisplayName, source, PRISON_CODE_MOORLANDS)
 
     assertThat(entity.publishedDomainEvents().single()).isEqualTo(
       AlertCreatedEvent(
@@ -312,6 +330,7 @@ class AlertTest {
     val updatedBy = "UPDATED_BY"
     val updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME"
     val source = DPS
+    val activeCaseLoadId = PRISON_CODE_MOORLANDS
 
     val sb = StringBuilder()
     sb.appendLine("Updated alert description from '${entity.description}' to '$updatedDescription'")
@@ -331,6 +350,7 @@ class AlertTest {
       updatedBy = updatedBy,
       updatedByDisplayName = updatedByDisplayName,
       source = source,
+      activeCaseLoadId = activeCaseLoadId,
     )
 
     assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
@@ -343,6 +363,7 @@ class AlertTest {
         actionedBy = updatedBy,
         actionedByDisplayName = updatedByDisplayName,
         source = source,
+        activeCaseLoadId = activeCaseLoadId,
       ),
     )
   }
@@ -354,6 +375,7 @@ class AlertTest {
     val updatedBy = "UPDATED_BY"
     val updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME"
     val source = NOMIS
+    val activeCaseLoadId = PRISON_CODE_LEEDS
 
     entity.update(
       description = "Updated description",
@@ -365,6 +387,7 @@ class AlertTest {
       updatedBy = updatedBy,
       updatedByDisplayName = updatedByDisplayName,
       source = source,
+      activeCaseLoadId = activeCaseLoadId,
     )
 
     assertThat(entity.publishedDomainEvents().single()).isEqualTo(
@@ -397,6 +420,7 @@ class AlertTest {
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = DPS,
+      activeCaseLoadId = PRISON_CODE_MOORLANDS,
     )
 
     assertThat(entity.lastModifiedAt).isNull()
@@ -417,6 +441,7 @@ class AlertTest {
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = NOMIS,
+      activeCaseLoadId = PRISON_CODE_LEEDS,
     )
 
     assertThat(entity.description).isNotNull()
@@ -438,6 +463,7 @@ class AlertTest {
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = DPS,
+      activeCaseLoadId = PRISON_CODE_MOORLANDS,
     )
 
     assertThat(entity.authorisedBy).isNotNull()
@@ -459,6 +485,7 @@ class AlertTest {
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = NOMIS,
+      activeCaseLoadId = PRISON_CODE_LEEDS,
     )
 
     assertThat(entity.activeFrom).isNotNull()
@@ -480,6 +507,7 @@ class AlertTest {
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = DPS,
+      activeCaseLoadId = PRISON_CODE_MOORLANDS,
     )
 
     assertThat(entity.lastModifiedAt).isNull()
@@ -500,6 +528,7 @@ class AlertTest {
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = NOMIS,
+      activeCaseLoadId = PRISON_CODE_MOORLANDS,
     )
 
     assertThat(entity.lastModifiedAt).isNull()
@@ -520,6 +549,7 @@ class AlertTest {
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = DPS,
+      activeCaseLoadId = PRISON_CODE_MOORLANDS,
     )
 
     assertThat(entity.lastModifiedAt).isNull()
@@ -545,6 +575,7 @@ class AlertTest {
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = source,
+      activeCaseLoadId = PRISON_CODE_LEEDS,
     )
 
     assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
@@ -577,6 +608,7 @@ class AlertTest {
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = source,
+      activeCaseLoadId = PRISON_CODE_LEEDS,
     )
 
     assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
@@ -609,6 +641,7 @@ class AlertTest {
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = source,
+      activeCaseLoadId = PRISON_CODE_MOORLANDS,
     )
 
     assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
@@ -641,6 +674,7 @@ class AlertTest {
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = source,
+      activeCaseLoadId = PRISON_CODE_LEEDS,
     )
 
     assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
@@ -675,6 +709,7 @@ class AlertTest {
       updatedBy = updatedBy,
       updatedByDisplayName = updatedByDisplayName,
       source = source,
+      activeCaseLoadId = PRISON_CODE_LEEDS,
     )
 
     assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
@@ -711,6 +746,7 @@ class AlertTest {
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = source,
+      activeCaseLoadId = PRISON_CODE_MOORLANDS,
     )
 
     assertThat(entity.comments().single().comment).isEqualTo(updatedAppendComment.trim())
@@ -722,8 +758,9 @@ class AlertTest {
     val entity = alertEntity()
     val deletedAt = LocalDateTime.now()
     val source = NOMIS
+    val activeCaseLoadId = PRISON_CODE_LEEDS
 
-    entity.delete(deletedAt, "DELETED_BY", "DELETED_BY_DISPLAY_NAME", source)
+    entity.delete(deletedAt, "DELETED_BY", "DELETED_BY_DISPLAY_NAME", source, activeCaseLoadId)
 
     assertThat(entity.lastModifiedAt).isEqualTo(deletedAt)
     assertThat(entity.deletedAt()).isEqualTo(deletedAt)
@@ -736,6 +773,7 @@ class AlertTest {
         actionedBy = "DELETED_BY",
         actionedByDisplayName = "DELETED_BY_DISPLAY_NAME",
         source = source,
+        activeCaseLoadId = activeCaseLoadId,
       ),
     )
   }
@@ -747,7 +785,7 @@ class AlertTest {
     val deletedBy = "DELETED_BY"
     val source = DPS
 
-    entity.delete(deletedAt, deletedBy, "DELETED_BY_DISPLAY_NAME", source)
+    entity.delete(deletedAt, deletedBy, "DELETED_BY_DISPLAY_NAME", source, PRISON_CODE_LEEDS)
 
     assertThat(entity.publishedDomainEvents().single()).isEqualTo(
       AlertDeletedEvent(
@@ -784,6 +822,7 @@ class AlertTest {
         actionedBy = createdBy,
         actionedByDisplayName = createdByDisplayName,
         source = source,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
       )
     }
 }
