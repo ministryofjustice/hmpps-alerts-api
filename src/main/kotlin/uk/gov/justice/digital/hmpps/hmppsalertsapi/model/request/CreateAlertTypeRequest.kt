@@ -11,13 +11,13 @@ data class CreateAlertTypeRequest(
     description = "The short code for the alert type",
     example = "A",
   )
-  @field:Size(max = 12, message = "Code must be <= 12 characters")
+  @field:Size(max = 12, min = 1, message = "Code must be between 1 & 12 characters")
   val code: String,
 
   @Schema(
     description = "The description of the alert type",
     example = "Alert type description",
   )
-  @field:Size(max = 40, message = "Description must be <= 40 characters")
+  @field:Size(max = 40, min = 1, message = "Description must be between 1 & 40 characters")
   val description: String,
 )
