@@ -5,7 +5,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCodeSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
-import java.time.LocalDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode as AlertCodeModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType as AlertTypeModel
 
@@ -61,6 +60,6 @@ fun CreateAlertTypeRequest.toEntity(context: AlertRequestContext): AlertType =
     code = code,
     description = description,
     listSequence = 0,
-    createdAt = LocalDateTime.now(),
+    createdAt = context.requestAt,
     createdBy = context.username,
   )

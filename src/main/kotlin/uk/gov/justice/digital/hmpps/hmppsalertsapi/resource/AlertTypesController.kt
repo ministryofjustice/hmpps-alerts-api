@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus.CREATED
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -95,7 +96,7 @@ class AlertTypesController(
   )
   @UsernameHeader
   fun createAlertType(
-    @RequestBody createAlertTypeRequest: CreateAlertTypeRequest,
+    @Valid @RequestBody createAlertTypeRequest: CreateAlertTypeRequest,
     httpRequest: HttpServletRequest,
   ): AlertType = alertTypeService.createAlertType(createAlertTypeRequest, httpRequest.alertRequestContext())
 

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -15,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
+import java.time.temporal.ChronoUnit
 
 class CreateAlertTypeIntTest : IntegrationTestBase() {
 
@@ -242,6 +244,9 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
     val request = createAlertTypeRequest()
     val alertType = webTestClient.createAlertType(request = request)
     assertThat(alertType).isNotNull
+    assertThat(alertType.code).isEqualTo("CO")
+    assertThat(alertType.description).isEqualTo("Description")
+    assertThat(alertType.createdAt).isCloseToUtcNow(Assertions.within(3, ChronoUnit.SECONDS))
   }
 
   @Test
@@ -259,6 +264,34 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
       assertThat(userMessage).isEqualTo("Duplicate failure: Alert type exists with code '${request.code}'")
       assertThat(developerMessage).isEqualTo("Alert type exists with code '${request.code}'")
       assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `validation - code too long`() {
+    val request = CreateAlertTypeRequest("1234567890123", "desc")
+    val response = webTestClient.createAlertTypeResponseSpec(request = request)
+      .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(userMessage).isEqualTo("Validation failure: Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertTypesController.createAlertType(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertTypeRequest' on field 'code': rejected value [1234567890123]; codes [Size.createAlertTypeRequest.code,Size.code,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertTypeRequest.code,code]; arguments []; default message [code],12,0]; default message [Code must be <= 12 characters]] ")
+      assertThat(developerMessage).isEqualTo("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertTypesController.createAlertType(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertTypeRequest' on field 'code': rejected value [1234567890123]; codes [Size.createAlertTypeRequest.code,Size.code,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertTypeRequest.code,code]; arguments []; default message [code],12,0]; default message [Code must be <= 12 characters]] ")
+    }
+  }
+
+  @Test
+  fun `validation - description too long`() {
+    val request = CreateAlertTypeRequest("AB", "descdescdescdescdescdescdescdescdescdescd")
+    val response = webTestClient.createAlertTypeResponseSpec(request = request)
+      .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(userMessage).isEqualTo("Validation failure: Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertTypesController.createAlertType(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertTypeRequest' on field 'description': rejected value [descdescdescdescdescdescdescdescdescdescd]; codes [Size.createAlertTypeRequest.description,Size.description,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertTypeRequest.description,description]; arguments []; default message [description],40,0]; default message [Description must be <= 40 characters]] ")
+      assertThat(developerMessage).isEqualTo("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertTypesController.createAlertType(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertTypeRequest' on field 'description': rejected value [descdescdescdescdescdescdescdescdescdescd]; codes [Size.createAlertTypeRequest.description,Size.description,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertTypeRequest.description,description]; arguments []; default message [description],40,0]; default message [Description must be <= 40 characters]] ")
     }
   }
 
