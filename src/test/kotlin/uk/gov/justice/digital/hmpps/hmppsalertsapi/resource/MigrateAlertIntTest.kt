@@ -191,6 +191,7 @@ class MigrateAlertIntTest : IntegrationTestBase() {
       assertThat(actionedBy).isEqualTo("AG111QD")
       assertThat(actionedByDisplayName).isEqualTo("A Creator")
       assertThat(source).isEqualTo(NOMIS)
+      assertThat(activeCaseLoadId).isNull()
     }
 
     assertThat(alertEntity.migratedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
