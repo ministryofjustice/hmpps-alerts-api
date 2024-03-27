@@ -72,7 +72,7 @@ class AlertTypeServiceTest {
     whenever(alertTypeRepository.saveAndFlush(any())).thenReturn(alertType())
     service.createAlertType(
       CreateAlertTypeRequest(code = "A", description = "Alert type A"),
-      AlertRequestContext(username = "USER", userDisplayName = "USER"),
+      AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
     )
     verify(alertTypeRepository).saveAndFlush(entityCaptor.capture())
     val value = entityCaptor.firstValue
