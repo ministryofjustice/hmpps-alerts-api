@@ -113,10 +113,10 @@ fun migrateAlertRequest(
     activeFrom = LocalDate.now().minusDays(2),
     activeTo = LocalDate.now().plusDays(3),
     comments = comments,
-    createdAt = LocalDateTime.now().minusDays(2),
+    createdAt = LocalDateTime.now().minusDays(2).withNano(0),
     createdBy = "AG111QD",
     createdByDisplayName = "A Creator",
-    updatedAt = if (includeUpdate) LocalDateTime.now().minusDays(1) else null,
+    updatedAt = if (includeUpdate) LocalDateTime.now().minusDays(1).withNano(0) else null,
     updatedBy = if (includeUpdate) "AG1221GG" else null,
     updatedByDisplayName = if (includeUpdate) "Up Dated" else null,
   )

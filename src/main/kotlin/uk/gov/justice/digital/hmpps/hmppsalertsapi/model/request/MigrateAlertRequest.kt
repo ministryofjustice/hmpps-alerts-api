@@ -59,9 +59,9 @@ data class MigrateAlertRequest(
 
   @Schema(
     description = "The date the alert was created",
-    example = "2022-07-15'H'23:03:01",
+    example = "2022-07-15'H'23:03:01.123456",
   )
-  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
   val createdAt: LocalDateTime,
 
   @Schema(
@@ -78,9 +78,9 @@ data class MigrateAlertRequest(
 
   @Schema(
     description = "The date the alert was updated",
-    example = "2022-07-15'H'23:03:01",
+    example = "2022-07-15'H'23:03:01.123456",
   )
-  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS")
   val updatedAt: LocalDateTime?,
 
   @Schema(
