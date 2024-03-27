@@ -4,6 +4,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 const val ROLE_ALERTS_READER = "ROLE_ALERTS_READER"
 const val ROLE_ALERTS_WRITER = "ROLE_ALERTS_WRITER"
 const val ROLE_ALERTS_ADMIN = "ROLE_ALERTS_ADMIN"
+const val ROLE_ALERTS_REFERENCE_DATA_MANAGER = "ROLE_ALERTS_REFERENCE_DATA_MANAGER"
 
 // DPS roles
 const val PRISON = "PRISON"

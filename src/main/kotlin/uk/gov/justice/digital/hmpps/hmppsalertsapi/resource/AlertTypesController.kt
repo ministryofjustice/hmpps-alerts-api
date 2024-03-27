@@ -64,7 +64,7 @@ class AlertTypesController(
   ): Collection<AlertType> = alertTypeService.getAlertTypes(includeInactive)
 
   @ResponseStatus(CREATED)
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_REFERENCE_DATA_MANAGER')")
   @PostMapping
   @Operation(
     summary = "Create an alert type",
