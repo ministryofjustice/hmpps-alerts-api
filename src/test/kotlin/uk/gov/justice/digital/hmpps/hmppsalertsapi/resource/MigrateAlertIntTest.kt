@@ -179,7 +179,7 @@ class MigrateAlertIntTest : IntegrationTestBase() {
         authorisedBy = request.authorisedBy,
         activeFrom = request.activeFrom,
         activeTo = request.activeTo,
-        createdAt = alert.createdAt,
+        createdAt = request.createdAt,
         migratedAt = alertEntity.migratedAt,
       ),
     )
@@ -195,6 +195,51 @@ class MigrateAlertIntTest : IntegrationTestBase() {
     }
 
     assertThat(alertEntity.migratedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+  }
+
+  @Test
+  fun `should migrate updated alert`() {
+    val request = migrateAlertRequest(includeUpdate = true)
+
+    val alert = webTestClient.migrateAlert(request = request)
+
+    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+
+    with(alert) {
+      assertThat(this.createdAt).isEqualTo(request.createdAt.withNano(0))
+      assertThat(lastModifiedAt).isEqualTo(request.updatedAt!!.withNano(0))
+    }
+
+    with(alertEntity) {
+      assertThat(this.createdAt).isEqualTo(request.createdAt)
+      assertThat(lastModifiedAt).isEqualTo(request.updatedAt)
+      assertThat(lastModifiedAuditEvent()!!.actionedAt).isEqualTo(request.updatedAt)
+    }
+  }
+
+  @Test
+  fun `migrate alert accepts and retains timestamp nanos`() {
+    val createdAt = LocalDateTime.parse("2024-01-09T16:23:41.860648")
+    val updatedAt = LocalDateTime.parse("2024-02-12T09:45:37.488208")
+    val request = migrateAlertRequest(includeUpdate = true).copy(
+      createdAt = createdAt,
+      updatedAt = updatedAt,
+    )
+
+    val alert = webTestClient.migrateAlert(request = request)
+
+    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+
+    with(alert) {
+      assertThat(this.createdAt).isEqualTo(createdAt.withNano(0))
+      assertThat(lastModifiedAt).isEqualTo(updatedAt.withNano(0))
+    }
+
+    with(alertEntity) {
+      assertThat(this.createdAt).isEqualTo(createdAt)
+      assertThat(lastModifiedAt).isEqualTo(updatedAt)
+      assertThat(lastModifiedAuditEvent()!!.actionedAt).isEqualTo(updatedAt)
+    }
   }
 
   @Test

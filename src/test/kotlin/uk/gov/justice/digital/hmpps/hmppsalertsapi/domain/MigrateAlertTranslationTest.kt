@@ -58,6 +58,7 @@ class MigrateAlertTranslationTest {
         createdAt = request.createdAt,
         migratedAt = entity.migratedAt,
       ).apply {
+        lastModifiedAt = request.updatedAt
         auditEvent(
           action = CREATED,
           description = "Migrated alert created",

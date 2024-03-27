@@ -9,8 +9,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertReq
 import java.time.LocalDateTime
 import java.util.UUID
 
-fun MigrateAlertRequest.toAlertEntity(alertCode: AlertCode, migratedAt: LocalDateTime = LocalDateTime.now()): Alert {
-  val alert = Alert(
+fun MigrateAlertRequest.toAlertEntity(alertCode: AlertCode, migratedAt: LocalDateTime = LocalDateTime.now()) =
+  Alert(
     alertUuid = UUID.randomUUID(),
     alertCode = alertCode,
     prisonNumber = this.prisonNumber,
@@ -20,8 +20,7 @@ fun MigrateAlertRequest.toAlertEntity(alertCode: AlertCode, migratedAt: LocalDat
     activeTo = this.activeTo,
     createdAt = this.createdAt,
     migratedAt = migratedAt,
-  )
-  alert.also { al: Alert ->
+  ).also { al ->
     al.auditEvent(
       action = CREATED,
       description = "Migrated alert created",
@@ -33,6 +32,7 @@ fun MigrateAlertRequest.toAlertEntity(alertCode: AlertCode, migratedAt: LocalDat
     )
     comments.forEach { al.addComment(it.comment, it.createdAt, it.createdBy, it.createdByDisplayName) }
     if (this.updatedAt != null) {
+      al.lastModifiedAt = this.updatedAt
       al.auditEvent(
         action = UPDATED,
         description = "Migrated alert updated",
@@ -44,5 +44,3 @@ fun MigrateAlertRequest.toAlertEntity(alertCode: AlertCode, migratedAt: LocalDat
       )
     }
   }
-  return alert
-}
