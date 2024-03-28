@@ -104,6 +104,7 @@ fun migrateAlertRequest(
   comments: Collection<MigrateCommentRequest> = emptyList(),
   includeUpdate: Boolean = false,
   alertCode: String = ALERT_CODE_VICTIM,
+  activeTo: LocalDate = LocalDate.now().plusDays(3),
 ): MigrateAlertRequest =
   MigrateAlertRequest(
     prisonNumber = PRISON_NUMBER,
@@ -111,7 +112,7 @@ fun migrateAlertRequest(
     description = "Alert description",
     authorisedBy = "A. Authorizer",
     activeFrom = LocalDate.now().minusDays(2),
-    activeTo = LocalDate.now().plusDays(3),
+    activeTo = activeTo,
     comments = comments,
     createdAt = LocalDateTime.now().minusDays(2).withNano(0),
     createdBy = "AG111QD",

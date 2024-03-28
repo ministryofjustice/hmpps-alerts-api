@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_SOCIAL_CARE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlertRequest
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
@@ -316,6 +317,17 @@ class MigrateAlertIntTest : IntegrationTestBase() {
     val alert = webTestClient.migrateAlert(request = request)
 
     assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
+  }
+
+  @Test
+  @Sql("classpath:test_data/duplicate-checking-alerts.sql")
+  fun `201 created - migrate inactive alert when active alert with code already exists for prison number`() {
+    val request = migrateAlertRequest(alertCode = ALERT_CODE_HIDDEN_DISABILITY, activeTo = LocalDate.now())
+
+    val alert = webTestClient.migrateAlert(request = request)
+
+    assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
+    assertThat(alert.activeTo).isEqualTo(request.activeTo)
   }
 
   private fun WebTestClient.migrateResponseSpec(request: MigrateAlertRequest) =

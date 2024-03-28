@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert as AlertEntity
 
 @Service
 class MigrateAlertService(
@@ -16,12 +17,15 @@ class MigrateAlertService(
 ) {
 
   fun migrateAlert(migrateAlertRequest: MigrateAlertRequest): Alert {
-    migrateAlertRequest.checkForExistingActiveAlert()
     val alertCode = alertCodeRepository.findByCode(migrateAlertRequest.alertCode) ?: throw IllegalArgumentException("Alert code '${migrateAlertRequest.alertCode}' not found")
-    return alertRepository.saveAndFlush(migrateAlertRequest.toAlertEntity(alertCode)).toAlertModel()
+    val alert = migrateAlertRequest.toAlertEntity(alertCode)
+    if (alert.isActive() || alert.willBecomeActive()) {
+      alert.checkForExistingActiveAlert()
+    }
+    return alertRepository.saveAndFlush(alert).toAlertModel()
   }
 
-  private fun MigrateAlertRequest.checkForExistingActiveAlert() =
-    alertRepository.findByPrisonNumberAndAlertCodeCode(prisonNumber, alertCode)
-      .any { it.isActive() || it.willBecomeActive() } && throw ExistingActiveAlertWithCodeException(prisonNumber, alertCode)
+  private fun AlertEntity.checkForExistingActiveAlert() =
+    alertRepository.findByPrisonNumberAndAlertCodeCode(prisonNumber, alertCode.code)
+      .any { it.isActive() || it.willBecomeActive() } && throw ExistingActiveAlertWithCodeException(prisonNumber, alertCode.code)
 }
