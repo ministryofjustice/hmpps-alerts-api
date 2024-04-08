@@ -30,3 +30,14 @@ The decision to associate alerts at the person level introduces several conseque
 - **Potential for Initial Overload:** Initially surfacing more alerts than staff are accustomed to, which may require adjustments in operational procedures.
 
 Despite these challenges, the benefits of a more accurate, person-centric view of alerts are expected to significantly outweigh the downsides. This change aligns with best practices for data management and will improve our service delivery. Mark Nettleton, our Business Analyst, is reviewing data analysis around a potential business rule to inform the flattening of booking alerts into a single value.
+
+## Addendum
+
+The recommended approach to flatten the data in the data model was confirmed by @RichardAdams and @AliceNoakes on 2024-04-02.
+
+This approach is `Take the most recent state of an alert`
+
+This will:
+- Provide a nuanced view by considering the latest status of alerts, marking recently resolved alerts as inactive
+- Significantly reduce the need for manual input to surface relevant alerts from previous bookings
+- Significantly reduce the associated risk and workload for prison staff in reviewing and managing surfaced alerts
