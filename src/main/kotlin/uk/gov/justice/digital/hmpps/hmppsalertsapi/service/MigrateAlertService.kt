@@ -17,7 +17,6 @@ class MigrateAlertService(
   private val alertCodeRepository: AlertCodeRepository,
   private val alertRepository: AlertRepository,
 ) {
-
   fun migrateAlert(migrateAlertRequest: MigrateAlertRequest): Alert {
     val alertCode = alertCodeRepository.findByCode(migrateAlertRequest.alertCode) ?: throw IllegalArgumentException("Alert code '${migrateAlertRequest.alertCode}' not found")
     val alert = migrateAlertRequest.toAlertEntity(alertCode)
@@ -32,6 +31,19 @@ class MigrateAlertService(
       .any { it.isActive() || it.willBecomeActive() } && throw ExistingActiveAlertWithCodeException(prisonNumber, alertCode.code)
 
   fun migratePrisonerAlerts(prisonNumber: String, request: List<MigrateAlert>): List<MigratedAlert> {
+    request.checkForNotFoundAlertCodes()
+
     return emptyList()
   }
+
+  private fun List<MigrateAlert>.checkForNotFoundAlertCodes() =
+    map { it.alertCode }.distinct().let { requestAlertCodes ->
+      alertCodeRepository.findByCodeIn(requestAlertCodes).associateBy { it.code }.let { alertCodes ->
+        requestAlertCodes.filterNot { alertCodes.containsKey(it) }.sorted()
+      }
+    }.run {
+      if (this.isNotEmpty()) {
+        throw IllegalArgumentException("Alert code(s) '${this.joinToString("', '") }' not found")
+      }
+    }
 }

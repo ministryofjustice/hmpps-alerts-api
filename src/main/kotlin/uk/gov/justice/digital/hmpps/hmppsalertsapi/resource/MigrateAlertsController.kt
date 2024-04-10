@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
-import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -26,7 +25,6 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 class MigrateAlertsController(
   private val migrateAlertService: MigrateAlertService,
 ) {
-
   @ResponseStatus(HttpStatus.CREATED)
   @PostMapping
   @Operation(
@@ -70,6 +68,5 @@ class MigrateAlertsController(
       required = true,
     )
     request: MigrateAlertRequest,
-    httpRequest: HttpServletRequest,
   ): Alert = migrateAlertService.migrateAlert(request)
 }

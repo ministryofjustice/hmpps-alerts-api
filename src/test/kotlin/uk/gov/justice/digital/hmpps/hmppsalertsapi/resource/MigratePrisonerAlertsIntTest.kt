@@ -13,7 +13,10 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_N
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
+import java.time.LocalDate
+import java.time.LocalDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
@@ -70,9 +73,14 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     }
   }
 
-  /*@Test
-  fun `400 bad request - alert code not found`() {
-    val request = migrateAlertRequest(alertCode = "NOT_FOUND")
+  @Test
+  fun `400 bad request - alert codes not found`() {
+    val request = listOf(
+      migrateAlertRequest(),
+      migrateAlertRequest().copy(alertCode = "NOT_FOUND_2"),
+      migrateAlertRequest().copy(alertCode = "NOT_FOUND_1"),
+      migrateAlertRequest().copy(alertCode = "NOT_FOUND_2"),
+    )
 
     val response = webTestClient.migrateResponseSpec(request = request)
       .expectStatus().isBadRequest
@@ -82,11 +90,29 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Alert code '${request.alertCode}' not found")
-      assertThat(developerMessage).isEqualTo("Alert code '${request.alertCode}' not found")
+      assertThat(userMessage).isEqualTo("Validation failure: Alert code(s) 'NOT_FOUND_1', 'NOT_FOUND_2' not found")
+      assertThat(developerMessage).isEqualTo("Alert code(s) 'NOT_FOUND_1', 'NOT_FOUND_2' not found")
       assertThat(moreInfo).isNull()
     }
-  }*/
+  }
+
+  @Test
+  fun `400 bad request - description greater than 4000 characters`() {
+    val request = migrateAlertRequest().copy(description = 'a'.toString().repeat(4001))
+
+    val response = webTestClient.migrateResponseSpec(request = listOf(request))
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure(s): Description must be <= 4000 characters")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(moreInfo).isNull()
+    }
+  }
 
   @Test
   fun `405 method not allowed`() {
@@ -326,6 +352,17 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       offenderBookId = 2,
       bookingSeq = 1,
       alertSeq = 3,
+      alertCode = ALERT_CODE_VICTIM,
+      description = "Alert description",
+      authorisedBy = "A. Nurse, An Agency",
+      activeFrom = LocalDate.now().minusDays(2),
+      activeTo = null,
+      createdAt = LocalDateTime.now().minusDays(2).withNano(0),
+      createdBy = "AB11DZ",
+      createdByDisplayName = "C Reated",
+      updatedAt = null,
+      updatedBy = null,
+      updatedByDisplayName = null,
     )
 
   private fun WebTestClient.migrateResponseSpec(role: String = ROLE_NOMIS_ALERTS, request: Collection<MigrateAlert>) =
