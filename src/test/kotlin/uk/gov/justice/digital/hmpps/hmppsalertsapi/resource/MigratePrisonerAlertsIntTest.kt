@@ -13,10 +13,9 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_N
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlert
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
-import java.time.LocalDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
@@ -76,10 +75,10 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   @Test
   fun `400 bad request - alert codes not found`() {
     val request = listOf(
-      migrateAlertRequest(),
-      migrateAlertRequest().copy(alertCode = "NOT_FOUND_2"),
-      migrateAlertRequest().copy(alertCode = "NOT_FOUND_1"),
-      migrateAlertRequest().copy(alertCode = "NOT_FOUND_2"),
+      migrateAlert(),
+      migrateAlert().copy(alertCode = "NOT_FOUND_2"),
+      migrateAlert().copy(alertCode = "NOT_FOUND_1"),
+      migrateAlert().copy(alertCode = "NOT_FOUND_2"),
     )
 
     val response = webTestClient.migrateResponseSpec(request = request)
@@ -98,7 +97,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - description greater than 4000 characters`() {
-    val request = migrateAlertRequest().copy(description = 'a'.toString().repeat(4001))
+    val request = migrateAlert().copy(description = 'a'.toString().repeat(4001))
 
     val response = webTestClient.migrateResponseSpec(request = listOf(request))
       .expectStatus().isBadRequest
@@ -109,6 +108,42 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure(s): Description must be <= 4000 characters")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - authorised by greater than 41 characters`() {
+    val request = migrateAlert().copy(authorisedBy = 'a'.toString().repeat(41))
+
+    val response = webTestClient.migrateResponseSpec(request = listOf(request))
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure(s): Authorised by must be <= 40 characters")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - active to is before active from`() {
+    val request = migrateAlert().copy(activeFrom = LocalDate.now(), activeTo = LocalDate.now().minusDays(1))
+
+    val response = webTestClient.migrateResponseSpec(request = listOf(request))
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure(s): Active to must be on or after active from")
       assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
       assertThat(moreInfo).isNull()
     }
@@ -346,24 +381,6 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
     assertThat(alert.activeTo).isEqualTo(request.activeTo)
   }*/
-
-  private fun migrateAlertRequest() =
-    MigrateAlert(
-      offenderBookId = 2,
-      bookingSeq = 1,
-      alertSeq = 3,
-      alertCode = ALERT_CODE_VICTIM,
-      description = "Alert description",
-      authorisedBy = "A. Nurse, An Agency",
-      activeFrom = LocalDate.now().minusDays(2),
-      activeTo = null,
-      createdAt = LocalDateTime.now().minusDays(2).withNano(0),
-      createdBy = "AB11DZ",
-      createdByDisplayName = "C Reated",
-      updatedAt = null,
-      updatedBy = null,
-      updatedByDisplayName = null,
-    )
 
   private fun WebTestClient.migrateResponseSpec(role: String = ROLE_NOMIS_ALERTS, request: Collection<MigrateAlert>) =
     post()

@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_N
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCodeSummary
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateCommentRequest
 import java.time.LocalDate
@@ -120,4 +121,22 @@ fun migrateAlertRequest(
     updatedAt = if (includeUpdate) LocalDateTime.now().minusDays(1).withNano(0) else null,
     updatedBy = if (includeUpdate) "AG1221GG" else null,
     updatedByDisplayName = if (includeUpdate) "Up Dated" else null,
+  )
+
+fun migrateAlert() =
+  MigrateAlert(
+    offenderBookId = 2,
+    bookingSeq = 1,
+    alertSeq = 3,
+    alertCode = ALERT_CODE_VICTIM,
+    description = "Alert description",
+    authorisedBy = "A. Nurse, An Agency",
+    activeFrom = LocalDate.now().minusDays(2),
+    activeTo = null,
+    createdAt = LocalDateTime.now().minusDays(2).withNano(0),
+    createdBy = "AB11DZ",
+    createdByDisplayName = "C Reated",
+    updatedAt = null,
+    updatedBy = null,
+    updatedByDisplayName = null,
   )

@@ -4,7 +4,7 @@ import jakarta.validation.Constraint
 import jakarta.validation.Payload
 import kotlin.reflect.KClass
 
-@Constraint(validatedBy = [CreateAlertDateValidator::class, UpdateAlertDateValidator::class])
+@Constraint(validatedBy = [CreateAlertDateValidator::class, UpdateAlertDateValidator::class, MigrateAlertDateValidator::class])
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class DateComparison(

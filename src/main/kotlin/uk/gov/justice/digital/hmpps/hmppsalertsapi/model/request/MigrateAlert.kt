@@ -3,9 +3,11 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Size
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.DateComparison
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+@DateComparison("Active to must be on or after active from")
 data class MigrateAlert(
   val offenderBookId: Int,
   val bookingSeq: Int,
@@ -33,11 +35,12 @@ data class MigrateAlert(
       "It is limited to 40 characters.",
     example = "A. Nurse, An Agency",
   )
+  @field:Size(max = 40, message = "Authorised by must be <= 40 characters")
   val authorisedBy: String?,
 
   @Schema(
     description = "The date the alert should be active from. " +
-      "The active from date can be in the past or the future and should be before the active to date.",
+      "The active from date can be in the past or the future, but must be on or before the active to date",
     example = "2021-09-27",
   )
   @JsonFormat(pattern = "yyyy-MM-dd")
@@ -46,7 +49,7 @@ data class MigrateAlert(
   @Schema(
     description = "The date the alert should be active until. " +
       "If not provided, the alert will be active indefinitely. " +
-      "The active to date can be in the past or the future and should be after the active from date.",
+      "The active to date can be in the past or the future, but must be on or after the active from date",
     example = "2022-07-15",
   )
   @JsonFormat(pattern = "yyyy-MM-dd")
