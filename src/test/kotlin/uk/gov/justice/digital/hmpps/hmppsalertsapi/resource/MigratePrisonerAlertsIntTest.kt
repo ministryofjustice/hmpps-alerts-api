@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlert
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
+import java.time.LocalDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
@@ -73,6 +74,24 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `400 bad request - alert code required`() {
+    val request = migrateAlert().copy(alertCode = "")
+
+    val response = webTestClient.migrateResponseSpec(request = listOf(request))
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure(s): Alert code must be supplied and be <= 12 characters")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
   fun `400 bad request - alert codes not found`() {
     val request = listOf(
       migrateAlert(),
@@ -114,7 +133,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `400 bad request - authorised by greater than 41 characters`() {
+  fun `400 bad request - authorised by greater than 40 characters`() {
     val request = migrateAlert().copy(authorisedBy = 'a'.toString().repeat(41))
 
     val response = webTestClient.migrateResponseSpec(request = listOf(request))
@@ -144,6 +163,150 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure(s): Active to must be on or after active from")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - created by required`() {
+    val request = migrateAlert().copy(createdBy = "")
+
+    val response = webTestClient.migrateResponseSpec(request = listOf(request))
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure(s): Created by must be supplied and be <= 32 characters")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - created by greater than 32 characters`() {
+    val request = migrateAlert().copy(createdBy = 'a'.toString().repeat(33))
+
+    val response = webTestClient.migrateResponseSpec(request = listOf(request))
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure(s): Created by must be supplied and be <= 32 characters")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - created by display name required`() {
+    val request = migrateAlert().copy(createdByDisplayName = "")
+
+    val response = webTestClient.migrateResponseSpec(request = listOf(request))
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure(s): Created by display name must be supplied and be <= 255 characters")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - created by display name greater than 255 characters`() {
+    val request = migrateAlert().copy(createdByDisplayName = 'a'.toString().repeat(256))
+
+    val response = webTestClient.migrateResponseSpec(request = listOf(request))
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure(s): Created by display name must be supplied and be <= 255 characters")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - updated by required when updated at is supplied`() {
+    val request = migrateAlert().copy(updatedAt = LocalDateTime.now(), updatedByDisplayName = "Up Dated")
+
+    val response = webTestClient.migrateResponseSpec(request = listOf(request))
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure(s): Updated by is required when updated at is supplied")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - updated by greater than 32 characters`() {
+    val request = migrateAlert().copy(updatedBy = 'a'.toString().repeat(33))
+
+    val response = webTestClient.migrateResponseSpec(request = listOf(request))
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure(s): Updated by must be <= 32 characters")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - updated by display name required when updated at is supplied`() {
+    val request = migrateAlert().copy(updatedAt = LocalDateTime.now(), updatedBy = "AB11DZ")
+
+    val response = webTestClient.migrateResponseSpec(request = listOf(request))
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure(s): Updated by display name is required when updated at is supplied")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - updated by display name greater than 255 characters`() {
+    val request = migrateAlert().copy(updatedByDisplayName = 'a'.toString().repeat(256))
+
+    val response = webTestClient.migrateResponseSpec(request = listOf(request))
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure(s): Updated by display name must be <= 255 characters")
       assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
       assertThat(moreInfo).isNull()
     }

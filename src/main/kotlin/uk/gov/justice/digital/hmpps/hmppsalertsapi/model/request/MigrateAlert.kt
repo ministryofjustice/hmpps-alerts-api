@@ -4,10 +4,14 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.DateComparison
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.UpdatedByDisplayNameRequired
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.UpdatedByRequired
 import java.time.LocalDate
 import java.time.LocalDateTime
 
 @DateComparison("Active to must be on or after active from")
+@UpdatedByRequired("Updated by is required when updated at is supplied")
+@UpdatedByDisplayNameRequired("Updated by display name is required when updated at is supplied")
 data class MigrateAlert(
   val offenderBookId: Int,
   val bookingSeq: Int,
@@ -18,6 +22,7 @@ data class MigrateAlert(
       "The alert code must exist but can be inactive when migrating an alert.",
     example = "ABC",
   )
+  @field:Size(min = 1, max = 12, message = "Alert code must be supplied and be <= 12 characters")
   val alertCode: String,
 
   @Schema(
@@ -65,12 +70,14 @@ data class MigrateAlert(
     description = "The user id of the person who created the alert.",
     example = "AB11DZ",
   )
+  @field:Size(min = 1, max = 32, message = "Created by must be supplied and be <= 32 characters")
   val createdBy: String,
 
   @Schema(
     description = "The displayable name of the person who created the alert.",
     example = "C Reated",
   )
+  @field:Size(min = 1, max = 255, message = "Created by display name must be supplied and be <= 255 characters")
   val createdByDisplayName: String,
 
   @Schema(
@@ -83,11 +90,13 @@ data class MigrateAlert(
     description = "The user id of the person who updated the alert. Required if updated at has been supplied.",
     example = "AB11DZ",
   )
+  @field:Size(min = 1, max = 32, message = "Updated by must be <= 32 characters")
   val updatedBy: String?,
 
   @Schema(
     description = "The displayable name of the person who updated the alert. Required if updated at has been supplied.",
     example = "Up Dated",
   )
+  @field:Size(min = 1, max = 255, message = "Updated by display name must be <= 255 characters")
   val updatedByDisplayName: String?,
 )
