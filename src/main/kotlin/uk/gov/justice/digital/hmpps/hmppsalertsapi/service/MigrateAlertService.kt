@@ -5,6 +5,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ExistingActiveAlertWit
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MigratedAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
@@ -28,4 +30,8 @@ class MigrateAlertService(
   private fun AlertEntity.checkForExistingActiveAlert() =
     alertRepository.findByPrisonNumberAndAlertCodeCode(prisonNumber, alertCode.code)
       .any { it.isActive() || it.willBecomeActive() } && throw ExistingActiveAlertWithCodeException(prisonNumber, alertCode.code)
+
+  fun migratePrisonerAlerts(prisonNumber: String, request: List<MigrateAlert>): List<MigratedAlert> {
+    return emptyList()
+  }
 }
