@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertCodeService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
@@ -41,7 +39,7 @@ class AlertCodesController(
       ApiResponse(
         responseCode = "201",
         description = "Alert code created",
-        content = [Content(array = ArraySchema(schema = Schema(implementation = AlertType::class)))],
+        content = [Content(schema = Schema(implementation = AlertCode::class))],
       ),
       ApiResponse(
         responseCode = "401",
@@ -51,6 +49,11 @@ class AlertCodesController(
       ApiResponse(
         responseCode = "403",
         description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Not found, the parent alert type has not been found",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(

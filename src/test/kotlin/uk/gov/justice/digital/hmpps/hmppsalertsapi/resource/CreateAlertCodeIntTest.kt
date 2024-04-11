@@ -15,21 +15,16 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THR
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertTypeVulnerability
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.temporal.ChronoUnit
 
 class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Autowired
-  lateinit var alertTypeRepository: AlertTypeRepository
-
-  @Autowired
   lateinit var alertCodeRepository: AlertCodeRepository
 
   @BeforeEach
   fun setup() {
-    alertTypeRepository.saveAndFlush(alertTypeVulnerability())
     val entity = alertCodeRepository.findByCode("CO")
     if (entity != null) {
       alertCodeRepository.delete(entity)
@@ -268,7 +263,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `409 conflict - active alert code exists`() {
+  fun `409 conflict - alert code exists`() {
     val request = createAlertCodeRequest()
     webTestClient.createAlertCode(request)
     val response = webTestClient.createAlertCodeResponseSpec(request = request)
@@ -300,6 +295,54 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
         .isEqualTo("Validation failure: Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'code': rejected value [1234567890123]; codes [Size.createAlertCodeRequest.code,Size.code,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.code,code]; arguments []; default message [code],12,1]; default message [Code must be between 1 & 12 characters]] ")
       assertThat(developerMessage)
         .isEqualTo("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'code': rejected value [1234567890123]; codes [Size.createAlertCodeRequest.code,Size.code,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.code,code]; arguments []; default message [code],12,1]; default message [Code must be between 1 & 12 characters]] ")
+    }
+  }
+
+  @Test
+  fun `validation - parent type not found`() {
+    val request = CreateAlertCodeRequest("AA", "desc", "ABCDE")
+    val response = webTestClient.createAlertCodeResponseSpec(request = request)
+      .expectStatus().isEqualTo(HttpStatus.NOT_FOUND)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+    with(response!!) {
+      assertThat(status).isEqualTo(404)
+      assertThat(userMessage)
+        .isEqualTo("Not found: Alert type with code ABCDE could not be found")
+      assertThat(developerMessage)
+        .isEqualTo("Alert type with code ABCDE could not be found")
+    }
+  }
+
+  @Test
+  fun `validation - no parent type`() {
+    val request = CreateAlertCodeRequest("AA", "desc", "")
+    val response = webTestClient.createAlertCodeResponseSpec(request = request)
+      .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(userMessage)
+        .isEqualTo("Validation failure: Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'parent': rejected value []; codes [Size.createAlertCodeRequest.parent,Size.parent,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.parent,parent]; arguments []; default message [parent],12,1]; default message [Code must be between 1 & 12 characters]] ")
+      assertThat(developerMessage)
+        .isEqualTo("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'parent': rejected value []; codes [Size.createAlertCodeRequest.parent,Size.parent,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.parent,parent]; arguments []; default message [parent],12,1]; default message [Code must be between 1 & 12 characters]] ")
+    }
+  }
+
+  @Test
+  fun `validation - parent type too long`() {
+    val request = CreateAlertCodeRequest("AA", "desc", "ABCDEFGHJKLMN")
+    val response = webTestClient.createAlertCodeResponseSpec(request = request)
+      .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(userMessage)
+        .isEqualTo("Validation failure: Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'parent': rejected value [ABCDEFGHJKLMN]; codes [Size.createAlertCodeRequest.parent,Size.parent,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.parent,parent]; arguments []; default message [parent],12,1]; default message [Code must be between 1 & 12 characters]] ")
+      assertThat(developerMessage)
+        .isEqualTo("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'parent': rejected value [ABCDEFGHJKLMN]; codes [Size.createAlertCodeRequest.parent,Size.parent,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.parent,parent]; arguments []; default message [parent],12,1]; default message [Code must be between 1 & 12 characters]] ")
     }
   }
 
