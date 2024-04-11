@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.DEFAULT_UUID
 import java.util.UUID
 
 class ManageUsersClientTest {
@@ -45,7 +46,7 @@ class ManageUsersClientTest {
         result.uuid,
       ),
     )
-    assertThat(result.uuid).isNotEqualTo(UUID.fromString("00000000-0000-0000-0000-000000000000"))
+    assertThat(result.uuid).isNotEqualTo(DEFAULT_UUID)
   }
 
   @Test

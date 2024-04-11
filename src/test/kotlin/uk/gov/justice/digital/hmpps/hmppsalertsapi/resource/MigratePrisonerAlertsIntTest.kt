@@ -12,9 +12,11 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MigratedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.DEFAULT_UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlert
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
@@ -189,6 +191,29 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   fun `201 migrated - allowed role`(role: String) {
     webTestClient.migrateResponseSpec(role, emptyList())
       .expectStatus().isCreated
+  }
+
+  @Test
+  fun `stores and returns mapping information`() {
+    val offenderBookId = 54321
+    val bookingSeq = 3
+    val alertSeq = 4
+
+    val migratedAlert = webTestClient.migrateAlert(request = listOf(migrateAlert().copy(
+      offenderBookId = offenderBookId,
+      bookingSeq = bookingSeq,
+      alertSeq = alertSeq,
+    ))).single()
+
+    assertThat(migratedAlert).isEqualTo(
+      MigratedAlert(
+        offenderBookId = offenderBookId,
+        bookingSeq = bookingSeq,
+        alertSeq = alertSeq,
+        alertUuid = migratedAlert.alertUuid,
+      )
+    )
+    assertThat(migratedAlert.alertUuid).isNotEqualTo(DEFAULT_UUID)
   }
 
   /*@Test
@@ -409,6 +434,6 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   private fun WebTestClient.migrateAlert(role: String = ROLE_NOMIS_ALERTS, request: Collection<MigrateAlert>) =
     migrateResponseSpec(role, request)
       .expectStatus().isCreated
-      .expectBody(AlertModel::class.java)
+      .expectBodyList(MigratedAlert::class.java)
       .returnResult().responseBody!!
 }
