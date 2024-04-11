@@ -21,7 +21,7 @@ data class MigrateAlert(
     example = "12345",
   )
   @field:Positive(message = "Offender book id must be supplied and be > 0")
-  val offenderBookId: Int,
+  val offenderBookId: Long,
 
   @Schema(
     description = "The sequence of the NOMIS offender booking. " +

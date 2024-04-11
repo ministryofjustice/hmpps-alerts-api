@@ -14,21 +14,20 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MigratedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.MigratedAlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.DEFAULT_UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlert
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   @Autowired
   lateinit var alertRepository: AlertRepository
 
   @Autowired
-  lateinit var alertCodeRepository: AlertCodeRepository
+  lateinit var migratedAlertRepository: MigratedAlertRepository
 
   @Test
   fun `401 unauthorised`() {
@@ -195,15 +194,19 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `stores and returns mapping information`() {
-    val offenderBookId = 54321
+    val offenderBookId = 54321L
     val bookingSeq = 3
     val alertSeq = 4
 
-    val migratedAlert = webTestClient.migrateAlert(request = listOf(migrateAlert().copy(
-      offenderBookId = offenderBookId,
-      bookingSeq = bookingSeq,
-      alertSeq = alertSeq,
-    ))).single()
+    val migratedAlert = webTestClient.migrateAlert(
+      request = listOf(
+        migrateAlert().copy(
+          offenderBookId = offenderBookId,
+          bookingSeq = bookingSeq,
+          alertSeq = alertSeq,
+        ),
+      ),
+    ).single()
 
     assertThat(migratedAlert).isEqualTo(
       MigratedAlert(
@@ -211,9 +214,19 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
         bookingSeq = bookingSeq,
         alertSeq = alertSeq,
         alertUuid = migratedAlert.alertUuid,
-      )
+      ),
     )
     assertThat(migratedAlert.alertUuid).isNotEqualTo(DEFAULT_UUID)
+
+    with(migratedAlertRepository.findByOffenderBookIdAndBookingSeq(offenderBookId, bookingSeq)) {
+      assertThat(this).isNotNull
+      assertThat(this!!.offenderBookId).isEqualTo(offenderBookId)
+      assertThat(this.bookingSeq).isEqualTo(bookingSeq)
+      assertThat(this.alertSeq).isEqualTo(alertSeq)
+      assertThat(this.alert.alertUuid).isEqualTo(migratedAlert.alertUuid)
+
+      assertThat(this).isEqualTo(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!.migratedAlert)
+    }
   }
 
   /*@Test

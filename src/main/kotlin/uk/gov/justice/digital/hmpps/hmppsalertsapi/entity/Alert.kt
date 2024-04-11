@@ -53,11 +53,11 @@ data class Alert(
   val createdAt: LocalDateTime,
 
   val migratedAt: LocalDateTime? = null,
-
-  @OneToOne(mappedBy = "alert", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
-  val migratedAlert: MigratedAlert? = null,
 ) : AbstractAggregateRoot<Alert>() {
   var lastModifiedAt: LocalDateTime? = null
+
+  @OneToOne(mappedBy = "alert", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
+  var migratedAlert: MigratedAlert? = null
 
   fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
 

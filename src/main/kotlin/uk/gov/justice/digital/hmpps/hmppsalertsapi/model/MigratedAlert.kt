@@ -10,7 +10,7 @@ data class MigratedAlert(
       "This is returned as part of the migrated alert response for mapping between NOMIS and DPS.",
     example = "12345",
   )
-  val offenderBookId: Int,
+  val offenderBookId: Long,
 
   @Schema(
     description = "The sequence of the NOMIS offender booking. " +

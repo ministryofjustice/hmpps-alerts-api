@@ -6,5 +6,5 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.MigratedAlert
 
 @Repository
 interface MigratedAlertRepository : JpaRepository<MigratedAlert, Long> {
-  fun findByOffenderBookIdAndBookingSeq(offenderBookId: Long, bookingSeq: Int): MigratedAlert
+  fun findByOffenderBookIdAndBookingSeq(offenderBookId: Long, bookingSeq: Int): MigratedAlert?
 }
