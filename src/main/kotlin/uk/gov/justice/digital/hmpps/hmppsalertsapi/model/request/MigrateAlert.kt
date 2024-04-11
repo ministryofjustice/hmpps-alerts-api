@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.DateComparison
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.UpdatedByDisplayNameRequired
@@ -13,8 +14,31 @@ import java.time.LocalDateTime
 @UpdatedByRequired("Updated by is required when updated at is supplied")
 @UpdatedByDisplayNameRequired("Updated by display name is required when updated at is supplied")
 data class MigrateAlert(
+  @Schema(
+    description = "The internal NOMIS id for the offender booking. " +
+      "An alert in NOMIS is uniquely identified by the offender booking id and alert sequence." +
+      "This is returned as part of the migrated alert response for mapping between NOMIS and DPS.",
+    example = "12345",
+  )
+  @field:Positive(message = "Offender book id must be supplied and be > 0")
   val offenderBookId: Int,
+
+  @Schema(
+    description = "The sequence of the NOMIS offender booking. " +
+      "A sequence of 1 means the alert is from the current booking. A sequence of > 1 means the alert is from a historic booking." +
+      "This is returned as part of the migrated alert response for mapping between NOMIS and DPS.",
+    example = "1",
+  )
+  @field:Positive(message = "Booking sequence must be supplied and be > 0")
   val bookingSeq: Int,
+
+  @Schema(
+    description = "The NOMIS alert sequence. " +
+      "An alert in NOMIS is uniquely identified by the offender booking id and alert sequence." +
+      "This is returned as part of the migrated alert response for mapping between NOMIS and DPS.",
+    example = "2",
+  )
+  @field:Positive(message = "Alert sequence must be supplied and be > 0")
   val alertSeq: Int,
 
   @Schema(

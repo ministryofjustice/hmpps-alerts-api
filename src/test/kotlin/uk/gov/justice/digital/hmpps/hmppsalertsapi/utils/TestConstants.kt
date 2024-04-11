@@ -125,9 +125,9 @@ fun migrateAlertRequest(
 
 fun migrateAlert() =
   MigrateAlert(
-    offenderBookId = 2,
+    offenderBookId = 12345,
     bookingSeq = 1,
-    alertSeq = 3,
+    alertSeq = 2,
     alertCode = ALERT_CODE_VICTIM,
     description = "Alert description",
     authorisedBy = "A. Nurse, An Agency",

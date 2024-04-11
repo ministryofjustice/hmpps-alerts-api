@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
-import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -79,6 +78,5 @@ class MigratePrisonerAlertsController(
       required = true,
     )
     request: List<MigrateAlert>,
-    httpRequest: HttpServletRequest,
   ): List<MigratedAlert> = migrateAlertService.migratePrisonerAlerts(prisonNumber, request)
 }

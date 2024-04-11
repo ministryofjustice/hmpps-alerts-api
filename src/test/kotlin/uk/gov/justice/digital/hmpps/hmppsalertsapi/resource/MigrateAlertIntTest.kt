@@ -81,7 +81,7 @@ class MigrateAlertIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Couldn't read request body")
-      assertThat(developerMessage).isEqualTo("Required request body is missing: public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MigrateAlertsController.createAlert(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest,jakarta.servlet.http.HttpServletRequest)")
+      assertThat(developerMessage).isEqualTo("Required request body is missing: public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MigrateAlertsController.createAlert(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest)")
       assertThat(moreInfo).isNull()
     }
   }
