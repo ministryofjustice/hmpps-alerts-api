@@ -16,7 +16,7 @@ data class CreateAlert(
       "Also referred to as the offender number, offender id or NOMS id.",
     example = "A1234AA",
   )
-  @field:Size(max = 10, message = "Prison number must be <= 10 characters")
+  @field:Size(min = 1, max = 10, message = "Prison number must be <= 10 characters")
   val prisonNumber: String,
 
   @Schema(
@@ -24,6 +24,7 @@ data class CreateAlert(
       "The alert code must exist and be active.",
     example = "ABC",
   )
+  @field:Size(min = 1, max = 12, message = "Alert code must be supplied and be <= 12 characters")
   val alertCode: String,
 
   @Schema(

@@ -4,10 +4,10 @@ import jakarta.validation.Constraint
 import jakarta.validation.Payload
 import kotlin.reflect.KClass
 
-@Constraint(validatedBy = [CreateAlertDateValidator::class, UpdateAlertDateValidator::class, MigrateAlertDateValidator::class])
+@Constraint(validatedBy = [MigrateAlertUpdatedByDisplayNameValidator::class])
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
-annotation class DateComparison(
+annotation class UpdatedByDisplayNameRequired(
   val message: String,
   val groups: Array<KClass<*>> = [],
   val payload: Array<KClass<out Payload>> = [],

@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.MigratedAlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeRefusingToShieldInactive
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlertRequest
@@ -30,6 +31,7 @@ import java.util.UUID
 class MigrateAlertServiceTest {
   private val alertRepository = mock<AlertRepository>()
   private val alertCodeRepository = mock<AlertCodeRepository>()
+  private val migratedAlertRepository = mock<MigratedAlertRepository>()
 
   @InjectMocks
   private lateinit var underTest: MigrateAlertService

@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_N
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCodeSummary
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateCommentRequest
 import java.time.LocalDate
@@ -30,6 +31,8 @@ const val ALERT_CODE_READY_FOR_WORK = "ORFW"
 const val ALERT_CODE_SECURE_ALERT_OCG_NOMINAL = "DOCGM"
 
 const val ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD = "URS"
+
+val DEFAULT_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000")
 
 fun userDetailsDto(username: String = TEST_USER, name: String = TEST_USER_NAME, uuid: UUID? = UUID.randomUUID()) =
   UserDetailsDto(username, true, name, "nomis", PRISON_CODE_MOORLANDS, "123", uuid)
@@ -120,4 +123,22 @@ fun migrateAlertRequest(
     updatedAt = if (includeUpdate) LocalDateTime.now().minusDays(1).withNano(0) else null,
     updatedBy = if (includeUpdate) "AG1221GG" else null,
     updatedByDisplayName = if (includeUpdate) "Up Dated" else null,
+  )
+
+fun migrateAlert() =
+  MigrateAlert(
+    offenderBookId = 12345,
+    bookingSeq = 1,
+    alertSeq = 2,
+    alertCode = ALERT_CODE_VICTIM,
+    description = "Alert description",
+    authorisedBy = "A. Nurse, An Agency",
+    activeFrom = LocalDate.now().minusDays(2),
+    activeTo = null,
+    createdAt = LocalDateTime.now().minusDays(2).withNano(0),
+    createdBy = "AB11DZ",
+    createdByDisplayName = "C Reated",
+    updatedAt = null,
+    updatedBy = null,
+    updatedByDisplayName = null,
   )
