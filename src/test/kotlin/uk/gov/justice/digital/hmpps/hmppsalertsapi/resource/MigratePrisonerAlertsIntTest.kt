@@ -2,14 +2,14 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
-import org.mockito.kotlin.any
-import org.mockito.kotlin.never
-import org.mockito.kotlin.verify
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
+import org.mockito.kotlin.any
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -24,10 +24,10 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.MigratedAlertRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_POOR_COPER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_ADULT_AT_RISK
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_ISOLATED_PRISONER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_POOR_COPER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.DEFAULT_UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlert
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
@@ -286,7 +286,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     val request = migrateAlert().copy(
       updatedAt = LocalDateTime.now().minusDays(1).withNano(0),
       updatedBy = "AG1221GG",
-      updatedByDisplayName = "Up Dated"
+      updatedByDisplayName = "Up Dated",
     )
 
     val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(request)).single()
@@ -321,7 +321,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       createdAt = createdAt,
       updatedAt = updatedAt,
       updatedBy = "AG1221GG",
-      updatedByDisplayName = "Up Dated"
+      updatedByDisplayName = "Up Dated",
     )
 
     val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(request)).single()
@@ -360,7 +360,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
         alertCode = ALERT_CODE_ISOLATED_PRISONER,
         activeFrom = LocalDate.now().minusDays(1),
         activeTo = null,
-      )
+      ),
     )
 
     val response = webTestClient.migratePrisonerAlerts(request = request)
