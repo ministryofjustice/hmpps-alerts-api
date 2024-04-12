@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert as AlertEntity
@@ -247,7 +248,7 @@ Updated active to from '${alert.activeTo}' to '$activeTo'
 Comment '$appendComment' was added
 """,
         )
-        assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+        assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
         assertThat(actionedBy).isEqualTo(TEST_USER)
         assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
         assertThat(source).isEqualTo(DPS)
@@ -321,7 +322,7 @@ Updated active to from '${alert.activeTo}' to '$activeTo'
 Comment '$appendComment' was added
 """,
         )
-        assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+        assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
         assertThat(actionedBy).isEqualTo(TEST_USER)
         assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
         assertThat(source).isEqualTo(NOMIS)
@@ -364,7 +365,7 @@ Comment '$appendComment' was added
           """Comment '$appendComment' was added
 """,
         )
-        assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+        assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
         assertThat(actionedBy).isEqualTo(TEST_USER)
         assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
         assertThat(source).isEqualTo(DPS)
@@ -458,7 +459,7 @@ Comment '$appendComment' was added
         updateAlertEvent.occurredAt,
       ),
     )
-    assertThat(updateAlertEvent.occurredAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+    assertThat(updateAlertEvent.occurredAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
   }
 
   @Test
@@ -488,7 +489,7 @@ Comment '$appendComment' was added
         updateAlertEvent.occurredAt,
       ),
     )
-    assertThat(updateAlertEvent.occurredAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+    assertThat(updateAlertEvent.occurredAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
   }
 
   private fun createAlertRequest(

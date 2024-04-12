@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlertRequest
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit.SECONDS
 import java.util.UUID
 
@@ -89,7 +90,7 @@ class MigrateAlertServiceTest {
       assertThat(alertUuid).isNotNull()
       assertThat(auditEvents()).hasSize(1)
       assertThat(alertCode).isEqualTo(alertCodeRefusingToShieldInactive())
-      assertThat(migratedAt).isCloseToUtcNow(within(3, SECONDS))
+      assertThat(migratedAt).isCloseTo(LocalDateTime.now(), within(3, SECONDS))
       assertThat(publishedDomainEvents()).isEmpty()
     }
   }
@@ -127,7 +128,7 @@ class MigrateAlertServiceTest {
       assertThat(alertUuid).isNotNull()
       assertThat(auditEvents()).hasSize(1)
       assertThat(alertCode).isEqualTo(alertCodeVictim())
-      assertThat(migratedAt).isCloseToUtcNow(within(3, SECONDS))
+      assertThat(migratedAt).isCloseTo(LocalDateTime.now(), within(3, SECONDS))
       assertThat(publishedDomainEvents()).isEmpty()
     }
   }

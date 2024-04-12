@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.userDetailsDto
 import uk.gov.justice.hmpps.kotlin.auth.AuthAwareAuthenticationToken
+import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 class AlertRequestContextConfigurationTest {
@@ -52,7 +53,7 @@ class AlertRequestContextConfigurationTest {
     interceptor.preHandle(req, res, "null")
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
 
-    assertThat(context.requestAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+    assertThat(context.requestAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
   }
 
   @Test
