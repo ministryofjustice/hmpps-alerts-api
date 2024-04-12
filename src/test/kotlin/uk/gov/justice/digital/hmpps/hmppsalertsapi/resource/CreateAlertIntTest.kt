@@ -39,6 +39,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
@@ -420,7 +421,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         null,
       ),
     )
-    assertThat(alert.createdAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+    assertThat(alert.createdAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
   }
 
   @Test
@@ -449,7 +450,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(auditEventId).isEqualTo(1)
       assertThat(action).isEqualTo(AuditEventAction.CREATED)
       assertThat(description).isEqualTo("Alert created")
-      assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+      assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
       assertThat(actionedAt).isEqualTo(alertEntity.createdAt)
       assertThat(actionedBy).isEqualTo(TEST_USER)
       assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
@@ -484,7 +485,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(auditEventId).isEqualTo(1)
       assertThat(action).isEqualTo(AuditEventAction.CREATED)
       assertThat(description).isEqualTo("Alert created")
-      assertThat(actionedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+      assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
       assertThat(actionedAt).isEqualTo(alertEntity.createdAt)
       assertThat(actionedBy).isEqualTo(TEST_USER)
       assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)

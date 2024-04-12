@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertTypeVulnerability
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
+import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 class CreateAlertCodeIntTest : IntegrationTestBase() {
@@ -259,7 +260,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     assertThat(alertCode).isNotNull
     assertThat(alertCode.code).isEqualTo("CO")
     assertThat(alertCode.description).isEqualTo("Description")
-    assertThat(alertCode.createdAt).isCloseToUtcNow(Assertions.within(3, ChronoUnit.SECONDS))
+    assertThat(alertCode.createdAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
   }
 
   @Test

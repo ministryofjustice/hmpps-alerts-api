@@ -234,13 +234,13 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     )
     assertThat(migratedAlert.alertUuid).isNotEqualTo(DEFAULT_UUID)
 
-    with(migratedAlertRepository.findByOffenderBookIdAndAlertSeq(offenderBookId, bookingSeq)) {
+    with(migratedAlertRepository.findByOffenderBookIdAndAlertSeq(offenderBookId, alertSeq)) {
       assertThat(this).isNotNull
       assertThat(this!!.offenderBookId).isEqualTo(offenderBookId)
       assertThat(this.bookingSeq).isEqualTo(bookingSeq)
       assertThat(this.alertSeq).isEqualTo(alertSeq)
       assertThat(this.alert.alertUuid).isEqualTo(migratedAlert.alertUuid)
-      assertThat(this.migratedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+      assertThat(this.migratedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
 
       assertThat(this).isEqualTo(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!.migratedAlert)
     }
