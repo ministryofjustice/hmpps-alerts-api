@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MigratedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.MigrateAlertService
@@ -38,7 +37,7 @@ class MigratePrisonerAlertsController(
       ApiResponse(
         responseCode = "201",
         description = "Alerts migrated successfully",
-        content = [Content(array = ArraySchema(schema = Schema(implementation = Alert::class)))],
+        content = [Content(array = ArraySchema(schema = Schema(implementation = MigratedAlert::class)))],
       ),
       ApiResponse(
         responseCode = "400",
