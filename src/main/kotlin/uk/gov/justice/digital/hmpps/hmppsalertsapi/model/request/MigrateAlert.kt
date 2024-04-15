@@ -10,6 +10,9 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.UpdatedByRequired
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+@Schema(
+  description = "The request body for migrating an alert from NOMIS to DPS",
+)
 @DateComparison("Active to must be on or after active from")
 @UpdatedByRequired("Updated by is required when updated at is supplied")
 @UpdatedByDisplayNameRequired("Updated by display name is required when updated at is supplied")

@@ -44,7 +44,7 @@ class MigrateAlertService(
     request.checkForNotFoundAlertCodes(alertCodes)
 
     return request.map {
-      migratedAlertRepository.findByOffenderBookIdAndBookingSeq(it.offenderBookId, it.bookingSeq)?.alert ?: alertRepository.save(it.toAlertEntity(prisonNumber, alertCodes[it.alertCode]!!, migratedAt))
+      migratedAlertRepository.findByOffenderBookIdAndAlertSeq(it.offenderBookId, it.alertSeq)?.alert ?: alertRepository.save(it.toAlertEntity(prisonNumber, alertCodes[it.alertCode]!!, migratedAt))
     }.also {
       it.logDuplicateActiveAlerts(prisonNumber)
       it.logHistoricAlerts(prisonNumber)

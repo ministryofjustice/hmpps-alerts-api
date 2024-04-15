@@ -195,7 +195,7 @@ class MigrateAlertIntTest : IntegrationTestBase() {
       assertThat(activeCaseLoadId).isNull()
     }
 
-    assertThat(alertEntity.migratedAt).isCloseToUtcNow(within(3, ChronoUnit.SECONDS))
+    assertThat(alertEntity.migratedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
   }
 
   @Test
