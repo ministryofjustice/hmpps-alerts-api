@@ -234,7 +234,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     )
     assertThat(migratedAlert.alertUuid).isNotEqualTo(DEFAULT_UUID)
 
-    with(migratedAlertRepository.findByOffenderBookIdAndBookingSeq(offenderBookId, bookingSeq)) {
+    with(migratedAlertRepository.findByOffenderBookIdAndAlertSeq(offenderBookId, alertSeq)) {
       assertThat(this).isNotNull
       assertThat(this!!.offenderBookId).isEqualTo(offenderBookId)
       assertThat(this.bookingSeq).isEqualTo(bookingSeq)
