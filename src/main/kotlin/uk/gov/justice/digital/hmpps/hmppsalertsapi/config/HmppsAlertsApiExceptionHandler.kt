@@ -138,15 +138,20 @@ class HmppsAlertsApiExceptionHandler {
     ).also { log.info("Validation exception: {}", e.message) }
 
   @ExceptionHandler(HandlerMethodValidationException::class)
-  fun handleHandlerMethodValidationException(e: HandlerMethodValidationException): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(BAD_REQUEST)
-    .body(
-      ErrorResponse(
-        status = BAD_REQUEST,
-        userMessage = "Validation failure(s): ${e.allErrors.map { it.defaultMessage }.distinct().sorted().joinToString("\n")}",
-        developerMessage = e.message,
-      ),
-    ).also { log.info("Validation exception: {}", e.message) }
+  fun handleHandlerMethodValidationException(e: HandlerMethodValidationException): ResponseEntity<ErrorResponse> =
+    e.allErrors.map { it.toString() }.distinct().sorted().joinToString("\n").let { validationErrors ->
+      ResponseEntity
+        .status(BAD_REQUEST)
+        .body(
+          ErrorResponse(
+            status = BAD_REQUEST,
+            userMessage = "Validation failure(s): ${
+              e.allErrors.map { it.defaultMessage }.distinct().sorted().joinToString("\n")
+            }",
+            developerMessage = "${e.message} $validationErrors",
+          ),
+        ).also { log.info("Validation exception: $validationErrors\n {}", e.message) }
+    }
 
   @ExceptionHandler(AlertNotFoundException::class)
   fun handleAlertNotFoundException(e: AlertNotFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
