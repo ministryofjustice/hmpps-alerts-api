@@ -102,7 +102,6 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       Arguments.of(migrateAlert().copy(alertCode = 'a'.toString().repeat(13)), "Alert code must be supplied and be <= 12 characters", "alert code greater than 12 characters"),
       Arguments.of(migrateAlert().copy(description = 'a'.toString().repeat(4001)), "Description must be <= 4000 characters", "description greater than 4000 characters"),
       Arguments.of(migrateAlert().copy(authorisedBy = 'a'.toString().repeat(41)), "Authorised by must be <= 40 characters", "authorised by greater than 40 characters"),
-      Arguments.of(migrateAlert().copy(activeFrom = LocalDate.now(), activeTo = LocalDate.now().minusDays(1)), "Active to must be on or after active from", "active to is before active from"),
       Arguments.of(migrateAlert().copy(createdBy = ""), "Created by must be supplied and be <= 32 characters", "created by required"),
       Arguments.of(migrateAlert().copy(createdBy = 'a'.toString().repeat(33)), "Created by must be supplied and be <= 32 characters", "created by greater than 32 characters"),
       Arguments.of(migrateAlert().copy(createdByDisplayName = ""), "Created by display name must be supplied and be <= 255 characters", "created by display name required"),
@@ -314,6 +313,16 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
     with(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!.alertCode) {
       assertThat(code).isEqualTo(ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
+      assertThat(isActive()).isFalse()
+    }
+  }
+
+  @Test
+  fun `migrate alert with active to before active from`() {
+    val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(migrateAlert().copy(activeFrom = LocalDate.now(), activeTo = LocalDate.now().minusDays(1)))).single()
+
+    with(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!) {
+      assertThat(activeTo).isBefore(activeFrom)
       assertThat(isActive()).isFalse()
     }
   }

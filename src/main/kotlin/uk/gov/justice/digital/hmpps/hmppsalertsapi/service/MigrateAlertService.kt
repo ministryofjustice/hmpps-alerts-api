@@ -42,6 +42,7 @@ class MigrateAlertService(
     val migratedAt = LocalDateTime.now()
     val alertCodes = request.alertCodes()
     request.checkForNotFoundAlertCodes(alertCodes)
+    request.logActiveToBeforeActiveFrom(prisonNumber)
 
     return request.map {
       migratedAlertRepository.findByOffenderBookIdAndAlertSeq(it.offenderBookId, it.alertSeq)?.alert ?: alertRepository.save(it.toAlertEntity(prisonNumber, alertCodes[it.alertCode]!!, migratedAt))
@@ -70,6 +71,12 @@ class MigrateAlertService(
         throw IllegalArgumentException("Alert code(s) '${this.joinToString("', '") }' not found")
       }
     }
+
+  private fun List<MigrateAlert>.logActiveToBeforeActiveFrom(prisonNumber: String) {
+    this.filter { it.activeTo?.isBefore(it.activeFrom) == true }.forEach {
+      log.warn("Alert with sequence '${it.alertSeq}' for person with prison number '$prisonNumber' from booking with id '${it.offenderBookId}' and sequence '${it.bookingSeq}' has an active to date '${it.activeTo}' that is before the active from date '${it.activeFrom}'")
+    }
+  }
 
   private fun List<Alert>.logDuplicateActiveAlerts(prisonNumber: String) {
     this.filter { it.isActive() || it.willBecomeActive() }.groupBy { it.alertCode.code }.filter { it.value.size > 1 }.run {
