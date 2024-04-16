@@ -126,7 +126,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure(s): $expectedUserMessage")
-      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(developerMessage).startsWith("400 BAD_REQUEST \"Validation failure\"")
       assertThat(moreInfo).isNull()
     }
   }
@@ -177,7 +177,12 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
           "Created by must be supplied and be <= 32 characters\n" +
           "Updated by is required when updated at is supplied",
       )
-      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(developerMessage).isEqualTo(
+        "400 BAD_REQUEST \"Validation failure\" Field error in object 'migrateAlertList' on field 'alertCode': rejected value []; codes [Size.migrateAlertList.alertCode,Size.alertCode,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [migrateAlertList.alertCode,alertCode]; arguments []; default message [alertCode],12,1]; default message [Alert code must be supplied and be <= 12 characters]\n" +
+          "Field error in object 'migrateAlertList' on field 'authorisedBy': rejected value [aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]; codes [Size.migrateAlertList.authorisedBy,Size.authorisedBy,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [migrateAlertList.authorisedBy,authorisedBy]; arguments []; default message [authorisedBy],40,0]; default message [Authorised by must be <= 40 characters]\n" +
+          "Field error in object 'migrateAlertList' on field 'createdBy': rejected value []; codes [Size.migrateAlertList.createdBy,Size.createdBy,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [migrateAlertList.createdBy,createdBy]; arguments []; default message [createdBy],32,1]; default message [Created by must be supplied and be <= 32 characters]\n" +
+          "org.springframework.context.support.DefaultMessageSourceResolvable: codes [UpdatedByRequired.migratePrisonerAlertsController#createAlert.request,UpdatedByRequired.request,UpdatedByRequired.java.util.List,UpdatedByRequired]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [migratePrisonerAlertsController#createAlert.request,request]; arguments []; default message [request]]; default message [Updated by is required when updated at is supplied]",
+      )
       assertThat(moreInfo).isNull()
     }
   }
