@@ -9,4 +9,6 @@ interface AlertCodeRepository : JpaRepository<AlertCode, Long> {
   fun findByCode(code: String): AlertCode?
 
   fun findByCodeIn(codes: Collection<String>): Collection<AlertCode>
+
+  fun findAllByAlertTypeCode(alertTypeCode: String): Collection<AlertCode>
 }

@@ -26,9 +26,22 @@ class AlertCodeService(
       }
     }
 
+  fun retrieveAlertCodeForAlertType(alertTypeCode: String): Collection<AlertCode> =
+    alertTypeCode.let {
+      it.checkIsActive()
+      alertTypeRepository.findByCode(it).let { _ ->
+        alertCodeRepository.findAllByAlertTypeCode(it).map { alertCode -> alertCode.toAlertCodeModel() }
+      }
+    }
+
   fun CreateAlertCodeRequest.checkForExistingAlertCode() =
     alertCodeRepository.findByCode(code) != null && throw ExistingActiveAlertTypeWithCodeException("Alert code exists with code '$code'")
 
   fun CreateAlertCodeRequest.checkAlertTypeExists() =
     alertTypeRepository.findByCode(parent) == null && throw AlertTypeNotFound("Alert type with code $parent could not be found")
+
+  fun String.checkIsActive() {
+    val alertType = alertTypeRepository.findByCode(code = this)
+    (alertType == null || alertType.isActive() == false) && throw AlertTypeNotFound("Alert type is inactive with code $this")
+  }
 }
