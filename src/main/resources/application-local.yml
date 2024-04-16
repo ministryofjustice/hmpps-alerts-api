@@ -15,15 +15,7 @@ spring:
 
   jpa:
     show-sql: true
-  datasource:
-    url: 'jdbc:postgresql://localhost:5433/alerts'
-    username: alerts
-    password: alerts
-    hikari:
-      pool-name: Alerts-DB-CP
-      connectionTimeout: 1000
-      validationTimeout: 500
-      maximumPoolSize: 10
+
 # Container-provider local services
 api:
   base:
@@ -42,6 +34,3 @@ hmpps.sqs:
   topics:
     hmppseventtopic:
       arn: arn:aws:sns:eu-west-2:000000000000:hmpps-event-topic
-service:
-  active:
-    prisons: '***'
