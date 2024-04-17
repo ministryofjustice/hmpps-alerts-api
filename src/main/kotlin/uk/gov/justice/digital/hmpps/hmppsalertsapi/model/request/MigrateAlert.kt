@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.DateComparison
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.UpdatedByDisplayNameRequired
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.UpdatedByRequired
 import java.time.LocalDate
@@ -13,7 +12,6 @@ import java.time.LocalDateTime
 @Schema(
   description = "The request body for migrating an alert from NOMIS to DPS",
 )
-@DateComparison("Active to must be on or after active from")
 @UpdatedByRequired("Updated by is required when updated at is supplied")
 @UpdatedByDisplayNameRequired("Updated by display name is required when updated at is supplied")
 data class MigrateAlert(
@@ -72,7 +70,7 @@ data class MigrateAlert(
 
   @Schema(
     description = "The date the alert should be active from. " +
-      "The active from date can be in the past or the future, but must be on or before the active to date",
+      "The active from date can be in the past or the future, but should be on or before the active to date",
     example = "2021-09-27",
   )
   @JsonFormat(pattern = "yyyy-MM-dd")
@@ -81,7 +79,7 @@ data class MigrateAlert(
   @Schema(
     description = "The date the alert should be active until. " +
       "If not provided, the alert will be active indefinitely. " +
-      "The active to date can be in the past or the future, but must be on or after the active from date",
+      "The active to date can be in the past or the future, but should be on or after the active from date",
     example = "2022-07-15",
   )
   @JsonFormat(pattern = "yyyy-MM-dd")
