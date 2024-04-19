@@ -31,7 +31,7 @@ data class Alert(
   @Schema(
     description = "The description of the alert. " +
       "It is a free text field and is used to provide additional information about the alert e.g. the reasons for adding it." +
-      "It is limited to 1000 characters.",
+      "It is limited to 4000 characters.",
     example = "Alert description",
   )
   val description: String?,

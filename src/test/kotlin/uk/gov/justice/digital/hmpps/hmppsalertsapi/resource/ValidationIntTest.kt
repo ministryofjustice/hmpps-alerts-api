@@ -135,10 +135,6 @@ class ValidationIntTest : IntegrationTestBase() {
 
   @Test
   fun `Validate description too long`() {
-    var description = "a"
-    for (i in 1..10) {
-      description += " $description"
-    }
     val response = webTestClient.post()
       .uri("/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
@@ -148,7 +144,7 @@ class ValidationIntTest : IntegrationTestBase() {
         CreateAlert(
           prisonNumber = "ABC123AS",
           alertCode = "A",
-          description = description,
+          description = "a".repeat(4001),
           authorisedBy = "A. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = null,
@@ -158,7 +154,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody!!
-    assertThat(response.developerMessage).contains("Description must be <= 1000 characters")
+    assertThat(response.developerMessage).contains("Description must be <= 4000 characters")
   }
 
   @Test
@@ -234,10 +230,6 @@ class ValidationIntTest : IntegrationTestBase() {
 
   @Test
   fun `Update validate description too long`() {
-    var description = "a"
-    for (i in 1..10) {
-      description += " $description"
-    }
     val response = webTestClient.put()
       .uri("/alerts/${UUID.randomUUID()}")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
@@ -245,7 +237,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         UpdateAlert(
-          description = description,
+          description = "a".repeat(4001),
           authorisedBy = "A. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = null,
@@ -256,7 +248,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody!!
-    assertThat(response.developerMessage).contains("Description must be <= 1000 characters")
+    assertThat(response.developerMessage).contains("Description must be <= 4000 characters")
   }
 
   @Test
@@ -284,10 +276,6 @@ class ValidationIntTest : IntegrationTestBase() {
 
   @Test
   fun `Update validate append comment too long`() {
-    var appendComment = "a"
-    for (i in 1..10) {
-      appendComment += " $appendComment"
-    }
     val response = webTestClient.put()
       .uri("/alerts/${UUID.randomUUID()}")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
@@ -299,7 +287,7 @@ class ValidationIntTest : IntegrationTestBase() {
           authorisedBy = "A. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = null,
-          appendComment = appendComment,
+          appendComment = "a".repeat(1001),
         ),
       )
       .exchange()

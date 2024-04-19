@@ -14,10 +14,10 @@ data class UpdateAlert(
   @Schema(
     description = "The updated description of the alert. Will be ignored if null and will clear the description if empty. " +
       "This is a free text field and can be used to provide additional information about the alert e.g. the reasons for adding it." +
-      "It is limited to 1000 characters.",
+      "It is limited to 4000 characters.",
     example = "Alert description",
   )
-  @field:Size(max = 1000, message = "Description must be <= 1000 characters")
+  @field:Size(max = 4000, message = "Description must be <= 4000 characters")
   val description: String? = null,
 
   @Schema(
