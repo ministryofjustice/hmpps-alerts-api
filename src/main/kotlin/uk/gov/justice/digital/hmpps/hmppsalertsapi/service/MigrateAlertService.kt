@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.MigratedAlertRepository
 import java.time.LocalDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
@@ -23,7 +22,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 class MigrateAlertService(
   private val alertCodeRepository: AlertCodeRepository,
   private val alertRepository: AlertRepository,
-  private val migratedAlertRepository: MigratedAlertRepository,
 ) {
   fun migrateAlert(migrateAlertRequest: MigrateAlertRequest): AlertModel {
     val alertCode = alertCodeRepository.findByCode(migrateAlertRequest.alertCode) ?: throw IllegalArgumentException("Alert code '${migrateAlertRequest.alertCode}' not found")
@@ -44,8 +42,10 @@ class MigrateAlertService(
     request.checkForNotFoundAlertCodes(alertCodes)
     request.logActiveToBeforeActiveFrom(prisonNumber)
 
+    alertRepository.deleteAll(alertRepository.findByPrisonNumber(prisonNumber))
+
     return request.map {
-      migratedAlertRepository.findByOffenderBookIdAndAlertSeq(it.offenderBookId, it.alertSeq)?.alert ?: alertRepository.save(it.toAlertEntity(prisonNumber, alertCodes[it.alertCode]!!, migratedAt))
+      alertRepository.save(it.toAlertEntity(prisonNumber, alertCodes[it.alertCode]!!, migratedAt))
     }.also {
       it.logDuplicateActiveAlerts(prisonNumber)
       it.logHistoricAlerts(prisonNumber)

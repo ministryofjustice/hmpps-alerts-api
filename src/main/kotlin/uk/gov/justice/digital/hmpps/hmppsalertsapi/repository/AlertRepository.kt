@@ -15,6 +15,8 @@ interface AlertRepository : JpaRepository<Alert, Long> {
 
   fun findByAlertUuid(alertUuid: UUID): Alert?
 
+  fun findByPrisonNumber(prisonNumber: String): Collection<Alert>
+
   fun findByPrisonNumberAndAlertCodeCode(prisonNumber: String, alertCode: String): Collection<Alert>
 
   @Query(

@@ -13,7 +13,6 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.firstValue
 import org.mockito.kotlin.lastValue
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -25,7 +24,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_N
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MigratedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.MigratedAlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeRefusingToShieldInactive
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
@@ -40,7 +38,6 @@ import java.util.UUID
 class MigrateAlertServiceTest {
   private val alertRepository = mock<AlertRepository>()
   private val alertCodeRepository = mock<AlertCodeRepository>()
-  private val migratedAlertRepository = mock<MigratedAlertRepository>()
 
   @InjectMocks
   private lateinit var underTest: MigrateAlertService
@@ -172,22 +169,16 @@ class MigrateAlertServiceTest {
   }
 
   @Test
-  fun `returns existing migrated alert mapping`() {
+  fun `deletes existing alerts`() {
     val request = migrateAlert()
     val alertCode = alertCodeVictim()
-    val existingMigratedAlert = request.toAlertEntity(PRISON_NUMBER, alertCode).migratedAlert!!
+    val existingAlert = request.toAlertEntity(PRISON_NUMBER, alertCode)
     whenever(alertCodeRepository.findByCodeIn(any())).thenReturn(listOf(alertCode))
-    whenever(migratedAlertRepository.findByOffenderBookIdAndAlertSeq(request.offenderBookId, request.alertSeq)).thenReturn(existingMigratedAlert)
+    whenever(alertRepository.findByPrisonNumber(PRISON_NUMBER)).thenReturn(listOf(existingAlert))
+    whenever(alertRepository.save(argumentCaptor.capture())).thenAnswer { argumentCaptor.firstValue }
     val migratedAlert = underTest.migratePrisonerAlerts(PRISON_NUMBER, listOf(request)).single()
-    assertThat(migratedAlert).isEqualTo(
-      MigratedAlert(
-        offenderBookId = existingMigratedAlert.offenderBookId,
-        bookingSeq = existingMigratedAlert.bookingSeq,
-        alertSeq = existingMigratedAlert.alertSeq,
-        alertUuid = existingMigratedAlert.alert.alertUuid,
-      ),
-    )
-    verify(alertRepository, never()).save(any())
+    assertThat(migratedAlert.alertUuid).isNotEqualTo(existingAlert.alertUuid)
+    verify(alertRepository).deleteAll(listOf(existingAlert))
   }
 
   @Test
