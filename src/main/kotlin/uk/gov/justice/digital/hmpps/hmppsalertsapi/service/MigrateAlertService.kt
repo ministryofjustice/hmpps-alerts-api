@@ -43,6 +43,7 @@ class MigrateAlertService(
     request.logActiveToBeforeActiveFrom(prisonNumber)
 
     alertRepository.deleteAll(alertRepository.findByPrisonNumber(prisonNumber))
+    alertRepository.flush()
 
     return request.map {
       alertRepository.save(it.toAlertEntity(prisonNumber, alertCodes[it.alertCode]!!, migratedAt))

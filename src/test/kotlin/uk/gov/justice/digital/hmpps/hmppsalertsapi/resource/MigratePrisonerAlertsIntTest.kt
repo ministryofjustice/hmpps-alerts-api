@@ -25,8 +25,10 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_ADULT_AT_RISK
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_ISOLATED_PRISONER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_POOR_COPER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.DEFAULT_UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlert
@@ -390,6 +392,29 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
         assertThat(isActive()).isTrue()
       }
     }
+  }
+
+  @Test
+  fun `migration is idempotent`() {
+    val migrateExistingAlert = migrateAlert().copy(
+      offenderBookId = 12345,
+      bookingSeq = 1,
+      alertSeq = 2,
+      alertCode = ALERT_CODE_ADULT_AT_RISK,
+    )
+    val migrateNewAlert = migrateAlert().copy(
+      offenderBookId = 54321,
+      bookingSeq = 3,
+      alertSeq = 4,
+      alertCode = ALERT_CODE_POOR_COPER,
+    )
+
+    val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(migrateExistingAlert)).single()
+
+    val response = webTestClient.migratePrisonerAlerts(request = listOf(migrateExistingAlert, migrateNewAlert))
+
+    assertThat(response).hasSize(2)
+    assertThat(response.associateBy { it.alertUuid }.containsKey(migratedAlert.alertUuid)).isFalse()
   }
 
   @Test

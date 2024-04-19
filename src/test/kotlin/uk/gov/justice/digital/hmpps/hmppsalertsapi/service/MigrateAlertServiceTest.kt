@@ -149,7 +149,7 @@ class MigrateAlertServiceTest {
     with(argumentCaptor.firstValue) {
       assertThat(this).isEqualTo(request.toAlertEntity(PRISON_NUMBER, alertCode, migratedAlert!!.migratedAt).copy(alertUuid = alertUuid))
     }
-    verify(alertRepository).flush()
+    verify(alertRepository, times(2)).flush()
   }
 
   @Test
@@ -179,6 +179,7 @@ class MigrateAlertServiceTest {
     val migratedAlert = underTest.migratePrisonerAlerts(PRISON_NUMBER, listOf(request)).single()
     assertThat(migratedAlert.alertUuid).isNotEqualTo(existingAlert.alertUuid)
     verify(alertRepository).deleteAll(listOf(existingAlert))
+    verify(alertRepository, times(2)).flush()
   }
 
   @Test
