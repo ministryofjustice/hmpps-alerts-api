@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.15.5"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.15.6"
   kotlin("plugin.spring") version "1.9.23"
   kotlin("plugin.jpa") version "1.9.23"
   jacoco
@@ -13,7 +13,7 @@ dependencies {
   // Spring boot dependencies
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:0.2.2")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:0.2.4")
 
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-core")
@@ -21,7 +21,7 @@ dependencies {
   implementation("io.hypersistence:hypersistence-utils-hibernate-62:3.7.4")
 
   // AWS
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:3.1.2")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:3.1.3")
 
   // OpenAPI
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0")
