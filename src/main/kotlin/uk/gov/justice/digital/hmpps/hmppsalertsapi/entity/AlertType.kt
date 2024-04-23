@@ -27,7 +27,7 @@ data class AlertType(
   var deactivatedBy: String? = null
 
   @OneToMany(mappedBy = "alertType")
-  private val alertCodes: MutableList<AlertCode> = mutableListOf()
+  private val alertCodes: MutableSet<AlertCode> = mutableSetOf()
 
   fun addAlertCode(alertCode: AlertCode): AlertCode {
     alertCodes.add(alertCode)

@@ -22,12 +22,12 @@ import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 @Service
-@Transactional
 class AlertService(
   private val alertRepository: AlertRepository,
   private val alertCodeRepository: AlertCodeRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
 ) {
+  @Transactional
   fun createAlert(request: CreateAlert, context: AlertRequestContext) =
     request.let {
       // Perform database checks first prior to checks that require API calls
@@ -64,6 +64,7 @@ class AlertService(
   fun retrieveAlert(alertUuid: UUID): AlertModel =
     alertRepository.findByAlertUuid(alertUuid)?.toAlertModel() ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
 
+  @Transactional
   fun updateAlert(alertUuid: UUID, request: UpdateAlert, context: AlertRequestContext) =
     alertRepository.findByAlertUuid(alertUuid)?.let {
       alertRepository.saveAndFlush(
@@ -82,6 +83,7 @@ class AlertService(
       ).toAlertModel()
     } ?: throw AlertNotFoundException("Could not find alert with ID $alertUuid")
 
+  @Transactional
   fun deleteAlert(alertUuid: UUID, context: AlertRequestContext) {
     val alert = alertRepository.findByAlertUuid(alertUuid) ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
     with(alert) {
