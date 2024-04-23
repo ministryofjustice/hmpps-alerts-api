@@ -60,7 +60,8 @@ class MigrateAlertsController(
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_NOMIS_ALERTS')")
-  fun createAlert(
+  @Deprecated("Replaced by migrate prisoner alerts")
+  fun migrateAlert(
     @Valid
     @RequestBody
     @Parameter(
