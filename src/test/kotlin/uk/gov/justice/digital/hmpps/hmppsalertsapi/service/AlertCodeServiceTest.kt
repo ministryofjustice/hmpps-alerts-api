@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -20,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepositor
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 @ExtendWith(MockitoExtension::class)
 class AlertCodeServiceTest {
@@ -49,6 +51,20 @@ class AlertCodeServiceTest {
     assertThat(value.createdBy).isEqualTo("USER")
     assertThat(value.code).isEqualTo("A")
     assertThat(value.description).isEqualTo("Alert code A")
+  }
+
+  @Test
+  fun `delete an alert code`() {
+    whenever(alertCodeRepository.findByCode(any())).thenReturn(alertCodeVictim())
+    underTest.deactivateAlertCode(
+      "VI",
+      AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
+    )
+    verify(alertCodeRepository).saveAndFlush(entityCaptor.capture())
+    val value = entityCaptor.firstValue
+    assertThat(value).isNotNull
+    assertThat(value.deactivatedBy).isEqualTo("USER")
+    assertThat(value.deactivatedAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
   }
 
   private fun alertType(alertTypeId: Long = 1, code: String = "A") =

@@ -20,12 +20,24 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.HandlerMethodValidationException
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.servlet.resource.NoResourceFoundException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertCodeNotFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertTypeNotFound
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.ExistingActiveAlertTypeWithCodeException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @RestControllerAdvice
 class HmppsAlertsApiExceptionHandler {
+  @ExceptionHandler(AlertCodeNotFoundException::class)
+  fun handleExistingActiveAlertTypeWithCodeException(e: AlertCodeNotFoundException): ResponseEntity<ErrorResponse> =
+    ResponseEntity
+      .status(404)
+      .body(
+        ErrorResponse(
+          status = NOT_FOUND.value(),
+          userMessage = "Not found: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
 
   @ExceptionHandler(AlertTypeNotFound::class)
   fun handleExistingActiveAlertTypeWithCodeException(e: AlertTypeNotFound): ResponseEntity<ErrorResponse> =

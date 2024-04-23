@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertCodeModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toEntity
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertCodeNotFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertTypeNotFound
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.ExistingActiveAlertTypeWithCodeException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
@@ -26,9 +27,23 @@ class AlertCodeService(
       }
     }
 
-  fun CreateAlertCodeRequest.checkForExistingAlertCode() =
+  private fun CreateAlertCodeRequest.checkForExistingAlertCode() =
     alertCodeRepository.findByCode(code) != null && throw ExistingActiveAlertTypeWithCodeException("Alert code exists with code '$code'")
 
-  fun CreateAlertCodeRequest.checkAlertTypeExists() =
+  private fun CreateAlertCodeRequest.checkAlertTypeExists() =
     alertTypeRepository.findByCode(parent) == null && throw AlertTypeNotFound("Alert type with code $parent could not be found")
+
+  private fun String.checkAlertCodeExists() =
+    alertCodeRepository.findByCode(this) == null && throw AlertCodeNotFoundException("Alert with code $this could not be found")
+
+  fun deactivateAlertCode(alertCode: String, alertRequestContext: AlertRequestContext) {
+    alertCode.let {
+      it.checkAlertCodeExists()
+      alertCodeRepository.findByCode(it)!!.apply {
+        deactivatedAt = alertRequestContext.requestAt
+        deactivatedBy = alertRequestContext.username
+        alertCodeRepository.saveAndFlush(this)
+      }
+    }
+  }
 }
