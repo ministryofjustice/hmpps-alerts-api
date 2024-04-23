@@ -73,3 +73,6 @@ sonar-project.properties
 
 # Macos finder database files
 .DS_Store
+
+#JMeter
+load-test-*
