@@ -22,12 +22,12 @@ import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 @Service
+@Transactional
 class AlertService(
   private val alertRepository: AlertRepository,
   private val alertCodeRepository: AlertCodeRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
 ) {
-  @Transactional
   fun createAlert(request: CreateAlert, context: AlertRequestContext) =
     request.let {
       // Perform database checks first prior to checks that require API calls
@@ -64,7 +64,6 @@ class AlertService(
   fun retrieveAlert(alertUuid: UUID): AlertModel =
     alertRepository.findByAlertUuid(alertUuid)?.toAlertModel() ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
 
-  @Transactional
   fun updateAlert(alertUuid: UUID, request: UpdateAlert, context: AlertRequestContext) =
     alertRepository.findByAlertUuid(alertUuid)?.let {
       alertRepository.saveAndFlush(
@@ -83,7 +82,6 @@ class AlertService(
       ).toAlertModel()
     } ?: throw AlertNotFoundException("Could not find alert with ID $alertUuid")
 
-  @Transactional
   fun deleteAlert(alertUuid: UUID, context: AlertRequestContext) {
     val alert = alertRepository.findByAlertUuid(alertUuid) ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
     with(alert) {
@@ -119,7 +117,12 @@ class AlertService(
         search = search,
       ),
       pageable = pageable,
-    ).map { it.toAlertModel() }
+    ).let { alerts ->
+      val alertIds = alerts.content.map { it.alertId }
+      val comments = alertRepository.findCommentsByAlertIdInOrderByCreatedAtDesc(alertIds).groupBy { it.alert.alertId }
+      val auditEvents = alertRepository.findAuditEventsByAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.alertId }
+      alerts.map { it.toAlertModel(comments[it.alertId] ?: emptyList(), auditEvents[it.alertId]) }
+    }
 
   fun retrieveAuditEventsForAlert(alertUuid: UUID): Collection<AuditEvent> =
     alertRepository.findByAlertUuid(alertUuid)?.let { alert ->
@@ -128,6 +131,9 @@ class AlertService(
 
   fun retrieveAlertsForPrisonNumbers(prisonNumbers: Collection<String>) =
     alertRepository.findByPrisonNumberInOrderByActiveFromDesc(prisonNumbers).let { alerts ->
-      alerts.map { it.toAlertModel() }.groupBy { it.prisonNumber }
+      val alertIds = alerts.map { it.alertId }
+      val comments = alertRepository.findCommentsByAlertIdInOrderByCreatedAtDesc(alertIds).groupBy { it.alert.alertId }
+      val auditEvents = alertRepository.findAuditEventsByAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.alertId }
+      alerts.map { it.toAlertModel(comments[it.alertId] ?: emptyList(), auditEvents[it.alertId]) }.groupBy { it.prisonNumber }
     }
 }

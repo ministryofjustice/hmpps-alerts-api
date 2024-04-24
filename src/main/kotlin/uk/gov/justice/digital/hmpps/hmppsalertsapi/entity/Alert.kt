@@ -34,8 +34,6 @@ import java.util.UUID
   attributeNodes = [
     NamedAttributeNode("alertCode", subgraph = "alertType"),
     NamedAttributeNode("migratedAlert"),
-    NamedAttributeNode("comments"),
-    NamedAttributeNode("auditEvents"),
   ],
   subgraphs = [NamedSubgraph(name = "alertType", attributeNodes = [NamedAttributeNode("alertType")])],
 )
@@ -73,8 +71,8 @@ data class Alert(
 
   fun willBecomeActive() = activeFrom > LocalDate.now()
 
-  @OneToMany(fetch = FetchType.EAGER, mappedBy = "alert", cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE])
-  private val comments: MutableSet<Comment> = mutableSetOf()
+  @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE])
+  private val comments: MutableList<Comment> = mutableListOf()
 
   fun comments() = comments.toList().sortedByDescending { it.createdAt }
 
@@ -96,9 +94,9 @@ data class Alert(
     return commentEntity
   }
 
-  @OneToMany(fetch = FetchType.EAGER, mappedBy = "alert", cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE])
+  @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE])
   @OrderBy("actioned_at DESC")
-  private val auditEvents: MutableSet<AuditEvent> = mutableSetOf()
+  private val auditEvents: MutableList<AuditEvent> = mutableListOf()
 
   fun auditEvents() = auditEvents.toList().sortedByDescending { it.actionedAt }
 
