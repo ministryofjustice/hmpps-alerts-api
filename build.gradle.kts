@@ -2,16 +2,11 @@ plugins {
   id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.15.6"
   kotlin("plugin.spring") version "1.9.23"
   kotlin("plugin.jpa") version "1.9.23"
-  kotlin("plugin.allopen") version "1.9.23"
   jacoco
 }
 
 configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
-}
-
-allOpen {
-  annotations("jakarta.persistence.Entity")
 }
 
 dependencies {
