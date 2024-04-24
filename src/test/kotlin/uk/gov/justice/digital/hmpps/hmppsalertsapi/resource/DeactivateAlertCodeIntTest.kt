@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,7 +21,7 @@ import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
-class DeleteAlertCodeIntTest : IntegrationTestBase() {
+class DeactivateAlertCodeIntTest : IntegrationTestBase() {
 
   @Autowired
   lateinit var alertCodeRepository: AlertCodeRepository
@@ -125,7 +124,7 @@ class DeleteAlertCodeIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should mark alert as deleted`() {
+  fun `should mark alert as deactivated`() {
     val alertCode = createAlertCode()
     val response = webTestClient.deleteAlertCode(alertCode = alertCode.code)
     assertThat(response.status).isEqualTo(HttpStatus.NO_CONTENT)

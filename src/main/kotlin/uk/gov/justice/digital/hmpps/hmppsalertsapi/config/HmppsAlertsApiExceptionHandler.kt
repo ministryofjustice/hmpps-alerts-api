@@ -27,30 +27,6 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @RestControllerAdvice
 class HmppsAlertsApiExceptionHandler {
-  @ExceptionHandler(AlertCodeNotFoundException::class)
-  fun handleExistingActiveAlertTypeWithCodeException(e: AlertCodeNotFoundException): ResponseEntity<ErrorResponse> =
-    ResponseEntity
-      .status(404)
-      .body(
-        ErrorResponse(
-          status = NOT_FOUND.value(),
-          userMessage = "Not found: ${e.message}",
-          developerMessage = e.message,
-        ),
-      )
-
-  @ExceptionHandler(AlertTypeNotFound::class)
-  fun handleExistingActiveAlertTypeWithCodeException(e: AlertTypeNotFound): ResponseEntity<ErrorResponse> =
-    ResponseEntity
-      .status(404)
-      .body(
-        ErrorResponse(
-          status = NOT_FOUND.value(),
-          userMessage = "Not found: ${e.message}",
-          developerMessage = e.message,
-        ),
-      )
-
   @ExceptionHandler(ExistingActiveAlertTypeWithCodeException::class)
   fun handleExistingActiveAlertTypeWithCodeException(e: ExistingActiveAlertTypeWithCodeException): ResponseEntity<ErrorResponse> =
     ResponseEntity
@@ -186,6 +162,30 @@ class HmppsAlertsApiExceptionHandler {
         developerMessage = e.message,
       ),
     ).also { log.info("No resource found exception: {}", e.message) }
+
+  @ExceptionHandler(AlertCodeNotFoundException::class)
+  fun handleAlertCodeNotFoundException(e: AlertCodeNotFoundException): ResponseEntity<ErrorResponse> =
+    ResponseEntity
+      .status(404)
+      .body(
+        ErrorResponse(
+          status = NOT_FOUND.value(),
+          userMessage = "Not found: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
+
+  @ExceptionHandler(AlertTypeNotFound::class)
+  fun handleExistingActiveAlertTypeWithCodeException(e: AlertTypeNotFound): ResponseEntity<ErrorResponse> =
+    ResponseEntity
+      .status(404)
+      .body(
+        ErrorResponse(
+          status = NOT_FOUND.value(),
+          userMessage = "Not found: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
 
   @ExceptionHandler(HttpRequestMethodNotSupportedException::class)
   fun handleHttpRequestMethodNotSupportedException(e: HttpRequestMethodNotSupportedException): ResponseEntity<ErrorResponse> = ResponseEntity

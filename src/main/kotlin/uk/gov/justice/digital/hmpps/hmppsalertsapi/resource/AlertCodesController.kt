@@ -75,8 +75,8 @@ class AlertCodesController(
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
   @DeleteMapping("/{alertCode}")
   @Operation(
-    summary = "Create an alert code",
-    description = "Create a new alert code, typically from the Alerts UI",
+    summary = "Deactivate an alert code",
+    description = "Deactivate an alert code, typically from the Alerts UI",
   )
   @ApiResponses(
     value = [
