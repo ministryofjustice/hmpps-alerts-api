@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Comment
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import java.time.LocalDate
@@ -32,9 +33,9 @@ fun CreateAlert.toAlertEntity(
     createdAt = createdAt,
   ).create(createdAt, createdBy, createdByDisplayName, source, activeCaseLoadId)
 
-fun Alert.toAlertModel(): AlertModel {
-  val createdAuditEvent = createdAuditEvent()
-  val lastModifiedAuditEvent = lastModifiedAuditEvent()
+fun Alert.toAlertModel(comments: Collection<Comment>? = null, auditEvents: Collection<AuditEvent>? = null): AlertModel {
+  val createdAuditEvent = (auditEvents ?: auditEvents()).single { it.action == AuditEventAction.CREATED }
+  val lastModifiedAuditEvent = (auditEvents ?: auditEvents()).firstOrNull { it.action == AuditEventAction.UPDATED }
 
   return AlertModel(
     alertUuid = alertUuid,
@@ -45,7 +46,7 @@ fun Alert.toAlertModel(): AlertModel {
     activeFrom = activeFrom,
     activeTo = activeTo,
     isActive = isActive(),
-    comments = comments().map { it.toAlertCommentModel() },
+    comments = (comments ?: comments()).map { it.toAlertCommentModel() },
     createdAt = createdAuditEvent.actionedAt,
     createdBy = createdAuditEvent.actionedBy,
     createdByDisplayName = createdAuditEvent.actionedByDisplayName,

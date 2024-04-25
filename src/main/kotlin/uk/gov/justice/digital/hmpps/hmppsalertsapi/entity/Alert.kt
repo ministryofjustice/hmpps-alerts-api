@@ -8,12 +8,13 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.NamedAttributeNode
+import jakarta.persistence.NamedEntityGraph
+import jakarta.persistence.NamedSubgraph
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
-import org.hibernate.annotations.Fetch
-import org.hibernate.annotations.FetchMode
 import org.hibernate.annotations.SQLRestriction
 import org.springframework.data.domain.AbstractAggregateRoot
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEvent
@@ -21,7 +22,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDeletedEven
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertUpdatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
-import java.lang.StringBuilder
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -29,6 +29,14 @@ import java.util.UUID
 @Entity
 @Table
 @SQLRestriction("deleted_at IS NULL")
+@NamedEntityGraph(
+  name = "alert",
+  attributeNodes = [
+    NamedAttributeNode("alertCode", subgraph = "alertType"),
+    NamedAttributeNode("migratedAlert"),
+  ],
+  subgraphs = [NamedSubgraph(name = "alertType", attributeNodes = [NamedAttributeNode("alertType")])],
+)
 data class Alert(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,7 +44,7 @@ data class Alert(
 
   val alertUuid: UUID,
 
-  @ManyToOne(fetch = FetchType.EAGER)
+  @ManyToOne
   @JoinColumn(name = "alert_code_id", nullable = false)
   val alertCode: AlertCode,
 
@@ -56,15 +64,14 @@ data class Alert(
 ) : AbstractAggregateRoot<Alert>() {
   var lastModifiedAt: LocalDateTime? = null
 
-  @OneToOne(mappedBy = "alert", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
+  @OneToOne(mappedBy = "alert", cascade = [CascadeType.PERSIST, CascadeType.REMOVE])
   var migratedAlert: MigratedAlert? = null
 
   fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
 
   fun willBecomeActive() = activeFrom > LocalDate.now()
 
-  @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
-  @Fetch(FetchMode.SUBSELECT)
+  @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE])
   private val comments: MutableList<Comment> = mutableListOf()
 
   fun comments() = comments.toList().sortedByDescending { it.createdAt }
@@ -87,8 +94,7 @@ data class Alert(
     return commentEntity
   }
 
-  @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
-  @Fetch(FetchMode.SUBSELECT)
+  @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE])
   @OrderBy("actioned_at DESC")
   private val auditEvents: MutableList<AuditEvent> = mutableListOf()
 

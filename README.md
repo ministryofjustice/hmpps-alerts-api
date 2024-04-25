@@ -17,3 +17,7 @@ For detailed insights into the architectural decisions made during the developme
 For more instructions and general hmpps project setup guidelines:
 - [Running the service locally using run-local.sh](docs/RUNNING_LOCALLY.md).
 
+## Load testing
+
+For guidance in running the load test suite against local and deployed environments:
+- [Running the load tests](docs/LOAD_TESTING.md)
