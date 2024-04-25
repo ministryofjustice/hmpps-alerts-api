@@ -36,6 +36,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AuditEventRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.CommentRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
 import java.time.LocalDate
@@ -49,6 +51,12 @@ class AlertServiceTest {
 
   @Mock
   lateinit var alertRepository: AlertRepository
+
+  @Mock
+  lateinit var commentRepository: CommentRepository
+
+  @Mock
+  lateinit var auditEventRepository: AuditEventRepository
 
   @Mock
   lateinit var mockAlertCode: AlertCode
