@@ -5,6 +5,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertTypeModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertTypeModels
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toEntity
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertTypeNotFound
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.ExistingActiveAlertTypeWithCodeException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
@@ -23,6 +24,19 @@ class AlertTypeService(
       alertTypeRepository.saveAndFlush(it.toEntity(context)).toAlertTypeModel(false)
     }
 
+  fun deactivateAlertType(alertType: String, alertRequestContext: AlertRequestContext) =
+    alertType.let {
+      it.checkAlertTypeExists()
+      alertTypeRepository.findByCode(it)!!.apply {
+        deactivatedAt = alertRequestContext.requestAt
+        deactivatedBy = alertRequestContext.username
+        alertTypeRepository.saveAndFlush(this)
+      }
+    }
+
   fun CreateAlertTypeRequest.checkForExistingAlertType() =
     alertTypeRepository.findByCode(code) != null && throw ExistingActiveAlertTypeWithCodeException("Alert type exists with code '$code'")
+
+  private fun String.checkAlertTypeExists() =
+    alertTypeRepository.findByCode(this) == null && throw AlertTypeNotFound("Alert type with code $this could not be found")
 }
