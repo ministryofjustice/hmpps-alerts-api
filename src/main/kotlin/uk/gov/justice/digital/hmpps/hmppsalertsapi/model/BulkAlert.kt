@@ -9,12 +9,12 @@ import java.util.UUID
 @Schema(
   description = "A set of alerts created in bulk. Contains detailed information of the result of a bulk alert creation request.",
 )
-data class BulkAlerts(
+data class BulkAlert(
   @Schema(
     description = "The unique identifier assigned to the alerts created in bulk",
     example = "b49053d8-3f29-4b1e-a9c5-15bde8c6e6cf",
   )
-  val bulkAlertsUuid: UUID,
+  val bulkAlertUuid: UUID,
 
   @Schema(
     description = "The original request body used to create alerts for multiple people in bulk",
@@ -61,24 +61,24 @@ data class BulkAlerts(
   @Schema(
     description = "Collection of new alerts that were created in bulk",
   )
-  val alertsCreated: Collection<BulkAlert>,
+  val alertsCreated: Collection<BulkAlertAlert>,
 
   @Schema(
     description = "Collection of existing alerts that were updated as a result of the bulk alert creation request. " +
       "The message for updated alerts will contain what was updated for example changing the active from date.",
   )
-  val alertsUpdated: Collection<BulkAlert>,
+  val alertsUpdated: Collection<BulkAlertAlert>,
 
   @Schema(
     description = "Collection of existing alerts that were made inactive as a result of the bulk alert creation request",
   )
-  val alertsExpired: Collection<BulkAlert>,
+  val alertsExpired: Collection<BulkAlertAlert>,
 )
 
 @Schema(
   description = "Summary information of an alert affected by a bulk alert creation request",
 )
-data class BulkAlert(
+data class BulkAlertAlert(
   @Schema(
     description = "The unique identifier assigned to the alert",
     example = "8cdadcf3-b003-4116-9956-c99bd8df6a00",
