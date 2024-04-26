@@ -141,7 +141,7 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should publish alert deleted event with NOMIS source`() {
+  fun `should publish alert deactivated event with NOMIS source`() {
     val alert = createAlertCode("DEF")
 
     webTestClient.deleteAlertCode(alert.code)

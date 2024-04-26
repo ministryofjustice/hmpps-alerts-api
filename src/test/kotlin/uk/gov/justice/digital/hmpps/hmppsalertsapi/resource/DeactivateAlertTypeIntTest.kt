@@ -139,7 +139,7 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should publish alert types deleted event with NOMIS source`() {
+  fun `should publish alert types deactivated event with NOMIS source`() {
     val request = createAlertTypeRequest("DEF")
     val alert = createAlertType(request)
     webTestClient.deleteAlertType(alert.code)
