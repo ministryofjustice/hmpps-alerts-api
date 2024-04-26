@@ -2,12 +2,19 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.awaitility.kotlin.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.ReferenceDataAdditionalInformation
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
@@ -124,13 +131,41 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should mark alert as deactivated`() {
-    val alertCode = createAlertCode()
+  fun `should mark alert code as deactivated`() {
+    val alertCode = createAlertCode("HJK")
     val response = webTestClient.deleteAlertCode(alertCode = alertCode.code)
     assertThat(response.status).isEqualTo(HttpStatus.NO_CONTENT)
     val entity = alertCodeRepository.findByCode(alertCode.code)
     assertThat(entity!!.deactivatedAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
     assertThat(entity.deactivatedBy).isEqualTo(TEST_USER)
+  }
+
+  @Test
+  fun `should publish alert deleted event with NOMIS source`() {
+    val alert = createAlertCode("DEF")
+
+    webTestClient.deleteAlertCode(alert.code)
+
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+
+    assertThat(createAlertEvent.eventType).isEqualTo(DomainEventType.ALERT_CODE_CREATED.eventType)
+    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(deleteAlertEvent.additionalInformation.identifier())
+    assertThat(deleteAlertEvent).isEqualTo(
+      AlertDomainEvent(
+        DomainEventType.ALERT_CODE_DEACTIVATED.eventType,
+        ReferenceDataAdditionalInformation(
+          "http://localhost:8080/alert-codes/${alert.code}",
+          alert.code,
+          Source.DPS,
+        ),
+        1,
+        DomainEventType.ALERT_CODE_DEACTIVATED.description,
+        deleteAlertEvent.occurredAt,
+      ),
+    )
+    assertThat(deleteAlertEvent.occurredAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
   }
 
   private fun createAlertCodeRequest(
@@ -139,8 +174,8 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
   ) =
     CreateAlertCodeRequest(alertCode, "description", alertType)
 
-  private fun createAlertCode(): AlertCode {
-    val request = createAlertCodeRequest(alertCode = "ABC")
+  private fun createAlertCode(alertCode: String = "ABC"): AlertCode {
+    val request = createAlertCodeRequest(alertCode = alertCode)
     return webTestClient.post()
       .uri("/alert-codes")
       .bodyValue(request)

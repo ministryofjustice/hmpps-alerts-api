@@ -2,12 +2,19 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.awaitility.kotlin.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.ReferenceDataAdditionalInformation
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
@@ -131,11 +138,37 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
     assertThat(entity.deactivatedBy).isEqualTo(TEST_USER)
   }
 
-  private fun createAlertTypeRequest() =
-    CreateAlertTypeRequest("ABC", "description")
+  @Test
+  fun `should publish alert types deleted event with NOMIS source`() {
+    val request = createAlertTypeRequest("DEF")
+    val alert = createAlertType(request)
+    webTestClient.deleteAlertType(alert.code)
 
-  private fun createAlertType(): AlertType {
-    val request = createAlertTypeRequest()
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+
+    assertThat(createAlertEvent.eventType).isEqualTo(DomainEventType.ALERT_TYPE_CREATED.eventType)
+    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(deleteAlertEvent.additionalInformation.identifier())
+    assertThat(deleteAlertEvent).isEqualTo(
+      AlertDomainEvent(
+        DomainEventType.ALERT_TYPE_DEACTIVATED.eventType,
+        ReferenceDataAdditionalInformation(
+          "http://localhost:8080/alert-types/${alert.code}",
+          alert.code,
+          Source.DPS,
+        ),
+        1,
+        DomainEventType.ALERT_TYPE_DEACTIVATED.description,
+        deleteAlertEvent.occurredAt,
+      ),
+    )
+    assertThat(deleteAlertEvent.occurredAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+  }
+  private fun createAlertTypeRequest(code: String = "ABC") =
+    CreateAlertTypeRequest(code, "description")
+
+  private fun createAlertType(request: CreateAlertTypeRequest = createAlertTypeRequest()): AlertType {
     return webTestClient.post()
       .uri("/alert-types")
       .bodyValue(request)

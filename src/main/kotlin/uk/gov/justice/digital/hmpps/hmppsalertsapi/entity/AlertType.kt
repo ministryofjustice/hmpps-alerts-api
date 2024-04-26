@@ -6,6 +6,10 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import org.springframework.data.domain.AbstractAggregateRoot
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertTypeCreatedEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertTypeDeactivatedEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertTypeUpdatedEvent
 import java.time.LocalDateTime
 
 @Entity
@@ -20,7 +24,7 @@ data class AlertType(
   var listSequence: Int,
   val createdAt: LocalDateTime,
   val createdBy: String,
-) {
+) : AbstractAggregateRoot<AlertType>() {
   var modifiedAt: LocalDateTime? = null
   var modifiedBy: String? = null
   var deactivatedAt: LocalDateTime? = null
@@ -37,4 +41,22 @@ data class AlertType(
   fun alertCodes(includeInactive: Boolean) = alertCodes.filter { includeInactive || it.isActive() }.toList()
 
   fun isActive() = deactivatedAt?.isBefore(LocalDateTime.now()) != true
+
+  fun create(): AlertType = this.also {
+    registerEvent(
+      AlertTypeCreatedEvent(code, createdAt),
+    )
+  }
+
+  fun deactivate(): AlertType = this.also {
+    registerEvent(
+      AlertTypeDeactivatedEvent(code, deactivatedAt!!),
+    )
+  }
+
+  fun update(): AlertType = this.also {
+    registerEvent(
+      AlertTypeUpdatedEvent(code, modifiedAt!!),
+    )
+  }
 }

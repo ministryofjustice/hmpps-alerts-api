@@ -5,6 +5,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.A
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -104,4 +105,89 @@ data class AlertDeletedEvent(
 
   override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
     toDomainEvent(ALERT_DELETED, baseUrl)
+}
+
+abstract class AlertCodeEvent {
+  abstract val alertCode: String
+  abstract val occurredAt: LocalDateTime
+
+  abstract fun toDomainEvent(baseUrl: String): AlertDomainEvent
+
+  protected fun toDomainEvent(type: DomainEventType, baseUrl: String): AlertDomainEvent =
+    AlertDomainEvent(
+      eventType = type.eventType,
+      additionalInformation = ReferenceDataAdditionalInformation(
+        url = "$baseUrl/alert-codes/$alertCode",
+        alertCode = alertCode,
+        source = DPS,
+      ),
+      description = type.description,
+      occurredAt = occurredAt,
+    )
+}
+
+data class AlertCodeCreatedEvent(
+  override val alertCode: String,
+  override val occurredAt: LocalDateTime,
+
+) : AlertCodeEvent() {
+  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
+    toDomainEvent(DomainEventType.ALERT_CODE_CREATED, baseUrl)
+}
+
+data class AlertCodeDeactivatedEvent(
+  override val alertCode: String,
+  override val occurredAt: LocalDateTime,
+) : AlertCodeEvent() {
+  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
+    toDomainEvent(DomainEventType.ALERT_CODE_DEACTIVATED, baseUrl)
+}
+data class AlertCodeUpdatedEvent(
+  override val alertCode: String,
+  override val occurredAt: LocalDateTime,
+) : AlertCodeEvent() {
+  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
+    toDomainEvent(DomainEventType.ALERT_CODE_UPDATED, baseUrl)
+}
+
+abstract class AlertTypeEvent {
+  abstract val alertCode: String
+  abstract val occurredAt: LocalDateTime
+
+  abstract fun toDomainEvent(baseUrl: String): AlertDomainEvent
+
+  protected fun toDomainEvent(type: DomainEventType, baseUrl: String): AlertDomainEvent =
+    AlertDomainEvent(
+      eventType = type.eventType,
+      additionalInformation = ReferenceDataAdditionalInformation(
+        url = "$baseUrl/alert-types/$alertCode",
+        alertCode = alertCode,
+        source = DPS,
+      ),
+      description = type.description,
+      occurredAt = occurredAt,
+    )
+}
+
+data class AlertTypeCreatedEvent(
+  override val alertCode: String,
+  override val occurredAt: LocalDateTime,
+) : AlertTypeEvent() {
+  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
+    toDomainEvent(DomainEventType.ALERT_TYPE_CREATED, baseUrl)
+}
+
+data class AlertTypeDeactivatedEvent(
+  override val alertCode: String,
+  override val occurredAt: LocalDateTime,
+) : AlertTypeEvent() {
+  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
+    toDomainEvent(DomainEventType.ALERT_TYPE_DEACTIVATED, baseUrl)
+}
+data class AlertTypeUpdatedEvent(
+  override val alertCode: String,
+  override val occurredAt: LocalDateTime,
+) : AlertTypeEvent() {
+  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
+    toDomainEvent(DomainEventType.ALERT_TYPE_UPDATED, baseUrl)
 }

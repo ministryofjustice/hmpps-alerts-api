@@ -2,12 +2,19 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
+import org.awaitility.kotlin.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.ReferenceDataAdditionalInformation
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
@@ -396,6 +403,29 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     }
   }
 
+  @Test
+  fun `should publish alert code created event with DPS source`() {
+    val request = createAlertCodeRequest()
+
+    val alert = webTestClient.createAlertCode(request = request)
+
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+
+    assertThat(event).isEqualTo(
+      AlertDomainEvent(
+        DomainEventType.ALERT_CODE_CREATED.eventType,
+        ReferenceDataAdditionalInformation(
+          "http://localhost:8080/alert-codes/${request.code}",
+          request.code,
+          Source.DPS,
+        ),
+        1,
+        DomainEventType.ALERT_CODE_CREATED.description,
+        alert.createdAt.withNano(event.occurredAt.nano),
+      ),
+    )
+  }
   private fun createAlertCodeRequest() = CreateAlertCodeRequest("CO", "Description", alertTypeVulnerability().code)
 
   private fun WebTestClient.createAlertCodeResponseSpec(

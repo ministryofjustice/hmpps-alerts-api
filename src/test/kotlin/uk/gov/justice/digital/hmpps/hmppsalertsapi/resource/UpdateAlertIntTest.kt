@@ -443,7 +443,7 @@ Comment '$appendComment' was added
     val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
-    assertThat(createAlertEvent.additionalInformation.alertUuid).isEqualTo(updateAlertEvent.additionalInformation.alertUuid)
+    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(updateAlertEvent.additionalInformation.identifier())
     assertThat(updateAlertEvent).isEqualTo(
       AlertDomainEvent(
         ALERT_UPDATED.eventType,
@@ -473,7 +473,7 @@ Comment '$appendComment' was added
     val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
-    assertThat(createAlertEvent.additionalInformation.alertUuid).isEqualTo(updateAlertEvent.additionalInformation.alertUuid)
+    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(updateAlertEvent.additionalInformation.identifier())
     assertThat(updateAlertEvent).isEqualTo(
       AlertDomainEvent(
         ALERT_UPDATED.eventType,

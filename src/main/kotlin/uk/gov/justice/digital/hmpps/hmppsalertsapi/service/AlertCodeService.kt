@@ -23,7 +23,11 @@ class AlertCodeService(
       it.checkForExistingAlertCode()
       it.checkAlertTypeExists()
       alertTypeRepository.findByCode(it.parent).let { alertType ->
-        alertCodeRepository.saveAndFlush(it.toEntity(context, alertType!!)).toAlertCodeModel()
+        val entity = it.toEntity(context, alertType!!)
+        with(entity) {
+          val toSave = create()
+          alertCodeRepository.saveAndFlush(toSave).toAlertCodeModel()
+        }
       }
     }
 
@@ -40,9 +44,12 @@ class AlertCodeService(
     alertCode.let {
       it.checkAlertCodeExists()
       alertCodeRepository.findByCode(it)!!.apply {
-        deactivatedAt = alertRequestContext.requestAt
-        deactivatedBy = alertRequestContext.username
-        alertCodeRepository.saveAndFlush(this)
+        with(this) {
+          deactivatedAt = alertRequestContext.requestAt
+          deactivatedBy = alertRequestContext.username
+          deactivate()
+          alertCodeRepository.saveAndFlush(this)
+        }
       }
     }
   }
