@@ -133,6 +133,48 @@ class UpdateAlertTypeDescriptionIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `400 bad request - empty description`() {
+    val alertType = createAlertType("ASDF")
+    val response = webTestClient.put()
+      .uri("/alert-types/ASDF/description")
+      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
+      .bodyValue(UpdateAlertTypeDescriptionRequest(""))
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).contains("Description must be between 1 & 40 characters")
+      assertThat(developerMessage).contains("Description must be between 1 & 40 characters")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - description too long`() {
+    val alertType = createAlertType("GHJK")
+    val response = webTestClient.put()
+      .uri("/alert-types/GHJK/description")
+      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
+      .bodyValue(UpdateAlertTypeDescriptionRequest("descdescdescdescdescdescdescdescdescdescd"))
+      .exchange()
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).contains("Description must be between 1 & 40 characters")
+      assertThat(developerMessage).contains("Description must be between 1 & 40 characters")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
   fun `should update alert type description`() {
     val alertType = createAlertType("QWERTY")
     val response = webTestClient.updateAlertTypeDescription(alertType.code, "New Description Value")
