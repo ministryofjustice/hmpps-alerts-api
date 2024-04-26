@@ -1,6 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
+import org.awaitility.kotlin.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -10,25 +15,46 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.alertCodeDescriptionMap
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_THROW_EXCEPTION
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.BulkAlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.bulkCreateAlertRequest
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert as BulkAlertModel
 
 class BulkAlertsIntTest : IntegrationTestBase() {
   @Autowired
   lateinit var alertRepository: AlertRepository
+
+  @Autowired
+  lateinit var alertCodeRepository: AlertCodeRepository
+
+  @Autowired
+  lateinit var bulkAlertRepository: BulkAlertRepository
 
   @Test
   fun `401 unauthorised`() {
@@ -244,17 +270,110 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     }
   }
 
-  private fun WebTestClient.bulkCreateAlertResponseSpec(
-    source: Source = DPS,
-    request: BulkCreateAlerts,
-  ) =
+  @Test
+  fun `creates new alert`() {
+    val request = bulkCreateAlertRequest()
+
+    val response = webTestClient.bulkCreateAlert(request)
+
+    val createdAlert = response.alertsCreated.single()
+    val alert = alertRepository.findByAlertUuid(createdAlert.alertUuid)!!
+    val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
+
+    assertThat(alert).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+      Alert(
+        alertId = 1,
+        alertUuid = createdAlert.alertUuid,
+        alertCode = alertCode,
+        prisonNumber = PRISON_NUMBER,
+        description = alertCodeDescriptionMap[request.alertCode],
+        authorisedBy = null,
+        activeFrom = LocalDate.now(),
+        activeTo = null,
+        createdAt = alert.createdAt,
+      ),
+    )
+    with(alert.auditEvents().single()) {
+      assertThat(auditEventId).isEqualTo(1)
+      assertThat(action).isEqualTo(CREATED)
+      assertThat(description).isEqualTo("Alert created")
+      assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+      assertThat(actionedAt).isEqualTo(alert.createdAt)
+      assertThat(actionedBy).isEqualTo(TEST_USER)
+      assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+      assertThat(source).isEqualTo(DPS)
+      assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
+    }
+  }
+
+  @Test
+  fun `stores and returns bulk alert with created alert`() {
+    val request = bulkCreateAlertRequest()
+
+    val response = webTestClient.bulkCreateAlert(request)
+
+    val bulkAlert = bulkAlertRepository.findByBulkAlertUuid(response.bulkAlertUuid)!!
+
+    assertThat(response).isEqualTo(
+      BulkAlertModel(
+        bulkAlertUuid = bulkAlert.bulkAlertUuid,
+        request = objectMapper.treeToValue<BulkCreateAlerts>(bulkAlert.request),
+        requestedAt = bulkAlert.requestedAt.withNano(0),
+        requestedBy = bulkAlert.requestedBy,
+        requestedByDisplayName = bulkAlert.requestedByDisplayName,
+        completedAt = bulkAlert.completedAt.withNano(0),
+        successful = bulkAlert.successful,
+        messages = objectMapper.treeToValue<List<String>>(bulkAlert.messages),
+        alertsCreated = objectMapper.treeToValue<List<BulkAlertAlert>>(bulkAlert.alertsCreated),
+        alertsUpdated = objectMapper.treeToValue<List<BulkAlertAlert>>(bulkAlert.alertsUpdated),
+        alertsExpired = objectMapper.treeToValue<List<BulkAlertAlert>>(bulkAlert.alertsExpired),
+      ),
+    )
+    assertThat(objectMapper.treeToValue<BulkCreateAlerts>(bulkAlert.request)).isEqualTo(request)
+  }
+
+  @Test
+  fun `publishes alert created event`() {
+    val request = bulkCreateAlertRequest()
+
+    val response = webTestClient.bulkCreateAlert(request)
+
+    val alert = alertRepository.findByAlertUuid(response.alertsCreated.single().alertUuid)!!
+
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+
+    assertThat(event).isEqualTo(
+      AlertDomainEvent(
+        ALERT_CREATED.eventType,
+        AlertAdditionalInformation(
+          "http://localhost:8080/alerts/${alert.alertUuid}",
+          alert.alertUuid,
+          alert.prisonNumber,
+          request.alertCode,
+          DPS,
+        ),
+        1,
+        ALERT_CREATED.description,
+        alert.createdAt.withNano(event.occurredAt.nano),
+      ),
+    )
+  }
+
+  private fun WebTestClient.bulkCreateAlertResponseSpec(request: BulkCreateAlerts) =
     post()
       .uri("/bulk-alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
-      .headers(setAlertRequestContext(source = source))
+      .headers(setAlertRequestContext(source = DPS))
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
+
+  private fun WebTestClient.bulkCreateAlert(request: BulkCreateAlerts) =
+    bulkCreateAlertResponseSpec(request)
+      .expectStatus().isCreated
+      .expectBody(BulkAlertModel::class.java)
+      .returnResult().responseBody!!
 
   private fun createAlertRequest() =
     CreateAlert(

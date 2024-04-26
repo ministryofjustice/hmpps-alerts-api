@@ -1,22 +1,27 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toBulkAlertAlertModel
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toEntity
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.BulkAlertRepository
-import java.time.LocalDateTime
-import java.util.UUID
 
 @Service
 @Transactional
 class BulkAlertService(
-  private val bulkAlertRepository: BulkAlertRepository,
+  private val alertRepository: AlertRepository,
   private val alertCodeRepository: AlertCodeRepository,
+  private val bulkAlertRepository: BulkAlertRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
+  private val objectMapper: ObjectMapper,
 ) {
   fun bulkCreateAlerts(request: BulkCreateAlerts, context: AlertRequestContext) =
     request.let {
@@ -26,30 +31,31 @@ class BulkAlertService(
       // Uses API call
       it.validatePrisonNumbers()
 
-      /*bulkAlertRepository.saveAndFlush(
-        it.toAlertEntity(
-          alertCode = alertCode,
-          createdAt = context.requestAt,
-          createdBy = context.username,
-          createdByDisplayName = context.userDisplayName,
-          source = context.source,
-          activeCaseLoadId = context.activeCaseLoadId,
-        ),
-      ).toAlertModel()*/
+      val alertsCreated = alertRepository.saveAllAndFlush(
+        it.prisonNumbers.map { prisonNumber ->
+          it.toAlertEntity(
+            alertCode = alertCode,
+            prisonNumber = prisonNumber,
+            createdAt = context.requestAt,
+            createdBy = context.username,
+            createdByDisplayName = context.userDisplayName,
+            source = context.source,
+            activeCaseLoadId = context.activeCaseLoadId,
+          )
+        },
+      ).map { alert -> alert.toBulkAlertAlertModel() }
 
-      BulkAlert(
-        bulkAlertUuid = UUID.randomUUID(),
-        request = request,
-        requestedAt = context.requestAt,
-        requestedBy = context.username,
-        requestedByDisplayName = context.userDisplayName,
-        completedAt = LocalDateTime.now(),
-        successful = true,
-        messages = emptyList(),
-        alertsCreated = emptyList(),
-        alertsUpdated = emptyList(),
-        alertsExpired = emptyList(),
-      )
+      bulkAlertRepository.saveAndFlush(
+        it.toEntity(
+          objectMapper = objectMapper,
+          requestedAt = context.requestAt,
+          requestedBy = context.username,
+          requestedByDisplayName = context.userDisplayName,
+          alertsCreated = alertsCreated,
+          alertsUpdated = emptyList(),
+          alertsExpired = emptyList(),
+        ),
+      ).toModel(objectMapper)
     }
 
   private fun BulkCreateAlerts.getAlertCode() =
