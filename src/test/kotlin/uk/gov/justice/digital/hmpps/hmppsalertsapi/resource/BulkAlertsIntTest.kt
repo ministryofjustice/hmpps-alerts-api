@@ -6,6 +6,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL
@@ -13,9 +14,13 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_THROW_EXCEPTION
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.bulkCreateAlertRequest
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
@@ -39,6 +44,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       .uri("/bulk-alerts")
       .bodyValue(bulkCreateAlertRequest())
       .headers(setAuthorisation())
+      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
   }
@@ -49,6 +55,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       .uri("/bulk-alerts")
       .bodyValue(bulkCreateAlertRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
   }
@@ -58,6 +65,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/bulk-alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
@@ -95,6 +103,143 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       assertThat(userMessage).isEqualTo("Validation failure(s): $expectedUserMessage")
       assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.BulkAlertsController.bulkCreateAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts,jakarta.servlet.http.HttpServletRequest): [Field error in object 'bulkCreateAlerts' on field ")
       assertThat(developerMessage).contains(expectedUserMessage)
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - multiple property errors`() {
+    val request = bulkCreateAlertRequest().copy(prisonNumbers = emptyList(), alertCode = "")
+
+    val response = webTestClient.bulkCreateAlertResponseSpec(request = request)
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo(
+        "Validation failure(s): Alert code must be supplied and be <= 12 characters\n" +
+          "At least one prison number must be supplied",
+      )
+      assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.BulkAlertsController.bulkCreateAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts,jakarta.servlet.http.HttpServletRequest) with 2 errors:")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - alert codes not found`() {
+    val request = bulkCreateAlertRequest().copy(alertCode = "NOT_FOUND")
+
+    val response = webTestClient.bulkCreateAlertResponseSpec(request = request)
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: Alert code 'NOT_FOUND' not found")
+      assertThat(developerMessage).isEqualTo("Alert code 'NOT_FOUND' not found")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - alert code is inactive`() {
+    val request = bulkCreateAlertRequest().copy(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
+
+    val response = webTestClient.bulkCreateAlertResponseSpec(request = request)
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: Alert code '${request.alertCode}' is inactive")
+      assertThat(developerMessage).isEqualTo("Alert code '${request.alertCode}' is inactive")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `400 bad request - prisoner not found`() {
+    val request = bulkCreateAlertRequest().copy(prisonNumbers = listOf(PRISON_NUMBER_NOT_FOUND))
+
+    val response = webTestClient.bulkCreateAlertResponseSpec(request = request)
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: Prison number(s) '$PRISON_NUMBER_NOT_FOUND' not found")
+      assertThat(developerMessage).isEqualTo("Prison number(s) '$PRISON_NUMBER_NOT_FOUND' not found")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `405 method not allowed`() {
+    val response = webTestClient.patch()
+      .uri("/bulk-alerts")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAlertRequestContext())
+      .exchange()
+      .expectStatus().isEqualTo(HttpStatus.METHOD_NOT_ALLOWED)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(405)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Method not allowed failure: Request method 'PATCH' is not supported")
+      assertThat(developerMessage).isEqualTo("Request method 'PATCH' is not supported")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `502 bad gateway - get user details request failed`() {
+    val response = webTestClient.post()
+      .uri("/bulk-alerts")
+      .bodyValue(bulkCreateAlertRequest())
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAlertRequestContext(username = USER_THROW_EXCEPTION))
+      .exchange()
+      .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(502)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Downstream service exception: Get user details request failed")
+      assertThat(developerMessage).isEqualTo("Get user details request failed")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `502 bad gateway - get prisoner request failed`() {
+    val response = webTestClient.post()
+      .uri("/bulk-alerts")
+      .bodyValue(bulkCreateAlertRequest().copy(prisonNumbers = listOf(PRISON_NUMBER_THROW_EXCEPTION)))
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAlertRequestContext())
+      .exchange()
+      .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(502)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Downstream service exception: Get prisoner request failed")
+      assertThat(developerMessage).isEqualTo("Get prisoner request failed")
       assertThat(moreInfo).isNull()
     }
   }

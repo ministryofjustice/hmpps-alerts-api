@@ -29,7 +29,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.ManageUs
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PrisonerSearchExtension
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SYNC_SUPPRESS_EVENTS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
@@ -76,12 +75,6 @@ abstract class IntegrationTestBase {
   ): (HttpHeaders) -> Unit = {
     it.set(SOURCE, source?.name)
     it.set(USERNAME, username)
-  }
-
-  internal fun setSyncContext(
-    suppressEvents: Boolean = false,
-  ): (HttpHeaders) -> Unit = {
-    it.set(SYNC_SUPPRESS_EVENTS, suppressEvents.toString())
   }
 
   internal fun HmppsQueue.countAllMessagesOnQueue() =

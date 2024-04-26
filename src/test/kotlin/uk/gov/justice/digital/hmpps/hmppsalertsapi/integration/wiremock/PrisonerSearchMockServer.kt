@@ -5,13 +5,16 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
+import com.github.tomakehurst.wiremock.client.WireMock.equalToJson
 import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.post
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerNumbersDto
 import java.time.LocalDate
 
 internal const val PRISON_NUMBER = "A1234AA"
@@ -32,7 +35,7 @@ class PrisonerSearchServer : WireMockServer(8112) {
     )
   }
 
-  fun stubGetPrisonerDetails(prisonNumber: String = PRISON_NUMBER): StubMapping =
+  fun stubGetPrisoner(prisonNumber: String = PRISON_NUMBER): StubMapping =
     stubFor(
       get("/prisoner/$prisonNumber")
         .willReturn(
@@ -43,9 +46,9 @@ class PrisonerSearchServer : WireMockServer(8112) {
                 PrisonerDto(
                   prisonerNumber = prisonNumber,
                   bookingId = 1234,
-                  "Prisoner",
+                  "First",
                   "Middle",
-                  "lastName",
+                  "Last",
                   LocalDate.of(1988, 4, 3),
                 ),
               ),
@@ -54,8 +57,52 @@ class PrisonerSearchServer : WireMockServer(8112) {
         ),
     )
 
-  fun stubGetPrisonerDetailsException(prisonNumber: String = PRISON_NUMBER_THROW_EXCEPTION): StubMapping =
+  fun stubGetPrisonerException(prisonNumber: String = PRISON_NUMBER_THROW_EXCEPTION): StubMapping =
     stubFor(get("/prisoner/$prisonNumber").willReturn(aResponse().withStatus(500)))
+
+  fun stubGetPrisoners(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER)): StubMapping =
+    stubFor(
+      post("/prisoner-search/prisoner-numbers")
+        .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(
+              mapper.writeValueAsString(
+                prisonNumbers.mapIndexed { index, prisonNumber ->
+                  PrisonerDto(
+                    prisonerNumber = prisonNumber,
+                    bookingId = index + 1L,
+                    "First$index",
+                    "Middle",
+                    "Last$index",
+                    LocalDate.of(1988, 4, 3).plusDays(index.toLong()),
+                  )
+                },
+              ),
+            )
+            .withStatus(200),
+        ),
+    )
+
+  fun stubGetPrisonersNotFound(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER_NOT_FOUND)): StubMapping =
+    stubFor(
+      post("/prisoner-search/prisoner-numbers")
+        .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(mapper.writeValueAsString(emptyList<PrisonerDto>()))
+            .withStatus(200),
+        ),
+    )
+
+  fun stubGetPrisonersException(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER_THROW_EXCEPTION)): StubMapping =
+    stubFor(
+      post("/prisoner-search/prisoner-numbers")
+        .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
+        .willReturn(aResponse().withStatus(500)),
+    )
 }
 
 class PrisonerSearchExtension : BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
@@ -66,13 +113,15 @@ class PrisonerSearchExtension : BeforeAllCallback, AfterAllCallback, BeforeEachC
 
   override fun beforeAll(context: ExtensionContext) {
     prisonerSearch.start()
-    prisonerSearch.stubGetPrisonerDetails()
-    prisonerSearch.stubGetPrisonerDetailsException()
   }
 
   override fun beforeEach(context: ExtensionContext) {
     prisonerSearch.resetRequests()
-    prisonerSearch.stubGetPrisonerDetails()
+    prisonerSearch.stubGetPrisoner()
+    prisonerSearch.stubGetPrisonerException()
+    prisonerSearch.stubGetPrisoners()
+    prisonerSearch.stubGetPrisonersNotFound()
+    prisonerSearch.stubGetPrisonersException()
   }
 
   override fun afterAll(context: ExtensionContext) {

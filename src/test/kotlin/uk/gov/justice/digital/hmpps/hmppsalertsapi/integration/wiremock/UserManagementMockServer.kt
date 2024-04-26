@@ -71,13 +71,12 @@ class ManageUsersExtension : BeforeAllCallback, AfterAllCallback, BeforeEachCall
 
   override fun beforeAll(context: ExtensionContext) {
     manageUsers.start()
-    manageUsers.stubGetUserDetails()
-    manageUsers.stubGetUserDetailsException()
   }
 
   override fun beforeEach(context: ExtensionContext) {
     manageUsers.resetRequests()
     manageUsers.stubGetUserDetails()
+    manageUsers.stubGetUserDetailsException()
   }
 
   override fun afterAll(context: ExtensionContext) {

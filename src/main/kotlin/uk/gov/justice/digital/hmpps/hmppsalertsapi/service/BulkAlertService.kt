@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
@@ -15,6 +16,7 @@ import java.util.UUID
 class BulkAlertService(
   private val bulkAlertRepository: BulkAlertRepository,
   private val alertCodeRepository: AlertCodeRepository,
+  private val prisonerSearchClient: PrisonerSearchClient,
 ) {
   fun bulkCreateAlerts(request: BulkCreateAlerts, context: AlertRequestContext) =
     request.let {
@@ -22,7 +24,7 @@ class BulkAlertService(
       val alertCode = it.getAlertCode()
 
       // Uses API call
-      // it.validatePrisonNumbers()
+      it.validatePrisonNumbers()
 
       /*bulkAlertRepository.saveAndFlush(
         it.toAlertEntity(
@@ -54,4 +56,11 @@ class BulkAlertService(
     alertCodeRepository.findByCode(alertCode)?.also {
       require(it.isActive()) { "Alert code '$alertCode' is inactive" }
     } ?: throw IllegalArgumentException("Alert code '$alertCode' not found")
+
+  private fun BulkCreateAlerts.validatePrisonNumbers() =
+    prisonerSearchClient.getPrisoners(prisonNumbers).associateBy { it.prisonerNumber }.also { prisoners ->
+      prisonNumbers.filterNot { prisoners.containsKey(it) }.also {
+        require(it.isEmpty()) { "Prison number(s) '${it.joinToString("', '")}' not found" }
+      }
+    }
 }

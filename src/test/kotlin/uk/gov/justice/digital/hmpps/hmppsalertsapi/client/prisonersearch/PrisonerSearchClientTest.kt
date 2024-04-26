@@ -28,7 +28,7 @@ class PrisonerSearchClientTest {
 
   @Test
   fun `getPrisoner - success`() {
-    server.stubGetPrisonerDetails()
+    server.stubGetPrisoner()
 
     val result = client.getPrisoner(PRISON_NUMBER)
 
@@ -36,9 +36,9 @@ class PrisonerSearchClientTest {
       PrisonerDto(
         prisonerNumber = PRISON_NUMBER,
         bookingId = 1234,
-        "Prisoner",
+        "First",
         "Middle",
-        "lastName",
+        "Last",
         LocalDate.of(1988, 4, 3),
       ),
     )
@@ -53,7 +53,7 @@ class PrisonerSearchClientTest {
 
   @Test
   fun `getPrisoner - downstream service exception`() {
-    server.stubGetPrisonerDetailsException()
+    server.stubGetPrisonerException()
 
     val exception = assertThrows<DownstreamServiceException> { client.getPrisoner(PRISON_NUMBER_THROW_EXCEPTION) }
     assertThat(exception.message).isEqualTo("Get prisoner request failed")
