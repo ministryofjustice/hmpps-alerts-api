@@ -2,12 +2,13 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertCleanupMode.KEEP_ALL
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.ADD_MISSING
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
@@ -15,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_N
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.bulkCreateAlertRequest
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
@@ -70,13 +72,32 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     }
   }
 
-  private fun bulkCreateAlertRequest() =
-    BulkCreateAlerts(
-      prisonNumbers = listOf(PRISON_NUMBER),
-      alertCode = ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL,
-      mode = ADD_MISSING,
-      cleanupMode = KEEP_ALL,
+  companion object {
+    @JvmStatic
+    fun badRequestParameters(): List<Arguments> = listOf(
+      Arguments.of(bulkCreateAlertRequest().copy(prisonNumbers = emptyList()), "At least one prison number must be supplied", "prison numbers required"),
+      Arguments.of(bulkCreateAlertRequest().copy(alertCode = ""), "Alert code must be supplied and be <= 12 characters", "alert code required"),
+      Arguments.of(bulkCreateAlertRequest().copy(alertCode = 'a'.toString().repeat(13)), "Alert code must be supplied and be <= 12 characters", "alert code greater than 12 characters"),
     )
+  }
+
+  @ParameterizedTest(name = "{2}")
+  @MethodSource("badRequestParameters")
+  fun `400 bad request - property validation`(request: BulkCreateAlerts, expectedUserMessage: String, displayName: String) {
+    val response = webTestClient.bulkCreateAlertResponseSpec(request = request)
+      .expectStatus().isBadRequest
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure(s): $expectedUserMessage")
+      assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.BulkAlertsController.bulkCreateAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts,jakarta.servlet.http.HttpServletRequest): [Field error in object 'bulkCreateAlerts' on field ")
+      assertThat(developerMessage).contains(expectedUserMessage)
+      assertThat(moreInfo).isNull()
+    }
+  }
 
   private fun WebTestClient.bulkCreateAlertResponseSpec(
     source: Source = DPS,

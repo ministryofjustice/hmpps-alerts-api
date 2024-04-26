@@ -98,7 +98,9 @@ class HmppsAlertsApiExceptionHandler {
     .body(
       ErrorResponse(
         status = BAD_REQUEST,
-        userMessage = "Validation failure: ${e.message}",
+        userMessage = "Validation failure(s): ${
+          e.allErrors.map { it.defaultMessage }.distinct().sorted().joinToString("\n")
+        }",
         developerMessage = e.message,
       ),
     ).also { log.info("Validation exception: {}", e.message) }
