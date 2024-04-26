@@ -254,7 +254,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
     val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
-    assertThat(createAlertEvent.additionalInformation.alertUuid).isEqualTo(deleteAlertEvent.additionalInformation.alertUuid)
+    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(deleteAlertEvent.additionalInformation.identifier())
     assertThat(deleteAlertEvent).isEqualTo(
       AlertDomainEvent(
         ALERT_DELETED.eventType,
@@ -284,7 +284,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
     val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
-    assertThat(createAlertEvent.additionalInformation.alertUuid).isEqualTo(deleteAlertEvent.additionalInformation.alertUuid)
+    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(deleteAlertEvent.additionalInformation.identifier())
     assertThat(deleteAlertEvent).isEqualTo(
       AlertDomainEvent(
         ALERT_DELETED.eventType,

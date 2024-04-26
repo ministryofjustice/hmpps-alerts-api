@@ -21,16 +21,23 @@ class AlertTypeService(
   fun createAlertType(createAlertTypeRequest: CreateAlertTypeRequest, context: AlertRequestContext): AlertType =
     createAlertTypeRequest.let {
       it.checkForExistingAlertType()
-      alertTypeRepository.saveAndFlush(it.toEntity(context)).toAlertTypeModel(false)
+      val entity = it.toEntity(context)
+      with(entity) {
+        val toSave = create()
+        alertTypeRepository.saveAndFlush(toSave).toAlertTypeModel(false)
+      }
     }
 
   fun deactivateAlertType(alertType: String, alertRequestContext: AlertRequestContext) =
     alertType.let {
       it.checkAlertTypeExists()
       alertTypeRepository.findByCode(it)!!.apply {
-        deactivatedAt = alertRequestContext.requestAt
-        deactivatedBy = alertRequestContext.username
-        alertTypeRepository.saveAndFlush(this)
+        with(this) {
+          deactivatedAt = alertRequestContext.requestAt
+          deactivatedBy = alertRequestContext.username
+          deactivate()
+          alertTypeRepository.saveAndFlush(this)
+        }
       }
     }
 
