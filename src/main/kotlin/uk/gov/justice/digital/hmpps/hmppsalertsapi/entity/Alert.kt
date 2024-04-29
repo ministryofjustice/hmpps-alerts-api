@@ -69,7 +69,7 @@ data class Alert(
 
   fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
 
-  fun willBecomeActive() = activeFrom > LocalDate.now()
+  fun willBecomeActive() = activeFrom > LocalDate.now() && (activeTo == null || activeTo!! > activeFrom)
 
   @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE])
   private val comments: MutableList<Comment> = mutableListOf()
@@ -210,7 +210,7 @@ data class Alert(
       lastModifiedAt = updatedAt
       auditEvent(
         action = AuditEventAction.UPDATED,
-        description = sb.toString(),
+        description = sb.toString().trimEnd(),
         actionedAt = updatedAt,
         actionedBy = updatedBy,
         actionedByDisplayName = updatedByDisplayName,

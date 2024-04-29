@@ -10,6 +10,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.mockito.kotlin.any
+import org.mockito.kotlin.never
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -17,11 +20,11 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.alertCodeDescriptionMap
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.ADD_MISSING
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.EXPIRE_AND_REPLACE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
@@ -271,7 +274,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `creates new alert`() {
+  fun `creates new active alert`() {
     val request = bulkCreateAlertRequest()
 
     val response = webTestClient.bulkCreateAlert(request)
@@ -293,6 +296,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
         createdAt = alert.createdAt,
       ),
     )
+    assertThat(alert.isActive()).isTrue()
     with(alert.auditEvents().single()) {
       assertThat(auditEventId).isEqualTo(1)
       assertThat(action).isEqualTo(CREATED)
@@ -339,41 +343,183 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
     val response = webTestClient.bulkCreateAlert(request)
 
-    val alert = alertRepository.findByAlertUuid(response.alertsCreated.single().alertUuid)!!
-
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
-    val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
 
-    assertThat(event).isEqualTo(
-      AlertDomainEvent(
-        ALERT_CREATED.eventType,
-        AlertAdditionalInformation(
-          "http://localhost:8080/alerts/${alert.alertUuid}",
-          alert.alertUuid,
-          alert.prisonNumber,
-          request.alertCode,
-          DPS,
-        ),
-        1,
-        ALERT_CREATED.description,
-        alert.createdAt.withNano(event.occurredAt.nano),
-      ),
-    )
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(response.alertsCreated.single().alertUuid.toString())
+    }
   }
 
   @Test
-  fun `does not create new alert when existing active alert exists`() {
+  fun `mode = ADD_MISSING does not create new alert when existing active alert exists`() {
     val existingActiveAlert = webTestClient.createAlert(request = createAlertRequest())
 
-    val request = bulkCreateAlertRequest()
+    val request = bulkCreateAlertRequest().copy(mode = ADD_MISSING)
 
     val response = webTestClient.bulkCreateAlert(request)
 
     assertThat(response.alertsCreated).isEmpty()
+    assertThat(response.alertsUpdated).isEmpty()
+    assertThat(response.alertsExpired).isEmpty()
     with(response.existingActiveAlerts.single()) {
       assertThat(alertUuid).isEqualTo(existingActiveAlert.alertUuid)
       assertThat(prisonNumber).isEqualTo(existingActiveAlert.prisonNumber)
       assertThat(message).isEmpty()
+    }
+
+    Thread.sleep(1000)
+    verify(hmppsQueueService, never()).findByTopicId(any())
+  }
+
+  @Test
+  fun `mode = ADD_MISSING clears active to date when existing active alert exists`() {
+    val existingActiveAlert = webTestClient.createAlert(request = createAlertRequest().copy(activeTo = LocalDate.now().plusDays(1)))
+
+    val request = bulkCreateAlertRequest().copy(mode = ADD_MISSING)
+
+    val response = webTestClient.bulkCreateAlert(request)
+
+    assertThat(response.existingActiveAlerts).isEmpty()
+    assertThat(response.alertsCreated).isEmpty()
+    assertThat(response.alertsExpired).isEmpty()
+    with(response.alertsUpdated.single()) {
+      assertThat(alertUuid).isEqualTo(existingActiveAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingActiveAlert.prisonNumber)
+      assertThat(message).isEqualTo("Updated active to from '${existingActiveAlert.activeTo}' to 'null'")
+      with(alertRepository.findByAlertUuid(alertUuid)!!) {
+        assertThat(isActive()).isTrue()
+        assertThat(willBecomeActive()).isFalse()
+        assertThat(activeTo).isNull()
+      }
+    }
+
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(existingActiveAlert.alertUuid.toString())
+    }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(existingActiveAlert.alertUuid.toString())
+    }
+  }
+
+  @Test
+  fun `mode = ADD_MISSING sets active from to today when existing will become active alert exists`() {
+    val existingWillBecomeActiveAlert = webTestClient.createAlert(request = createAlertRequest().copy(activeFrom = LocalDate.now().plusDays(1), activeTo = LocalDate.now().plusDays(2)))
+
+    val request = bulkCreateAlertRequest().copy(mode = ADD_MISSING)
+
+    val response = webTestClient.bulkCreateAlert(request)
+
+    assertThat(response.existingActiveAlerts).isEmpty()
+    assertThat(response.alertsCreated).isEmpty()
+    assertThat(response.alertsExpired).isEmpty()
+    with(response.alertsUpdated.single()) {
+      assertThat(alertUuid).isEqualTo(existingWillBecomeActiveAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingWillBecomeActiveAlert.prisonNumber)
+      assertThat(message).isEqualTo(
+        """Updated active from from '${existingWillBecomeActiveAlert.activeFrom}' to '${LocalDate.now()}'
+          |Updated active to from '${existingWillBecomeActiveAlert.activeTo}' to 'null'
+        """.trimMargin(),
+      )
+      with(alertRepository.findByAlertUuid(alertUuid)!!) {
+        assertThat(isActive()).isTrue()
+        assertThat(willBecomeActive()).isFalse()
+        assertThat(activeFrom).isEqualTo(LocalDate.now())
+        assertThat(activeTo).isNull()
+      }
+    }
+
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
+    }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
+    }
+  }
+
+  @Test
+  fun `mode = EXPIRE_AND_REPLACE expires existing active alert and creates new active alert to replace it`() {
+    val existingActiveAlert = webTestClient.createAlert(request = createAlertRequest())
+
+    val request = bulkCreateAlertRequest().copy(mode = EXPIRE_AND_REPLACE)
+
+    val response = webTestClient.bulkCreateAlert(request)
+
+    assertThat(response.existingActiveAlerts).isEmpty()
+    assertThat(response.alertsUpdated).isEmpty()
+    with(response.alertsCreated.single()) {
+      assertThat(alertUuid).isNotEqualTo(existingActiveAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingActiveAlert.prisonNumber)
+      assertThat(message).isEmpty()
+      assertThat(alertRepository.findByAlertUuid(alertUuid)!!.isActive()).isTrue()
+    }
+    with(response.alertsExpired.single()) {
+      assertThat(alertUuid).isEqualTo(existingActiveAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingActiveAlert.prisonNumber)
+      assertThat(message).isEmpty()
+      assertThat(alertRepository.findByAlertUuid(alertUuid)!!.isActive()).isFalse()
+    }
+
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(existingActiveAlert.alertUuid.toString())
+    }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(existingActiveAlert.alertUuid.toString())
+    }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(response.alertsCreated.single().alertUuid.toString())
+    }
+  }
+
+  @Test
+  fun `mode = EXPIRE_AND_REPLACE expires existing will become active alert and creates new active alert to replace it`() {
+    val existingWillBecomeActiveAlert = webTestClient.createAlert(request = createAlertRequest().copy(activeFrom = LocalDate.now().plusDays(1)))
+
+    val request = bulkCreateAlertRequest().copy(mode = EXPIRE_AND_REPLACE)
+
+    val response = webTestClient.bulkCreateAlert(request)
+
+    assertThat(response.existingActiveAlerts).isEmpty()
+    assertThat(response.alertsUpdated).isEmpty()
+    with(response.alertsCreated.single()) {
+      assertThat(alertUuid).isNotEqualTo(existingWillBecomeActiveAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingWillBecomeActiveAlert.prisonNumber)
+      assertThat(message).isEmpty()
+      assertThat(alertRepository.findByAlertUuid(alertUuid)!!.isActive()).isTrue()
+    }
+    with(response.alertsExpired.single()) {
+      assertThat(alertUuid).isEqualTo(existingWillBecomeActiveAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingWillBecomeActiveAlert.prisonNumber)
+      assertThat(message).isEmpty()
+      with(alertRepository.findByAlertUuid(alertUuid)!!) {
+        assertThat(isActive()).isFalse()
+        assertThat(willBecomeActive()).isFalse()
+        assertThat(activeTo).isEqualTo(activeFrom)
+      }
+    }
+
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
+    }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
+    }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(response.alertsCreated.single().alertUuid.toString())
     }
   }
 

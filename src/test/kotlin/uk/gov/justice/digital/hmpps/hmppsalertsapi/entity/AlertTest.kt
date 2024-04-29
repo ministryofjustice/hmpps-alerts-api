@@ -356,7 +356,7 @@ class AlertTest {
     sb.appendLine("Updated active from from '${entity.activeFrom}' to '$updatedActiveFrom'")
     sb.appendLine("Updated active to from '${entity.activeTo}' to '$updatedActiveTo'")
     sb.appendLine("Comment '$updatedAppendComment' was added")
-    val expectedDescription = sb.toString()
+    val expectedDescription = sb.toString().trimEnd()
 
     entity.update(
       description = updatedDescription,
@@ -581,7 +581,7 @@ class AlertTest {
     val updatedDescription = "Updated description"
     val updatedAt = LocalDateTime.now()
     val source = NOMIS
-    val expectedDescription = "Updated alert description from '${entity.description}' to '$updatedDescription'\n"
+    val expectedDescription = "Updated alert description from '${entity.description}' to '$updatedDescription'"
 
     entity.update(
       description = updatedDescription,
@@ -614,7 +614,7 @@ class AlertTest {
     val updatedAuthorisedBy = "Updated authorised by"
     val updatedAt = LocalDateTime.now()
     val source = DPS
-    val expectedDescription = "Updated authorised by from '${entity.authorisedBy}' to '$updatedAuthorisedBy'\n"
+    val expectedDescription = "Updated authorised by from '${entity.authorisedBy}' to '$updatedAuthorisedBy'"
 
     entity.update(
       description = entity.description,
@@ -647,7 +647,7 @@ class AlertTest {
     val updatedActiveFrom = entity.activeFrom.plusDays(1)
     val updatedAt = LocalDateTime.now()
     val source = NOMIS
-    val expectedDescription = "Updated active from from '${entity.activeFrom}' to '$updatedActiveFrom'\n"
+    val expectedDescription = "Updated active from from '${entity.activeFrom}' to '$updatedActiveFrom'"
 
     entity.update(
       description = entity.description,
@@ -680,7 +680,7 @@ class AlertTest {
     val updatedActiveTo = entity.activeTo!!.plusDays(1)
     val updatedAt = LocalDateTime.now()
     val source = DPS
-    val expectedDescription = "Updated active to from '${entity.activeTo}' to '$updatedActiveTo'\n"
+    val expectedDescription = "Updated active to from '${entity.activeTo}' to '$updatedActiveTo'"
 
     entity.update(
       description = entity.description,
@@ -715,7 +715,7 @@ class AlertTest {
     val updatedBy = "UPDATED_BY"
     val updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME"
     val source = NOMIS
-    val expectedDescription = "Comment '$updatedAppendComment' was added\n"
+    val expectedDescription = "Comment '$updatedAppendComment' was added"
 
     entity.update(
       description = entity.description,
@@ -753,7 +753,7 @@ class AlertTest {
     val entity = alertEntity()
     val updatedAppendComment = " Appended comment  "
     val source = DPS
-    val expectedDescription = "Comment '${updatedAppendComment.trim()}' was added\n"
+    val expectedDescription = "Comment '${updatedAppendComment.trim()}' was added"
 
     entity.update(
       description = entity.description,
