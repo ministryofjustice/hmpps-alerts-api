@@ -109,7 +109,7 @@ class AlertCodesController(
     httpRequest: HttpServletRequest,
   ) = alertCodeService.deactivateAlertCode(alertCode, httpRequest.alertRequestContext())
 
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_ALERTS_ADMIN', '$PRISON')")
   @GetMapping
   @Operation(
     summary = "Retrieve all alert codes",
@@ -131,11 +131,6 @@ class AlertCodesController(
         description = "Forbidden, requires an appropriate role",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
-      ApiResponse(
-        responseCode = "404",
-        description = "Not found, the alert code was is not found",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
     ],
   )
   fun retrieveAlertCodes(
@@ -145,7 +140,7 @@ class AlertCodesController(
     includeInactive: Boolean = false,
   ) = alertCodeService.retrieveAlertCodes(includeInactive)
 
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_ALERTS_ADMIN', '$PRISON')")
   @GetMapping("/{alertCode}")
   @Operation(
     summary = "Retrieve an alert code",

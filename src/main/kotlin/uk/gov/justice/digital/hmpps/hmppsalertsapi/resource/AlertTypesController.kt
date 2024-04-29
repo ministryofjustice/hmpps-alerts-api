@@ -89,6 +89,11 @@ class AlertTypesController(
         description = "Forbidden, requires an appropriate role",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
       ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Not found, the alert type was is not found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
     ],
   )
   fun retrieveAlertType(@PathVariable alertTypeCode: String): AlertType = alertTypeService.getAlertType(alertTypeCode)
