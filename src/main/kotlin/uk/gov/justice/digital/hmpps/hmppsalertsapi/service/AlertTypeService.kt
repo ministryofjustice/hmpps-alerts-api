@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertTypeModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertTypeModels
@@ -9,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertTypeNotFound
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.ExistingActiveAlertTypeWithCodeException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 
 @Service
@@ -44,6 +46,25 @@ class AlertTypeService(
           deactivate()
           alertTypeRepository.saveAndFlush(this)
         }
+      }
+    }
+
+  @Transactional
+  fun updateAlertType(
+    alertType: String,
+    updateAlertTypeRequest: UpdateAlertTypeRequest,
+    alertRequestContext: AlertRequestContext,
+  ): AlertType =
+    alertType.let {
+      it.checkAlertTypeExists()
+      with(alertTypeRepository.findByCode(it)!!) {
+        if (description != updateAlertTypeRequest.description) {
+          description = updateAlertTypeRequest.description
+          modifiedBy = alertRequestContext.username
+          modifiedAt = alertRequestContext.requestAt
+          update()
+        }
+        alertTypeRepository.saveAndFlush(this).toAlertTypeModel(false)
       }
     }
 
