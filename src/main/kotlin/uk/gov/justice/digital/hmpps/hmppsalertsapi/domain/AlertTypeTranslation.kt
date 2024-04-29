@@ -32,8 +32,9 @@ fun AlertCode.toAlertCodeModel() =
     deactivatedBy = deactivatedBy,
   )
 
-fun Collection<AlertCode>.toAlertCodeModels() =
+fun Collection<AlertCode>.toAlertCodeModels(includeInactive: Boolean) =
   sortedWith(compareBy({ it.listSequence }, { it.code }))
+    .filter { includeInactive || it.isActive() }
     .map { it.toAlertCodeModel() }
 
 fun AlertType.toAlertTypeModel(includeInactive: Boolean) =
@@ -48,7 +49,7 @@ fun AlertType.toAlertTypeModel(includeInactive: Boolean) =
     modifiedBy = modifiedBy,
     deactivatedAt = deactivatedAt,
     deactivatedBy = deactivatedBy,
-    alertCodes = alertCodes(includeInactive).toAlertCodeModels(),
+    alertCodes = alertCodes.toAlertCodeModels(includeInactive),
   )
 
 fun Collection<AlertType>.toAlertTypeModels(includeInactive: Boolean) =

@@ -5,20 +5,6 @@ import org.junit.jupiter.api.Test
 import java.time.LocalDateTime
 
 class AlertTypeTest {
-  @Test
-  fun `filters out inactive alert codes`() {
-    val alertType = alertType()
-    val activeAlertCode = alertCode(alertType, 1, "ABC")
-    val inactiveAlertCode = alertCode(alertType, 2, "ADE").apply {
-      deactivatedAt = LocalDateTime.now().minusSeconds(1)
-      deactivatedBy = "DEACTIVATED_BY"
-    }
-
-    val alertCodes = alertType.alertCodes(false)
-
-    assertThat(alertCodes).isEqualTo(listOf(activeAlertCode))
-    assertThat(alertCodes).doesNotContain(inactiveAlertCode)
-  }
 
   @Test
   fun `is active is true when deactivated at is null`() {
