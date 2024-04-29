@@ -70,7 +70,7 @@ class AlertTypesController(
   @GetMapping("/{alertTypeCode}")
   @Operation(
     summary = "Get an alert type",
-    description = "Returns the specified alert type."
+    description = "Returns the specified alert type.",
   )
   @ApiResponses(
     value = [
