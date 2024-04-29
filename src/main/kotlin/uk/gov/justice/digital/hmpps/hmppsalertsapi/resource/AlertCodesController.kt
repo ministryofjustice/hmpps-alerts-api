@@ -112,13 +112,13 @@ class AlertCodesController(
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
   @GetMapping
   @Operation(
-    summary = "Retrieve an alert code",
-    description = "Retrieve an alert code, typically from the Alerts UI",
+    summary = "Retrieve all alert codes",
+    description = "Retrieve all alert codes, typically from the Alerts UI",
   )
   @ApiResponses(
     value = [
       ApiResponse(
-        responseCode = "204",
+        responseCode = "200",
         description = "Alert code retrieved",
       ),
       ApiResponse(
@@ -154,7 +154,7 @@ class AlertCodesController(
   @ApiResponses(
     value = [
       ApiResponse(
-        responseCode = "204",
+        responseCode = "200",
         description = "Alert code retrieved",
       ),
       ApiResponse(

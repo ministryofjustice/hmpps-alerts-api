@@ -69,10 +69,8 @@ class AlertTypesController(
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_ALERTS_ADMIN', '$PRISON')")
   @GetMapping("/{alertTypeCode}")
   @Operation(
-    summary = "Get all alert types",
-    description = "Returns the full list of alert types and the alert codes within those types. " +
-      "By default this endpoint only returns active alert types and codes. " +
-      "The include inactive parameter can be used to return all alert types and codes.",
+    summary = "Get an alert type",
+    description = "Returns the specified alert type."
   )
   @ApiResponses(
     value = [
