@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeDescriptionRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertTypeService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
@@ -143,7 +143,7 @@ class AlertTypesController(
 
   @ResponseStatus(HttpStatus.NO_CONTENT)
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
-  @PutMapping("/{alertType}/description")
+  @PutMapping("/{alertType}")
   @Operation(
     summary = "Update alert type description",
     description = "Set the description of an alert type to the submitted value.",
@@ -172,11 +172,11 @@ class AlertTypesController(
     ],
   )
   @UsernameHeader
-  fun updateAlertTypeDescription(
-    @PathVariable alertType: String,
-    @Valid @RequestBody updateDescriptionRequest: UpdateAlertTypeDescriptionRequest,
-    httpRequest: HttpServletRequest,
-  ) = alertTypeService.updateDescription(alertType, updateDescriptionRequest, httpRequest.alertRequestContext())
+  fun updateAlertType(
+      @PathVariable alertType: String,
+      @Valid @RequestBody updateRequest: UpdateAlertTypeRequest,
+      httpRequest: HttpServletRequest,
+  ) = alertTypeService.updateAlertType(alertType, updateRequest, httpRequest.alertRequestContext())
 
   private fun HttpServletRequest.alertRequestContext() =
     getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext

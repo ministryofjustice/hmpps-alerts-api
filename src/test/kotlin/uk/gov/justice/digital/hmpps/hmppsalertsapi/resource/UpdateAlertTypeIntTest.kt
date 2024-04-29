@@ -20,14 +20,14 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeDescriptionRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.*
 
-class UpdateAlertTypeDescriptionIntTest : IntegrationTestBase() {
+class UpdateAlertTypeIntTest : IntegrationTestBase() {
 
   @Autowired
   lateinit var alertTypeRepository: AlertTypeRepository
@@ -42,7 +42,7 @@ class UpdateAlertTypeDescriptionIntTest : IntegrationTestBase() {
   @Test
   fun `401 unauthorised`() {
     webTestClient.put()
-      .uri("/alert-types/VI/description")
+      .uri("/alert-types/VI")
       .exchange()
       .expectStatus().isUnauthorized
   }
@@ -50,10 +50,10 @@ class UpdateAlertTypeDescriptionIntTest : IntegrationTestBase() {
   @Test
   fun `403 forbidden - no roles`() {
     webTestClient.put()
-      .uri("/alert-types/VI/description")
+      .uri("/alert-types/VI")
       .headers(setAuthorisation())
       .headers(setAlertRequestContext())
-      .bodyValue(UpdateAlertTypeDescriptionRequest("description"))
+      .bodyValue(UpdateAlertTypeRequest("description"))
       .exchange()
       .expectStatus().isForbidden
   }
@@ -61,10 +61,10 @@ class UpdateAlertTypeDescriptionIntTest : IntegrationTestBase() {
   @Test
   fun `403 forbidden - alerts reader`() {
     webTestClient.put()
-      .uri("/alert-types/VI/description")
+      .uri("/alert-types/VI")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
       .headers(setAlertRequestContext())
-      .bodyValue(UpdateAlertTypeDescriptionRequest("description"))
+      .bodyValue(UpdateAlertTypeRequest("description"))
       .exchange()
       .expectStatus().isForbidden
   }
@@ -72,7 +72,7 @@ class UpdateAlertTypeDescriptionIntTest : IntegrationTestBase() {
   @Test
   fun `400 bad request - username not supplied`() {
     val response = webTestClient.put()
-      .uri("/alert-types/VI/description")
+      .uri("/alert-types/VI")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
       .exchange()
       .expectStatus().isBadRequest
@@ -93,7 +93,7 @@ class UpdateAlertTypeDescriptionIntTest : IntegrationTestBase() {
   @Test
   fun `400 bad request - username not found`() {
     val response = webTestClient.put()
-      .uri("/alert-types/VI/description")
+      .uri("/alert-types/VI")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
       .exchange()
@@ -113,10 +113,10 @@ class UpdateAlertTypeDescriptionIntTest : IntegrationTestBase() {
   @Test
   fun `404 alert type not found`() {
     val response = webTestClient.put()
-      .uri("/alert-types/ALK/description")
+      .uri("/alert-types/ALK")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
       .headers(setAlertRequestContext())
-      .bodyValue(UpdateAlertTypeDescriptionRequest("description"))
+      .bodyValue(UpdateAlertTypeRequest("description"))
       .exchange()
       .expectStatus().isNotFound
       .expectBody(ErrorResponse::class.java)
@@ -134,11 +134,11 @@ class UpdateAlertTypeDescriptionIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - empty description`() {
-    val alertType = createAlertType("ASDF")
+    val alertTypeCode = createAlertType("ASDF").code
     val response = webTestClient.put()
-      .uri("/alert-types/ASDF/description")
+      .uri("/alert-types/$alertTypeCode")
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
-      .bodyValue(UpdateAlertTypeDescriptionRequest(""))
+      .bodyValue(UpdateAlertTypeRequest(""))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
@@ -155,11 +155,11 @@ class UpdateAlertTypeDescriptionIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - description too long`() {
-    val alertType = createAlertType("GHJK")
+    val alertTypeCode = createAlertType("GHJK").code
     val response = webTestClient.put()
-      .uri("/alert-types/GHJK/description")
+      .uri("/alert-types/$alertTypeCode")
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
-      .bodyValue(UpdateAlertTypeDescriptionRequest("descdescdescdescdescdescdescdescdescdescd"))
+      .bodyValue(UpdateAlertTypeRequest("descdescdescdescdescdescdescdescdescdescd"))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
@@ -227,9 +227,9 @@ class UpdateAlertTypeDescriptionIntTest : IntegrationTestBase() {
     description: String,
   ) =
     put()
-      .uri("/alert-types/$alertCode/description")
+      .uri("/alert-types/$alertCode")
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
-      .bodyValue(UpdateAlertTypeDescriptionRequest(description))
+      .bodyValue(UpdateAlertTypeRequest(description))
       .exchange()
       .expectStatus().isNoContent
       .expectBody().isEmpty

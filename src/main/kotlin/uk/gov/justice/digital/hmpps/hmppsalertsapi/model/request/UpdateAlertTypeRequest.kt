@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size
 @Schema(
   description = "The request body for updating the description of an alert type",
 )
-data class UpdateAlertTypeDescriptionRequest(
+data class UpdateAlertTypeRequest(
   @Schema(
     description = "The description of the alert type",
     example = "Alert type description",

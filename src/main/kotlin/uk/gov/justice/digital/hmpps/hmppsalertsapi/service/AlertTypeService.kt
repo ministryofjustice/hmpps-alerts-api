@@ -9,7 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertTypeNotFound
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.ExistingActiveAlertTypeWithCodeException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeDescriptionRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 
 @Service
@@ -42,16 +42,17 @@ class AlertTypeService(
       }
     }
 
-  fun updateDescription(
+  fun updateAlertType(
     alertType: String,
-    updateAlertTypeDescriptionRequest: UpdateAlertTypeDescriptionRequest,
+    updateAlertTypeRequest: UpdateAlertTypeRequest,
     alertRequestContext: AlertRequestContext,
   ) =
     alertType.let {
       it.checkAlertTypeExists()
       alertTypeRepository.findByCode(it)!!.apply {
         with(this) {
-          description = updateAlertTypeDescriptionRequest.description
+          description = updateAlertTypeRequest.description
+          modifiedBy = alertRequestContext.username
           modifiedAt = alertRequestContext.requestAt
           update()
           alertTypeRepository.saveAndFlush(this)
