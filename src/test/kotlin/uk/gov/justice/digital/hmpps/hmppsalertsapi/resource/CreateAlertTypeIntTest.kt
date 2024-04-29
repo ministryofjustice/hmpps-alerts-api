@@ -7,7 +7,6 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -21,16 +20,11 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 class CreateAlertTypeIntTest : IntegrationTestBase() {
-
-  @Autowired
-  lateinit var alertTypeRepository: AlertTypeRepository
-
   @BeforeEach
   fun setup() {
     val entity = alertTypeRepository.findByCode("CO")

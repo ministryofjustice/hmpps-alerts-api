@@ -5,7 +5,6 @@ import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
-import org.testcontainers.shaded.org.bouncycastle.asn1.x500.style.RFC4519Style.description
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER

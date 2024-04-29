@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,6 +29,9 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.HmppsAut
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.ManageUsersExtension
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PrisonerSearchExtension
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SYNC_SUPPRESS_EVENTS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
@@ -35,6 +39,7 @@ import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
 import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
+import java.time.LocalDateTime
 
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 @Sql("classpath:test_data/reset-database.sql")
@@ -51,6 +56,15 @@ abstract class IntegrationTestBase {
   @Autowired
   lateinit var objectMapper: ObjectMapper
 
+  @Autowired
+  lateinit var alertTypeRepository: AlertTypeRepository
+
+  @Autowired
+  lateinit var alertCodeRepository: AlertCodeRepository
+
+  @Autowired
+  lateinit var alertRepository: AlertRepository
+
   @SpyBean
   lateinit var hmppsQueueService: HmppsQueueService
 
@@ -61,6 +75,19 @@ abstract class IntegrationTestBase {
   @BeforeEach
   fun `clear queues`() {
     hmppsEventsQueue.sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(hmppsEventsQueue.queueUrl).build()).get()
+  }
+
+  @AfterEach
+  fun cleanup() {
+    alertRepository.findAll().filter { it.createdAt.isAfter(LocalDateTime.now().minusHours(1)) }.forEach {
+      alertRepository.delete(it)
+    }
+    alertCodeRepository.findAll().filter { it.createdAt.isAfter(LocalDateTime.now().minusHours(1)) }.forEach {
+      alertCodeRepository.delete(it)
+    }
+    alertTypeRepository.findAll().filter { it.createdAt.isAfter(LocalDateTime.now().minusHours(1)) }.forEach {
+      alertTypeRepository.delete(it)
+    }
   }
 
   internal fun setAuthorisation(

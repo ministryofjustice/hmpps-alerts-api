@@ -7,7 +7,6 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
@@ -27,7 +26,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
@@ -36,10 +34,6 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class DeleteAlertIntTest : IntegrationTestBase() {
-
-  @Autowired
-  lateinit var alertRepository: AlertRepository
-
   var uuid: UUID? = null
 
   @BeforeEach

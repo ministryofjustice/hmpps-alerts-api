@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertTypeModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertTypeModels
@@ -42,21 +43,22 @@ class AlertTypeService(
       }
     }
 
+  @Transactional
   fun updateAlertType(
     alertType: String,
     updateAlertTypeRequest: UpdateAlertTypeRequest,
     alertRequestContext: AlertRequestContext,
-  ) =
+  ): AlertType =
     alertType.let {
       it.checkAlertTypeExists()
-      alertTypeRepository.findByCode(it)!!.apply {
-        with(this) {
+      with(alertTypeRepository.findByCode(it)!!) {
+        if (description != updateAlertTypeRequest.description) {
           description = updateAlertTypeRequest.description
           modifiedBy = alertRequestContext.username
           modifiedAt = alertRequestContext.requestAt
           update()
-          alertTypeRepository.saveAndFlush(this)
         }
+        alertTypeRepository.saveAndFlush(this).toAlertTypeModel(false)
       }
     }
 

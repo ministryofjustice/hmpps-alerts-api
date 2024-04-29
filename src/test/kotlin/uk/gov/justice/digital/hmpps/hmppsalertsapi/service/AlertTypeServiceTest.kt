@@ -103,6 +103,7 @@ class AlertTypeServiceTest {
   @Test
   fun `update alert type description`() {
     whenever(alertTypeRepository.findByCode(any())).thenReturn(alertTypeVulnerability())
+    whenever(alertTypeRepository.saveAndFlush(any())).thenReturn(alertType())
     service.updateAlertType(
       "VI",
       UpdateAlertTypeRequest("New Description Value"),
@@ -113,6 +114,22 @@ class AlertTypeServiceTest {
     assertThat(value).isNotNull
     assertThat(value.description).isEqualTo("New Description Value")
     assertThat(value.modifiedBy).isEqualTo("USER")
+  }
+
+  @Test
+  fun `update alert type with unchanged description`() {
+    whenever(alertTypeRepository.findByCode(any())).thenReturn(alertTypeVulnerability())
+    whenever(alertTypeRepository.saveAndFlush(any())).thenReturn(alertType())
+    service.updateAlertType(
+      "VI",
+      UpdateAlertTypeRequest("Vulnerability"),
+      AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
+    )
+    verify(alertTypeRepository).saveAndFlush(entityCaptor.capture())
+    val value = entityCaptor.firstValue
+    assertThat(value).isNotNull
+    assertThat(value.description).isEqualTo("Vulnerability")
+    assertThat(value.modifiedBy).isNotEqualTo("USER")
   }
 
   private fun alertType(alertTypeId: Long = 1, code: String = "A") =

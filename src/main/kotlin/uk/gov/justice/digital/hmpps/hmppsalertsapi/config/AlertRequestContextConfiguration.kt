@@ -36,7 +36,7 @@ class AlertRequestContextInterceptor(
   private val userService: UserService,
 ) : HandlerInterceptor {
   override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-    if (arrayOf("POST", "PUT", "DELETE").contains(request.method)) {
+    if (arrayOf("POST", "PUT", "PATCH", "DELETE").contains(request.method)) {
       val source = request.getSource()
       val userDetails = request.getUserDetails(source)
 

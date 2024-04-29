@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -11,8 +10,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
@@ -20,13 +17,6 @@ import java.time.LocalDate
 import java.util.UUID
 
 class RetrieveAlertIntTest : IntegrationTestBase() {
-
-  @Autowired
-  lateinit var alertRepository: AlertRepository
-
-  @Autowired
-  lateinit var alertCodeRepository: AlertCodeRepository
-
   var uuid: UUID? = null
 
   @BeforeEach

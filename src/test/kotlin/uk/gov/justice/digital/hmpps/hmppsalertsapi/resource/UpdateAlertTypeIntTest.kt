@@ -5,10 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
@@ -21,27 +18,14 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
-import java.util.*
 
 class UpdateAlertTypeIntTest : IntegrationTestBase() {
-
-  @Autowired
-  lateinit var alertTypeRepository: AlertTypeRepository
-
-  var uuid: UUID? = null
-
-  @BeforeEach
-  fun setup() {
-    uuid = UUID.randomUUID()
-  }
-
   @Test
   fun `401 unauthorised`() {
-    webTestClient.put()
+    webTestClient.patch()
       .uri("/alert-types/VI")
       .exchange()
       .expectStatus().isUnauthorized
@@ -49,7 +33,7 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `403 forbidden - no roles`() {
-    webTestClient.put()
+    webTestClient.patch()
       .uri("/alert-types/VI")
       .headers(setAuthorisation())
       .headers(setAlertRequestContext())
@@ -60,7 +44,7 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `403 forbidden - alerts reader`() {
-    webTestClient.put()
+    webTestClient.patch()
       .uri("/alert-types/VI")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
       .headers(setAlertRequestContext())
@@ -71,7 +55,7 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - username not supplied`() {
-    val response = webTestClient.put()
+    val response = webTestClient.patch()
       .uri("/alert-types/VI")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
       .exchange()
@@ -92,10 +76,11 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - username not found`() {
-    val response = webTestClient.put()
+    val response = webTestClient.patch()
       .uri("/alert-types/VI")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
+      .bodyValue(UpdateAlertTypeRequest("description"))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
@@ -112,7 +97,7 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `404 alert type not found`() {
-    val response = webTestClient.put()
+    val response = webTestClient.patch()
       .uri("/alert-types/ALK")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
       .headers(setAlertRequestContext())
@@ -134,8 +119,8 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - empty description`() {
-    val alertTypeCode = createAlertType("ASDF").code
-    val response = webTestClient.put()
+    val alertTypeCode = createAlertType().code
+    val response = webTestClient.patch()
       .uri("/alert-types/$alertTypeCode")
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
       .bodyValue(UpdateAlertTypeRequest(""))
@@ -155,8 +140,8 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - description too long`() {
-    val alertTypeCode = createAlertType("GHJK").code
-    val response = webTestClient.put()
+    val alertTypeCode = createAlertType().code
+    val response = webTestClient.patch()
       .uri("/alert-types/$alertTypeCode")
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
       .bodyValue(UpdateAlertTypeRequest("descdescdescdescdescdescdescdescdescdescd"))
@@ -176,16 +161,14 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `should update alert type description`() {
-    val alertType = createAlertType("QWERTY")
+    val alertType = createAlertType()
     val response = webTestClient.updateAlertTypeDescription(alertType.code, "New Description Value")
-    assertThat(response.status).isEqualTo(HttpStatus.NO_CONTENT)
-    val entity = alertTypeRepository.findByCode(alertType.code)
-    assertThat(entity!!.description).isEqualTo("New Description Value")
+    assertThat(response.description).isEqualTo("New Description Value")
   }
 
   @Test
-  fun `should publish alert types deactivated event with NOMIS source`() {
-    val alertType = createAlertType("DVORAK")
+  fun `should publish alert types updated event with NOMIS source`() {
+    val alertType = createAlertType()
     webTestClient.updateAlertTypeDescription(alertType.code, "New Description Value")
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
@@ -210,10 +193,10 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
     assertThat(updateAlertEvent.occurredAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
   }
 
-  private fun createAlertType(code: String): AlertType {
+  private fun createAlertType(): AlertType {
     return webTestClient.post()
       .uri("/alert-types")
-      .bodyValue(CreateAlertTypeRequest(code, "description"))
+      .bodyValue(CreateAlertTypeRequest("ABC", "description"))
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
       .exchange()
       .expectStatus().isCreated
@@ -225,12 +208,14 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
   private fun WebTestClient.updateAlertTypeDescription(
     alertCode: String,
     description: String,
-  ) =
-    put()
+  ): AlertType =
+    patch()
       .uri("/alert-types/$alertCode")
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
       .bodyValue(UpdateAlertTypeRequest(description))
       .exchange()
-      .expectStatus().isNoContent
-      .expectBody().isEmpty
+      .expectStatus().isOk
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody(AlertType::class.java)
+      .returnResult().responseBody!!
 }
