@@ -10,5 +10,6 @@ interface AlertTypeRepository : JpaRepository<AlertType, Long> {
   @EntityGraph(attributePaths = ["alertCodes"])
   override fun findAll(): List<AlertType>
 
+  @EntityGraph(attributePaths = ["alertCodes"])
   fun findByCode(code: String): AlertType?
 }

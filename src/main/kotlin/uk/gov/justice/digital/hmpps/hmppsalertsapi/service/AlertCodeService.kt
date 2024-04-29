@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertCodeModel
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertCodeModels
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertCodeNotFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertTypeNotFound
@@ -53,4 +54,13 @@ class AlertCodeService(
       }
     }
   }
+
+  fun retrieveAlertCode(alertCode: String): AlertCode =
+    alertCode.let {
+      it.checkAlertCodeExists()
+      alertCodeRepository.findByCode(it)!!.toAlertCodeModel()
+    }
+
+  fun retrieveAlertCodes(includeInactive: Boolean): Collection<AlertCode> =
+    alertCodeRepository.findAll().toAlertCodeModels(includeInactive)
 }

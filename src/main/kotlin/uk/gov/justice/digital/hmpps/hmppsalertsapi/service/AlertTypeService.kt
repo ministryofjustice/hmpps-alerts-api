@@ -28,6 +28,12 @@ class AlertTypeService(
       }
     }
 
+  fun getAlertType(alertType: String): AlertType =
+    alertType.let {
+      it.checkAlertTypeExists()
+      alertTypeRepository.findByCode(alertType)!!.toAlertTypeModel(true)
+    }
+
   fun deactivateAlertType(alertType: String, alertRequestContext: AlertRequestContext) =
     alertType.let {
       it.checkAlertTypeExists()

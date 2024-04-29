@@ -5,14 +5,14 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import java.util.Optional
 
-class GetAlertTypesIntTest : IntegrationTestBase() {
+class RetrieveAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `401 unauthorised`() {
     webTestClient.get()
-      .uri("/alert-types")
+      .uri("/alert-codes")
       .exchange()
       .expectStatus().isUnauthorized
   }
@@ -20,7 +20,7 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
   @Test
   fun `403 forbidden - no roles`() {
     webTestClient.get()
-      .uri("/alert-types")
+      .uri("/alert-codes")
       .headers(setAuthorisation())
       .exchange()
       .expectStatus().isForbidden
@@ -29,62 +29,62 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
   @Test
   fun `403 forbidden - alerts writer`() {
     webTestClient.get()
-      .uri("/alert-types")
+      .uri("/alert-codes")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .exchange()
       .expectStatus().isForbidden
   }
 
   @Test
-  fun `get alert types excludes inactive types and codes by default`() {
-    val alertTypes = webTestClient.getAlertTypes(null)
-    assertThat(alertTypes.all { it.isActive }).isTrue()
-    assertThat(alertTypes.flatMap { it.alertCodes }.all { it.isActive }).isTrue()
+  fun `get alert codes excludes inactive codes by default`() {
+    val alertCodes = webTestClient.getAlertCodes(null)
+    assertThat(alertCodes.all { it.isActive }).isTrue()
+    assertThat(alertCodes.all { it.isActive }).isTrue()
   }
 
   @Test
-  fun `get alert types including inactive types and codes`() {
-    val alertTypes = webTestClient.getAlertTypes(true)
-    assertThat(alertTypes.any { !it.isActive }).isTrue()
-    assertThat(alertTypes.flatMap { it.alertCodes }.any { !it.isActive }).isTrue()
+  fun `get alert codes including inactive codes`() {
+    val alertCodes = webTestClient.getAlertCodes(true)
+    assertThat(alertCodes.any { !it.isActive }).isTrue()
+    assertThat(alertCodes.any { !it.isActive }).isTrue()
   }
 
   @Test
-  fun `get specific alert type`() {
-    val alertType = webTestClient.getAlertType("L")
-    assertThat(alertType.code).isEqualTo("L")
+  fun `get specific alert code`() {
+    val alertCodes = webTestClient.getAlertCode("VI")
+    assertThat(alertCodes.code).isEqualTo("VI")
   }
 
-  private fun WebTestClient.getAlertTypes(
+  private fun WebTestClient.getAlertCodes(
     includeInactive: Boolean?,
   ) =
     get()
       .uri { builder ->
         builder
-          .path("/alert-types")
+          .path("/alert-codes")
           .queryParamIfPresent("includeInactive", Optional.ofNullable(includeInactive))
           .build()
       }
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
       .exchange()
       .expectStatus().isOk
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBodyList(AlertType::class.java)
+      .expectBodyList(AlertCode::class.java)
       .returnResult().responseBody!!
 
-  private fun WebTestClient.getAlertType(
-    alertTypeCode: String,
+  private fun WebTestClient.getAlertCode(
+    alertCode: String,
   ) =
     get()
       .uri { builder ->
         builder
-          .path("/alert-types/$alertTypeCode")
+          .path("/alert-codes/$alertCode")
           .build()
       }
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
       .exchange()
       .expectStatus().isOk
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertType::class.java)
+      .expectBody(AlertCode::class.java)
       .returnResult().responseBody!!
 }
