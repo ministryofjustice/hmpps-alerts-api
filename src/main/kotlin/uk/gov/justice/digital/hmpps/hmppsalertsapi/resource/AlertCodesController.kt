@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -11,6 +12,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -107,6 +109,75 @@ class AlertCodesController(
     httpRequest: HttpServletRequest,
   ) = alertCodeService.deactivateAlertCode(alertCode, httpRequest.alertRequestContext())
 
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
+  @GetMapping
+  @Operation(
+    summary = "Retrieve an alert code",
+    description = "Retrieve an alert code, typically from the Alerts UI",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "204",
+        description = "Alert code retrieved",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Not found, the alert code was is not found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun retrieveAlertCodes(
+    @Parameter(
+      description = "Include inactive alert types and codes. Defaults to false",
+    )
+    includeInactive: Boolean = false,
+  ) = alertCodeService.retrieveAlertCodes(includeInactive)
+
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
+  @GetMapping("/{alertCode}")
+  @Operation(
+    summary = "Retrieve an alert code",
+    description = "Retrieve an alert code, typically from the Alerts UI",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "204",
+        description = "Alert code retrieved",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Not found, the alert code was is not found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun retrieveAlertCode(
+    @PathVariable alertCode: String,
+    httpRequest: HttpServletRequest,
+  ) = alertCodeService.retrieveAlertCode(alertCode)
   private fun HttpServletRequest.alertRequestContext() =
     getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
 }

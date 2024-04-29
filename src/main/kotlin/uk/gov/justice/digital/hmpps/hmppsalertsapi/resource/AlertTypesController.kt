@@ -66,6 +66,35 @@ class AlertTypesController(
     includeInactive: Boolean = false,
   ): Collection<AlertType> = alertTypeService.getAlertTypes(includeInactive)
 
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_ALERTS_ADMIN', '$PRISON')")
+  @GetMapping("/{alertTypeCode}")
+  @Operation(
+    summary = "Get all alert types",
+    description = "Returns the full list of alert types and the alert codes within those types. " +
+      "By default this endpoint only returns active alert types and codes. " +
+      "The include inactive parameter can be used to return all alert types and codes.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Alert type found",
+        content = [Content(array = ArraySchema(schema = Schema(implementation = AlertType::class)))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun retrieveAlertType(@PathVariable alertTypeCode: String): AlertType = alertTypeService.getAlertType(alertTypeCode)
+
   @ResponseStatus(CREATED)
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
   @PostMapping

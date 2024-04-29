@@ -61,7 +61,7 @@ class AlertTypeTranslationTest {
       listSequence = 1
     }
 
-    val models = alertType.alertCodes(false).toAlertCodeModels()
+    val models = alertType.alertCodes.toAlertCodeModels(false)
 
     assertThat(models.map { it.code }).containsExactly(alertCodeExpectedPosition1.code, alertCodeExpectedPosition2.code, alertCodeExpectedPosition3.code)
     assertThat(models).isSortedAccordingTo(compareBy({ it.listSequence }, { it.code }))
