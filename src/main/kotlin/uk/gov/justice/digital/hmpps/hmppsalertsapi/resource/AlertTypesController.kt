@@ -173,9 +173,9 @@ class AlertTypesController(
   )
   @UsernameHeader
   fun updateAlertType(
-      @PathVariable alertType: String,
-      @Valid @RequestBody updateRequest: UpdateAlertTypeRequest,
-      httpRequest: HttpServletRequest,
+    @PathVariable alertType: String,
+    @Valid @RequestBody updateRequest: UpdateAlertTypeRequest,
+    httpRequest: HttpServletRequest,
   ) = alertTypeService.updateAlertType(alertType, updateRequest, httpRequest.alertRequestContext())
 
   private fun HttpServletRequest.alertRequestContext() =
