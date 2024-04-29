@@ -16,11 +16,13 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.alertCodeDescriptionMap
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertCleanupMode.EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.ADD_MISSING
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.EXPIRE_AND_REPLACE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
@@ -516,6 +518,54 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
+    }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(response.alertsCreated.single().alertUuid.toString())
+    }
+  }
+
+  @Test
+  @Sql("classpath:test_data/existing-active-alerts-for-multiple-prison-numbers.sql")
+  fun `cleanupMode = EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED expires existing active and will become active alerts for prison numbers not in list`() {
+    val request = bulkCreateAlertRequest().copy(mode = ADD_MISSING, cleanupMode = EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED)
+
+    val response = webTestClient.bulkCreateAlert(request)
+
+    val alertsForFirstPrisonerNotInList = alertRepository.findByPrisonNumber("B2345BB")
+    val alertsForSecondPrisonerNotInList = alertRepository.findByPrisonNumber("C3456CC")
+    val alertsExpiredForPrisonersNotInList = alertsForFirstPrisonerNotInList.union(alertsForSecondPrisonerNotInList).filterNot { it.isActive() || it.willBecomeActive() }
+
+    assertThat(response.existingActiveAlerts).isEmpty()
+    assertThat(response.alertsUpdated).isEmpty()
+    with(response.alertsCreated.single()) {
+      assertThat(prisonNumber).isEqualTo(PRISON_NUMBER)
+      assertThat(message).isEmpty()
+      assertThat(alertRepository.findByAlertUuid(alertUuid)!!.isActive()).isTrue()
+    }
+    with(response.alertsExpired) {
+      assertThat(this).hasSize(2)
+      assertThat(map { it.alertUuid }).containsAll(alertsExpiredForPrisonersNotInList.map { it.alertUuid })
+      assertThat(map { it.prisonNumber }).contains("B2345BB", "C3456CC")
+      onEach {
+        with(alertRepository.findByAlertUuid(it.alertUuid)!!) {
+          assertThat(isActive()).isFalse()
+          assertThat(willBecomeActive()).isFalse()
+        }
+      }
+    }
+
+    assertThat(alertsForFirstPrisonerNotInList.single { it.isActive() }.alertCode.code).isEqualTo("ADSC")
+    assertThat(alertsForSecondPrisonerNotInList.filter { it.isActive() || it.willBecomeActive() }).isEmpty()
+
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(alertsExpiredForPrisonersNotInList[0].alertUuid.toString())
+    }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(alertsExpiredForPrisonersNotInList[1].alertUuid.toString())
     }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)

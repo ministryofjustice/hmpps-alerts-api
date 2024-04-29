@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertCleanupMode.EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.ADD_MISSING
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.EXPIRE_AND_REPLACE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
@@ -41,7 +42,8 @@ class BulkAlertService(
 
       val alertsUpdated = if (it.mode == ADD_MISSING) existingUnexpiredAlerts.updateToBePermanentlyActive(context) else emptyList()
 
-      val alertsExpired = if (it.mode == EXPIRE_AND_REPLACE) existingUnexpiredAlerts.expire(context) else emptyList()
+      val alertsExpired = (if (it.mode == EXPIRE_AND_REPLACE) existingUnexpiredAlerts.expire(context) else emptyList())
+        .union(if (it.cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) alertRepository.findByPrisonNumberNotInAndAlertCodeCode(it.prisonNumbers, it.alertCode).expire(context) else emptyList())
 
       val prisonNumbersWithActiveAlerts = existingUnexpiredAlerts.filter { alert -> alert.isActive() }.map { alert -> alert.prisonNumber }.toSet()
       val prisonNumbersWithoutActiveAlerts = it.prisonNumbers.filterNot { prisonNumber -> prisonNumbersWithActiveAlerts.contains(prisonNumber) }
