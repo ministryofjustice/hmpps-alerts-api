@@ -4,12 +4,12 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Size
 
 @Schema(
-  description = "The request body for updating the description of an alert type",
+  description = "The request body for updating the properties of an alert type",
 )
 data class UpdateAlertTypeRequest(
   @Schema(
-    description = "The description of the alert type",
-    example = "Alert type description",
+    description = "The new property value(s) to be updated onto an alert type",
+    example = "New description value for an alert type",
   )
   @field:Size(max = 40, min = 1, message = "Description must be between 1 & 40 characters")
   val description: String,

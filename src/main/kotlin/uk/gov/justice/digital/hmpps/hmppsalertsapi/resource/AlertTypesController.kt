@@ -145,14 +145,14 @@ class AlertTypesController(
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
   @PutMapping("/{alertType}")
   @Operation(
-    summary = "Update alert type description",
-    description = "Set the description of an alert type to the submitted value.",
+    summary = "Update alert type",
+    description = "Set the properties of an alert type to the submitted value.",
   )
   @ApiResponses(
     value = [
       ApiResponse(
         responseCode = "204",
-        description = "Alert type description updated",
+        description = "Alert type updated",
       ),
       ApiResponse(
         responseCode = "401",
