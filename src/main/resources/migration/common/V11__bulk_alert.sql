@@ -9,6 +9,7 @@ CREATE TABLE bulk_alert
     completed_at                timestamp       NOT NULL,
     successful                  boolean         NOT NULL,
     messages                    jsonb           NOT NULL,
+    existing_active_alerts      jsonb           NOT NULL,
     alerts_created              jsonb           NOT NULL,
     alerts_updated              jsonb           NOT NULL,
     alerts_expired              jsonb           NOT NULL

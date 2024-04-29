@@ -37,6 +37,10 @@ data class BulkAlert(
 
   @Type(JsonType::class)
   @Column(columnDefinition = "jsonb")
+  val existingActiveAlerts: JsonNode,
+
+  @Type(JsonType::class)
+  @Column(columnDefinition = "jsonb")
   val alertsCreated: JsonNode,
 
   @Type(JsonType::class)

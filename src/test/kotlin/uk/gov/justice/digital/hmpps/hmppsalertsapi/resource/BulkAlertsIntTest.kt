@@ -324,6 +324,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
         completedAt = bulkAlert.completedAt.withNano(0),
         successful = bulkAlert.successful,
         messages = objectMapper.treeToValue<List<String>>(bulkAlert.messages),
+        existingActiveAlerts = objectMapper.treeToValue<List<BulkAlertAlert>>(bulkAlert.existingActiveAlerts),
         alertsCreated = objectMapper.treeToValue<List<BulkAlertAlert>>(bulkAlert.alertsCreated),
         alertsUpdated = objectMapper.treeToValue<List<BulkAlertAlert>>(bulkAlert.alertsUpdated),
         alertsExpired = objectMapper.treeToValue<List<BulkAlertAlert>>(bulkAlert.alertsExpired),
@@ -360,6 +361,22 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     )
   }
 
+  @Test
+  fun `does not create new alert when existing active alert exists`() {
+    val existingActiveAlert = webTestClient.createAlert(request = createAlertRequest())
+
+    val request = bulkCreateAlertRequest()
+
+    val response = webTestClient.bulkCreateAlert(request)
+
+    assertThat(response.alertsCreated).isEmpty()
+    with(response.existingActiveAlerts.single()) {
+      assertThat(alertUuid).isEqualTo(existingActiveAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingActiveAlert.prisonNumber)
+      assertThat(message).isEmpty()
+    }
+  }
+
   private fun WebTestClient.bulkCreateAlertResponseSpec(request: BulkCreateAlerts) =
     post()
       .uri("/bulk-alerts")
@@ -385,24 +402,15 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       activeTo = null,
     )
 
-  private fun WebTestClient.createAlertResponseSpec(
-    source: Source = DPS,
-    request: CreateAlert,
-  ) =
+  private fun WebTestClient.createAlert(request: CreateAlert) =
     post()
       .uri("/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext(source = source))
+      .headers(setAlertRequestContext(source = DPS))
       .exchange()
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-
-  private fun WebTestClient.createAlert(
-    source: Source = DPS,
-    request: CreateAlert,
-  ) =
-    createAlertResponseSpec(source, request)
       .expectStatus().isCreated
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
       .expectBody(AlertModel::class.java)
       .returnResult().responseBody!!
 }

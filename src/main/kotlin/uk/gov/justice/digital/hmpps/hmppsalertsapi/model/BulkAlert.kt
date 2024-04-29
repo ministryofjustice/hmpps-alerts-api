@@ -59,6 +59,12 @@ data class BulkAlert(
   val messages: Collection<String>,
 
   @Schema(
+    description = "Collection of existing active alerts that were not modified and resulted in no additional alert " +
+      "being created for the associated prison number.",
+  )
+  val existingActiveAlerts: Collection<BulkAlertAlert>,
+
+  @Schema(
     description = "Collection of new alerts that were created in bulk",
   )
   val alertsCreated: Collection<BulkAlertAlert>,

@@ -23,6 +23,9 @@ interface AlertRepository : JpaRepository<Alert, Long> {
   @EntityGraph(value = "alert")
   fun findByPrisonNumberAndAlertCodeCode(prisonNumber: String, alertCode: String): Collection<Alert>
 
+  @EntityGraph(value = "alert")
+  fun findByPrisonNumberInAndAlertCodeCode(prisonNumbers: Collection<String>, alertCode: String): Collection<Alert>
+
   @Query(
     value = "SELECT * FROM alert a WHERE a.alert_uuid = :alertUuid",
     nativeQuery = true,

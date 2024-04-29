@@ -28,13 +28,13 @@ class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val web
     }
   }
 
-  fun getPrisoners(prisonerNumbers: List<String>, batchSize: Int = 1000): Collection<PrisonerDto> {
+  fun getPrisoners(prisonNumbers: Collection<String>, batchSize: Int = 1000): Collection<PrisonerDto> {
     require(batchSize in 1..1000) {
       "Batch size must be between 1 and 1000"
     }
-    if (prisonerNumbers.isEmpty()) return emptyList()
+    if (prisonNumbers.isEmpty()) return emptyList()
     return try {
-      prisonerNumbers.chunked(batchSize).flatMap {
+      prisonNumbers.chunked(batchSize).flatMap {
         webClient
           .post()
           .uri("/prisoner-search/prisoner-numbers")
