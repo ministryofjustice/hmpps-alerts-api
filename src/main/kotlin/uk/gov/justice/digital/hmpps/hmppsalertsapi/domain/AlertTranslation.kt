@@ -17,9 +17,10 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Comment as CommentModel
 const val ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL = "DOCGM"
 
 val alertCodeDescriptionMap = mapOf(
-  ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL to "** Offenders must not be made aware of the OCG flag status.  Do not Share with offender. **\n" +
-    "\n" +
-    "This person has been mapped as a member of an Organised Crime Group (OCG). If further information is required to assist in management or re-categorisation decisions, including OPT 2 applications please contact the Prison Intelligence Officer.",
+  ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL to """** Offenders must not be made aware of the OCG flag status.  Do not Share with offender. **
+    |
+    |This person has been mapped as a member of an Organised Crime Group (OCG). If further information is required to assist in management or re-categorisation decisions, including OPT 2 applications please contact the Prison Intelligence Officer.
+  """.trimMargin(),
 )
 
 fun CreateAlert.toAlertEntity(
