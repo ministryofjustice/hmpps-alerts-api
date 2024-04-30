@@ -24,6 +24,7 @@ class AlertRequestContextConfiguration(private val alertRequestContextIntercepto
     log.info("Adding alert request context interceptor")
     registry.addInterceptor(alertRequestContextInterceptor).addPathPatterns("/alerts/**")
     registry.addInterceptor(alertRequestContextInterceptor).addPathPatterns("/alert-**/**")
+    registry.addInterceptor(alertRequestContextInterceptor).addPathPatterns("/bulk-alerts/**")
   }
 
   companion object {

@@ -66,6 +66,27 @@ class AlertTranslationTest {
   }
 
   @Test
+  fun `replace supplied description with fixed description for security alerts`() {
+    val request = CreateAlert(
+      prisonNumber = PRISON_NUMBER,
+      alertCode = ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL,
+      description = "Alert description",
+      authorisedBy = "A. Authorizer",
+      activeFrom = null,
+      activeTo = LocalDate.now().plusDays(3),
+    )
+    val context = AlertRequestContext(
+      username = TEST_USER,
+      userDisplayName = TEST_USER_NAME,
+      activeCaseLoadId = PRISON_CODE_LEEDS,
+    )
+
+    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source, context.activeCaseLoadId)
+
+    assertThat(entity.description).isEqualTo(alertCodeDescriptionMap[ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL])
+  }
+
+  @Test
   fun `use today when active from is not supplied`() {
     val request = CreateAlert(
       prisonNumber = PRISON_NUMBER,
