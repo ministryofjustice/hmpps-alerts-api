@@ -294,8 +294,7 @@ class AlertServiceTest {
 Updated authorised by from '${unchangedAlert.authorisedBy}' to '${savedAlert.authorisedBy}'
 Updated active from from '${unchangedAlert.activeFrom}' to '${savedAlert.activeFrom}'
 Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'
-Comment '${updateRequest.appendComment}' was added
-""",
+Comment '${updateRequest.appendComment}' was added""",
       )
       assertThat(actionedAt).isEqualTo(context.requestAt)
       assertThat(actionedBy).isEqualTo(context.username)

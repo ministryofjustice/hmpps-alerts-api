@@ -299,8 +299,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .returnResult().responseBody
     with(response!!) {
       assertThat(status).isEqualTo(400)
-      assertThat(userMessage)
-        .isEqualTo("Validation failure: Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'code': rejected value [1234567890123]; codes [Size.createAlertCodeRequest.code,Size.code,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.code,code]; arguments []; default message [code],12,1]; default message [Code must be between 1 & 12 characters]] ")
+      assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
       assertThat(developerMessage)
         .isEqualTo("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'code': rejected value [1234567890123]; codes [Size.createAlertCodeRequest.code,Size.code,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.code,code]; arguments []; default message [code],12,1]; default message [Code must be between 1 & 12 characters]] ")
     }
@@ -315,10 +314,8 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .returnResult().responseBody
     with(response!!) {
       assertThat(status).isEqualTo(404)
-      assertThat(userMessage)
-        .isEqualTo("Not found: Alert type with code ABCDE could not be found")
-      assertThat(developerMessage)
-        .isEqualTo("Alert type with code ABCDE could not be found")
+      assertThat(userMessage).isEqualTo("Not found: Alert type with code ABCDE could not be found")
+      assertThat(developerMessage).isEqualTo("Alert type with code ABCDE could not be found")
     }
   }
 
@@ -331,8 +328,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .returnResult().responseBody
     with(response!!) {
       assertThat(status).isEqualTo(400)
-      assertThat(userMessage)
-        .isEqualTo("Validation failure: Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'parent': rejected value []; codes [Size.createAlertCodeRequest.parent,Size.parent,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.parent,parent]; arguments []; default message [parent],12,1]; default message [Code must be between 1 & 12 characters]] ")
+      assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
       assertThat(developerMessage)
         .isEqualTo("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'parent': rejected value []; codes [Size.createAlertCodeRequest.parent,Size.parent,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.parent,parent]; arguments []; default message [parent],12,1]; default message [Code must be between 1 & 12 characters]] ")
     }
@@ -347,8 +343,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .returnResult().responseBody
     with(response!!) {
       assertThat(status).isEqualTo(400)
-      assertThat(userMessage)
-        .isEqualTo("Validation failure: Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'parent': rejected value [ABCDEFGHJKLMN]; codes [Size.createAlertCodeRequest.parent,Size.parent,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.parent,parent]; arguments []; default message [parent],12,1]; default message [Code must be between 1 & 12 characters]] ")
+      assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
       assertThat(developerMessage)
         .isEqualTo("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'parent': rejected value [ABCDEFGHJKLMN]; codes [Size.createAlertCodeRequest.parent,Size.parent,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.parent,parent]; arguments []; default message [parent],12,1]; default message [Code must be between 1 & 12 characters]] ")
     }
@@ -364,8 +359,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .returnResult().responseBody
     with(response!!) {
       assertThat(status).isEqualTo(400)
-      assertThat(userMessage)
-        .isEqualTo("Validation failure: Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'description': rejected value [descdescdescdescdescdescdescdescdescdescd]; codes [Size.createAlertCodeRequest.description,Size.description,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.description,description]; arguments []; default message [description],40,1]; default message [Description must be between 1 & 40 characters]] ")
+      assertThat(userMessage).isEqualTo("Validation failure(s): Description must be between 1 & 40 characters")
       assertThat(developerMessage)
         .isEqualTo("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'description': rejected value [descdescdescdescdescdescdescdescdescdescd]; codes [Size.createAlertCodeRequest.description,Size.description,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.description,description]; arguments []; default message [description],40,1]; default message [Description must be between 1 & 40 characters]] ")
     }
@@ -380,8 +374,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .returnResult().responseBody
     with(response!!) {
       assertThat(status).isEqualTo(400)
-      assertThat(userMessage)
-        .isEqualTo("Validation failure: Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'code': rejected value []; codes [Size.createAlertCodeRequest.code,Size.code,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.code,code]; arguments []; default message [code],12,1]; default message [Code must be between 1 & 12 characters]] ")
+      assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
       assertThat(developerMessage)
         .isEqualTo("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'code': rejected value []; codes [Size.createAlertCodeRequest.code,Size.code,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.code,code]; arguments []; default message [code],12,1]; default message [Code must be between 1 & 12 characters]] ")
     }
@@ -396,8 +389,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .returnResult().responseBody
     with(response!!) {
       assertThat(status).isEqualTo(400)
-      assertThat(userMessage)
-        .isEqualTo("Validation failure: Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'description': rejected value []; codes [Size.createAlertCodeRequest.description,Size.description,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.description,description]; arguments []; default message [description],40,1]; default message [Description must be between 1 & 40 characters]] ")
+      assertThat(userMessage).isEqualTo("Validation failure(s): Description must be between 1 & 40 characters")
       assertThat(developerMessage)
         .isEqualTo("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertCodesController.createAlertCode(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest,jakarta.servlet.http.HttpServletRequest): [Field error in object 'createAlertCodeRequest' on field 'description': rejected value []; codes [Size.createAlertCodeRequest.description,Size.description,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [createAlertCodeRequest.description,description]; arguments []; default message [description],40,1]; default message [Description must be between 1 & 40 characters]] ")
     }

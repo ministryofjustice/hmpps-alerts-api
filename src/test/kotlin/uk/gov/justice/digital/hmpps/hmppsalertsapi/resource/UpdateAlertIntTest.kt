@@ -245,8 +245,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
 Updated authorised by from '${alert.authorisedBy}' to '$authorisedBy'
 Updated active from from '${alert.activeFrom}' to '$activeFrom'
 Updated active to from '${alert.activeTo}' to '$activeTo'
-Comment '$appendComment' was added
-""",
+Comment '$appendComment' was added""",
         )
         assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
         assertThat(actionedBy).isEqualTo(TEST_USER)
@@ -319,8 +318,7 @@ Comment '$appendComment' was added
 Updated authorised by from '${alert.authorisedBy}' to '$authorisedBy'
 Updated active from from '${alert.activeFrom}' to '$activeFrom'
 Updated active to from '${alert.activeTo}' to '$activeTo'
-Comment '$appendComment' was added
-""",
+Comment '$appendComment' was added""",
         )
         assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
         assertThat(actionedBy).isEqualTo(TEST_USER)
@@ -361,10 +359,7 @@ Comment '$appendComment' was added
       }
       with(lastModifiedAuditEvent) {
         assertThat(action).isEqualTo(AuditEventAction.UPDATED)
-        assertThat(description).isEqualTo(
-          """Comment '$appendComment' was added
-""",
-        )
+        assertThat(description).isEqualTo("Comment '$appendComment' was added")
         assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
         assertThat(actionedBy).isEqualTo(TEST_USER)
         assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
