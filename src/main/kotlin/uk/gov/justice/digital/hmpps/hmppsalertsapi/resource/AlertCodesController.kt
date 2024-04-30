@@ -13,6 +13,7 @@ import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertCodeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertCodeService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
@@ -173,6 +175,45 @@ class AlertCodesController(
     @PathVariable alertCode: String,
     httpRequest: HttpServletRequest,
   ) = alertCodeService.retrieveAlertCode(alertCode)
+
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
+  @PatchMapping("/{alertCode}")
+  @Operation(
+    summary = "Update alert code",
+    description = "Set the properties of an alert code to the submitted value.",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Alert code updated",
+        content = [Content(schema = Schema(implementation = AlertCode::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Not found, the alert code was is not found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @UsernameHeader
+  fun updateAlertCode(
+    @PathVariable alertCode: String,
+    @Valid @RequestBody updateRequest: UpdateAlertCodeRequest,
+    httpRequest: HttpServletRequest,
+  ) = alertCodeService.updateAlertCode(alertCode, updateRequest, httpRequest.alertRequestContext())
+
   private fun HttpServletRequest.alertRequestContext() =
     getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
 }

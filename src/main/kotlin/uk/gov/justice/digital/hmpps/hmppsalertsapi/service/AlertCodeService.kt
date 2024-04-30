@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertTypeNotFound
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.ExistingActiveAlertTypeWithCodeException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertCodeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 
@@ -63,4 +64,22 @@ class AlertCodeService(
 
   fun retrieveAlertCodes(includeInactive: Boolean): Collection<AlertCode> =
     alertCodeRepository.findAll().toAlertCodeModels(includeInactive)
+
+  fun updateAlertCode(
+    alertCode: String,
+    updateAlertCodeRequest: UpdateAlertCodeRequest,
+    alertRequestContext: AlertRequestContext,
+  ): AlertCode =
+    alertCode.let {
+      it.checkAlertCodeExists()
+      with(alertCodeRepository.findByCode(it)!!) {
+        if (description != updateAlertCodeRequest.description) {
+          description = updateAlertCodeRequest.description
+          modifiedBy = alertRequestContext.username
+          modifiedAt = alertRequestContext.requestAt
+          update()
+        }
+        alertCodeRepository.saveAndFlush(this).toAlertCodeModel()
+      }
+    }
 }
