@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertCodeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
@@ -65,6 +66,39 @@ class AlertCodeServiceTest {
     assertThat(value).isNotNull
     assertThat(value.deactivatedBy).isEqualTo("USER")
     assertThat(value.deactivatedAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+  }
+
+  @Test
+  fun `update alert code description`() {
+    whenever(alertCodeRepository.findByCode(any())).thenReturn(alertCodeVictim())
+    whenever(alertCodeRepository.saveAndFlush(any())).thenReturn(alertCodeVictim())
+    underTest.updateAlertCode(
+      "VI",
+      UpdateAlertCodeRequest(description = "New Description"),
+      AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
+    )
+    verify(alertCodeRepository).saveAndFlush(entityCaptor.capture())
+    val value = entityCaptor.firstValue
+    assertThat(value.description).isEqualTo("New Description")
+    assertThat(value.modifiedBy).isEqualTo("USER")
+    assertThat(value.modifiedAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+  }
+
+  @Test
+  fun `update alert code with no actual change`() {
+    val alertCode = alertCodeVictim()
+    whenever(alertCodeRepository.findByCode(alertCode.code)).thenReturn(alertCode)
+    whenever(alertCodeRepository.saveAndFlush(any())).thenReturn(alertCode)
+    underTest.updateAlertCode(
+      alertCode.code,
+      UpdateAlertCodeRequest(description = alertCode.description),
+      AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
+    )
+    verify(alertCodeRepository).saveAndFlush(entityCaptor.capture())
+    val value = entityCaptor.firstValue
+    assertThat(value.description).isEqualTo(alertCode.description)
+    assertThat(value.modifiedBy).isNotEqualTo("USER")
+    assertThat(value.modifiedAt).isBefore(LocalDateTime.now().minus(3, ChronoUnit.HOURS))
   }
 
   private fun alertType(alertTypeId: Long = 1, code: String = "A") =
