@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.Pri
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.DownstreamServiceException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NULL_RESPONSE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PrisonerSearchServer
 import java.time.LocalDate
@@ -60,6 +61,51 @@ class PrisonerSearchClientTest {
     with(exception.cause) {
       assertThat(this).isInstanceOf(WebClientResponseException::class.java)
       assertThat(this!!.message).isEqualTo("500 Internal Server Error from GET http://localhost:8112/prisoner/${PRISON_NUMBER_THROW_EXCEPTION}")
+    }
+  }
+
+  @Test
+  fun `getPrisoners - batch size must be greater than zero`() {
+    val exception = assertThrows<IllegalArgumentException> {
+      client.getPrisoners(emptyList(), 0)
+    }
+    assertThat(exception.message).isEqualTo("Batch size must be between 1 and 1000")
+  }
+
+  @Test
+  fun `getPrisoners - batch size must be less than 1001`() {
+    val exception = assertThrows<IllegalArgumentException> {
+      client.getPrisoners(emptyList(), 1001)
+    }
+    assertThat(exception.message).isEqualTo("Batch size must be between 1 and 1000")
+  }
+
+  @Test
+  fun `getPrisoners - no prison numbers`() {
+    assertThat(client.getPrisoners(emptyList())).isEmpty()
+  }
+
+  @Test
+  fun `getPrisoners - not found`() {
+    server.stubGetPrisonersNotFound()
+    assertThat(client.getPrisoners(listOf(PRISON_NUMBER_NOT_FOUND))).isEmpty()
+  }
+
+  @Test
+  fun `getPrisoners - null response`() {
+    server.stubGetPrisonersNullResponse()
+    assertThat(client.getPrisoners(listOf(PRISON_NUMBER_NULL_RESPONSE))).isEmpty()
+  }
+
+  @Test
+  fun `getPrisoners - downstream service exception`() {
+    server.stubGetPrisonersException()
+
+    val exception = assertThrows<DownstreamServiceException> { client.getPrisoners(listOf(PRISON_NUMBER_THROW_EXCEPTION)) }
+    assertThat(exception.message).isEqualTo("Get prisoner request failed")
+    with(exception.cause) {
+      assertThat(this).isInstanceOf(WebClientResponseException::class.java)
+      assertThat(this!!.message).isEqualTo("500 Internal Server Error from POST http://localhost:8112/prisoner-search/prisoner-numbers")
     }
   }
 

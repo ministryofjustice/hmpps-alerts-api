@@ -19,6 +19,7 @@ import java.time.LocalDate
 
 internal const val PRISON_NUMBER = "A1234AA"
 internal const val PRISON_NUMBER_NOT_FOUND = "NOT_FOUND"
+internal const val PRISON_NUMBER_NULL_RESPONSE = "NULL"
 internal const val PRISON_NUMBER_THROW_EXCEPTION = "THROW"
 
 class PrisonerSearchServer : WireMockServer(8112) {
@@ -93,6 +94,18 @@ class PrisonerSearchServer : WireMockServer(8112) {
           aResponse()
             .withHeader("Content-Type", "application/json")
             .withBody(mapper.writeValueAsString(emptyList<PrisonerDto>()))
+            .withStatus(200),
+        ),
+    )
+
+  fun stubGetPrisonersNullResponse(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER_NULL_RESPONSE)): StubMapping =
+    stubFor(
+      post("/prisoner-search/prisoner-numbers")
+        .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody("")
             .withStatus(200),
         ),
     )
