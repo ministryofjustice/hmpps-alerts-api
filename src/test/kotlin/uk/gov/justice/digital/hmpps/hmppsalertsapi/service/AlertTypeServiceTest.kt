@@ -112,8 +112,8 @@ class AlertTypeServiceTest {
     verify(alertTypeRepository).saveAndFlush(entityCaptor.capture())
     val value = entityCaptor.firstValue
     assertThat(value).isNotNull
-    assertThat(value.deactivatedBy).isNull();
-    assertThat(value.deactivatedAt).isNull();
+    assertThat(value.deactivatedBy).isNull()
+    assertThat(value.deactivatedAt).isNull()
   }
 
   @Test
