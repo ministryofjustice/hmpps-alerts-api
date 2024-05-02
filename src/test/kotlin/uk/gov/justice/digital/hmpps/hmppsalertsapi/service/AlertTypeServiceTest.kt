@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertTypeVulnerability
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertTypeVulnerabilityDeactivated
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -98,6 +99,21 @@ class AlertTypeServiceTest {
     assertThat(value).isNotNull
     assertThat(value.deactivatedBy).isEqualTo("USER")
     assertThat(value.deactivatedAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+  }
+
+  @Test
+  fun `reactivate an alert type`() {
+    whenever(alertTypeRepository.findByCode(any())).thenReturn(alertTypeVulnerabilityDeactivated())
+    whenever(alertTypeRepository.saveAndFlush(any())).thenReturn(alertType())
+    service.reactivateAlertType(
+      "VI",
+      AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
+    )
+    verify(alertTypeRepository).saveAndFlush(entityCaptor.capture())
+    val value = entityCaptor.firstValue
+    assertThat(value).isNotNull
+    assertThat(value.deactivatedBy).isNull();
+    assertThat(value.deactivatedAt).isNull();
   }
 
   @Test

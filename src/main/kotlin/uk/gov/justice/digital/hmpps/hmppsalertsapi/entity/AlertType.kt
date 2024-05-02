@@ -9,6 +9,7 @@ import jakarta.persistence.Table
 import org.springframework.data.domain.AbstractAggregateRoot
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertTypeCreatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertTypeDeactivatedEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertTypeReactivatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertTypeUpdatedEvent
 import java.time.LocalDateTime
 
@@ -49,6 +50,12 @@ data class AlertType(
   fun deactivate(): AlertType = this.also {
     registerEvent(
       AlertTypeDeactivatedEvent(code, deactivatedAt!!),
+    )
+  }
+
+  fun reactivate(requestAt: LocalDateTime): AlertType = this.also {
+    registerEvent(
+      AlertTypeReactivatedEvent(code, requestAt),
     )
   }
 
