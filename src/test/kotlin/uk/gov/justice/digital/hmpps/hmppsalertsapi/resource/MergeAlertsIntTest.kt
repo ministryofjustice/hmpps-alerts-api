@@ -1,6 +1,9 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
+import org.awaitility.kotlin.await
+import org.awaitility.kotlin.matches
+import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -9,24 +12,30 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_THROW_EXCEPTION
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MigratedAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_ISOLATED_PRISONER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.DEFAULT_UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.mergeAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.mergeAlerts
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.util.UUID
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 class MergeAlertsIntTest : IntegrationTestBase() {
   @Autowired
@@ -231,57 +240,39 @@ class MergeAlertsIntTest : IntegrationTestBase() {
 
   @ParameterizedTest(name = "{0} allowed")
   @ValueSource(strings = [ROLE_ALERTS_ADMIN, ROLE_NOMIS_ALERTS])
-  fun `201 migrated - allowed role`(role: String) {
+  fun `201 merged - allowed role`(role: String) {
     webTestClient.mergeAlertsResponseSpec(role, mergeAlerts())
       .expectStatus().isCreated
   }
 
-  /*@Test
-  fun `stores and returns mapping information`() {
+  @Test
+  fun `returns mapping information`() {
     val offenderBookId = 54321L
-    val bookingSeq = 3
     val alertSeq = 4
 
-    val migratedAlert = webTestClient.mergeAlerts(
-      request = listOf(
-        migrateAlert().copy(
-          offenderBookId = offenderBookId,
-          bookingSeq = bookingSeq,
-          alertSeq = alertSeq,
-        ),
-      ),
-    ).single()
+    val mergedAlert = webTestClient.mergeAlerts(
+      request = mergeAlerts().copy(newAlerts = listOf(mergeAlert().copy(offenderBookId = offenderBookId, alertSeq = alertSeq))),
+    ).alertsCreated.single()
 
-    assertThat(migratedAlert).isEqualTo(
-      MigratedAlert(
+    assertThat(mergedAlert).isEqualTo(
+      MergedAlert(
         offenderBookId = offenderBookId,
-        bookingSeq = bookingSeq,
         alertSeq = alertSeq,
-        alertUuid = migratedAlert.alertUuid,
+        alertUuid = mergedAlert.alertUuid,
       ),
     )
-    assertThat(migratedAlert.alertUuid).isNotEqualTo(DEFAULT_UUID)
-
-    with(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!.migratedAlert) {
-      assertThat(this).isNotNull
-      assertThat(this!!.offenderBookId).isEqualTo(offenderBookId)
-      assertThat(this.bookingSeq).isEqualTo(bookingSeq)
-      assertThat(this.alertSeq).isEqualTo(alertSeq)
-      assertThat(this.alert.alertUuid).isEqualTo(migratedAlert.alertUuid)
-      assertThat(this.migratedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
-
-      assertThat(this).isEqualTo(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!.migratedAlert)
-    }
+    assertThat(mergedAlert.alertUuid).isNotEqualTo(DEFAULT_UUID)
   }
 
   @Test
-  fun `should migrate new alert`() {
-    val request = migrateAlert()
+  fun `merge new alert`() {
+    val request = mergeAlerts()
+    val newAlert = request.newAlerts.single()
 
-    val migratedAlert = webTestClient.mergeAlerts(request = listOf(request)).single()
+    val mergedAlert = webTestClient.mergeAlerts(request = request).alertsCreated.single()
 
-    val alert = alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!
-    val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
+    val alert = alertRepository.findByAlertUuid(mergedAlert.alertUuid)!!
+    val alertCode = alertCodeRepository.findByCode(newAlert.alertCode)!!
 
     assertThat(alert).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
       Alert(
@@ -289,121 +280,85 @@ class MergeAlertsIntTest : IntegrationTestBase() {
         alertUuid = alert.alertUuid,
         alertCode = alertCode,
         prisonNumber = PRISON_NUMBER,
-        description = request.description,
-        authorisedBy = request.authorisedBy,
-        activeFrom = request.activeFrom,
-        activeTo = request.activeTo,
-        createdAt = request.createdAt,
-        migratedAt = alert.migratedAt,
+        description = newAlert.description,
+        authorisedBy = newAlert.authorisedBy,
+        activeFrom = newAlert.activeFrom,
+        activeTo = newAlert.activeTo,
+        createdAt = alert.createdAt,
       ),
     )
     with(alert.auditEvents().single()) {
       assertThat(auditEventId).isEqualTo(1)
       assertThat(action).isEqualTo(CREATED)
-      assertThat(description).isEqualTo("Migrated alert created")
-      assertThat(actionedAt).isEqualToIgnoringNanos(request.createdAt)
-      assertThat(actionedBy).isEqualTo(request.createdBy)
-      assertThat(actionedByDisplayName).isEqualTo(request.createdByDisplayName)
+      assertThat(description).isEqualTo("Alert created when merging alerts from prison number '${request.prisonNumberMergeFrom}' into prison number '${request.prisonNumberMergeTo}'")
+      assertThat(actionedAt).isEqualToIgnoringNanos(alert.createdAt)
+      assertThat(actionedBy).isEqualTo("SYS")
+      assertThat(actionedByDisplayName).isEqualTo("Merge from ${request.prisonNumberMergeFrom}")
       assertThat(source).isEqualTo(NOMIS)
       assertThat(activeCaseLoadId).isNull()
     }
   }
 
   @Test
-  fun `should migrate updated alert`() {
-    val request = migrateAlert().copy(
-      updatedAt = LocalDateTime.now().minusDays(1).withNano(0),
-      updatedBy = "AG1221GG",
-      updatedByDisplayName = "Up Dated",
-    )
+  fun `publishes alert created event`() {
+    val mergedAlert = webTestClient.mergeAlerts(request = mergeAlerts()).alertsCreated.single()
 
-    val migratedAlert = webTestClient.mergeAlerts(request = listOf(request)).single()
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
 
-    val alert = alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!
-
-    with(alert) {
-      assertThat(lastModifiedAt).isEqualTo(request.updatedAt)
-      with(lastModifiedAuditEvent()!!) {
-        assertThat(actionedAt).isEqualTo(request.updatedAt)
-        assertThat(actionedBy).isEqualTo(request.updatedBy)
-        assertThat(actionedByDisplayName).isEqualTo(request.updatedByDisplayName)
-      }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
+      assertThat(additionalInformation.identifier()).isEqualTo(mergedAlert.alertUuid.toString())
     }
   }
 
   @Test
-  fun `migrate alert with inactive alert code`() {
-    val migratedAlert = webTestClient.mergeAlerts(request = listOf(migrateAlert().copy(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD))).single()
+  fun `merge alert with inactive alert code`() {
+    val mergedAlert = webTestClient.mergeAlerts(
+      request = mergeAlerts().copy(newAlerts = listOf(mergeAlert().copy(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD))),
+    ).alertsCreated.single()
 
-    with(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!.alertCode) {
+    with(alertRepository.findByAlertUuid(mergedAlert.alertUuid)!!.alertCode) {
       assertThat(code).isEqualTo(ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
       assertThat(isActive()).isFalse()
     }
   }
 
   @Test
-  fun `migrate alert with active to before active from`() {
-    val migratedAlert = webTestClient.mergeAlerts(request = listOf(migrateAlert().copy(activeFrom = LocalDate.now(), activeTo = LocalDate.now().minusDays(1)))).single()
+  fun `merge alert with active to before active from`() {
+    val mergedAlert = webTestClient.mergeAlerts(
+      request = mergeAlerts().copy(newAlerts = listOf(mergeAlert().copy(activeFrom = LocalDate.now(), activeTo = LocalDate.now().minusDays(1)))),
+    ).alertsCreated.single()
 
-    with(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!) {
+    with(alertRepository.findByAlertUuid(mergedAlert.alertUuid)!!) {
       assertThat(activeTo).isBefore(activeFrom)
       assertThat(isActive()).isFalse()
     }
   }
 
   @Test
-  fun `migrate alert accepts and retains timestamp nanos`() {
-    val createdAt = LocalDateTime.parse("2024-01-09T16:23:41.860648")
-    val updatedAt = LocalDateTime.parse("2024-01-30T12:57:06.21759")
-    val request = migrateAlert().copy(
-      createdAt = createdAt,
-      updatedAt = updatedAt,
-      updatedBy = "AG1221GG",
-      updatedByDisplayName = "Up Dated",
-    )
-
-    val migratedAlert = webTestClient.mergeAlerts(request = listOf(request)).single()
-
-    val alert = alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!
-
-    with(alert) {
-      assertThat(this.createdAt).isEqualTo(createdAt)
-      assertThat(lastModifiedAt).isEqualTo(updatedAt)
-      assertThat(lastModifiedAuditEvent()!!.actionedAt).isEqualTo(updatedAt)
-    }
-  }
-
-  @Test
-  fun `should not publish alert created event`() {
-    webTestClient.mergeAlerts(request = listOf(migrateAlert()))
-    Thread.sleep(1000)
-    verify(hmppsQueueService, never()).findByTopicId(any())
-  }
-
-  @Test
   fun `accepts two active alerts with the same alert code`() {
-    val request = listOf(
-      migrateAlert().copy(
-        offenderBookId = 12345,
-        bookingSeq = 1,
-        alertSeq = 2,
-        alertCode = ALERT_CODE_ISOLATED_PRISONER,
-        activeFrom = LocalDate.now().minusDays(1),
-        activeTo = null,
-      ),
-      migrateAlert().copy(
-        offenderBookId = 54321,
-        bookingSeq = 3,
-        alertSeq = 4,
-        alertCode = ALERT_CODE_ISOLATED_PRISONER,
-        activeFrom = LocalDate.now().minusDays(1),
-        activeTo = null,
+    val request = mergeAlerts().copy(
+      newAlerts = listOf(
+        mergeAlert().copy(
+          offenderBookId = 12345,
+          alertSeq = 2,
+          alertCode = ALERT_CODE_ISOLATED_PRISONER,
+          activeFrom = LocalDate.now().minusDays(1),
+          activeTo = null,
+        ),
+        mergeAlert().copy(
+          offenderBookId = 54321,
+          alertSeq = 4,
+          alertCode = ALERT_CODE_ISOLATED_PRISONER,
+          activeFrom = LocalDate.now().minusDays(1),
+          activeTo = null,
+        ),
       ),
     )
 
     val response = webTestClient.mergeAlerts(request = request)
 
-    with(response) {
+    with(response.alertsCreated) {
       assertThat(this).hasSize(2)
       assertThat(this[0].alertUuid).isNotEqualTo(this[1].alertUuid)
       with(alertRepository.findByAlertUuid(this[0].alertUuid)!!) {
@@ -418,38 +373,33 @@ class MergeAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `migration is idempotent`() {
-    val migrateExistingAlert = migrateAlert().copy(
-      offenderBookId = 12345,
-      bookingSeq = 1,
-      alertSeq = 2,
-      alertCode = ALERT_CODE_ADULT_AT_RISK,
-    )
-    val migrateNewAlert = migrateAlert().copy(
-      offenderBookId = 54321,
-      bookingSeq = 3,
-      alertSeq = 4,
-      alertCode = ALERT_CODE_POOR_COPER,
-    )
+  @Sql("classpath:test_data/existing-active-alerts-for-multiple-prison-numbers.sql")
+  fun `deletes merge from prisoner alerts`() {
+    val prisonNumberMergeFrom = "B2345BB"
+    val request = mergeAlerts().copy(prisonNumberMergeFrom = prisonNumberMergeFrom)
 
-    val migratedAlert = webTestClient.mergeAlerts(request = listOf(migrateExistingAlert)).single()
+    val prisonNumberMergeFromAlertUuids = alertRepository.findByPrisonNumber(prisonNumberMergeFrom).map { it.alertUuid }
 
-    val response = webTestClient.mergeAlerts(request = listOf(migrateExistingAlert, migrateNewAlert))
+    val response = webTestClient.mergeAlerts(request = request)
 
-    assertThat(response).hasSize(2)
-    assertThat(response.associateBy { it.alertUuid }.containsKey(migratedAlert.alertUuid)).isFalse()
+    assertThat(response.alertsDeleted).isEqualTo(prisonNumberMergeFromAlertUuids)
+    assertThat(alertRepository.findByPrisonNumber(prisonNumberMergeFrom)).isEmpty()
+
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
+
+    with(
+      listOf(
+        hmppsEventsQueue.receiveAlertDomainEventOnQueue(),
+        hmppsEventsQueue.receiveAlertDomainEventOnQueue(),
+        hmppsEventsQueue.receiveAlertDomainEventOnQueue(),
+      ).filter { it.eventType == ALERT_DELETED.eventType },
+    ) {
+      assertThat(this).hasSize(2)
+      onEach {
+        assertThat(prisonNumberMergeFromAlertUuids.contains(UUID.fromString(it.additionalInformation.identifier()))).isTrue()
+      }
+    }
   }
-
-  @Test
-  fun `deletes existing prisoner alerts`() {
-    var alert = webTestClient.createAlert()
-    alert = webTestClient.addComment(alert.alertUuid)
-
-    val migratedAlert = webTestClient.mergeAlerts(request = listOf(migrateAlert())).single()
-
-    assertThat(alertRepository.findByAlertUuid(alert.alertUuid)).isNull()
-    assertThat(alert.alertUuid).isNotEqualTo(migratedAlert.alertUuid)
-  }*/
 
   private fun WebTestClient.mergeAlertsResponseSpec(role: String = ROLE_NOMIS_ALERTS, request: MergeAlerts) =
     post()
@@ -462,35 +412,6 @@ class MergeAlertsIntTest : IntegrationTestBase() {
   private fun WebTestClient.mergeAlerts(role: String = ROLE_NOMIS_ALERTS, request: MergeAlerts) =
     mergeAlertsResponseSpec(role, request)
       .expectStatus().isCreated
-      .expectBodyList(MigratedAlert::class.java)
-      .returnResult().responseBody!!
-
-  private fun WebTestClient.createAlert() =
-    post()
-      .uri("/alerts")
-      .bodyValue(
-        CreateAlert(
-          prisonNumber = PRISON_NUMBER,
-          alertCode = ALERT_CODE_VICTIM,
-          description = "Alert description",
-          authorisedBy = "A. Authorizer",
-          activeFrom = LocalDate.now().minusDays(3),
-          activeTo = null,
-        ),
-      )
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
-      .exchange()
-      .expectBody(AlertModel::class.java)
-      .returnResult().responseBody!!
-
-  private fun WebTestClient.addComment(alertUuid: UUID) =
-    put()
-      .uri("/alerts/$alertUuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext())
-      .bodyValue(UpdateAlert(appendComment = "Additional comment"))
-      .exchange()
-      .expectBody(AlertModel::class.java)
+      .expectBody(MergedAlerts::class.java)
       .returnResult().responseBody!!
 }
