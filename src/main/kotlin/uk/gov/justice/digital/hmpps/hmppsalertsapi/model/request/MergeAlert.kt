@@ -4,15 +4,11 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.UpdatedByDisplayNameRequired
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.UpdatedByRequired
 import java.time.LocalDate
 
 @Schema(
   description = "The request body for merging a new alert for a person",
 )
-@UpdatedByRequired("Updated by is required when updated at is supplied")
-@UpdatedByDisplayNameRequired("Updated by display name is required when updated at is supplied")
 data class MergeAlert(
   @Schema(
     description = "The internal NOMIS id for the offender booking. " +

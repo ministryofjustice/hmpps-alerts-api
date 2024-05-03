@@ -4,6 +4,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
@@ -20,11 +21,13 @@ import java.time.LocalDateTime
 class MergeAlertService(
   private val alertCodeRepository: AlertCodeRepository,
   private val alertRepository: AlertRepository,
+  private val prisonerSearchClient: PrisonerSearchClient,
 ) {
   fun mergePrisonerAlerts(request: MergeAlerts): MergedAlerts {
     val mergedAt = LocalDateTime.now()
     val alertCodes = request.alertCodes()
     request.checkForNotFoundAlertCodes(alertCodes)
+    request.validatePrisonNumberMergeTo()
     request.logActiveToBeforeActiveFrom(request.prisonNumberMergeTo)
 
     val alertsDeleted = alertRepository.saveAllAndFlush(
@@ -66,6 +69,9 @@ class MergeAlertService(
         throw IllegalArgumentException("Alert code(s) '${this.joinToString("', '") }' not found")
       }
     }
+
+  private fun MergeAlerts.validatePrisonNumberMergeTo() =
+    require(prisonerSearchClient.getPrisoner(prisonNumberMergeTo) != null) { "Prison number '$prisonNumberMergeTo' not found" }
 
   private fun MergeAlerts.logActiveToBeforeActiveFrom(prisonNumber: String) {
     newAlerts.filter { it.activeTo?.isBefore(it.activeFrom) == true }.forEach {
