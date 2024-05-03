@@ -184,6 +184,15 @@ data class AlertTypeDeactivatedEvent(
   override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
     toDomainEvent(DomainEventType.ALERT_TYPE_DEACTIVATED, baseUrl)
 }
+
+data class AlertTypeReactivatedEvent(
+  override val alertCode: String,
+  override val occurredAt: LocalDateTime,
+) : AlertTypeEvent() {
+  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
+    toDomainEvent(DomainEventType.ALERT_TYPE_REACTIVATED, baseUrl)
+}
+
 data class AlertTypeUpdatedEvent(
   override val alertCode: String,
   override val occurredAt: LocalDateTime,

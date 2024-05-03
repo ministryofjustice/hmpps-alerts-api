@@ -175,6 +175,43 @@ class AlertTypesController(
 
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
+  @PatchMapping("/{alertType}/reactivate")
+  @Operation(
+    summary = "Reactivate an alert type",
+    description = "Reactivate an alert type, typically from the Alerts UI",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Alert type reactivated",
+        content = [Content(schema = Schema(implementation = AlertType::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Not found, the alert type was is not found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @UsernameHeader
+  fun reactivateAlertType(
+    @PathVariable alertType: String,
+    httpRequest: HttpServletRequest,
+  ) = alertTypeService.reactivateAlertType(alertType, httpRequest.alertRequestContext())
+
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
   @PatchMapping("/{alertType}")
   @Operation(
     summary = "Update alert type",

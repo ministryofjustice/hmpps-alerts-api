@@ -49,6 +49,20 @@ class AlertTypeService(
     }
 
   @Transactional
+  fun reactivateAlertType(alertType: String, alertRequestContext: AlertRequestContext) =
+    alertType.let {
+      it.checkAlertTypeExists()
+      with(alertTypeRepository.findByCode(it)!!) {
+        if (deactivatedAt != null) {
+          deactivatedAt = null
+          deactivatedBy = null
+          reactivate(alertRequestContext.requestAt)
+        }
+        alertTypeRepository.saveAndFlush(this).toAlertTypeModel(false)
+      }
+    }
+
+  @Transactional
   fun updateAlertType(
     alertType: String,
     updateAlertTypeRequest: UpdateAlertTypeRequest,
