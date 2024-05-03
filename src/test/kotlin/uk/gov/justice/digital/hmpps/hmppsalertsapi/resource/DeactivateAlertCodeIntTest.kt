@@ -8,7 +8,6 @@ import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
@@ -42,16 +41,16 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `401 unauthorised`() {
-    webTestClient.delete()
-      .uri("/alert-codes/VI")
+    webTestClient.patch()
+      .uri("/alert-codes/VI/deactivate")
       .exchange()
       .expectStatus().isUnauthorized
   }
 
   @Test
   fun `403 forbidden - no roles`() {
-    webTestClient.delete()
-      .uri("/alert-codes/VI")
+    webTestClient.patch()
+      .uri("/alert-codes/VI/deactivate")
       .headers(setAuthorisation())
       .headers(setAlertRequestContext())
       .exchange()
@@ -60,8 +59,8 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `403 forbidden - alerts reader`() {
-    webTestClient.delete()
-      .uri("/alert-codes/VI")
+    webTestClient.patch()
+      .uri("/alert-codes/VI/deactivate")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
       .headers(setAlertRequestContext())
       .exchange()
@@ -70,8 +69,8 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - username not supplied`() {
-    val response = webTestClient.delete()
-      .uri("/alert-codes/VI")
+    val response = webTestClient.patch()
+      .uri("/alert-codes/VI/deactivate")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
       .exchange()
       .expectStatus().isBadRequest
@@ -91,8 +90,8 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - username not found`() {
-    val response = webTestClient.delete()
-      .uri("/alert-codes/VI")
+    val response = webTestClient.patch()
+      .uri("/alert-codes/VI/deactivate")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
       .exchange()
@@ -111,8 +110,8 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `404 alert not found`() {
-    val response = webTestClient.delete()
-      .uri("/alert-codes/ALK")
+    val response = webTestClient.patch()
+      .uri("/alert-codes/ALK/deactivate")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
       .headers(setAlertRequestContext())
       .exchange()
@@ -134,7 +133,9 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
   fun `should mark alert code as deactivated`() {
     val alertCode = createAlertCode("HJK")
     val response = webTestClient.deleteAlertCode(alertCode = alertCode.code)
-    assertThat(response.status).isEqualTo(HttpStatus.NO_CONTENT)
+    with(response) {
+      assertThat(isActive).isFalse()
+    }
     val entity = alertCodeRepository.findByCode(alertCode.code)
     assertThat(entity!!.deactivatedAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
     assertThat(entity.deactivatedBy).isEqualTo(TEST_USER)
@@ -189,11 +190,13 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
 
   private fun WebTestClient.deleteAlertCode(
     alertCode: String,
-  ) =
-    delete()
-      .uri("/alert-codes/$alertCode")
+  ): AlertCode =
+    patch()
+      .uri("/alert-codes/$alertCode/deactivate")
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
       .exchange()
-      .expectStatus().isNoContent
-      .expectBody().isEmpty
+      .expectStatus().isOk
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody(AlertCode::class.java)
+      .returnResult().responseBody!!
 }

@@ -36,16 +36,15 @@ class AlertTypeService(
       alertTypeRepository.findByCode(alertType)!!.toAlertTypeModel(true)
     }
 
-  fun deactivateAlertType(alertType: String, alertRequestContext: AlertRequestContext) =
+  @Transactional
+  fun deactivateAlertType(alertType: String, alertRequestContext: AlertRequestContext): AlertType =
     alertType.let {
       it.checkAlertTypeExists()
-      alertTypeRepository.findByCode(it)!!.apply {
-        with(this) {
-          deactivatedAt = alertRequestContext.requestAt
-          deactivatedBy = alertRequestContext.username
-          deactivate()
-          alertTypeRepository.saveAndFlush(this)
-        }
+      with(alertTypeRepository.findByCode(it)!!) {
+        deactivatedAt = alertRequestContext.requestAt
+        deactivatedBy = alertRequestContext.username
+        deactivate()
+        alertTypeRepository.saveAndFlush(this).toAlertTypeModel(true)
       }
     }
 
