@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertCodeModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertCodeModels
@@ -42,19 +43,17 @@ class AlertCodeService(
   private fun String.checkAlertCodeExists() =
     alertCodeRepository.findByCode(this) == null && throw AlertCodeNotFoundException("Alert with code $this could not be found")
 
-  fun deactivateAlertCode(alertCode: String, alertRequestContext: AlertRequestContext) {
+  @Transactional
+  fun deactivateAlertCode(alertCode: String, alertRequestContext: AlertRequestContext): AlertCode =
     alertCode.let {
       it.checkAlertCodeExists()
-      alertCodeRepository.findByCode(it)!!.apply {
-        with(this) {
-          deactivatedAt = alertRequestContext.requestAt
-          deactivatedBy = alertRequestContext.username
-          deactivate()
-          alertCodeRepository.saveAndFlush(this)
-        }
+      with(alertCodeRepository.findByCode(it)!!) {
+        deactivatedAt = alertRequestContext.requestAt
+        deactivatedBy = alertRequestContext.username
+        deactivate()
+        alertCodeRepository.saveAndFlush(this).toAlertCodeModel()
       }
     }
-  }
 
   fun retrieveAlertCode(alertCode: String): AlertCode =
     alertCode.let {

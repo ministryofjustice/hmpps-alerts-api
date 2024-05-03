@@ -11,7 +11,6 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -75,9 +74,9 @@ class AlertCodesController(
     httpRequest: HttpServletRequest,
   ): AlertCode = alertCodeService.createAlertCode(createAlertCodeRequest, httpRequest.alertRequestContext())
 
-  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
-  @DeleteMapping("/{alertCode}")
+  @PatchMapping("/{alertCode}/deactivate")
   @Operation(
     summary = "Deactivate an alert code",
     description = "Deactivate an alert code, typically from the Alerts UI",
@@ -85,8 +84,9 @@ class AlertCodesController(
   @ApiResponses(
     value = [
       ApiResponse(
-        responseCode = "204",
+        responseCode = "200",
         description = "Alert code deactivated",
+        content = [Content(schema = Schema(implementation = AlertCode::class))],
       ),
       ApiResponse(
         responseCode = "401",

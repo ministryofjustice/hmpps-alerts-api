@@ -57,6 +57,7 @@ class AlertCodeServiceTest {
   @Test
   fun `delete an alert code`() {
     whenever(alertCodeRepository.findByCode(any())).thenReturn(alertCodeVictim())
+    whenever(alertCodeRepository.saveAndFlush(any())).thenReturn(alertCodeVictim())
     underTest.deactivateAlertCode(
       "VI",
       AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),

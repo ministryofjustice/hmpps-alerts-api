@@ -216,7 +216,7 @@ class AlertsController(
     httpRequest: HttpServletRequest,
   ): Unit = alertService.deleteAlert(alertUuid, httpRequest.alertRequestContext())
 
-  @GetMapping("/{alertUuid}/auditEvents")
+  @GetMapping("/{alertUuid}/audit-events")
   @Operation(
     summary = "Get audit events for an alert",
     description = "This endpoint retrieves all the audit events for a given alert",
