@@ -111,6 +111,43 @@ class AlertCodesController(
     httpRequest: HttpServletRequest,
   ) = alertCodeService.deactivateAlertCode(alertCode, httpRequest.alertRequestContext())
 
+  @ResponseStatus(HttpStatus.OK)
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
+  @PatchMapping("/{alertCode}/reactivate")
+  @Operation(
+    summary = "Reactivate an alert code",
+    description = "Reactivate an alert code, typically from the Alerts UI",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Alert code reactivated",
+        content = [Content(schema = Schema(implementation = AlertCode::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Not found, the alert code was is not found",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @UsernameHeader
+  fun reactivateAlertCode(
+    @PathVariable alertCode: String,
+    httpRequest: HttpServletRequest,
+  ) = alertCodeService.reactivateAlertCode(alertCode, httpRequest.alertRequestContext())
+
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_ALERTS_ADMIN', '$PRISON')")
   @GetMapping
   @Operation(

@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimDeactivated
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -67,6 +68,21 @@ class AlertCodeServiceTest {
     assertThat(value).isNotNull
     assertThat(value.deactivatedBy).isEqualTo("USER")
     assertThat(value.deactivatedAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+  }
+
+  @Test
+  fun `reactivate an alert code`() {
+    whenever(alertCodeRepository.findByCode(any())).thenReturn(alertCodeVictimDeactivated())
+    whenever(alertCodeRepository.saveAndFlush(any())).thenReturn(alertCodeVictimDeactivated())
+    underTest.reactivateAlertCode(
+      "VI",
+      AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
+    )
+    verify(alertCodeRepository).saveAndFlush(entityCaptor.capture())
+    val value = entityCaptor.firstValue
+    assertThat(value).isNotNull
+    assertThat(value.deactivatedBy).isNull()
+    assertThat(value.deactivatedAt).isNull()
   }
 
   @Test
