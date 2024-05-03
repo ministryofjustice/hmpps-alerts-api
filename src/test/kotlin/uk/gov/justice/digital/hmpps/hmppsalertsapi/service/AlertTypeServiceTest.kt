@@ -89,6 +89,7 @@ class AlertTypeServiceTest {
   @Test
   fun `delete an alert type`() {
     whenever(alertTypeRepository.findByCode(any())).thenReturn(alertTypeVulnerability())
+    whenever(alertTypeRepository.saveAndFlush(any())).thenReturn(alertTypeVulnerability())
     service.deactivateAlertType(
       "VI",
       AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
