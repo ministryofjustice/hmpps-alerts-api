@@ -55,6 +55,20 @@ class AlertCodeService(
       }
     }
 
+  @Transactional
+  fun reactivateAlertCode(alertCode: String, alertRequestContext: AlertRequestContext): AlertCode =
+    alertCode.let {
+      it.checkAlertCodeExists()
+      with(alertCodeRepository.findByCode(it)!!) {
+        if (deactivatedAt != null) {
+          deactivatedAt = null
+          deactivatedBy = null
+          reactivate(alertRequestContext.requestAt)
+        }
+        alertCodeRepository.saveAndFlush(this).toAlertCodeModel()
+      }
+    }
+
   fun retrieveAlertCode(alertCode: String): AlertCode =
     alertCode.let {
       it.checkAlertCodeExists()

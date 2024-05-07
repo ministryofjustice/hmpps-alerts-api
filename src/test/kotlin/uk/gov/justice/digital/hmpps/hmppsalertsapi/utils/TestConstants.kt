@@ -96,6 +96,22 @@ fun alertCodeVictim() =
     modifiedBy = "MODIFIED_BY"
   }
 
+fun alertCodeVictimDeactivated() =
+  AlertCode(
+    158,
+    alertTypeVulnerability(),
+    ALERT_CODE_VICTIM,
+    "Victim",
+    6,
+    LocalDateTime.of(2006, 6, 28, 16, 19, 44),
+    "CREATED_BY",
+  ).apply {
+    modifiedAt = LocalDateTime.of(2010, 3, 7, 16, 27, 58)
+    modifiedBy = "MODIFIED_BY"
+    deactivatedAt = LocalDateTime.of(2010, 3, 7, 16, 27, 58)
+    deactivatedBy = "MODIFIED_BY"
+  }
+
 fun alertCodeRefusingToShieldInactive() =
   AlertCode(
     152,

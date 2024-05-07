@@ -10,6 +10,7 @@ import jakarta.persistence.Table
 import org.springframework.data.domain.AbstractAggregateRoot
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCodeCreatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCodeDeactivatedEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCodeReactivatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCodeUpdatedEvent
 import java.time.LocalDateTime
 
@@ -48,6 +49,13 @@ data class AlertCode(
       AlertCodeDeactivatedEvent(code, deactivatedAt!!),
     )
   }
+
+  fun reactivate(requestAt: LocalDateTime): AlertCode = this.also {
+    registerEvent(
+      AlertCodeReactivatedEvent(code, requestAt),
+    )
+  }
+
   fun update(): AlertCode = this.also {
     registerEvent(
       AlertCodeUpdatedEvent(code, modifiedAt!!),
