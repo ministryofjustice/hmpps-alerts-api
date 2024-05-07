@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved by @AliceNoakes as Service Owner
+Approved by @AliceNoakes as Service Owner and @RichardAdams as Lead Technical Architect
 
 ## Context
 
