@@ -30,7 +30,7 @@ data class MergeAlert(
 
   @Schema(
     description = "The alert code for the alert. A person should only have one alert using each code active at any one time " +
-      "however this is not enforced during merging. The alert code must exist and be active.",
+      "however this is not enforced during merging. The alert code must exist but can be inactive.",
     example = "ABC",
   )
   @field:Size(min = 1, max = 12, message = "Alert code must be supplied and be <= 12 characters")
