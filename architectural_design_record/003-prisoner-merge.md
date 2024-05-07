@@ -2,42 +2,39 @@
 
 ## Status
 
-Proposed
+Proposed, accepted by @Andy Marke
 
 ## Context
 
-Currently, in the HMPPS data model, alerts are associated with bookings at the booking level as per NOMIS data association strategy. This approach has been identified as limiting the system's ability to provide a reliable and useful alert system. NOMIS attempts to simulate a person-level association by copying alerts from one booking to the next upon creating a new booking. Additionally, the DPS system displays alerts against the current booking, implicitly suggesting these are the person's alerts rather than being specific to the latest booking. This existing approach leads to several issues, especially in scenarios involving licence recall, and bookings being created and then deleted or merged, which can result in the loss or hiding of crucial alert information. Furthermore, by maintaining the association of alerts to bookings, there's a risk of obscuring alerts tied to historical bookings, which prevents a comprehensive view of the risks a person may pose or face.
+Prisoner records can be merged together when it is discovered that two records represent the same person. This is a regular occurrence particularly in reception prisons due to people commonly being booked in under different names and aliases.
+
+When two prisoner records are merged, the associated booking from the prisoner to be merged from is moved to the prisoner to be merged to. This booking becomes the new current booking by being assigned sequence 1. The alerts from what is now the previous booking are copied to the new booking, creating a combined list of alerts from both bookings.
+
+A duplicate check is applied when copying the alerts from the previous booking. If any of the copied alerts have the same date, code and status, the duplicate on the current booking is made inactive. Because of the date check, **it is possible to end up with two active alerts with the same code if they have different dates**. This is considered invalid however it is possible and must therefore be allowed by the implementation for this ticket.
 
 ## Decision
 
-We propose to enhance the reliability and usefulness of our alert system by associating alerts at the person level instead of the booking level. This decision is supported by the identification of significant opportunities for improvement in how alerts are managed and displayed, which include overcoming the limitations of NOMIS's current workarounds and providing a more accurate, person-centric view of alerts.
+We propose a two phase approach to handling prisoner merge events for alerts.
 
-The proposed change involves:
-- Developing a business rule for handling historical bookings to dictate whether we display all historic alerts associated with an individual or only a selection.
-- Flattening the history of alerts across an individual's bookings to associate alerts at the person level.
-- Introducing additional audit tables to compensate for losing booking-specific alert history, enabling us to track changes over time without cluttering the current operational data model.
-- Incorporating the business rule into our migration strategy and maintaining bidirectional synchronisation between our system and NOMIS.
+### Strategic short term goal
 
-This decision has been discussed with a principal technical architect, who supports this approach. Furthermore, the consensus among our team is that moving to a person-level association for alerts is the right direction for our project.
+**NOMIS owns merge logic and drives DPS**
+
+- Allow NOMIS to merge the alerts data and react appropriately
+- This requires changes to the sync service and the Alerts API to listen for the merge event, update any sync mappings and create any new alerts.
+
+### End goal for prisoner merge events
+
+**DPS owns merge logic and drives NOMIS**
+
+- The alerts service should take over responsibility for merging prisoner alerts data from NOMIS
+- The service should own the business logic and drive the alerts data merge, syncing changes back into NOMIS.
+- **Not doing so would prevent moving to a one way sync**.
+
+Note that this requires a change request to switch off the NOMIS alerts data merge process and should not be attempted until after full roll out across the prison estate.
 
 ## Consequences
 
-The decision to associate alerts at the person level introduces several consequences, including:
-
-- **Complexity in Managing Historical Data:** Establishing a business rule for handling historical bookings introduces complexity in balancing alert visibility.
-- **Data Flattening:** Simplifies the data model but makes trend analysis more challenging and requires the introduction of audit and history mechanisms.
-- **Increased Effort for Migration and Synchronisation:** Requires more work than maintaining the current structure but is considered necessary for the long-term efficacy and reliability of our system.
-- **Potential for Initial Overload:** Initially surfacing more alerts than staff are accustomed to, which may require adjustments in operational procedures.
-
-Despite these challenges, the benefits of a more accurate, person-centric view of alerts are expected to significantly outweigh the downsides. This change aligns with best practices for data management and will improve our service delivery. Mark Nettleton, our Business Analyst, is reviewing data analysis around a potential business rule to inform the flattening of booking alerts into a single value.
-
-## Addendum
-
-The recommended approach to flatten the data in the data model was confirmed by @RichardAdams and @AliceNoakes on 2024-04-02.
-
-This approach is `Take the most recent state of an alert`
-
-This will:
-- Provide a nuanced view by considering the latest status of alerts, marking recently resolved alerts as inactive
-- Significantly reduce the need for manual input to surface relevant alerts from previous bookings
-- Significantly reduce the associated risk and workload for prison staff in reviewing and managing surfaced alerts
+- We can rapidly develop and test merge logic based on the current NOMIS approach
+- We can launch the service sooner without a dependency on a NOMIS change
+- We have a plan to take over the alerts merging logic allowing it to be improved
