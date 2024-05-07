@@ -132,6 +132,7 @@ data class Alert(
   fun deletedAt() = deletedAt
 
   fun create(
+    description: String = "Alert created",
     createdAt: LocalDateTime = LocalDateTime.now(),
     createdBy: String,
     createdByDisplayName: String,
@@ -140,7 +141,7 @@ data class Alert(
   ) = apply {
     auditEvent(
       action = AuditEventAction.CREATED,
-      description = "Alert created",
+      description = description,
       actionedAt = createdAt,
       actionedBy = createdBy,
       actionedByDisplayName = createdByDisplayName,

@@ -31,7 +31,7 @@ fun BulkCreateAlerts.toAlertEntity(
     activeFrom = LocalDate.now(),
     activeTo = null,
     createdAt = createdAt,
-  ).create(createdAt, createdBy, createdByDisplayName, source, activeCaseLoadId)
+  ).create(createdAt = createdAt, createdBy = createdBy, createdByDisplayName = createdByDisplayName, source = source, activeCaseLoadId = activeCaseLoadId)
 
 fun Alert.toBulkAlertAlertModel(message: String = "") =
   BulkAlertAlert(

@@ -290,7 +290,7 @@ class AlertTest {
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
       createdAt = createdAt,
-    ).create(createdAt, createdBy, createdByDisplayName, source, activeCaseLoadId)
+    ).create(createdAt = createdAt, createdBy = createdBy, createdByDisplayName = createdByDisplayName, source = source, activeCaseLoadId = activeCaseLoadId)
 
     assertThat(entity.auditEvents().single()).isEqualTo(
       AuditEvent(
@@ -322,7 +322,7 @@ class AlertTest {
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
       createdAt = createdAt,
-    ).create(createdAt, createdBy, createdByDisplayName, source, PRISON_CODE_MOORLANDS)
+    ).create(createdAt = createdAt, createdBy = createdBy, createdByDisplayName = createdByDisplayName, source = source, activeCaseLoadId = PRISON_CODE_MOORLANDS)
 
     assertThat(entity.publishedDomainEvents().single()).isEqualTo(
       AlertCreatedEvent(

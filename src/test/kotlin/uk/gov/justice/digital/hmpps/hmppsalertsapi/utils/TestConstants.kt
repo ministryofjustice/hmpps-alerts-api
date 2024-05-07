@@ -12,6 +12,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCodeSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateCommentRequest
@@ -182,4 +184,22 @@ fun bulkCreateAlertRequest() =
     alertCode = ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL,
     mode = ADD_MISSING,
     cleanupMode = KEEP_ALL,
+  )
+
+fun mergeAlerts() =
+  MergeAlerts(
+    prisonNumberMergeFrom = "B2345BB",
+    prisonNumberMergeTo = PRISON_NUMBER,
+    newAlerts = listOf(mergeAlert()),
+  )
+
+fun mergeAlert() =
+  MergeAlert(
+    offenderBookId = 12345,
+    alertSeq = 1,
+    alertCode = ALERT_CODE_HIDDEN_DISABILITY,
+    description = "Alert description",
+    authorisedBy = "A. Nurse, An Agency",
+    activeFrom = LocalDate.now().minusDays(1),
+    activeTo = null,
   )
