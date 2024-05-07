@@ -55,7 +55,7 @@ class MergeAlertsController(
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_NOMIS_ALERTS')")
-  fun createAlert(
+  fun mergeAlerts(
     @Valid
     @RequestBody
     @Parameter(

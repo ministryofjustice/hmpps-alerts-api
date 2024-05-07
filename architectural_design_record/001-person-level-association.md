@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved by @Alice Noakes as Service Owner and @Richard Adams as Lead Technical Architect
+Approved by @Alice Noakes as Service Owner and @Richard Adams as Principal Technical Architect
 
 ## Context
 

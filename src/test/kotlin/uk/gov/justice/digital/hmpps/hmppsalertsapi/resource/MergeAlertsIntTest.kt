@@ -86,7 +86,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Couldn't read request body")
-      assertThat(developerMessage).isEqualTo("Required request body is missing: public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MergeAlertsController.createAlert(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts)")
+      assertThat(developerMessage).isEqualTo("Required request body is missing: public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MergeAlertsController.mergeAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts)")
       assertThat(moreInfo).isNull()
     }
   }
@@ -119,7 +119,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure(s): $expectedUserMessage")
-      assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MergeAlertsController.createAlert(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts): [Field error in object 'mergeAlerts' on field ")
+      assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MergeAlertsController.mergeAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts): [Field error in object 'mergeAlerts' on field ")
       assertThat(moreInfo).isNull()
     }
   }
@@ -194,7 +194,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
           |Offender book id must be supplied and be > 0
         """.trimMargin(),
       )
-      assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MergeAlertsController.createAlert(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts) with 6 errors: [Field error in object 'mergeAlerts' on field ")
+      assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MergeAlertsController.mergeAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts) with 6 errors: [Field error in object 'mergeAlerts' on field ")
       assertThat(moreInfo).isNull()
     }
   }
