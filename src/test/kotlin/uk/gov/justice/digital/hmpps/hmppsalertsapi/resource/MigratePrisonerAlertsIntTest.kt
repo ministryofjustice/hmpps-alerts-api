@@ -366,14 +366,14 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
         alertSeq = 2,
         alertCode = ALERT_CODE_ISOLATED_PRISONER,
         activeFrom = LocalDate.now().minusDays(1),
-        activeTo = null,
+        activeTo = LocalDate.now().plusDays(1),
       ),
       migrateAlert().copy(
         offenderBookId = 54321,
         bookingSeq = 3,
         alertSeq = 4,
         alertCode = ALERT_CODE_ISOLATED_PRISONER,
-        activeFrom = LocalDate.now().minusDays(1),
+        activeFrom = LocalDate.now().plusDays(1),
         activeTo = null,
       ),
     )
@@ -389,7 +389,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       }
       with(alertRepository.findByAlertUuid(this[1].alertUuid)!!) {
         assertThat(alertCode.code).isEqualTo(ALERT_CODE_ISOLATED_PRISONER)
-        assertThat(isActive()).isTrue()
+        assertThat(willBecomeActive()).isTrue()
       }
     }
   }
