@@ -273,7 +273,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         deleteAlertEvent.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!.deletedAt(), within(1, ChronoUnit.MICROS))
   }
 
   @Test
@@ -304,7 +304,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         deleteAlertEvent.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!.deletedAt(), within(1, ChronoUnit.MICROS))
   }
 
   private fun createAlertRequest(

@@ -143,8 +143,8 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
   @Test
   fun `should publish alert types deactivated event with NOMIS source`() {
     val request = createAlertTypeRequest("DEF")
-    val alert = createAlertType(request)
-    webTestClient.deleteAlertType(alert.code)
+    val alertType = createAlertType(request)
+    webTestClient.deleteAlertType(alertType.code)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -156,8 +156,8 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         DomainEventType.ALERT_TYPE_DEACTIVATED.eventType,
         ReferenceDataAdditionalInformation(
-          "http://localhost:8080/alert-types/${alert.code}",
-          alert.code,
+          "http://localhost:8080/alert-types/${alertType.code}",
+          alertType.code,
           Source.DPS,
         ),
         1,
@@ -165,7 +165,7 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
         deleteAlertEvent.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(alertTypeRepository.findByCode(alertType.code)!!.deactivatedAt, within(1, ChronoUnit.MICROS))
   }
 
   private fun createAlertTypeRequest(code: String = "ABC") =
