@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved by @AliceNoakes as Service Owner
+Approved by @Alice Noakes as Service Owner and @Richard Adams as Principal Technical Architect
 
 ## Context
 
@@ -33,7 +33,7 @@ Despite these challenges, the benefits of a more accurate, person-centric view o
 
 ## Addendum
 
-The recommended approach to flatten the data in the data model was confirmed by @RichardAdams and @AliceNoakes on 2024-04-02.
+The recommended approach to flatten the data in the data model was confirmed by @Richard Adams and @Alice Noakes on 2024-04-02.
 
 This approach is `Take the most recent state of an alert`
 

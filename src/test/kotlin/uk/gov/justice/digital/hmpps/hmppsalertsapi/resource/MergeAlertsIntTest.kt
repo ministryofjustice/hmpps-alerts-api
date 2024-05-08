@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.MERGE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -86,7 +87,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Couldn't read request body")
-      assertThat(developerMessage).isEqualTo("Required request body is missing: public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MergeAlertsController.createAlert(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts)")
+      assertThat(developerMessage).isEqualTo("Required request body is missing: public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MergeAlertsController.mergeAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts)")
       assertThat(moreInfo).isNull()
     }
   }
@@ -119,7 +120,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure(s): $expectedUserMessage")
-      assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MergeAlertsController.createAlert(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts): [Field error in object 'mergeAlerts' on field ")
+      assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MergeAlertsController.mergeAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts): [Field error in object 'mergeAlerts' on field ")
       assertThat(moreInfo).isNull()
     }
   }
@@ -194,7 +195,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
           |Offender book id must be supplied and be > 0
         """.trimMargin(),
       )
-      assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MergeAlertsController.createAlert(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts) with 6 errors: [Field error in object 'mergeAlerts' on field ")
+      assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.MergeAlertsController.mergeAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts) with 6 errors: [Field error in object 'mergeAlerts' on field ")
       assertThat(moreInfo).isNull()
     }
   }
@@ -308,6 +309,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(mergedAlert.alertUuid.toString())
+      assertThat(additionalInformation.reason).isEqualTo(MERGE)
     }
   }
 
@@ -397,6 +399,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
       assertThat(this).hasSize(2)
       onEach {
         assertThat(prisonNumberMergeFromAlertUuids.contains(UUID.fromString(it.additionalInformation.identifier()))).isTrue()
+        assertThat(it.additionalInformation.reason).isEqualTo(MERGE)
       }
     }
   }

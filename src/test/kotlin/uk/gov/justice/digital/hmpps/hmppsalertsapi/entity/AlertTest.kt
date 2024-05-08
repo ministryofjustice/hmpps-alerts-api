@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertUpdatedEven
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.UPDATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
@@ -331,6 +332,7 @@ class AlertTest {
         alertCode = entity.alertCode.code,
         occurredAt = createdAt,
         source = source,
+        reason = USER,
         createdBy = createdBy,
       ),
     )
@@ -415,6 +417,7 @@ class AlertTest {
         alertCode = entity.alertCode.code,
         occurredAt = updatedAt,
         source = source,
+        reason = USER,
         updatedBy = updatedBy,
         descriptionUpdated = true,
         authorisedByUpdated = true,
@@ -778,7 +781,7 @@ class AlertTest {
     val source = NOMIS
     val activeCaseLoadId = PRISON_CODE_LEEDS
 
-    entity.delete(deletedAt, "DELETED_BY", "DELETED_BY_DISPLAY_NAME", source, activeCaseLoadId)
+    entity.delete(deletedAt, "DELETED_BY", "DELETED_BY_DISPLAY_NAME", source, USER, activeCaseLoadId)
 
     assertThat(entity.lastModifiedAt).isEqualTo(deletedAt)
     assertThat(entity.deletedAt()).isEqualTo(deletedAt)
@@ -803,7 +806,7 @@ class AlertTest {
     val deletedBy = "DELETED_BY"
     val source = DPS
 
-    entity.delete(deletedAt, deletedBy, "DELETED_BY_DISPLAY_NAME", source, PRISON_CODE_LEEDS)
+    entity.delete(deletedAt, deletedBy, "DELETED_BY_DISPLAY_NAME", source, USER, PRISON_CODE_LEEDS)
 
     assertThat(entity.publishedDomainEvents().single()).isEqualTo(
       AlertDeletedEvent(
@@ -812,6 +815,7 @@ class AlertTest {
         alertCode = entity.alertCode.code,
         occurredAt = deletedAt,
         source = source,
+        reason = USER,
         deletedBy = deletedBy,
       ),
     )

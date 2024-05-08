@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import java.time.LocalDateTime
@@ -15,6 +16,7 @@ abstract class AlertEvent {
   abstract val alertCode: String
   abstract val occurredAt: LocalDateTime
   abstract val source: Source
+  abstract val reason: Reason
 
   abstract fun toDomainEvent(baseUrl: String): AlertDomainEvent
 
@@ -27,6 +29,7 @@ abstract class AlertEvent {
         prisonNumber = prisonNumber,
         alertCode = alertCode,
         source = source,
+        reason = reason,
       ),
       description = type.description,
       occurredAt = occurredAt,
@@ -39,6 +42,7 @@ data class AlertCreatedEvent(
   override val alertCode: String,
   override val occurredAt: LocalDateTime,
   override val source: Source,
+  override val reason: Reason,
   val createdBy: String,
 ) : AlertEvent() {
   override fun toString(): String {
@@ -47,7 +51,8 @@ data class AlertCreatedEvent(
       "with alert code '$alertCode' " +
       "at '$occurredAt' " +
       "by '$createdBy' " +
-      "from source '$source'."
+      "from source '$source' " +
+      "with reason '$reason'."
   }
 
   override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
@@ -60,6 +65,7 @@ data class AlertUpdatedEvent(
   override val alertCode: String,
   override val occurredAt: LocalDateTime,
   override val source: Source,
+  override val reason: Reason,
   val updatedBy: String,
   val descriptionUpdated: Boolean,
   val authorisedByUpdated: Boolean,
@@ -73,7 +79,8 @@ data class AlertUpdatedEvent(
       "with alert code '$alertCode' " +
       "at '$occurredAt' " +
       "by '$updatedBy' " +
-      "from source '$source'. " +
+      "from source '$source' " +
+      "with reason '$reason'. " +
       "Properties updated: " +
       "description: $descriptionUpdated, " +
       "authorisedBy: $authorisedByUpdated, " +
@@ -92,6 +99,7 @@ data class AlertDeletedEvent(
   override val alertCode: String,
   override val occurredAt: LocalDateTime,
   override val source: Source,
+  override val reason: Reason,
   val deletedBy: String,
 ) : AlertEvent() {
   override fun toString(): String {
@@ -100,7 +108,8 @@ data class AlertDeletedEvent(
       "with alert code '$alertCode' " +
       "at '$occurredAt' " +
       "by '$deletedBy' " +
-      "from source '$source'."
+      "from source '$source' " +
+      "with reason '$reason'."
   }
 
   override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
