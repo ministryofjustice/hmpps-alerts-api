@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
@@ -191,7 +191,7 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
         updateAlertEvent.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+    assertThat(OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
   }
 
   private fun createAlertType(): AlertType {

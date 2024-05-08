@@ -13,7 +13,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.ReferenceDataAdditionalInformation
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.toOffsetString
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
@@ -26,6 +25,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepositor
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertTypeVulnerability
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
 class CreateAlertCodeIntTest : IntegrationTestBase() {
@@ -400,7 +400,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   fun `should publish alert code created event with DPS source`() {
     val request = createAlertCodeRequest()
 
-    val alert = alertCodeRepository.findByCode(webTestClient.createAlertCode(request = request).code)!!
+    val alertCode = alertCodeRepository.findByCode(webTestClient.createAlertCode(request = request).code)!!
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -415,9 +415,10 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
         ),
         1,
         DomainEventType.ALERT_CODE_CREATED.description,
-        alert.createdAt.toOffsetString(),
+        event.occurredAt,
       ),
     )
+    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alertCode.createdAt, within(1, ChronoUnit.MICROS))
   }
   private fun createAlertCodeRequest() = CreateAlertCodeRequest("CO", "Description", alertTypeVulnerability().code)
 

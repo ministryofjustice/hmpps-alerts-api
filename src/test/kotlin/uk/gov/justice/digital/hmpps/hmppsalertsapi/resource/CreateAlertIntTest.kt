@@ -14,7 +14,6 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.toOffsetString
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.USER
@@ -42,6 +41,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
@@ -518,9 +518,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
         ),
         1,
         ALERT_CREATED.description,
-        alert.createdAt.toOffsetString(),
+        event.occurredAt,
       ),
     )
+    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alert.createdAt, within(1, ChronoUnit.MICROS))
   }
 
   @Test
@@ -545,9 +546,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
         ),
         1,
         ALERT_CREATED.description,
-        alert.createdAt.toOffsetString(),
+        event.occurredAt,
       ),
     )
+    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alert.createdAt, within(1, ChronoUnit.MICROS))
   }
 
   @Test

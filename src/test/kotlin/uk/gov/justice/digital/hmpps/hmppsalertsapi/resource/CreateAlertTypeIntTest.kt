@@ -13,7 +13,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.ReferenceDataAdditionalInformation
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.toOffsetString
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
@@ -25,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
 class CreateAlertTypeIntTest : IntegrationTestBase() {
@@ -336,7 +336,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
   fun `should publish alert type created event with DPS source`() {
     val request = createAlertTypeRequest()
 
-    val alert = alertTypeRepository.findByCode(webTestClient.createAlertType(request = request).code)!!
+    val alertType = alertTypeRepository.findByCode(webTestClient.createAlertType(request = request).code)!!
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -351,9 +351,10 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
         ),
         1,
         DomainEventType.ALERT_TYPE_CREATED.description,
-        alert.createdAt.toOffsetString(),
+        event.occurredAt,
       ),
     )
+    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alertType.createdAt, within(1, ChronoUnit.MICROS))
   }
   private fun createAlertTypeRequest() = CreateAlertTypeRequest("CO", "Description")
 

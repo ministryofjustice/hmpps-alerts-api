@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
@@ -138,7 +138,7 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
       assertThat(isActive).isFalse()
     }
     val entity = alertCodeRepository.findByCode(alertCode.code)
-    assertThat(entity!!.deactivatedAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+    assertThat(entity!!.deactivatedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
     assertThat(entity.deactivatedBy).isEqualTo(TEST_USER)
   }
 
@@ -167,7 +167,7 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
         deleteAlertEvent.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
   }
 
   private fun createAlertCodeRequest(
