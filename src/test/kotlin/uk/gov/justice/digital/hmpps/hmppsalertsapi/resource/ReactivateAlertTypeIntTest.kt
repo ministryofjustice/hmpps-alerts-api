@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
 class ReactivateAlertTypeIntTest : IntegrationTestBase() {
@@ -165,7 +166,7 @@ class ReactivateAlertTypeIntTest : IntegrationTestBase() {
         reactivateAlertEvent.occurredAt,
       ),
     )
-    assertThat(reactivateAlertEvent.occurredAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+    assertThat(OffsetDateTime.parse(reactivateAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
   }
 
   private fun createAlertTypeRequest(code: String = "ABC") =

@@ -41,6 +41,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
@@ -517,9 +518,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
         ),
         1,
         ALERT_CREATED.description,
-        alert.createdAt.withNano(event.occurredAt.nano),
+        event.occurredAt,
       ),
     )
+    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
   }
 
   @Test
@@ -544,9 +546,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
         ),
         1,
         ALERT_CREATED.description,
-        alert.createdAt.withNano(event.occurredAt.nano),
+        event.occurredAt,
       ),
     )
+    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
   }
 
   @Test

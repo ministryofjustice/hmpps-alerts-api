@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
-import java.time.LocalDateTime
 import java.util.UUID
 
 abstract class DomainEvent<T : AdditionalInformation> {
@@ -13,7 +12,7 @@ abstract class DomainEvent<T : AdditionalInformation> {
   abstract val additionalInformation: T
   abstract val version: Int
   abstract val description: String
-  abstract val occurredAt: LocalDateTime
+  abstract val occurredAt: String
 
   override fun toString(): String {
     return "v$version domain event '$eventType' " +
@@ -41,7 +40,7 @@ data class AlertDomainEvent(
   override val additionalInformation: AdditionalInformation,
   override val version: Int = 1,
   override val description: String,
-  override val occurredAt: LocalDateTime = LocalDateTime.now(),
+  override val occurredAt: String,
 ) : DomainEvent<AdditionalInformation>() {
   override fun toString(): String {
     return "v$version alert domain event '$eventType' " + additionalInformation.asString()

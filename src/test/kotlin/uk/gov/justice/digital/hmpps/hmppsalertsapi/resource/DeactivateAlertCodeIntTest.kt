@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_VULNERABILITY
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
@@ -137,15 +138,15 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
       assertThat(isActive).isFalse()
     }
     val entity = alertCodeRepository.findByCode(alertCode.code)
-    assertThat(entity!!.deactivatedAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+    assertThat(entity!!.deactivatedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
     assertThat(entity.deactivatedBy).isEqualTo(TEST_USER)
   }
 
   @Test
   fun `should publish alert deactivated event with NOMIS source`() {
-    val alert = createAlertCode("DEF")
+    val alertCode = createAlertCode("DEF")
 
-    webTestClient.deleteAlertCode(alert.code)
+    webTestClient.deleteAlertCode(alertCode.code)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -157,8 +158,8 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         DomainEventType.ALERT_CODE_DEACTIVATED.eventType,
         ReferenceDataAdditionalInformation(
-          "http://localhost:8080/alert-codes/${alert.code}",
-          alert.code,
+          "http://localhost:8080/alert-codes/${alertCode.code}",
+          alertCode.code,
           Source.DPS,
         ),
         1,
@@ -166,7 +167,7 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
         deleteAlertEvent.occurredAt,
       ),
     )
-    assertThat(deleteAlertEvent.occurredAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(alertCodeRepository.findByCode(alertCode.code)!!.deactivatedAt, within(1, ChronoUnit.MICROS))
   }
 
   private fun createAlertCodeRequest(

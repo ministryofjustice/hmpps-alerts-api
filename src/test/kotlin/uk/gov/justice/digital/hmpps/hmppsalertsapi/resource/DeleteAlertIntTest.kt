@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
@@ -272,7 +273,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         deleteAlertEvent.occurredAt,
       ),
     )
-    assertThat(deleteAlertEvent.occurredAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!.deletedAt(), within(1, ChronoUnit.MICROS))
   }
 
   @Test
@@ -303,7 +304,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         deleteAlertEvent.occurredAt,
       ),
     )
-    assertThat(deleteAlertEvent.occurredAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!.deletedAt(), within(1, ChronoUnit.MICROS))
   }
 
   private fun createAlertRequest(

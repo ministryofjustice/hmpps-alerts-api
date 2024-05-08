@@ -8,6 +8,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 abstract class AlertEvent {
@@ -32,7 +34,7 @@ abstract class AlertEvent {
         reason = reason,
       ),
       description = type.description,
-      occurredAt = occurredAt,
+      occurredAt = occurredAt.toOffsetString(),
     )
 }
 
@@ -131,7 +133,7 @@ abstract class AlertCodeEvent {
         source = DPS,
       ),
       description = type.description,
-      occurredAt = occurredAt,
+      occurredAt = occurredAt.toOffsetString(),
     )
 }
 
@@ -183,7 +185,7 @@ abstract class AlertTypeEvent {
         source = DPS,
       ),
       description = type.description,
-      occurredAt = occurredAt,
+      occurredAt = occurredAt.toOffsetString(),
     )
 }
 
@@ -218,3 +220,6 @@ data class AlertTypeUpdatedEvent(
   override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
     toDomainEvent(DomainEventType.ALERT_TYPE_UPDATED, baseUrl)
 }
+
+fun LocalDateTime.toOffsetString(): String =
+  DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(this.atOffset(ZoneId.of("Europe/London").rules.getOffset(this)))

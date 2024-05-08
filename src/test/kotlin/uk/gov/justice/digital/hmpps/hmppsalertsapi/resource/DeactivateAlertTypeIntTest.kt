@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
@@ -135,15 +136,15 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
       assertThat(isActive).isFalse()
     }
     val entity = alertTypeRepository.findByCode(alertCode.code)
-    assertThat(entity!!.deactivatedAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+    assertThat(entity!!.deactivatedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
     assertThat(entity.deactivatedBy).isEqualTo(TEST_USER)
   }
 
   @Test
   fun `should publish alert types deactivated event with NOMIS source`() {
     val request = createAlertTypeRequest("DEF")
-    val alert = createAlertType(request)
-    webTestClient.deleteAlertType(alert.code)
+    val alertType = createAlertType(request)
+    webTestClient.deleteAlertType(alertType.code)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -155,8 +156,8 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         DomainEventType.ALERT_TYPE_DEACTIVATED.eventType,
         ReferenceDataAdditionalInformation(
-          "http://localhost:8080/alert-types/${alert.code}",
-          alert.code,
+          "http://localhost:8080/alert-types/${alertType.code}",
+          alertType.code,
           Source.DPS,
         ),
         1,
@@ -164,7 +165,7 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
         deleteAlertEvent.occurredAt,
       ),
     )
-    assertThat(deleteAlertEvent.occurredAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(alertTypeRepository.findByCode(alertType.code)!!.deactivatedAt, within(1, ChronoUnit.MICROS))
   }
 
   private fun createAlertTypeRequest(code: String = "ABC") =

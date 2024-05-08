@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.EventProperties
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertTypeCreatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.ReferenceDataAdditionalInformation
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.toOffsetString
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_TYPE_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
@@ -45,7 +46,7 @@ class AlertTypeEventServiceTest {
           source = DPS,
         ),
         description = ALERT_TYPE_CREATED.description,
-        occurredAt = alertEvent.occurredAt,
+        occurredAt = alertEvent.occurredAt.toOffsetString(),
       ),
     )
   }
