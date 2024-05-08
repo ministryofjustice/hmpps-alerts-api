@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalI
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
@@ -36,6 +37,7 @@ class AlertEventServiceTest {
       ALERT_CODE_VICTIM,
       LocalDateTime.now(),
       NOMIS,
+      USER,
       TEST_USER,
     )
 
@@ -52,6 +54,7 @@ class AlertEventServiceTest {
           prisonNumber = alertEvent.prisonNumber,
           alertCode = alertEvent.alertCode,
           source = alertEvent.source,
+          reason = alertEvent.reason,
         ),
         description = ALERT_CREATED.description,
         occurredAt = alertEvent.occurredAt,
@@ -69,6 +72,7 @@ class AlertEventServiceTest {
       ALERT_CODE_VICTIM,
       LocalDateTime.now(),
       NOMIS,
+      USER,
       TEST_USER,
     )
 

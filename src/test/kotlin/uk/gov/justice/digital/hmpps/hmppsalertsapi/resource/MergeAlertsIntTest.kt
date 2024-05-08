@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.MERGE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -308,6 +309,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(mergedAlert.alertUuid.toString())
+      assertThat(additionalInformation.reason).isEqualTo(MERGE)
     }
   }
 
@@ -397,6 +399,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
       assertThat(this).hasSize(2)
       onEach {
         assertThat(prisonNumberMergeFromAlertUuids.contains(UUID.fromString(it.additionalInformation.identifier()))).isTrue()
+        assertThat(it.additionalInformation.reason).isEqualTo(MERGE)
       }
     }
   }

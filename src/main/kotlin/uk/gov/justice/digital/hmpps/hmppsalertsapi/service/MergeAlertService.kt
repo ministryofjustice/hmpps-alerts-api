@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.Prisone
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.MERGE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts
@@ -32,7 +33,7 @@ class MergeAlertService(
 
     val alertsDeleted = alertRepository.saveAllAndFlush(
       alertRepository.findByPrisonNumber(request.prisonNumberMergeFrom).onEach {
-        it.delete(mergedAt, "SYS", "Merge deleted from ${request.prisonNumberMergeFrom}", NOMIS, null)
+        it.delete(mergedAt, "SYS", "Merge deleted from ${request.prisonNumberMergeFrom}", NOMIS, MERGE, null)
       },
     )
 

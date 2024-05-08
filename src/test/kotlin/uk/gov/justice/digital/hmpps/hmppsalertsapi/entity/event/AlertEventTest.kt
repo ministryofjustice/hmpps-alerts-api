@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.MERGE
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
@@ -17,20 +19,21 @@ class AlertEventTest {
 
   @Test
   fun `alert created event to string`() {
-    val alertEvent = AlertCreatedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
+    val alertEvent = AlertCreatedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, USER, TEST_USER)
     assertThat(alertEvent.toString()).isEqualTo(
       "Alert with UUID '${alertEvent.alertUuid}' " +
         "created for prison number '${alertEvent.prisonNumber}' " +
         "with alert code '${alertEvent.alertCode}' " +
         "at '${alertEvent.occurredAt}' " +
         "by '${alertEvent.createdBy}' " +
-        "from source '${alertEvent.source}'.",
+        "from source '${alertEvent.source}' " +
+        "with reason '${alertEvent.reason}'.",
     )
   }
 
   @Test
   fun `alert created event to domain event`() {
-    val alertEvent = AlertCreatedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
+    val alertEvent = AlertCreatedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, MERGE, TEST_USER)
 
     val domainEvent = alertEvent.toDomainEvent(baseUrl)
 
@@ -43,6 +46,7 @@ class AlertEventTest {
           prisonNumber = alertEvent.prisonNumber,
           alertCode = alertEvent.alertCode,
           source = alertEvent.source,
+          reason = alertEvent.reason,
         ),
         description = ALERT_CREATED.description,
         occurredAt = alertEvent.occurredAt,
@@ -53,7 +57,8 @@ class AlertEventTest {
         "for alert with UUID '${alertEvent.alertUuid}' " +
         "for prison number '${alertEvent.prisonNumber}' " +
         "with alert code '${alertEvent.alertCode}' " +
-        "from source '${alertEvent.source}'",
+        "from source '${alertEvent.source}' " +
+        "with reason '${alertEvent.reason}'",
     )
   }
 
@@ -65,6 +70,7 @@ class AlertEventTest {
       alertCode = ALERT_CODE_VICTIM,
       occurredAt = LocalDateTime.now(),
       source = NOMIS,
+      reason = USER,
       updatedBy = TEST_USER,
       descriptionUpdated = true,
       authorisedByUpdated = false,
@@ -78,7 +84,8 @@ class AlertEventTest {
         "with alert code '${alertEvent.alertCode}' " +
         "at '${alertEvent.occurredAt}' " +
         "by '${alertEvent.updatedBy}' " +
-        "from source '${alertEvent.source}'. " +
+        "from source '${alertEvent.source}' " +
+        "with reason '${alertEvent.reason}'. " +
         "Properties updated: " +
         "description: true, " +
         "authorisedBy: false, " +
@@ -96,6 +103,7 @@ class AlertEventTest {
       alertCode = ALERT_CODE_VICTIM,
       occurredAt = LocalDateTime.now(),
       source = NOMIS,
+      reason = MERGE,
       updatedBy = TEST_USER,
       descriptionUpdated = true,
       authorisedByUpdated = true,
@@ -115,6 +123,7 @@ class AlertEventTest {
           prisonNumber = alertEvent.prisonNumber,
           alertCode = alertEvent.alertCode,
           source = alertEvent.source,
+          reason = alertEvent.reason,
         ),
         description = ALERT_UPDATED.description,
         occurredAt = alertEvent.occurredAt,
@@ -125,26 +134,28 @@ class AlertEventTest {
         "for alert with UUID '${alertEvent.alertUuid}' " +
         "for prison number '${alertEvent.prisonNumber}' " +
         "with alert code '${alertEvent.alertCode}' " +
-        "from source '${alertEvent.source}'",
+        "from source '${alertEvent.source}' " +
+        "with reason '${alertEvent.reason}'",
     )
   }
 
   @Test
   fun `alert deleted event to string`() {
-    val alertEvent = AlertDeletedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
+    val alertEvent = AlertDeletedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, USER, TEST_USER)
     assertThat(alertEvent.toString()).isEqualTo(
       "Alert with UUID '${alertEvent.alertUuid}' " +
         "deleted for prison number '${alertEvent.prisonNumber}' " +
         "with alert code '${alertEvent.alertCode}' " +
         "at '${alertEvent.occurredAt}' " +
         "by '${alertEvent.deletedBy}' " +
-        "from source '${alertEvent.source}'.",
+        "from source '${alertEvent.source}' " +
+        "with reason '${alertEvent.reason}'.",
     )
   }
 
   @Test
   fun `alert deleted event to domain event`() {
-    val alertEvent = AlertDeletedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
+    val alertEvent = AlertDeletedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, MERGE, TEST_USER)
 
     val domainEvent = alertEvent.toDomainEvent(baseUrl)
 
@@ -157,6 +168,7 @@ class AlertEventTest {
           prisonNumber = alertEvent.prisonNumber,
           alertCode = alertEvent.alertCode,
           source = alertEvent.source,
+          reason = alertEvent.reason,
         ),
         description = ALERT_DELETED.description,
         occurredAt = alertEvent.occurredAt,
@@ -167,7 +179,8 @@ class AlertEventTest {
         "for alert with UUID '${alertEvent.alertUuid}' " +
         "for prison number '${alertEvent.prisonNumber}' " +
         "with alert code '${alertEvent.alertCode}' " +
-        "from source '${alertEvent.source}'",
+        "from source '${alertEvent.source}' " +
+        "with reason '${alertEvent.reason}'",
     )
   }
 }

@@ -21,6 +21,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEven
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDeletedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertUpdatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -137,6 +139,7 @@ data class Alert(
     createdBy: String,
     createdByDisplayName: String,
     source: Source,
+    reason: Reason = USER,
     activeCaseLoadId: String?,
   ) = apply {
     auditEvent(
@@ -155,6 +158,7 @@ data class Alert(
         alertCode = alertCode.code,
         occurredAt = createdAt,
         source = source,
+        reason = reason,
         createdBy = createdBy,
       ),
     )
@@ -170,6 +174,7 @@ data class Alert(
     updatedBy: String,
     updatedByDisplayName: String,
     source: Source,
+    reason: Reason = USER,
     activeCaseLoadId: String?,
   ) = apply {
     val descriptionUpdated = description != null && this.description != description
@@ -225,6 +230,7 @@ data class Alert(
           alertCode = alertCode.code,
           occurredAt = updatedAt,
           source = source,
+          reason = reason,
           updatedBy = updatedBy,
           descriptionUpdated = descriptionUpdated,
           authorisedByUpdated = authorisedByUpdated,
@@ -241,6 +247,7 @@ data class Alert(
     deletedBy: String,
     deletedByDisplayName: String,
     source: Source,
+    reason: Reason = USER,
     activeCaseLoadId: String?,
   ): AuditEvent {
     lastModifiedAt = deletedAt
@@ -261,6 +268,7 @@ data class Alert(
           alertCode = alertCode.code,
           occurredAt = deletedAt,
           source = source,
+          reason = reason,
           deletedBy = deletedBy,
         ),
       )
