@@ -14,6 +14,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.toOffsetString
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.USER
@@ -499,7 +500,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `should publish alert created event with DPS source`() {
     val request = createAlertRequest()
 
-    val alert = webTestClient.createAlert(source = DPS, request = request)
+    val alert = alertRepository.findByAlertUuid(webTestClient.createAlert(source = DPS, request = request).alertUuid)!!
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -517,7 +518,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         ),
         1,
         ALERT_CREATED.description,
-        alert.createdAt.withNano(event.occurredAt.nano),
+        alert.createdAt.toOffsetString(),
       ),
     )
   }
@@ -526,7 +527,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `should publish alert created event with NOMIS source`() {
     val request = createAlertRequest()
 
-    val alert = webTestClient.createAlert(source = NOMIS, request = request)
+    val alert = alertRepository.findByAlertUuid(webTestClient.createAlert(source = NOMIS, request = request).alertUuid)!!
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -544,7 +545,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         ),
         1,
         ALERT_CREATED.description,
-        alert.createdAt.withNano(event.occurredAt.nano),
+        alert.createdAt.toOffsetString(),
       ),
     )
   }

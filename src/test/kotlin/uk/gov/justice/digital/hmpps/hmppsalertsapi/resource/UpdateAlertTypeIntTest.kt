@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeRequest
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
 class UpdateAlertTypeIntTest : IntegrationTestBase() {
@@ -190,7 +191,7 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
         updateAlertEvent.occurredAt,
       ),
     )
-    assertThat(updateAlertEvent.occurredAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+    assertThat(OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
   }
 
   private fun createAlertType(): AlertType {

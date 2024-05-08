@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_VULNERABILITY
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
 class UpdateAlertCodeIntTest : IntegrationTestBase() {
@@ -192,7 +193,7 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
         updateAlertEvent.occurredAt,
       ),
     )
-    assertThat(updateAlertEvent.occurredAt).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
+    assertThat(OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(LocalDateTime.now(), Assertions.within(3, ChronoUnit.SECONDS))
   }
 
   private fun createAlertCode(): AlertCode {

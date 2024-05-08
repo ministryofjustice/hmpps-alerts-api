@@ -17,7 +17,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepositor
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.BulkAlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.bulkCreateAlertRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.testObjectMapper
 
 @ExtendWith(MockitoExtension::class)
 class BulkAlertServiceTest {
@@ -34,7 +33,7 @@ class BulkAlertServiceTest {
   lateinit var prisonerSearchClient: PrisonerSearchClient
 
   @Mock
-  val objectMapper: ObjectMapper = testObjectMapper()
+  lateinit var objectMapper: ObjectMapper
 
   @InjectMocks
   lateinit var underTest: BulkAlertService

@@ -49,7 +49,7 @@ class AlertEventTest {
           reason = alertEvent.reason,
         ),
         description = ALERT_CREATED.description,
-        occurredAt = alertEvent.occurredAt,
+        occurredAt = alertEvent.occurredAt.toOffsetString(),
       ),
     )
     assertThat(domainEvent.toString()).isEqualTo(
@@ -126,7 +126,7 @@ class AlertEventTest {
           reason = alertEvent.reason,
         ),
         description = ALERT_UPDATED.description,
-        occurredAt = alertEvent.occurredAt,
+        occurredAt = alertEvent.occurredAt.toOffsetString(),
       ),
     )
     assertThat(domainEvent.toString()).isEqualTo(
@@ -171,7 +171,7 @@ class AlertEventTest {
           reason = alertEvent.reason,
         ),
         description = ALERT_DELETED.description,
-        occurredAt = alertEvent.occurredAt,
+        occurredAt = alertEvent.occurredAt.toOffsetString(),
       ),
     )
     assertThat(domainEvent.toString()).isEqualTo(
