@@ -400,7 +400,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   fun `should publish alert code created event with DPS source`() {
     val request = createAlertCodeRequest()
 
-    val alertCode = alertCodeRepository.findByCode(webTestClient.createAlertCode(request = request).code)!!
+    val alertCode = webTestClient.createAlertCode(request = request)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -418,7 +418,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
         event.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alertCode.createdAt, within(1, ChronoUnit.MICROS))
+    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alertCodeRepository.findByCode(alertCode.code)!!.createdAt, within(1, ChronoUnit.MICROS))
   }
   private fun createAlertCodeRequest() = CreateAlertCodeRequest("CO", "Description", alertTypeVulnerability().code)
 

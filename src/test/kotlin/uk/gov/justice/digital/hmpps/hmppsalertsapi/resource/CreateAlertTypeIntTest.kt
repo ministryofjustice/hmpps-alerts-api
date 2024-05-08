@@ -336,7 +336,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
   fun `should publish alert type created event with DPS source`() {
     val request = createAlertTypeRequest()
 
-    val alertType = alertTypeRepository.findByCode(webTestClient.createAlertType(request = request).code)!!
+    val alertType = webTestClient.createAlertType(request = request)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -354,7 +354,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
         event.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alertType.createdAt, within(1, ChronoUnit.MICROS))
+    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alertTypeRepository.findByCode(alertType.code)!!.createdAt, within(1, ChronoUnit.MICROS))
   }
   private fun createAlertTypeRequest() = CreateAlertTypeRequest("CO", "Description")
 

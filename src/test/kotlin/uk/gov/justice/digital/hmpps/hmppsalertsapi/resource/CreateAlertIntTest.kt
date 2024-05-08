@@ -500,7 +500,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `should publish alert created event with DPS source`() {
     val request = createAlertRequest()
 
-    val alert = alertRepository.findByAlertUuid(webTestClient.createAlert(source = DPS, request = request).alertUuid)!!
+    val alert = webTestClient.createAlert(source = DPS, request = request)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -521,14 +521,14 @@ class CreateAlertIntTest : IntegrationTestBase() {
         event.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alert.createdAt, within(1, ChronoUnit.MICROS))
+    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
   }
 
   @Test
   fun `should publish alert created event with NOMIS source`() {
     val request = createAlertRequest()
 
-    val alert = alertRepository.findByAlertUuid(webTestClient.createAlert(source = NOMIS, request = request).alertUuid)!!
+    val alert = webTestClient.createAlert(source = NOMIS, request = request)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
@@ -549,7 +549,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         event.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alert.createdAt, within(1, ChronoUnit.MICROS))
+    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
   }
 
   @Test
