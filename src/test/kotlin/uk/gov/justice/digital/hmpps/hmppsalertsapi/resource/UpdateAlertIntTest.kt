@@ -218,6 +218,9 @@ class UpdateAlertIntTest : IntegrationTestBase() {
           lastModifiedAuditEvent.actionedAt.withNano(0),
           TEST_USER,
           TEST_USER_NAME,
+          lastModifiedAuditEvent.actionedAt.withNano(0),
+          TEST_USER,
+          TEST_USER_NAME,
         ),
       )
       with(updatedAlert.comments.single()) {
@@ -254,12 +257,85 @@ Comment '$appendComment' was added""",
         assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
         assertThat(source).isEqualTo(DPS)
         assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
+        assertThat(descriptionUpdated).isTrue()
+        assertThat(authorisedByUpdated).isTrue()
+        assertThat(activeFromUpdated).isTrue()
+        assertThat(activeToUpdated).isTrue()
+        assertThat(commentAppended).isTrue()
       }
       with(alertEntity.comments().single()) {
         assertThat(comment).isEqualTo(appendComment)
         assertThat(createdAt).isEqualTo(lastModifiedAuditEvent.actionedAt)
         assertThat(createdBy).isEqualTo(TEST_USER)
         assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
+      }
+    }
+  }
+
+  @Test
+  fun `alert updated without changing alertTo via DPS`() {
+    val alert = createAlert()
+    val request = updateAlertRequest(activeTo = alert.activeTo)
+    val updatedAlert = webTestClient.updateAlert(alert.alertUuid, source = DPS, request = request)
+    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+    val alertCode = alertCodeRepository.findByCode(alertEntity.alertCode.code)!!
+    val lastModifiedAuditEvent = alertEntity.lastModifiedAuditEvent()!!
+
+    with(request) {
+      assertThat(updatedAlert).isEqualTo(
+        Alert(
+          alert.alertUuid,
+          alert.prisonNumber,
+          alertCodeVictimSummary(),
+          description,
+          authorisedBy,
+          activeFrom!!,
+          activeTo,
+          true,
+          updatedAlert.comments,
+          alert.createdAt,
+          TEST_USER,
+          TEST_USER_NAME,
+          lastModifiedAuditEvent.actionedAt.withNano(0),
+          TEST_USER,
+          TEST_USER_NAME,
+          null,
+          null,
+          null,
+        ),
+      )
+
+      assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+        AlertEntity(
+          alertId = alertEntity.alertId,
+          alertUuid = alertEntity.alertUuid,
+          alertCode = alertCode,
+          prisonNumber = alertEntity.prisonNumber,
+          description = description,
+          authorisedBy = authorisedBy,
+          activeFrom = activeFrom!!,
+          activeTo = activeTo,
+          createdAt = alertEntity.createdAt,
+        ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
+      )
+      with(lastModifiedAuditEvent) {
+        assertThat(action).isEqualTo(AuditEventAction.UPDATED)
+        assertThat(description).isEqualTo(
+          """Updated alert description from '${alert.description}' to '${request.description}'
+Updated authorised by from '${alert.authorisedBy}' to '$authorisedBy'
+Updated active from from '${alert.activeFrom}' to '$activeFrom'
+Comment '$appendComment' was added""",
+        )
+        assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+        assertThat(actionedBy).isEqualTo(TEST_USER)
+        assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+        assertThat(source).isEqualTo(DPS)
+        assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
+        assertThat(descriptionUpdated).isTrue()
+        assertThat(authorisedByUpdated).isTrue()
+        assertThat(activeFromUpdated).isTrue()
+        assertThat(activeToUpdated).isFalse()
+        assertThat(commentAppended).isTrue()
       }
     }
   }
@@ -286,6 +362,9 @@ Comment '$appendComment' was added""",
           true,
           updatedAlert.comments,
           alert.createdAt,
+          TEST_USER,
+          TEST_USER_NAME,
+          lastModifiedAuditEvent.actionedAt.withNano(0),
           TEST_USER,
           TEST_USER_NAME,
           lastModifiedAuditEvent.actionedAt.withNano(0),
@@ -457,7 +536,9 @@ Comment '$appendComment' was added""",
         updateAlertEvent.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
+    assertThat(
+        OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime(),
+    ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
   }
 
   @Test
@@ -488,7 +569,9 @@ Comment '$appendComment' was added""",
         updateAlertEvent.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
+    assertThat(
+        OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime(),
+    ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
   }
 
   private fun createAlertRequest(
@@ -515,12 +598,15 @@ Comment '$appendComment' was added""",
       .expectBody(Alert::class.java)
       .returnResult().responseBody!!
 
-  private fun updateAlertRequest(comment: String = "Another update alert") =
+  private fun updateAlertRequest(
+    comment: String = "Another update alert",
+    activeTo: LocalDate? = LocalDate.now().plusMonths(10),
+  ) =
     UpdateAlert(
       description = "another new description",
       authorisedBy = "C Cauthorizer",
       activeFrom = LocalDate.now().minusMonths(2),
-      activeTo = LocalDate.now().plusMonths(10),
+      activeTo = activeTo,
       appendComment = comment,
     )
 

@@ -40,11 +40,19 @@ fun CreateAlert.toAlertEntity(
     activeFrom = this.activeFrom ?: LocalDate.now(),
     activeTo = this.activeTo,
     createdAt = createdAt,
-  ).create(createdAt = createdAt, createdBy = createdBy, createdByDisplayName = createdByDisplayName, source = source, activeCaseLoadId = activeCaseLoadId)
+  ).create(
+    createdAt = createdAt,
+    createdBy = createdBy,
+    createdByDisplayName = createdByDisplayName,
+    source = source,
+    activeCaseLoadId = activeCaseLoadId,
+  )
 
 fun Alert.toAlertModel(comments: Collection<Comment>? = null, auditEvents: Collection<AuditEvent>? = null): AlertModel {
   val createdAuditEvent = (auditEvents ?: auditEvents()).single { it.action == AuditEventAction.CREATED }
   val lastModifiedAuditEvent = (auditEvents ?: auditEvents()).firstOrNull { it.action == AuditEventAction.UPDATED }
+  val lastActiveToSetAuditEvent = if (activeTo == null) null else (auditEvents ?: auditEvents())
+    .firstOrNull { it.action == AuditEventAction.UPDATED && it.activeToUpdated == true }
 
   return AlertModel(
     alertUuid = alertUuid,
@@ -62,6 +70,9 @@ fun Alert.toAlertModel(comments: Collection<Comment>? = null, auditEvents: Colle
     lastModifiedAt = lastModifiedAuditEvent?.actionedAt,
     lastModifiedBy = lastModifiedAuditEvent?.actionedBy,
     lastModifiedByDisplayName = lastModifiedAuditEvent?.actionedByDisplayName,
+    activeToLastSetAt = lastActiveToSetAuditEvent?.actionedAt,
+    activeToLastSetBy = lastActiveToSetAuditEvent?.actionedBy,
+    activeToLastSetByDisplayName = lastActiveToSetAuditEvent?.actionedByDisplayName,
   )
 }
 

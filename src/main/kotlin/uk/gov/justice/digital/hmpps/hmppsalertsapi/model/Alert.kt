@@ -113,4 +113,23 @@ data class Alert(
     example = "Firstname Lastname",
   )
   val lastModifiedByDisplayName: String?,
+
+  @Schema(
+    description = "The date and time the alert's active duration end date is last set.",
+    example = "2022-07-15T15:24:56",
+  )
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+  val activeToLastSetAt: LocalDateTime?,
+
+  @Schema(
+    description = "The username of the user who last set the alert's active duration end date.",
+    example = "USER1234",
+  )
+  val activeToLastSetBy: String?,
+
+  @Schema(
+    description = "The displayable name of the user who last set the alert's active duration end date.",
+    example = "Firstname Lastname",
+  )
+  val activeToLastSetByDisplayName: String?,
 )

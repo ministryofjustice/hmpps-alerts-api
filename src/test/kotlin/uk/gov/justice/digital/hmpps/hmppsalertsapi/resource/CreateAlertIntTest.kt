@@ -421,6 +421,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
         null,
         null,
         null,
+        null,
+        null,
+        null,
       ),
     )
     assertThat(alert.createdAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
