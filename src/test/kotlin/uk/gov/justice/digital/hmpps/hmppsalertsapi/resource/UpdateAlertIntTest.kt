@@ -537,7 +537,7 @@ Comment '$appendComment' was added""",
       ),
     )
     assertThat(
-        OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime(),
+      OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime(),
     ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
   }
 
@@ -570,7 +570,7 @@ Comment '$appendComment' was added""",
       ),
     )
     assertThat(
-        OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime(),
+      OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime(),
     ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
   }
 
