@@ -384,6 +384,11 @@ class AlertTest {
         actionedByDisplayName = updatedByDisplayName,
         source = source,
         activeCaseLoadId = activeCaseLoadId,
+        descriptionUpdated = true,
+        authorisedByUpdated = true,
+        activeFromUpdated = true,
+        activeToUpdated = true,
+        commentAppended = true,
       ),
     )
   }
