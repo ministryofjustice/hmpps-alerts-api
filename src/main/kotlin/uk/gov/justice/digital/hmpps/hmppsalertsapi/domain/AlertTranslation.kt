@@ -49,13 +49,12 @@ fun CreateAlert.toAlertEntity(
   )
 
 fun Alert.toAlertModel(comments: Collection<Comment>? = null, auditEvents: Collection<AuditEvent>? = null): AlertModel {
-  val createdAuditEvent = (auditEvents ?: auditEvents()).single { it.action == AuditEventAction.CREATED }
-  val lastModifiedAuditEvent = (auditEvents ?: auditEvents()).firstOrNull { it.action == AuditEventAction.UPDATED }
-  val lastActiveToSetAuditEvent = if (activeTo == null) {
-    null
-  } else {
-    (auditEvents ?: auditEvents()).firstOrNull { it.action == AuditEventAction.UPDATED && it.activeToUpdated == true }
-  }
+  val events = auditEvents ?: auditEvents()
+
+  val createdAuditEvent = events.single { it.action == AuditEventAction.CREATED }
+  val lastModifiedAuditEvent = events.firstOrNull { it.action == AuditEventAction.UPDATED }
+  val lastActiveToSetAuditEvent = events.takeIf { activeTo != null }
+    ?.firstOrNull { it.action == AuditEventAction.UPDATED && it.activeToUpdated == true }
 
   return AlertModel(
     alertUuid = alertUuid,

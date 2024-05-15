@@ -273,7 +273,7 @@ Comment '$appendComment' was added""",
   }
 
   @Test
-  fun `alert updated without changing alertTo via DPS`() {
+  fun `alert updated without changing activeTo via DPS`() {
     val alert = createAlert()
     val request = updateAlertRequest(activeTo = alert.activeTo)
     val updatedAlert = webTestClient.updateAlert(alert.alertUuid, source = DPS, request = request)

@@ -605,7 +605,14 @@ class AlertTest {
     )
 
     assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
-    assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
+    with(entity.auditEvents().single { it.action == UPDATED }) {
+      assertThat(description).isEqualTo(expectedDescription)
+      assertThat(descriptionUpdated).isTrue
+      assertThat(authorisedByUpdated).isFalse
+      assertThat(activeFromUpdated).isFalse
+      assertThat(activeToUpdated).isFalse
+      assertThat(commentAppended).isFalse
+    }
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
       assertThat(source).isEqualTo(source)
       assertThat(descriptionUpdated).isTrue
@@ -638,7 +645,14 @@ class AlertTest {
     )
 
     assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
-    assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
+    with(entity.auditEvents().single { it.action == UPDATED }) {
+      assertThat(description).isEqualTo(expectedDescription)
+      assertThat(descriptionUpdated).isFalse
+      assertThat(authorisedByUpdated).isTrue
+      assertThat(activeFromUpdated).isFalse
+      assertThat(activeToUpdated).isFalse
+      assertThat(commentAppended).isFalse
+    }
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
       assertThat(source).isEqualTo(source)
       assertThat(descriptionUpdated).isFalse
@@ -671,7 +685,14 @@ class AlertTest {
     )
 
     assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
-    assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
+    with(entity.auditEvents().single { it.action == UPDATED }) {
+      assertThat(description).isEqualTo(expectedDescription)
+      assertThat(descriptionUpdated).isFalse
+      assertThat(authorisedByUpdated).isFalse
+      assertThat(activeFromUpdated).isTrue
+      assertThat(activeToUpdated).isFalse
+      assertThat(commentAppended).isFalse
+    }
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
       assertThat(source).isEqualTo(source)
       assertThat(descriptionUpdated).isFalse
@@ -704,7 +725,14 @@ class AlertTest {
     )
 
     assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
-    assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
+    with(entity.auditEvents().single { it.action == UPDATED }) {
+      assertThat(description).isEqualTo(expectedDescription)
+      assertThat(descriptionUpdated).isFalse
+      assertThat(authorisedByUpdated).isFalse
+      assertThat(activeFromUpdated).isFalse
+      assertThat(activeToUpdated).isTrue
+      assertThat(commentAppended).isFalse
+    }
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
       assertThat(source).isEqualTo(source)
       assertThat(descriptionUpdated).isFalse
@@ -745,7 +773,14 @@ class AlertTest {
       assertThat(createdBy).isEqualTo(updatedBy)
       assertThat(createdByDisplayName).isEqualTo(updatedByDisplayName)
     }
-    assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
+    with(entity.auditEvents().single { it.action == UPDATED }) {
+      assertThat(description).isEqualTo(expectedDescription)
+      assertThat(descriptionUpdated).isFalse
+      assertThat(authorisedByUpdated).isFalse
+      assertThat(activeFromUpdated).isFalse
+      assertThat(activeToUpdated).isFalse
+      assertThat(commentAppended).isTrue
+    }
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
       assertThat(source).isEqualTo(source)
       assertThat(descriptionUpdated).isFalse
