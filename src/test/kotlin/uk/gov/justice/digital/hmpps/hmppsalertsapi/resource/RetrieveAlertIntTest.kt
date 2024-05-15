@@ -99,6 +99,9 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
           null,
           null,
           null,
+          null,
+          null,
+          null,
         ),
       )
     }

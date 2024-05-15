@@ -110,6 +110,11 @@ data class Alert(
     actionedByDisplayName: String,
     source: Source,
     activeCaseLoadId: String?,
+    descriptionUpdated: Boolean? = null,
+    authorisedByUpdated: Boolean? = null,
+    activeFromUpdated: Boolean? = null,
+    activeToUpdated: Boolean? = null,
+    commentAppended: Boolean? = null,
   ): AuditEvent {
     val auditEvent = AuditEvent(
       alert = this,
@@ -120,6 +125,11 @@ data class Alert(
       actionedByDisplayName = actionedByDisplayName,
       source = source,
       activeCaseLoadId = activeCaseLoadId,
+      descriptionUpdated = descriptionUpdated,
+      authorisedByUpdated = authorisedByUpdated,
+      activeFromUpdated = activeFromUpdated,
+      activeToUpdated = activeToUpdated,
+      commentAppended = commentAppended,
     )
     auditEvents.add(auditEvent)
     return auditEvent
@@ -222,6 +232,11 @@ data class Alert(
         actionedByDisplayName = updatedByDisplayName,
         source = source,
         activeCaseLoadId = activeCaseLoadId,
+        descriptionUpdated = descriptionUpdated,
+        authorisedByUpdated = authorisedByUpdated,
+        activeFromUpdated = activeFromUpdated,
+        activeToUpdated = activeToUpdated,
+        commentAppended = commentAppended,
       )
       registerEvent(
         AlertUpdatedEvent(

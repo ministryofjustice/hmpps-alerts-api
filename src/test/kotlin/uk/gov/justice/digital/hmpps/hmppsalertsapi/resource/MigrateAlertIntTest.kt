@@ -157,6 +157,9 @@ class MigrateAlertIntTest : IntegrationTestBase() {
         null,
         null,
         null,
+        null,
+        null,
+        null,
       ),
     )
   }

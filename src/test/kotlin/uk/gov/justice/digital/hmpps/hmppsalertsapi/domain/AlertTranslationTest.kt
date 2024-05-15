@@ -131,6 +131,9 @@ class AlertTranslationTest {
         lastModifiedAt = null,
         lastModifiedBy = null,
         lastModifiedByDisplayName = null,
+        activeToLastSetAt = null,
+        activeToLastSetBy = null,
+        activeToLastSetByDisplayName = null,
       ),
     )
   }
@@ -198,6 +201,54 @@ class AlertTranslationTest {
       assertThat(lastModifiedAt).isEqualTo(lastModifiedAt)
       assertThat(lastModifiedBy).isEqualTo("UPDATED_BY_3")
       assertThat(lastModifiedByDisplayName).isEqualTo("UPDATED_BY_3_DISPLAY_NAME")
+    }
+  }
+
+  @Test
+  fun `convert alert entity to model with different last modified and last deactivated audit event`() {
+    val lastModifiedAt = LocalDateTime.now().minusDays(1)
+    val lastDeactivatedAt = LocalDateTime.now().minusDays(2)
+    val entity = alertEntity().apply {
+      auditEvent(
+        action = AuditEventAction.UPDATED,
+        description = "Alert updated",
+        actionedAt = lastDeactivatedAt,
+        actionedBy = "UPDATED_BY_2",
+        actionedByDisplayName = "UPDATED_BY_2_DISPLAY_NAME",
+        source = DPS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
+        activeToUpdated = true,
+      )
+      auditEvent(
+        action = AuditEventAction.UPDATED,
+        description = "Alert updated",
+        actionedAt = lastModifiedAt,
+        actionedBy = "UPDATED_BY_3",
+        actionedByDisplayName = "UPDATED_BY_3_DISPLAY_NAME",
+        source = NOMIS,
+        activeCaseLoadId = PRISON_CODE_LEEDS,
+        activeToUpdated = false,
+      )
+      auditEvent(
+        action = AuditEventAction.UPDATED,
+        description = "Alert updated",
+        actionedAt = LocalDateTime.now().minusDays(3),
+        actionedBy = "UPDATED_BY_1",
+        actionedByDisplayName = "UPDATED_BY_1_DISPLAY_NAME",
+        source = DPS,
+        activeCaseLoadId = PRISON_CODE_MOORLANDS,
+      )
+    }
+
+    val model = entity.toAlertModel()
+
+    with(model) {
+      assertThat(lastModifiedAt).isEqualTo(lastModifiedAt)
+      assertThat(lastModifiedBy).isEqualTo("UPDATED_BY_3")
+      assertThat(lastModifiedByDisplayName).isEqualTo("UPDATED_BY_3_DISPLAY_NAME")
+      assertThat(activeToLastSetAt).isEqualTo(lastDeactivatedAt)
+      assertThat(activeToLastSetBy).isEqualTo("UPDATED_BY_2")
+      assertThat(activeToLastSetByDisplayName).isEqualTo("UPDATED_BY_2_DISPLAY_NAME")
     }
   }
 

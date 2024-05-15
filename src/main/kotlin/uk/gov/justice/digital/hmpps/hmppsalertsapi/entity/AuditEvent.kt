@@ -36,4 +36,10 @@ data class AuditEvent(
   val source: Source,
 
   val activeCaseLoadId: String?,
+
+  val descriptionUpdated: Boolean? = null,
+  val authorisedByUpdated: Boolean? = null,
+  val activeFromUpdated: Boolean? = null,
+  val activeToUpdated: Boolean? = null,
+  val commentAppended: Boolean? = null,
 )
