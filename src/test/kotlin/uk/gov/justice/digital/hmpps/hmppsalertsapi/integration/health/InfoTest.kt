@@ -38,4 +38,16 @@ class InfoTest : IntegrationTestBase() {
         assertThat(it.contains("***")).isTrue
       }
   }
+
+  @Test
+  fun `has navigation`() {
+    webTestClient.get().uri("/info")
+      .exchange()
+      .expectStatus().isOk
+      .expectBody().jsonPath("navigation").value<HashMap<String, Object>> {
+        assertThat(it["navEnabled"]).isEqualTo(false)
+        assertThat(it["description"]).isEqualTo("Create and manage alert types and codes. Add alerts in bulk for lists of prisoners.")
+        assertThat(it["href"]).isEqualTo("https://alerts-ui-dev.hmpps.service.justice.gov.uk")
+      }
+  }
 }

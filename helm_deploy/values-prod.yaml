@@ -12,6 +12,7 @@ generic-service:
     EVENTS_PUBLISH: false
     EVENTS_BASE_URL: "https://alerts-api.hmpps.service.justice.gov.uk"
     SERVICE_ACTIVE_PRISONS:
+    ENVIRONMENT: ""
   postgresDatabaseRestore:
     enabled: true
     namespace_secrets:

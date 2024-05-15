@@ -48,3 +48,5 @@ hmpps.sqs:
 service:
   active:
     prisons: ${SERVICE_ACTIVE_PRISONS:***}
+
+environment: ${ENVIRONMENT:dev}
