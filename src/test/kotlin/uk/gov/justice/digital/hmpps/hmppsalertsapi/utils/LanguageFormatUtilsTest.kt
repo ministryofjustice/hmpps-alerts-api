@@ -11,6 +11,12 @@ class LanguageFormatUtilsTest {
   }
 
   @Test
+  fun `test formatDisplayName with non-Standard space`() {
+    val result = LanguageFormatUtils.formatDisplayName("JOHN\tSMITH  DOE")
+    assertThat(result).isEqualTo("John Smith Doe")
+  }
+
+  @Test
   fun `test formatDisplayName with underscore-seperated name`() {
     val result = LanguageFormatUtils.formatDisplayName("USER_NOT_FOUND")
     assertThat(result).isEqualTo("User Not Found")
