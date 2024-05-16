@@ -6,19 +6,10 @@ import org.springframework.boot.actuate.info.InfoContributor
 import org.springframework.stereotype.Component
 
 @Component
-class NavigationInfo(@Value("\${environment}") val environment: String = "") : InfoContributor {
+class NavigationInfo(@Value("\${service.ui.url}") val url: String = "") : InfoContributor {
   override fun contribute(builder: Info.Builder?) {
-    val url = if (this.environment.isNotEmpty()) {
-      String.format(URL, "-$environment")
-    } else {
-      String.format(URL, "")
-    }
     val navigation = Navigation(href = url)
     builder?.withDetail("navigation", navigation)
-  }
-
-  companion object {
-    private const val URL = "https://alerts-ui%s.hmpps.service.justice.gov.uk"
   }
 }
 
