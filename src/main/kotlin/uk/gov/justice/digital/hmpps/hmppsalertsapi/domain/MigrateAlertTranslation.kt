@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.LanguageFormatUtils
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -28,11 +29,18 @@ fun MigrateAlertRequest.toAlertEntity(alertCode: AlertCode, migratedAt: LocalDat
       description = "Migrated alert created",
       actionedAt = this.createdAt,
       actionedBy = this.createdBy,
-      actionedByDisplayName = this.createdByDisplayName,
+      actionedByDisplayName = LanguageFormatUtils.formatDisplayName(this.createdByDisplayName),
       source = NOMIS,
       activeCaseLoadId = null,
     )
-    comments.forEach { al.addComment(it.comment, it.createdAt, it.createdBy, it.createdByDisplayName) }
+    comments.forEach {
+      al.addComment(
+        it.comment,
+        it.createdAt,
+        it.createdBy,
+        LanguageFormatUtils.formatDisplayName(it.createdByDisplayName),
+      )
+    }
     if (this.updatedAt != null) {
       al.lastModifiedAt = this.updatedAt
       al.auditEvent(
@@ -40,14 +48,18 @@ fun MigrateAlertRequest.toAlertEntity(alertCode: AlertCode, migratedAt: LocalDat
         description = "Migrated alert updated",
         actionedAt = this.updatedAt,
         actionedBy = this.updatedBy!!,
-        actionedByDisplayName = this.updatedByDisplayName!!,
+        actionedByDisplayName = LanguageFormatUtils.formatDisplayName(this.updatedByDisplayName!!),
         source = NOMIS,
         activeCaseLoadId = null,
       )
     }
   }
 
-fun MigrateAlert.toAlertEntity(prisonNumber: String, alertCode: AlertCode, migratedAt: LocalDateTime = LocalDateTime.now()) =
+fun MigrateAlert.toAlertEntity(
+  prisonNumber: String,
+  alertCode: AlertCode,
+  migratedAt: LocalDateTime = LocalDateTime.now(),
+) =
   Alert(
     alertUuid = UUID.randomUUID(),
     alertCode = alertCode,
@@ -70,7 +82,7 @@ fun MigrateAlert.toAlertEntity(prisonNumber: String, alertCode: AlertCode, migra
       description = "Migrated alert created",
       actionedAt = this.createdAt,
       actionedBy = this.createdBy,
-      actionedByDisplayName = this.createdByDisplayName,
+      actionedByDisplayName = LanguageFormatUtils.formatDisplayName(this.createdByDisplayName),
       source = NOMIS,
       activeCaseLoadId = null,
     )
@@ -81,7 +93,7 @@ fun MigrateAlert.toAlertEntity(prisonNumber: String, alertCode: AlertCode, migra
         description = "Migrated alert updated",
         actionedAt = this.updatedAt,
         actionedBy = this.updatedBy!!,
-        actionedByDisplayName = this.updatedByDisplayName!!,
+        actionedByDisplayName = LanguageFormatUtils.formatDisplayName(this.updatedByDisplayName!!),
         source = NOMIS,
         activeCaseLoadId = null,
       )

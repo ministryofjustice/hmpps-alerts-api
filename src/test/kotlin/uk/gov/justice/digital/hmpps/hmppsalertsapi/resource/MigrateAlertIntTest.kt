@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_HIDDEN_DISABILITY
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_SOCIAL_CARE
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.LanguageFormatUtils
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlertRequest
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
@@ -153,7 +154,7 @@ class MigrateAlertIntTest : IntegrationTestBase() {
         emptyList(),
         expectedCreatedTime,
         request.createdBy,
-        request.createdByDisplayName,
+        LanguageFormatUtils.formatDisplayName(request.createdByDisplayName),
         null,
         null,
         null,

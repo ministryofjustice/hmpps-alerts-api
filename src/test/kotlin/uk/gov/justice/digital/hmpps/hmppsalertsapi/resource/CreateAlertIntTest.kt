@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER_DISPLAY_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
@@ -355,14 +356,14 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
     with(alert) {
       assertThat(createdBy).isEqualTo(NOMIS_SYS_USER)
-      assertThat(createdByDisplayName).isEqualTo(NOMIS_SYS_USER)
+      assertThat(createdByDisplayName).isEqualTo(NOMIS_SYS_USER_DISPLAY_NAME)
     }
 
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
 
     with(alertEntity.auditEvents()[0]) {
       assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
-      assertThat(actionedByDisplayName).isEqualTo(NOMIS_SYS_USER)
+      assertThat(actionedByDisplayName).isEqualTo(NOMIS_SYS_USER_DISPLAY_NAME)
       assertThat(source).isEqualTo(NOMIS)
       assertThat(activeCaseLoadId).isNull()
     }
@@ -385,14 +386,14 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
     with(alert) {
       assertThat(createdBy).isEqualTo("NOMIS")
-      assertThat(createdByDisplayName).isEqualTo("NOMIS")
+      assertThat(createdByDisplayName).isEqualTo("Nomis")
     }
 
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
 
     with(alertEntity.auditEvents()[0]) {
       assertThat(actionedBy).isEqualTo("NOMIS")
-      assertThat(actionedByDisplayName).isEqualTo("NOMIS")
+      assertThat(actionedByDisplayName).isEqualTo("Nomis")
       assertThat(source).isEqualTo(NOMIS)
       assertThat(activeCaseLoadId).isNull()
     }

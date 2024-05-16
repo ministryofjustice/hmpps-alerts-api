@@ -154,10 +154,10 @@ fun migrateAlertRequest(
     comments = comments,
     createdAt = LocalDateTime.now().minusDays(2).withNano(0),
     createdBy = "AG111QD",
-    createdByDisplayName = "A Creator",
+    createdByDisplayName = "A CREATOR",
     updatedAt = if (includeUpdate) LocalDateTime.now().minusDays(1).withNano(0) else null,
     updatedBy = if (includeUpdate) "AG1221GG" else null,
-    updatedByDisplayName = if (includeUpdate) "Up Dated" else null,
+    updatedByDisplayName = if (includeUpdate) "UP DATED" else null,
   )
 
 fun migrateAlert() =
@@ -172,7 +172,7 @@ fun migrateAlert() =
     activeTo = null,
     createdAt = LocalDateTime.now().minusDays(2).withNano(0),
     createdBy = "AB11DZ",
-    createdByDisplayName = "C Reated",
+    createdByDisplayName = "C REATED",
     updatedAt = null,
     updatedBy = null,
     updatedByDisplayName = null,

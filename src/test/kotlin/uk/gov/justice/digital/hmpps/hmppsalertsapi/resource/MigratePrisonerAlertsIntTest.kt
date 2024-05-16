@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_ISOLATED_PRI
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_POOR_COPER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.DEFAULT_UUID
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.LanguageFormatUtils
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlert
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
@@ -280,7 +281,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       assertThat(description).isEqualTo("Migrated alert created")
       assertThat(actionedAt).isEqualToIgnoringNanos(request.createdAt)
       assertThat(actionedBy).isEqualTo(request.createdBy)
-      assertThat(actionedByDisplayName).isEqualTo(request.createdByDisplayName)
+      assertThat(actionedByDisplayName).isEqualTo(LanguageFormatUtils.formatDisplayName(request.createdByDisplayName))
       assertThat(source).isEqualTo(NOMIS)
       assertThat(activeCaseLoadId).isNull()
     }
