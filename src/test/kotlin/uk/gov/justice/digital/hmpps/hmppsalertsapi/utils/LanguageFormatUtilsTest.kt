@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Test
 class LanguageFormatUtilsTest {
   @Test
   fun `test formatDisplayName`() {
-    val result = LanguageFormatUtils.formatDisplayName("JOHN SMITH")
-    assertThat(result).isEqualTo("John Smith")
+    val result = LanguageFormatUtils.formatDisplayName("JOHN SMITH-DOE")
+    assertThat(result).isEqualTo("John Smith-Doe")
   }
 
   @Test
