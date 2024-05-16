@@ -48,3 +48,5 @@ hmpps.sqs:
 service:
   active:
     prisons: ${SERVICE_ACTIVE_PRISONS:***}
+  ui:
+    url: ${SERVICE_UI_URL:https://alerts-ui-dev.hmpps.service.justice.gov.uk}
