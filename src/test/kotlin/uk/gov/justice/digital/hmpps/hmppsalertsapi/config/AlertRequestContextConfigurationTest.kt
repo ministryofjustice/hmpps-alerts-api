@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_C
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND_DISPLAY_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
@@ -158,7 +159,7 @@ class AlertRequestContextConfigurationTest {
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
 
     assertThat(context.username).isEqualTo(USER_NOT_FOUND)
-    assertThat(context.userDisplayName).isEqualTo(USER_NOT_FOUND)
+    assertThat(context.userDisplayName).isEqualTo(USER_NOT_FOUND_DISPLAY_NAME)
   }
 
   @Test
@@ -255,7 +256,7 @@ class AlertRequestContextConfigurationTest {
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
 
     assertThat(context.username).isEqualTo(USER_NOT_FOUND)
-    assertThat(context.userDisplayName).isEqualTo(USER_NOT_FOUND)
+    assertThat(context.userDisplayName).isEqualTo(USER_NOT_FOUND_DISPLAY_NAME)
   }
 
   @Test
@@ -358,7 +359,7 @@ class AlertRequestContextConfigurationTest {
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
 
     assertThat(context.username).isEqualTo(USER_NOT_FOUND)
-    assertThat(context.userDisplayName).isEqualTo(USER_NOT_FOUND)
+    assertThat(context.userDisplayName).isEqualTo(USER_NOT_FOUND_DISPLAY_NAME)
   }
 
   @Test
@@ -442,7 +443,7 @@ class AlertRequestContextConfigurationTest {
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
 
     assertThat(context.username).isEqualTo("NOMIS")
-    assertThat(context.userDisplayName).isEqualTo("NOMIS")
+    assertThat(context.userDisplayName).isEqualTo("Nomis")
   }
 
   @Test

@@ -167,7 +167,7 @@ class MigrateAlertTranslationTest {
       updatedByDisplayName = "Up Dated",
     )
     val entity = request.toAlertEntity(PRISON_NUMBER, alertCodeVictim())
-    assertThat(entity.auditEvents()).isEqualTo(
+    assertThat(entity.auditEvents()).usingRecursiveComparison().isEqualTo(
       listOf(
         AuditEvent(
           alert = entity,
@@ -185,7 +185,7 @@ class MigrateAlertTranslationTest {
           description = "Migrated alert created",
           actionedAt = request.createdAt,
           actionedBy = request.createdBy,
-          actionedByDisplayName = request.createdByDisplayName,
+          actionedByDisplayName = "C Reated",
           source = NOMIS,
           activeCaseLoadId = null,
         ),

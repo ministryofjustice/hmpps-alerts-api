@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.LanguageFormatUtils
 import uk.gov.justice.hmpps.kotlin.auth.AuthAwareAuthenticationToken
 
 @Configuration
@@ -46,7 +47,7 @@ class AlertRequestContextInterceptor(
         AlertRequestContext(
           source = source,
           username = userDetails.username,
-          userDisplayName = userDetails.name,
+          userDisplayName = LanguageFormatUtils.formatDisplayName(userDetails.name),
           activeCaseLoadId = userDetails.activeCaseLoadId,
         ),
       )
