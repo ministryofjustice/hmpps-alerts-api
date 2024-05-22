@@ -69,9 +69,7 @@ data class Alert(
   @OneToOne(mappedBy = "alert", cascade = [CascadeType.PERSIST, CascadeType.REMOVE])
   var migratedAlert: MigratedAlert? = null
 
-  fun isActive() = activeFrom <= LocalDate.now() && (activeTo == null || activeTo!! > LocalDate.now())
-
-  fun willBecomeActive() = activeFrom > LocalDate.now() && (activeTo == null || activeTo!! > activeFrom)
+  fun isActive() = activeTo == null || activeTo!! > LocalDate.now()
 
   @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE])
   private val comments: MutableList<Comment> = mutableListOf()

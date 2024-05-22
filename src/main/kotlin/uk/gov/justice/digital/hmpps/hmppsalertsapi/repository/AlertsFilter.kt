@@ -29,11 +29,10 @@ class AlertsFilter(
     isActive?.let {
       when (it) {
         true -> {
-          predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("activeFrom"), criteriaBuilder.literal(LocalDate.now())))
           predicates.add(criteriaBuilder.or(criteriaBuilder.isNull(root.get<LocalDate>("activeTo")), criteriaBuilder.greaterThan(root.get("activeTo"), criteriaBuilder.literal(LocalDate.now()))))
         }
         false -> {
-          predicates.add(criteriaBuilder.or(criteriaBuilder.greaterThan(root.get("activeFrom"), criteriaBuilder.literal(LocalDate.now())), criteriaBuilder.lessThanOrEqualTo(root.get("activeTo"), criteriaBuilder.literal(LocalDate.now()))))
+          predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get("activeTo"), criteriaBuilder.literal(LocalDate.now())))
         }
       }
     }

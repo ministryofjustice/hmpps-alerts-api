@@ -29,9 +29,9 @@ class AlertTest {
   }
 
   @Test
-  fun `is not active when active from is tomorrow`() {
+  fun `is active when active from is tomorrow`() {
     val alert = alertEntity().apply { activeFrom = LocalDate.now().plusDays(1) }
-    assertThat(alert.isActive()).isFalse
+    assertThat(alert.isActive()).isTrue()
   }
 
   @Test
@@ -50,30 +50,6 @@ class AlertTest {
   fun `is not active when active to is today`() {
     val alert = alertEntity().apply { activeTo = LocalDate.now() }
     assertThat(alert.isActive()).isFalse
-  }
-
-  @Test
-  fun `will become active when active from is tomorrow`() {
-    val alert = alertEntity().apply { activeFrom = LocalDate.now().plusDays(1) }
-    assertThat(alert.willBecomeActive()).isTrue
-  }
-
-  @Test
-  fun `will become active when active from is tomorrow and active to is the day after`() {
-    val alert = alertEntity().apply {
-      activeFrom = LocalDate.now().plusDays(1)
-      activeTo = LocalDate.now().plusDays(2)
-    }
-    assertThat(alert.willBecomeActive()).isTrue
-  }
-
-  @Test
-  fun `will not become active when active from and active to are tomorrow`() {
-    val alert = alertEntity().apply {
-      activeFrom = LocalDate.now().plusDays(1)
-      activeTo = LocalDate.now().plusDays(1)
-    }
-    assertThat(alert.willBecomeActive()).isFalse()
   }
 
   @Test

@@ -369,7 +369,6 @@ class MergeAlertsIntTest : IntegrationTestBase() {
       }
       with(alertRepository.findByAlertUuid(this[1].alertUuid)!!) {
         assertThat(alertCode.code).isEqualTo(ALERT_CODE_ISOLATED_PRISONER)
-        assertThat(willBecomeActive()).isTrue()
       }
     }
   }
