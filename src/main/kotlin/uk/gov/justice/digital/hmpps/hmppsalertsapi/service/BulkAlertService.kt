@@ -93,11 +93,10 @@ class BulkAlertService(
     chunked(batchSize).flatMap {
       alertRepository.saveAllAndFlush(
         filter { it.activeTo != null }.map {
-          val activeFrom = it.activeFrom
           it.update(
             description = null,
             authorisedBy = null,
-            activeFrom = activeFrom,
+            activeFrom = it.activeFrom,
             activeTo = null,
             appendComment = null,
             updatedAt = context.requestAt,
@@ -114,12 +113,11 @@ class BulkAlertService(
     chunked(batchSize).flatMap {
       alertRepository.saveAllAndFlush(
         map {
-          val activeTo = LocalDate.now()
           it.update(
             description = null,
             authorisedBy = null,
             activeFrom = null,
-            activeTo = activeTo,
+            activeTo = LocalDate.now(),
             appendComment = null,
             updatedAt = context.requestAt,
             updatedBy = context.username,
