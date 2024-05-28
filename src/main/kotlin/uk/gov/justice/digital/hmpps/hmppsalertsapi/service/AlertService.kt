@@ -60,7 +60,7 @@ class AlertService(
 
   private fun CreateAlert.checkForExistingActiveAlert() =
     alertRepository.findByPrisonNumberAndAlertCodeCode(prisonNumber, alertCode)
-      .any { it.isActive() || it.willBecomeActive() } && throw ExistingActiveAlertWithCodeException(prisonNumber, alertCode)
+      .any { it.isActive() } && throw ExistingActiveAlertWithCodeException(prisonNumber, alertCode)
 
   private fun CreateAlert.validatePrisonNumber() =
     require(prisonerSearchClient.getPrisoner(prisonNumber) != null) { "Prison number '$prisonNumber' not found" }

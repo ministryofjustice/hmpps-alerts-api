@@ -26,7 +26,7 @@ class MigrateAlertService(
   fun migrateAlert(migrateAlertRequest: MigrateAlertRequest): AlertModel {
     val alertCode = alertCodeRepository.findByCode(migrateAlertRequest.alertCode) ?: throw IllegalArgumentException("Alert code '${migrateAlertRequest.alertCode}' not found")
     val alert = migrateAlertRequest.toAlertEntity(alertCode)
-    if (alert.isActive() || alert.willBecomeActive()) {
+    if (alert.isActive()) {
       alert.checkForExistingActiveAlert()
     }
     return alertRepository.saveAndFlush(alert).toAlertModel()
@@ -34,7 +34,7 @@ class MigrateAlertService(
 
   private fun Alert.checkForExistingActiveAlert() =
     alertRepository.findByPrisonNumberAndAlertCodeCode(prisonNumber, alertCode.code)
-      .any { it.isActive() || it.willBecomeActive() } && throw ExistingActiveAlertWithCodeException(prisonNumber, alertCode.code)
+      .any { it.isActive() } && throw ExistingActiveAlertWithCodeException(prisonNumber, alertCode.code)
 
   fun migratePrisonerAlerts(prisonNumber: String, request: List<MigrateAlert>): List<MigratedAlert> {
     val migratedAt = LocalDateTime.now()
@@ -80,7 +80,7 @@ class MigrateAlertService(
   }
 
   private fun List<Alert>.logDuplicateActiveAlerts(prisonNumber: String) {
-    this.filter { it.isActive() || it.willBecomeActive() }.groupBy { it.alertCode.code }.filter { it.value.size > 1 }.run {
+    this.filter { it.isActive() }.groupBy { it.alertCode.code }.filter { it.value.size > 1 }.run {
       if (any()) {
         log.warn("Person with prison number '$prisonNumber' has ${this.size} duplicate active alert(s) for code(s) ${this.map { "'${it.key}' (${it.value.size} active)" }.joinToString(", ")}")
       }
@@ -94,7 +94,7 @@ class MigrateAlertService(
           "Person with prison number '$prisonNumber' has ${this.size} historic alert(s) for code(s) ${
             this.joinToString(
               ", ",
-            ) { "'${it.alertCode.code}' (${if (it.isActive()) "active" else if (it.willBecomeActive()) "will become active on ${it.activeFrom}" else "inactive"})" }
+            ) { "'${it.alertCode.code}' (${if (it.isActive()) "active" else "inactive"})" }
           }",
         )
       }

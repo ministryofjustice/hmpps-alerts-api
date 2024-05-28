@@ -81,7 +81,7 @@ class MergeAlertService(
   }
 
   private fun List<Alert>.logDuplicateActiveAlerts(prisonNumber: String) {
-    this.filter { it.isActive() || it.willBecomeActive() }.groupBy { it.alertCode.code }.filter { it.value.size > 1 }.run {
+    this.filter { it.isActive() }.groupBy { it.alertCode.code }.filter { it.value.size > 1 }.run {
       if (any()) {
         log.warn("Person with prison number '$prisonNumber' has ${this.size} duplicate active alert(s) for code(s) ${this.map { "'${it.key}' (${it.value.size} active)" }.joinToString(", ")}")
       }

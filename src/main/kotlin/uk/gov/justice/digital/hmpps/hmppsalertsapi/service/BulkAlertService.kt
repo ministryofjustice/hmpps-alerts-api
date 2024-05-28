@@ -76,7 +76,7 @@ class BulkAlertService(
   private fun BulkCreateAlerts.getExistingUnexpiredAlerts(batchSize: Int) =
     prisonNumbers.chunked(batchSize).flatMap {
       alertRepository.findByPrisonNumberInAndAlertCodeCode(it, alertCode)
-        .filter { alert -> alert.isActive() || alert.willBecomeActive() }
+        .filter { alert -> alert.isActive() }
     }
 
   private fun BulkCreateAlerts.getAnyExistingActiveAlertsThatWillNotBeRecreated(existingUnexpiredAlerts: Collection<Alert>) =
@@ -93,11 +93,10 @@ class BulkAlertService(
     chunked(batchSize).flatMap {
       alertRepository.saveAllAndFlush(
         filter { it.activeTo != null }.map {
-          val activeFrom = if (it.willBecomeActive()) LocalDate.now() else it.activeFrom
           it.update(
             description = null,
             authorisedBy = null,
-            activeFrom = activeFrom,
+            activeFrom = it.activeFrom,
             activeTo = null,
             appendComment = null,
             updatedAt = context.requestAt,
@@ -114,12 +113,11 @@ class BulkAlertService(
     chunked(batchSize).flatMap {
       alertRepository.saveAllAndFlush(
         map {
-          val activeTo = if (it.willBecomeActive()) it.activeFrom else LocalDate.now()
           it.update(
             description = null,
             authorisedBy = null,
             activeFrom = null,
-            activeTo = activeTo,
+            activeTo = LocalDate.now(),
             appendComment = null,
             updatedAt = context.requestAt,
             updatedBy = context.username,

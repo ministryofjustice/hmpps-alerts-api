@@ -139,7 +139,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
   fun `retrieve all active alerts for prison number`() {
     val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, isActive = true)
     with(response.content) {
-      assertThat(this).hasSize(3)
+      assertThat(this).hasSize(4)
       assertAllForPrisonNumber(PRISON_NUMBER)
       assertContainsOnlyActive()
       assertDoesNotContainDeletedAlert()
@@ -152,7 +152,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
   fun `retrieve all inactive alerts for prison number`() {
     val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, isActive = false)
     with(response.content) {
-      assertThat(this).hasSize(2)
+      assertThat(this).hasSize(1)
       assertAllForPrisonNumber(PRISON_NUMBER)
       assertContainsOnlyInactive()
       assertDoesNotContainDeletedAlert()
@@ -227,7 +227,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
       assertThat(this).hasSize(3)
       assertAllForPrisonNumber(PRISON_NUMBER)
       assertActiveFromOnOrAfter(activeFromStart)
-      assertContainsActiveAndInactive()
+      assertContainsOnlyActive()
       assertDoesNotContainDeletedAlert()
       assertOrderedByActiveFromDesc()
     }
@@ -270,7 +270,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
       assertThat(this).hasSize(2)
       assertAllForPrisonNumber(PRISON_NUMBER)
       assertAuthorisedByContainsCaseInsensitive(search)
-      assertContainsActiveAndInactive()
+      assertContainsOnlyActive()
       assertDoesNotContainDeletedAlert()
       assertOrderedByActiveFromDesc()
     }

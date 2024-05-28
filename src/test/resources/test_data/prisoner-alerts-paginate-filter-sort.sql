@@ -96,15 +96,14 @@ values
     gen_random_uuid(),
     (SELECT alert_code_id FROM alert_code WHERE code = 'ADSC'),
     'B2345BB',
-    'Active alert type ''A'' - ''Social Care'' code ''ADSC'' - ''Adult Social Care'' alert for prison number ''B2345BB'' active from yesterday with no active to date. Alert code is active. Created yesterday and not modified since',
+    'Active alert type ''A'' - ''Social Care'' code ''ADSC'' - ''Adult Social Care'' alert for prison number ''B2345BB'' active from three days ago with active to from two days ago. Alert code is inactive. Created yesterday and not modified since',
     null,
-    now() - interval '1 day',
-    null,
-    now() - interval '1 day',
+    now() - interval '3 days',
+    now() - interval '2 days',
+    now() - interval '2 days',
     null,
     null
 );
-
 insert into audit_event
 (
     alert_id,

@@ -391,7 +391,6 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       assertThat(message).isEqualTo("Updated active to from '${existingActiveAlert.activeTo}' to 'null'")
       with(alertRepository.findByAlertUuid(alertUuid)!!) {
         assertThat(isActive()).isTrue()
-        assertThat(willBecomeActive()).isFalse()
         assertThat(activeTo).isNull()
       }
     }
@@ -422,14 +421,11 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       assertThat(alertUuid).isEqualTo(existingWillBecomeActiveAlert.alertUuid)
       assertThat(prisonNumber).isEqualTo(existingWillBecomeActiveAlert.prisonNumber)
       assertThat(message).isEqualTo(
-        """Updated active from from '${existingWillBecomeActiveAlert.activeFrom}' to '${LocalDate.now()}'
-          |Updated active to from '${existingWillBecomeActiveAlert.activeTo}' to 'null'
-        """.trimMargin(),
+        "Updated active to from '${existingWillBecomeActiveAlert.activeTo}' to 'null'".trimMargin(),
       )
       with(alertRepository.findByAlertUuid(alertUuid)!!) {
         assertThat(isActive()).isTrue()
-        assertThat(willBecomeActive()).isFalse()
-        assertThat(activeFrom).isEqualTo(LocalDate.now())
+        assertThat(activeFrom).isEqualTo(existingWillBecomeActiveAlert.activeFrom)
         assertThat(activeTo).isNull()
       }
     }
@@ -505,8 +501,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       assertThat(message).isEmpty()
       with(alertRepository.findByAlertUuid(alertUuid)!!) {
         assertThat(isActive()).isFalse()
-        assertThat(willBecomeActive()).isFalse()
-        assertThat(activeTo).isEqualTo(activeFrom)
+        assertThat(activeTo).isEqualTo(LocalDate.now())
       }
     }
 
@@ -534,7 +529,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
     val alertsForFirstPrisonerNotInList = alertRepository.findByPrisonNumber("B2345BB")
     val alertsForSecondPrisonerNotInList = alertRepository.findByPrisonNumber("C3456CC")
-    val alertsExpiredForPrisonersNotInList = alertsForFirstPrisonerNotInList.union(alertsForSecondPrisonerNotInList).filterNot { it.isActive() || it.willBecomeActive() }
+    val alertsExpiredForPrisonersNotInList = alertsForFirstPrisonerNotInList.union(alertsForSecondPrisonerNotInList).filterNot { it.isActive() }
 
     assertThat(response.existingActiveAlerts).isEmpty()
     assertThat(response.alertsUpdated).isEmpty()
@@ -550,13 +545,12 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       onEach {
         with(alertRepository.findByAlertUuid(it.alertUuid)!!) {
           assertThat(isActive()).isFalse()
-          assertThat(willBecomeActive()).isFalse()
         }
       }
     }
 
     assertThat(alertsForFirstPrisonerNotInList.single { it.isActive() }.alertCode.code).isEqualTo("ADSC")
-    assertThat(alertsForSecondPrisonerNotInList.filter { it.isActive() || it.willBecomeActive() }).isEmpty()
+    assertThat(alertsForSecondPrisonerNotInList.filter { it.isActive() }).isEmpty()
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
