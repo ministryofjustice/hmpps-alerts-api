@@ -1,7 +1,9 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
   id("uk.gov.justice.hmpps.gradle-spring-boot") version "6.0.0"
-  kotlin("plugin.spring") version "1.9.24"
-  kotlin("plugin.jpa") version "1.9.24"
+  kotlin("plugin.spring") version "2.0.0"
+  kotlin("plugin.jpa") version "2.0.0"
   jacoco
 }
 
@@ -13,10 +15,11 @@ dependencies {
   // Spring boot dependencies
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:0.2.4")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.0.0")
 
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-core")
+  runtimeOnly("org.flywaydb:flyway-database-postgresql")
   runtimeOnly("org.postgresql:postgresql")
   implementation("io.hypersistence:hypersistence-utils-hibernate-62:3.7.5")
 
@@ -43,9 +46,7 @@ kotlin {
 
 tasks {
   withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions {
-      jvmTarget = "21"
-    }
+    compilerOptions.jvmTarget.set(JvmTarget.JVM_21)
   }
 }
 
