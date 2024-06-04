@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THR
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.PrisonerAlertsIntTest.AlertsPage
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_HIDDEN_DISABILITY
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_SOCIAL_CARE
@@ -525,7 +526,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
         event.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
+    assertThat(
+      OffsetDateTime.parse(event.occurredAt).toLocalDateTime(),
+    ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
   }
 
   @Test
@@ -553,7 +556,24 @@ class CreateAlertIntTest : IntegrationTestBase() {
         event.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
+    assertThat(
+      OffsetDateTime.parse(event.occurredAt).toLocalDateTime(),
+    ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
+  }
+
+  @Test
+  fun `should return updated alert list after alert creation instead of returning cached list`() {
+    webTestClient.createAlert(source = DPS, request = createAlertRequest(alertCode = ALERT_CODE_VICTIM))
+    with(getActivePrisonerAlerts()) {
+      assertThat(size).isEqualTo(1)
+      assertThat(map { it.alertCode.code }).containsOnly(ALERT_CODE_VICTIM)
+    }
+
+    webTestClient.createAlert(source = DPS, request = createAlertRequest(alertCode = ALERT_CODE_SOCIAL_CARE))
+    with(getActivePrisonerAlerts()) {
+      assertThat(size).isEqualTo(2)
+      assertThat(map { it.alertCode.code }).containsOnly(ALERT_CODE_VICTIM, ALERT_CODE_SOCIAL_CARE)
+    }
   }
 
   @Test
@@ -656,4 +676,19 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .expectStatus().isCreated
       .expectBody(AlertModel::class.java)
       .returnResult().responseBody!!
+
+  private fun getActivePrisonerAlerts() =
+    webTestClient.get()
+      .uri { builder ->
+        builder
+          .path("/prisoners/$PRISON_NUMBER/alerts")
+          .queryParam("isActive", true)
+          .build()
+      }
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .exchange()
+      .expectStatus().isOk
+      .expectHeader().valueEquals("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
+      .expectBody(AlertsPage::class.java)
+      .returnResult().responseBody!!.content
 }
