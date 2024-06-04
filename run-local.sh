@@ -32,10 +32,6 @@ export API_BASE_URL_HMPPS_AUTH=https://sign-in-dev.hmpps.service.justice.gov.uk/
 export API_BASE_URL_MANAGE_USERS=https://manage-users-api-dev.hmpps.service.justice.gov.uk
 export API_BASE_URL_PRISONER_SEARCH=https://prisoner-search-dev.prison.service.justice.gov.uk
 
-export SERVICE_ACTIVE_PRISONS=***
-
-export SERVICE_UI_URL="$HMPPS_ALERTS_UI_BASE_URL"
-
 # Run the application with stdout and local profiles active
 SPRING_PROFILES_ACTIVE=stdout,local ./gradlew bootRun
 
