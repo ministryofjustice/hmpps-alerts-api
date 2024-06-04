@@ -34,3 +34,9 @@ hmpps.sqs:
   topics:
     hmppseventtopic:
       arn: arn:aws:sns:eu-west-2:000000000000:hmpps-event-topic
+
+service:
+  active:
+    prisons: ${SERVICE_ACTIVE_PRISONS:***}
+  ui:
+    url: ${SERVICE_UI_URL:https://alerts-ui-dev.hmpps.service.justice.gov.uk}
