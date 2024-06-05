@@ -15,8 +15,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlertRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateCommentRequest
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -136,28 +134,6 @@ fun alertCodeVictimSummary() =
     "Vulnerability",
     ALERT_CODE_VICTIM,
     "Victim",
-  )
-
-fun migrateAlertRequest(
-  comments: Collection<MigrateCommentRequest> = emptyList(),
-  includeUpdate: Boolean = false,
-  alertCode: String = ALERT_CODE_VICTIM,
-  activeTo: LocalDate = LocalDate.now().plusDays(3),
-): MigrateAlertRequest =
-  MigrateAlertRequest(
-    prisonNumber = PRISON_NUMBER,
-    alertCode = alertCode,
-    description = "Alert description",
-    authorisedBy = "A. Authorizer",
-    activeFrom = LocalDate.now().minusDays(2),
-    activeTo = activeTo,
-    comments = comments,
-    createdAt = LocalDateTime.now().minusDays(2).withNano(0),
-    createdBy = "AG111QD",
-    createdByDisplayName = "A CREATOR",
-    updatedAt = if (includeUpdate) LocalDateTime.now().minusDays(1).withNano(0) else null,
-    updatedBy = if (includeUpdate) "AG1221GG" else null,
-    updatedByDisplayName = if (includeUpdate) "UP DATED" else null,
   )
 
 fun migrateAlert() =
