@@ -61,8 +61,6 @@ data class Alert(
   var activeTo: LocalDate?,
 
   val createdAt: LocalDateTime,
-
-  val migratedAt: LocalDateTime? = null,
 ) : AbstractAggregateRoot<Alert>() {
   var lastModifiedAt: LocalDateTime? = null
 

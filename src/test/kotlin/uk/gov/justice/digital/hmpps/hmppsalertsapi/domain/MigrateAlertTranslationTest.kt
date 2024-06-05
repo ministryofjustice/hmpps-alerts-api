@@ -31,7 +31,6 @@ class MigrateAlertTranslationTest {
         activeFrom = request.activeFrom,
         activeTo = request.activeTo,
         createdAt = request.createdAt,
-        migratedAt = entity.migratedAt,
       ).apply {
         migratedAlert = MigratedAlert(
           offenderBookId = request.offenderBookId,
