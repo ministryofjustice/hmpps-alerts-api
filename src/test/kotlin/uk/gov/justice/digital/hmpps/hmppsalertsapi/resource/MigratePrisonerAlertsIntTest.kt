@@ -272,7 +272,6 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
         activeFrom = request.activeFrom,
         activeTo = request.activeTo,
         createdAt = request.createdAt,
-        migratedAt = alert.migratedAt,
       ),
     )
     with(alert.auditEvents().single()) {
