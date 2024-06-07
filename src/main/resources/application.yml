@@ -99,3 +99,12 @@ hmpps.sqs:
 events:
   publish: true
   base-url: http://localhost:8080
+
+logging:
+  level:
+    org:
+      springframework:
+        data:
+          web:
+            config:
+              SpringDataJacksonConfiguration: off # disable warning log on "Serializing PageImpl instances as-is"
