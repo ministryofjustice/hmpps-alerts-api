@@ -17,6 +17,8 @@ interface AlertRepository : JpaRepository<Alert, Long> {
 
   fun findByAlertUuid(alertUuid: UUID): Alert?
 
+  fun findByAlertUuidIn(alertUuids: Collection<UUID>): Collection<Alert>
+
   @EntityGraph(value = "alert")
   fun findByPrisonNumber(prisonNumber: String): Collection<Alert>
 

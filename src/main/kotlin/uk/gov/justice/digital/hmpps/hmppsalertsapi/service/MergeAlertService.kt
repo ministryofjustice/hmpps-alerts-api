@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Service
 @Transactional
@@ -31,6 +32,21 @@ class MergeAlertService(
     request.validatePrisonNumberMergeTo()
     request.logActiveToBeforeActiveFrom(request.prisonNumberMergeTo)
 
+    val retainedAlerts = alertRepository.findByAlertUuidIn(request.retainedAlertUuids)
+
+    request.retainedAlertUuids.filter { uuid -> retainedAlerts.none { it.alertUuid == uuid } }
+      .takeIf { it.isNotEmpty() }?.let {
+        throw IllegalArgumentException("Could not find alert(s) with id(s) ${it.join()}")
+      }
+
+    retainedAlerts.groupBy { it.prisonNumber }.let {
+      if (it.keys.size != 1) {
+        throw IllegalArgumentException("Alert(s) with id(s) ${request.retainedAlertUuids.join()} are not all associated with the same prison numbers")
+      } else if (it.keys.single() != request.prisonNumberMergeTo && it.keys.single() != request.prisonNumberMergeFrom) {
+        throw IllegalArgumentException("Alert(s) with id(s) ${request.retainedAlertUuids.join()} are not associated with either '${request.prisonNumberMergeFrom}' or '${request.prisonNumberMergeTo}'")
+      }
+    }
+
     val alertsDeleted = alertRepository.saveAllAndFlush(
       alertRepository.findByPrisonNumber(request.prisonNumberMergeFrom).onEach {
         it.delete(mergedAt, "SYS", "Merge deleted from ${request.prisonNumberMergeFrom}", NOMIS, MERGE, null)
@@ -39,7 +55,14 @@ class MergeAlertService(
 
     val alertsCreated = mutableListOf<MergedAlert>()
     request.newAlerts.map {
-      val alert = alertRepository.save(it.toAlertEntity(request.prisonNumberMergeFrom, request.prisonNumberMergeTo, alertCodes[it.alertCode]!!, mergedAt))
+      val alert = alertRepository.save(
+        it.toAlertEntity(
+          request.prisonNumberMergeFrom,
+          request.prisonNumberMergeTo,
+          alertCodes[it.alertCode]!!,
+          mergedAt,
+        ),
+      )
       alertsCreated.add(
         MergedAlert(
           offenderBookId = it.offenderBookId,
@@ -67,7 +90,7 @@ class MergeAlertService(
   private fun MergeAlerts.checkForNotFoundAlertCodes(alertCodes: Map<String, AlertCode>) =
     newAlerts.map { it.alertCode }.distinct().filterNot { alertCodes.containsKey(it) }.sorted().run {
       if (this.isNotEmpty()) {
-        throw IllegalArgumentException("Alert code(s) '${this.joinToString("', '") }' not found")
+        throw IllegalArgumentException("Alert code(s) '${this.joinToString("', '")}' not found")
       }
     }
 
@@ -83,10 +106,16 @@ class MergeAlertService(
   private fun List<Alert>.logDuplicateActiveAlerts(prisonNumber: String) {
     this.filter { it.isActive() }.groupBy { it.alertCode.code }.filter { it.value.size > 1 }.run {
       if (any()) {
-        log.warn("Person with prison number '$prisonNumber' has ${this.size} duplicate active alert(s) for code(s) ${this.map { "'${it.key}' (${it.value.size} active)" }.joinToString(", ")}")
+        log.warn(
+          "Person with prison number '$prisonNumber' has ${this.size} duplicate active alert(s) for code(s) ${
+            this.map { "'${it.key}' (${it.value.size} active)" }.joinToString(", ")
+          }",
+        )
       }
     }
   }
+
+  private fun Collection<UUID>.join() = joinToString(separator = ", ", transform = { "'$it'" })
 
   private companion object {
     private val log: Logger = LoggerFactory.getLogger(this::class.java)

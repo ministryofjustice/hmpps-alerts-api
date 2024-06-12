@@ -167,6 +167,7 @@ fun mergeAlerts() =
     prisonNumberMergeFrom = "B2345BB",
     prisonNumberMergeTo = PRISON_NUMBER,
     newAlerts = listOf(mergeAlert()),
+    retainedAlertUuids = listOf(UUID.fromString("7b96fa7d-0d11-416a-9606-5fa5b004639d")),
   )
 
 fun mergeAlert() =

@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Size
+import java.util.UUID
 
 data class MergeAlerts(
   @Schema(
@@ -27,4 +28,10 @@ data class MergeAlerts(
   )
   @field:Valid
   val newAlerts: List<MergeAlert>,
+
+  @Schema(
+    description = "The UUIDs of previously migrated or synced alerts that should be " +
+      "associated to the Prison Number merged to",
+  )
+  val retainedAlertUuids: List<UUID>,
 )
