@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.Prisone
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertsMergedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.MERGE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlert
@@ -53,9 +54,27 @@ class MergeAlertService(
       }
     }
 
+    val alertsToReassign = alertRepository.findByPrisonNumber(prisonNumberOfAlertsToReassign).apply {
+      if (size != request.retainedAlertUuids.size) {
+        throw IllegalArgumentException("Retained Alert UUIDs does not cover all the alerts associated to '$prisonNumberOfAlertsToReassign'")
+      }
+    }
+
+    var domainEventRegistered = false
+
     val alertsDeleted = alertRepository.saveAllAndFlush(
       alertRepository.findByPrisonNumber(prisonNumberOfAlertsToCopy).onEach {
         it.delete(mergedAt, "SYS", "Merge deleted from $prisonNumberOfAlertsToCopy", NOMIS, MERGE, null, false)
+      }.also {
+        if (it.isNotEmpty()) {
+          it.first().registerAlertsMergedEvent(
+            AlertsMergedEvent(
+              prisonNumberMergeFrom = request.prisonNumberMergeFrom,
+              prisonNumberMergeTo = request.prisonNumberMergeTo,
+            ),
+          )
+          domainEventRegistered = true
+        }
       },
     )
 
@@ -68,7 +87,17 @@ class MergeAlertService(
           alertCodes[it.alertCode]!!,
           mergedAt,
           false,
-        ),
+        ).apply {
+          if (!domainEventRegistered) {
+            this.registerAlertsMergedEvent(
+              AlertsMergedEvent(
+                prisonNumberMergeFrom = request.prisonNumberMergeFrom,
+                prisonNumberMergeTo = request.prisonNumberMergeTo,
+              ),
+            )
+            domainEventRegistered = true
+          }
+        },
       )
       alertsCreated.add(
         MergedAlert(
@@ -84,10 +113,14 @@ class MergeAlertService(
     }
 
     if (prisonNumberOfAlertsToReassign != request.prisonNumberMergeTo) {
-      alertRepository.saveAllAndFlush(
-        alertRepository.findByPrisonNumber(prisonNumberOfAlertsToReassign).onEach {
-          it.reassign(request.prisonNumberMergeTo)
-        },
+      alertRepository.saveAllAndFlush(alertsToReassign.onEach { it.reassign(request.prisonNumberMergeTo) })
+    }
+
+    if (alertsDeleted.size != request.newAlerts.size) {
+      log.warn(
+        "Non-matching count while copying alerts " +
+          "from prison number $prisonNumberOfAlertsToCopy to ${request.prisonNumberMergeTo}: " +
+          "${alertsDeleted.size} deleted, and ${request.newAlerts.size} created.",
       )
     }
 

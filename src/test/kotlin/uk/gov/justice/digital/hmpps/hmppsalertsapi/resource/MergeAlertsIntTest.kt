@@ -16,7 +16,12 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.MergeAlertsAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERTS_MERGED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.MERGE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -323,6 +328,33 @@ class MergeAlertsIntTest : IntegrationTestBase() {
     }
   }
 
+  @Test
+  @Sql(
+    value = [
+      "classpath:test_data/existing-active-alerts-for-multiple-prison-numbers.sql",
+      "classpath:test_data/additional-alerts-for-merge-test.sql",
+    ],
+  )
+  fun `400 bad request - retained alert UUIDs does not cover all alerts associated to the relevant Prison Number`() {
+    val request = mergeAlerts(
+      listOf(
+        UUID.fromString("00000000-0000-0000-0000-000000000001"),
+      ),
+    )
+
+    val response = webTestClient.mergeAlertsResponseSpec(request = request).expectStatus().isBadRequest.expectBody(
+      ErrorResponse::class.java,
+    ).returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Validation failure: Retained Alert UUIDs does not cover all the alerts associated to 'B2345BB'")
+      assertThat(developerMessage).isEqualTo("Retained Alert UUIDs does not cover all the alerts associated to 'B2345BB'")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
   @ParameterizedTest(name = "{0} allowed")
   @ValueSource(strings = [ROLE_ALERTS_ADMIN, ROLE_NOMIS_ALERTS])
   fun `201 merged - allowed role`(role: String) {
@@ -391,9 +423,29 @@ class MergeAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `does not publish alert created event`() {
-    webTestClient.mergeAlerts(request = mergeAlerts()).alertsCreated.single()
-    await withPollDelay Duration.ofSeconds(2) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 0 }
+  fun `only publish alerts merged event`() {
+    val request = mergeAlerts()
+
+    webTestClient.mergeAlerts(request = request)
+    await withPollDelay Duration.ofSeconds(2) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
+
+    val message = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+
+    assertThat(message).usingRecursiveComparison().ignoringFieldsMatchingRegexes("occurredAt").isEqualTo(
+      AlertDomainEvent(
+        eventType = ALERTS_MERGED.eventType,
+        additionalInformation = MergeAlertsAdditionalInformation(
+          url = "http://localhost:8080/prisoners/${request.prisonNumberMergeTo}/alerts",
+          prisonNumberMergeFrom = request.prisonNumberMergeFrom,
+          prisonNumberMergeTo = request.prisonNumberMergeTo,
+          source = NOMIS,
+          reason = MERGE,
+        ),
+        version = 1,
+        description = ALERTS_MERGED.description,
+        occurredAt = "",
+      ),
+    )
   }
 
   @Test
@@ -476,7 +528,10 @@ class MergeAlertsIntTest : IntegrationTestBase() {
     assertThat(response.alertsDeleted).isEqualTo(prisonNumberMergeFromAlertUuids)
     assertThat(alertRepository.findByPrisonNumber(prisonNumberMergeFrom)).isEmpty()
 
-    await withPollDelay Duration.ofSeconds(2) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 0 }
+    await withPollDelay Duration.ofSeconds(2) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+      assertThat(eventType).isNotEqualTo(ALERT_DELETED.eventType)
+    }
   }
 
   @Test
