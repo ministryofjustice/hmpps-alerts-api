@@ -162,11 +162,12 @@ fun bulkCreateAlertRequest() =
     cleanupMode = KEEP_ALL,
   )
 
-fun mergeAlerts() =
+fun mergeAlerts(retainedAlertUuid: List<UUID> = listOf()) =
   MergeAlerts(
     prisonNumberMergeFrom = "B2345BB",
     prisonNumberMergeTo = PRISON_NUMBER,
     newAlerts = listOf(mergeAlert()),
+    retainedAlertUuids = retainedAlertUuid,
   )
 
 fun mergeAlert() =

@@ -7,6 +7,7 @@ enum class DomainEventType(
   ALERT_CREATED("prisoner-alerts.alert-created", "An alert has been created in the alerts service"),
   ALERT_UPDATED("prisoner-alerts.alert-updated", "An alert has been updated in the alerts service"),
   ALERT_DELETED("prisoner-alerts.alert-deleted", "An alert has been deleted in the alerts service"),
+  ALERTS_MERGED("prisoner-alerts.alerts-merged", "Alerts have been merged onto a prison number in the merge alerts service"),
   ALERT_CODE_CREATED("prisoner-alerts.alert-code-created", "An alert code has been created in the alerts reference data service"),
   ALERT_CODE_DEACTIVATED("prisoner-alerts.alert-code-deactivated", "An alert code has been deactivated in the alerts reference data service"),
   ALERT_CODE_REACTIVATED("prisoner-alerts.alert-code-reactivated", "An alert code has been reactivated in the alerts reference data service"),

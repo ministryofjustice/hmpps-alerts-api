@@ -25,6 +25,7 @@ abstract class DomainEvent<T : AdditionalInformation> {
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(
   JsonSubTypes.Type(value = AlertAdditionalInformation::class, name = "alert"),
+  JsonSubTypes.Type(value = MergeAlertsAdditionalInformation::class, name = "alertsMerge"),
   JsonSubTypes.Type(value = ReferenceDataAdditionalInformation::class, name = "alertCode"),
 )
 abstract class AdditionalInformation {
@@ -63,6 +64,22 @@ data class AlertAdditionalInformation(
       "with reason '$reason'"
 
   override fun identifier(): String = alertUuid.toString()
+}
+
+data class MergeAlertsAdditionalInformation(
+  override val url: String,
+  val prisonNumberMergeFrom: String,
+  val prisonNumberMergeTo: String,
+  override val source: Source,
+  override val reason: Reason,
+) : AdditionalInformation() {
+  override fun asString(): String =
+    "for prison number merged to '$prisonNumberMergeTo' " +
+      "and prison number merged from'$prisonNumberMergeFrom' " +
+      "from source '$source' " +
+      "with reason '$reason'"
+
+  override fun identifier(): String = "$prisonNumberMergeFrom->$prisonNumberMergeTo"
 }
 
 data class ReferenceDataAdditionalInformation(

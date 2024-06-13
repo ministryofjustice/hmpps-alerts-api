@@ -1,12 +1,15 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event
 
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERTS_MERGED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.MERGE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -168,6 +171,26 @@ data class AlertCodeUpdatedEvent(
 ) : AlertCodeEvent() {
   override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
     toDomainEvent(DomainEventType.ALERT_CODE_UPDATED, baseUrl)
+}
+
+data class AlertsMergedEvent(
+  val prisonNumberMergeFrom: String,
+  val prisonNumberMergeTo: String,
+  val occurredAt: LocalDateTime = LocalDateTime.now(),
+) {
+  fun toDomainEvent(baseUrl: String): AlertDomainEvent =
+    AlertDomainEvent(
+      eventType = ALERTS_MERGED.eventType,
+      additionalInformation = MergeAlertsAdditionalInformation(
+        url = "$baseUrl/prisoners/$prisonNumberMergeTo/alerts",
+        prisonNumberMergeFrom = prisonNumberMergeFrom,
+        prisonNumberMergeTo = prisonNumberMergeTo,
+        source = NOMIS,
+        reason = MERGE,
+      ),
+      description = ALERTS_MERGED.description,
+      occurredAt = occurredAt.toOffsetString(),
+    )
 }
 
 abstract class AlertTypeEvent {
