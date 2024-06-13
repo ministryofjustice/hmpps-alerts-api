@@ -39,17 +39,23 @@ class MergeAlertService(
         throw IllegalArgumentException("Could not find alert(s) with id(s) ${it.join()}")
       }
 
-    retainedAlerts.groupBy { it.prisonNumber }.let {
-      if (it.keys.size != 1) {
+    val (prisonNumberOfAlertsToReassign, prisonNumberOfAlertsToCopy) = retainedAlerts.groupBy { it.prisonNumber }.keys.also {
+      if (it.size > 1) {
         throw IllegalArgumentException("Alert(s) with id(s) ${request.retainedAlertUuids.join()} are not all associated with the same prison numbers")
-      } else if (it.keys.single() != request.prisonNumberMergeTo && it.keys.single() != request.prisonNumberMergeFrom) {
+      } else if (it.any { key -> key != request.prisonNumberMergeTo && key != request.prisonNumberMergeFrom }) {
         throw IllegalArgumentException("Alert(s) with id(s) ${request.retainedAlertUuids.join()} are not associated with either '${request.prisonNumberMergeFrom}' or '${request.prisonNumberMergeTo}'")
+      }
+    }.let {
+      if (it.isEmpty() || it.single() == request.prisonNumberMergeTo) {
+        Pair(request.prisonNumberMergeTo, request.prisonNumberMergeFrom)
+      } else {
+        Pair(request.prisonNumberMergeFrom, request.prisonNumberMergeTo)
       }
     }
 
     val alertsDeleted = alertRepository.saveAllAndFlush(
-      alertRepository.findByPrisonNumber(request.prisonNumberMergeFrom).onEach {
-        it.delete(mergedAt, "SYS", "Merge deleted from ${request.prisonNumberMergeFrom}", NOMIS, MERGE, null)
+      alertRepository.findByPrisonNumber(prisonNumberOfAlertsToCopy).onEach {
+        it.delete(mergedAt, "SYS", "Merge deleted from $prisonNumberOfAlertsToCopy", NOMIS, MERGE, null, false)
       },
     )
 
@@ -61,6 +67,7 @@ class MergeAlertService(
           request.prisonNumberMergeTo,
           alertCodes[it.alertCode]!!,
           mergedAt,
+          false,
         ),
       )
       alertsCreated.add(
@@ -76,16 +83,23 @@ class MergeAlertService(
       alertRepository.flush()
     }
 
+    if (prisonNumberOfAlertsToReassign != request.prisonNumberMergeTo) {
+      alertRepository.saveAllAndFlush(
+        alertRepository.findByPrisonNumber(prisonNumberOfAlertsToReassign).onEach {
+          it.reassign(request.prisonNumberMergeTo)
+        },
+      )
+    }
+
     return MergedAlerts(
       alertsCreated = alertsCreated,
       alertsDeleted = alertsDeleted.map { it.alertUuid },
     )
   }
 
-  private fun MergeAlerts.alertCodes() =
-    newAlerts.map { it.alertCode }.distinct().let { requestAlertCodes ->
-      alertCodeRepository.findByCodeIn(requestAlertCodes).associateBy { it.code }
-    }
+  private fun MergeAlerts.alertCodes() = newAlerts.map { it.alertCode }.distinct().let { requestAlertCodes ->
+    alertCodeRepository.findByCodeIn(requestAlertCodes).associateBy { it.code }
+  }
 
   private fun MergeAlerts.checkForNotFoundAlertCodes(alertCodes: Map<String, AlertCode>) =
     newAlerts.map { it.alertCode }.distinct().filterNot { alertCodes.containsKey(it) }.sorted().run {

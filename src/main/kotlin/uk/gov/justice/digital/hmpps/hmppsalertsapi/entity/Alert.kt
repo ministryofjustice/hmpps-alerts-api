@@ -50,7 +50,7 @@ data class Alert(
   @JoinColumn(name = "alert_code_id", nullable = false)
   val alertCode: AlertCode,
 
-  val prisonNumber: String,
+  var prisonNumber: String,
 
   var description: String?,
 
@@ -147,6 +147,7 @@ data class Alert(
     source: Source,
     reason: Reason = USER,
     activeCaseLoadId: String?,
+    publishEvent: Boolean = true,
   ) = apply {
     auditEvent(
       action = AuditEventAction.CREATED,
@@ -157,17 +158,19 @@ data class Alert(
       source = source,
       activeCaseLoadId = activeCaseLoadId,
     )
-    registerEvent(
-      AlertCreatedEvent(
-        alertUuid = alertUuid,
-        prisonNumber = prisonNumber,
-        alertCode = alertCode.code,
-        occurredAt = createdAt,
-        source = source,
-        reason = reason,
-        createdBy = createdBy,
-      ),
-    )
+    if (publishEvent) {
+      registerEvent(
+        AlertCreatedEvent(
+          alertUuid = alertUuid,
+          prisonNumber = prisonNumber,
+          alertCode = alertCode.code,
+          occurredAt = createdAt,
+          source = source,
+          reason = reason,
+          createdBy = createdBy,
+        ),
+      )
+    }
   }
 
   fun update(
@@ -260,6 +263,7 @@ data class Alert(
     source: Source,
     reason: Reason = USER,
     activeCaseLoadId: String?,
+    publishEvent: Boolean = true,
   ): AuditEvent {
     lastModifiedAt = deletedAt
     this.deletedAt = deletedAt
@@ -272,18 +276,24 @@ data class Alert(
       source = source,
       activeCaseLoadId = activeCaseLoadId,
     ).also {
-      registerEvent(
-        AlertDeletedEvent(
-          alertUuid = alertUuid,
-          prisonNumber = prisonNumber,
-          alertCode = alertCode.code,
-          occurredAt = deletedAt,
-          source = source,
-          reason = reason,
-          deletedBy = deletedBy,
-        ),
-      )
+      if (publishEvent) {
+        registerEvent(
+          AlertDeletedEvent(
+            alertUuid = alertUuid,
+            prisonNumber = prisonNumber,
+            alertCode = alertCode.code,
+            occurredAt = deletedAt,
+            source = source,
+            reason = reason,
+            deletedBy = deletedBy,
+          ),
+        )
+      }
     }
+  }
+
+  fun reassign(prisonNumberMergeTo: String) = apply {
+    prisonNumber = prisonNumberMergeTo
   }
 
   /**

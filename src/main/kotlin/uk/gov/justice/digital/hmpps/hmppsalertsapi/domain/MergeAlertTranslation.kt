@@ -8,7 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlert
 import java.time.LocalDateTime
 import java.util.UUID
 
-fun MergeAlert.toAlertEntity(prisonNumberMergeFrom: String, prisonNumberMergeTo: String, alertCode: AlertCode, mergedAt: LocalDateTime) =
+fun MergeAlert.toAlertEntity(prisonNumberMergeFrom: String, prisonNumberMergeTo: String, alertCode: AlertCode, mergedAt: LocalDateTime, publishEvent: Boolean) =
   Alert(
     alertUuid = UUID.randomUUID(),
     alertCode = alertCode,
@@ -26,4 +26,5 @@ fun MergeAlert.toAlertEntity(prisonNumberMergeFrom: String, prisonNumberMergeTo:
     source = NOMIS,
     reason = MERGE,
     activeCaseLoadId = null,
+    publishEvent = publishEvent,
   )

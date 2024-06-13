@@ -13,7 +13,7 @@ insert into alert
 )
 values
 (
-    gen_random_uuid(),
+    '00000000-0000-0000-0000-000000000001',
     (SELECT alert_code_id FROM alert_code WHERE code = 'ADSC'),
     'B2345BB',
     'Active alert type ''A'' - ''Social Care'' code ''ADSC'' - ''Adult Social Care'' alert for prison number ''B2345BB'' active from yesterday with no active to date',
@@ -25,7 +25,7 @@ values
     null
 ),
 (
-    gen_random_uuid(),
+    '00000000-0000-0000-0000-000000000002',
     (SELECT alert_code_id FROM alert_code WHERE code = 'DOCGM'),
     'B2345BB',
     'Active alert type ''D'' - ''Security. Do not share with offender'' code ''DOCGM'' - ''OCG Nominal - Do not share'' alert for prison number ''B2345BB'' active from today with no active to date',
@@ -37,7 +37,7 @@ values
     null
 ),
 (
-    gen_random_uuid(),
+    '00000000-0000-0000-0000-000000000003',
     (SELECT alert_code_id FROM alert_code WHERE code = 'DOCGM'),
     'C3456CC',
     'Inactive alert type ''D'' - ''Security. Do not share with offender'' code ''DOCGM'' - ''OCG Nominal - Do not share'' alert for prison number ''C3456CC'' active from tomorrow with no active to date',
