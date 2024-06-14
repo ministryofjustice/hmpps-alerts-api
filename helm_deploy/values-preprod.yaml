@@ -19,3 +19,4 @@ generic-service:
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
 generic-prometheus-alerts:
   alertSeverity: hmpps-alerts-api-non-prod # sent to Slack channel #move-and-improve-alerts-non-prod
+  businessHoursOnly: true
