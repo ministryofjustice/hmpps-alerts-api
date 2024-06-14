@@ -435,7 +435,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         eventType = ALERTS_MERGED.eventType,
         additionalInformation = MergeAlertsAdditionalInformation(
-          url = "http://localhost:8080/prisoners/${request.prisonNumberMergeTo}/alerts",
+          url = "http://localhost:8080/prisoners/${request.prisonNumberMergeTo}/alerts?size=2147483647",
           prisonNumberMergeFrom = request.prisonNumberMergeFrom,
           prisonNumberMergeTo = request.prisonNumberMergeTo,
           source = NOMIS,

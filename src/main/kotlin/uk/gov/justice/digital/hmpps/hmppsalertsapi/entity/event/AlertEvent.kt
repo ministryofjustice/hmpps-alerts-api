@@ -182,7 +182,7 @@ data class AlertsMergedEvent(
     AlertDomainEvent(
       eventType = ALERTS_MERGED.eventType,
       additionalInformation = MergeAlertsAdditionalInformation(
-        url = "$baseUrl/prisoners/$prisonNumberMergeTo/alerts",
+        url = "$baseUrl/prisoners/$prisonNumberMergeTo/alerts?size=2147483647",
         prisonNumberMergeFrom = prisonNumberMergeFrom,
         prisonNumberMergeTo = prisonNumberMergeTo,
         source = NOMIS,

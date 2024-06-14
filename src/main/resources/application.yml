@@ -44,6 +44,11 @@ spring:
     hibernate:
       ddl-auto: none
 
+  data:
+    web:
+      pageable:
+        max-page-size: 2147483647
+
   datasource:
     url: 'jdbc:postgresql://${DB_SERVER}/${DB_NAME}?sslmode=${DB_SSL_MODE}'
     username: ${DB_USER}
