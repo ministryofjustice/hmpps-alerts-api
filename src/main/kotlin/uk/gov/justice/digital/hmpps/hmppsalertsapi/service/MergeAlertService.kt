@@ -80,6 +80,8 @@ class MergeAlertService(
       alert
     }
 
+    // As a workaround, the Alerts Merged domain event is to be registered into one of the affected Alert entity,
+    // since there is not a single entity to represent the whole merge operation
     var domainEventRegistered = false
     val domainEvent = AlertsMergedEvent(
       prisonNumberMergeFrom = request.prisonNumberMergeFrom,
