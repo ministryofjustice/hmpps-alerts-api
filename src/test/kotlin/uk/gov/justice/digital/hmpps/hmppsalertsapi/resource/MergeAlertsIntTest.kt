@@ -424,10 +424,27 @@ class MergeAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `only publish alerts merged event`() {
-    val request = mergeAlerts()
+  @Sql(
+    value = [
+      "classpath:test_data/existing-active-alerts-for-multiple-prison-numbers.sql",
+      "classpath:test_data/additional-alerts-for-merge-test.sql",
+    ],
+  )
+  fun `only publish one alerts merged event when multiple alerts are created, deleted, or reassigned`() {
+    val request = mergeAlerts(
+      retainedAlertUuid = listOf(
+        UUID.fromString("00000000-0000-0000-0000-000000000001"),
+        UUID.fromString("00000000-0000-0000-0000-000000000002"),
+      ),
+    )
 
-    webTestClient.mergeAlerts(request = request)
+    val response = webTestClient.mergeAlerts(request = request)
+
+    with(response) {
+      assertThat(alertsDeleted).hasSize(1)
+      assertThat(alertsCreated).hasSize(1)
+    }
+
     await withPollDelay Duration.ofSeconds(2) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
 
     val message = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
