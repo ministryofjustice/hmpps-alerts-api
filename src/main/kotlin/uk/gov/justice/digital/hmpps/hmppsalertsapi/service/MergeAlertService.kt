@@ -59,45 +59,16 @@ class MergeAlertService(
         throw IllegalArgumentException("Retained Alert UUIDs does not cover all the alerts associated to '$prisonNumberOfAlertsToReassign'")
       }
     }
-
-    var domainEventRegistered = false
-
-    val alertsDeleted = alertRepository.saveAllAndFlush(
-      alertRepository.findByPrisonNumber(prisonNumberOfAlertsToCopy).onEach {
-        it.delete(mergedAt, "SYS", "Merge deleted from $prisonNumberOfAlertsToCopy", NOMIS, MERGE, null, false)
-      }.also {
-        if (it.isNotEmpty()) {
-          it.first().registerAlertsMergedEvent(
-            AlertsMergedEvent(
-              prisonNumberMergeFrom = request.prisonNumberMergeFrom,
-              prisonNumberMergeTo = request.prisonNumberMergeTo,
-            ),
-          )
-          domainEventRegistered = true
-        }
-      },
-    )
-
+    val alertsToDelete = alertRepository.findByPrisonNumber(prisonNumberOfAlertsToCopy)
     val alertsCreated = mutableListOf<MergedAlert>()
-    request.newAlerts.map {
-      val alert = alertRepository.save(
-        it.toAlertEntity(
-          request.prisonNumberMergeFrom,
-          request.prisonNumberMergeTo,
-          alertCodes[it.alertCode]!!,
-          mergedAt,
-          false,
-        ).apply {
-          if (!domainEventRegistered) {
-            this.registerAlertsMergedEvent(
-              AlertsMergedEvent(
-                prisonNumberMergeFrom = request.prisonNumberMergeFrom,
-                prisonNumberMergeTo = request.prisonNumberMergeTo,
-              ),
-            )
-            domainEventRegistered = true
-          }
-        },
+
+    val newAlerts = request.newAlerts.map {
+      val alert = it.toAlertEntity(
+        request.prisonNumberMergeFrom,
+        request.prisonNumberMergeTo,
+        alertCodes[it.alertCode]!!,
+        mergedAt,
+        false,
       )
       alertsCreated.add(
         MergedAlert(
@@ -107,13 +78,47 @@ class MergeAlertService(
         ),
       )
       alert
+    }
+
+    var domainEventRegistered = false
+    val domainEvent = AlertsMergedEvent(
+      prisonNumberMergeFrom = request.prisonNumberMergeFrom,
+      prisonNumberMergeTo = request.prisonNumberMergeTo,
+      mergedAlerts = alertsCreated,
+    )
+
+    newAlerts.map {
+      if (!domainEventRegistered) {
+        it.registerAlertsMergedEvent(domainEvent)
+        domainEventRegistered = true
+      }
+      alertRepository.save(it)
     }.also {
       it.logDuplicateActiveAlerts(request.prisonNumberMergeTo)
       alertRepository.flush()
     }
 
+    val alertsDeleted = alertRepository.saveAllAndFlush(
+      alertsToDelete.onEach {
+        it.delete(mergedAt, "SYS", "Merge deleted from $prisonNumberOfAlertsToCopy", NOMIS, MERGE, null, false)
+      }.also {
+        if (it.isNotEmpty() && !domainEventRegistered) {
+          it.first().registerAlertsMergedEvent(domainEvent)
+          domainEventRegistered = true
+        }
+      },
+    )
+
     if (prisonNumberOfAlertsToReassign != request.prisonNumberMergeTo) {
-      alertRepository.saveAllAndFlush(alertsToReassign.onEach { it.reassign(request.prisonNumberMergeTo) })
+      alertRepository.saveAllAndFlush(
+        alertsToReassign.onEach {
+          it.reassign(request.prisonNumberMergeTo)
+          if (!domainEventRegistered) {
+            it.registerAlertsMergedEvent(domainEvent)
+            domainEventRegistered = true
+          }
+        },
+      )
     }
 
     if (alertsDeleted.size != request.newAlerts.size) {

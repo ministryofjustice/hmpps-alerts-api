@@ -553,17 +553,23 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     assertThat(alertsForSecondPrisonerNotInList.filter { it.isActive() }).isEmpty()
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(alertsExpiredForPrisonersNotInList[0].alertUuid.toString())
+    val messages = listOf(
+      hmppsEventsQueue.receiveAlertDomainEventOnQueue(),
+      hmppsEventsQueue.receiveAlertDomainEventOnQueue(),
+      hmppsEventsQueue.receiveAlertDomainEventOnQueue(),
+    )
+
+    with(messages.filter { it.eventType == ALERT_UPDATED.eventType }) {
+      assertThat(this.map { it.additionalInformation.identifier() }).containsExactlyInAnyOrder(
+        alertsExpiredForPrisonersNotInList[0].alertUuid.toString(),
+        alertsExpiredForPrisonersNotInList[1].alertUuid.toString(),
+      )
     }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(alertsExpiredForPrisonersNotInList[1].alertUuid.toString())
-    }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(response.alertsCreated.single().alertUuid.toString())
+
+    with(messages.filter { it.eventType == ALERT_CREATED.eventType }) {
+      assertThat(this.map { it.additionalInformation.identifier() }).containsExactlyInAnyOrder(
+        response.alertsCreated.single().alertUuid.toString(),
+      )
     }
   }
 

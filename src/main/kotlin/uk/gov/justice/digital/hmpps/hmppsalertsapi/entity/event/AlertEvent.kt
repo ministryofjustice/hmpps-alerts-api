@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.MERGE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlert
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -176,6 +177,7 @@ data class AlertCodeUpdatedEvent(
 data class AlertsMergedEvent(
   val prisonNumberMergeFrom: String,
   val prisonNumberMergeTo: String,
+  val mergedAlerts: List<MergedAlert>,
   val occurredAt: LocalDateTime = LocalDateTime.now(),
 ) {
   fun toDomainEvent(baseUrl: String): AlertDomainEvent =
@@ -185,6 +187,7 @@ data class AlertsMergedEvent(
         url = "$baseUrl/prisoners/$prisonNumberMergeTo/alerts?size=2147483647",
         prisonNumberMergeFrom = prisonNumberMergeFrom,
         prisonNumberMergeTo = prisonNumberMergeTo,
+        mergedAlerts = mergedAlerts,
         source = NOMIS,
         reason = MERGE,
       ),

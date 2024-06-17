@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlert
 import java.util.UUID
 
 abstract class DomainEvent<T : AdditionalInformation> {
@@ -70,12 +71,14 @@ data class MergeAlertsAdditionalInformation(
   override val url: String,
   val prisonNumberMergeFrom: String,
   val prisonNumberMergeTo: String,
+  val mergedAlerts: List<MergedAlert>,
   override val source: Source,
   override val reason: Reason,
 ) : AdditionalInformation() {
   override fun asString(): String =
     "for prison number merged to '$prisonNumberMergeTo' " +
       "and prison number merged from'$prisonNumberMergeFrom' " +
+      "with ${mergedAlerts.count()} merged alerts " +
       "from source '$source' " +
       "with reason '$reason'"
 
