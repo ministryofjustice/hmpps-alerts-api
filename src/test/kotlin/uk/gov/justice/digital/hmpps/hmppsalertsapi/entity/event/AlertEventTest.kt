@@ -46,7 +46,6 @@ class AlertEventTest {
           prisonNumber = alertEvent.prisonNumber,
           alertCode = alertEvent.alertCode,
           source = alertEvent.source,
-          reason = alertEvent.reason,
         ),
         description = ALERT_CREATED.description,
         occurredAt = alertEvent.occurredAt.toOffsetString(),
@@ -57,8 +56,7 @@ class AlertEventTest {
         "for alert with UUID '${alertEvent.alertUuid}' " +
         "for prison number '${alertEvent.prisonNumber}' " +
         "with alert code '${alertEvent.alertCode}' " +
-        "from source '${alertEvent.source}' " +
-        "with reason '${alertEvent.reason}'",
+        "from source '${alertEvent.source}' ",
     )
   }
 
@@ -123,7 +121,6 @@ class AlertEventTest {
           prisonNumber = alertEvent.prisonNumber,
           alertCode = alertEvent.alertCode,
           source = alertEvent.source,
-          reason = alertEvent.reason,
         ),
         description = ALERT_UPDATED.description,
         occurredAt = alertEvent.occurredAt.toOffsetString(),
@@ -134,8 +131,7 @@ class AlertEventTest {
         "for alert with UUID '${alertEvent.alertUuid}' " +
         "for prison number '${alertEvent.prisonNumber}' " +
         "with alert code '${alertEvent.alertCode}' " +
-        "from source '${alertEvent.source}' " +
-        "with reason '${alertEvent.reason}'",
+        "from source '${alertEvent.source}' ",
     )
   }
 
@@ -168,7 +164,6 @@ class AlertEventTest {
           prisonNumber = alertEvent.prisonNumber,
           alertCode = alertEvent.alertCode,
           source = alertEvent.source,
-          reason = alertEvent.reason,
         ),
         description = ALERT_DELETED.description,
         occurredAt = alertEvent.occurredAt.toOffsetString(),
@@ -179,8 +174,7 @@ class AlertEventTest {
         "for alert with UUID '${alertEvent.alertUuid}' " +
         "for prison number '${alertEvent.prisonNumber}' " +
         "with alert code '${alertEvent.alertCode}' " +
-        "from source '${alertEvent.source}' " +
-        "with reason '${alertEvent.reason}'",
+        "from source '${alertEvent.source}' ",
     )
   }
 }

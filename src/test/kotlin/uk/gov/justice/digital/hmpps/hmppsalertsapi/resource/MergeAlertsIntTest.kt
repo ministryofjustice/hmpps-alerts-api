@@ -22,7 +22,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERTS_MERGED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.MERGE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -467,7 +466,6 @@ class MergeAlertsIntTest : IntegrationTestBase() {
             ),
           ),
           source = NOMIS,
-          reason = MERGE,
         ),
         version = 1,
         description = ALERTS_MERGED.description,

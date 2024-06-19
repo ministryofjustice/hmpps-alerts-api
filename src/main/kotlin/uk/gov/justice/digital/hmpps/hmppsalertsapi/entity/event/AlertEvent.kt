@@ -6,7 +6,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.A
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.MERGE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
@@ -35,7 +34,6 @@ abstract class AlertEvent {
         prisonNumber = prisonNumber,
         alertCode = alertCode,
         source = source,
-        reason = reason,
       ),
       description = type.description,
       occurredAt = occurredAt.toOffsetString(),
@@ -189,7 +187,6 @@ data class AlertsMergedEvent(
         prisonNumberMergeTo = prisonNumberMergeTo,
         mergedAlerts = mergedAlerts,
         source = NOMIS,
-        reason = MERGE,
       ),
       description = ALERTS_MERGED.description,
       occurredAt = occurredAt.toOffsetString(),

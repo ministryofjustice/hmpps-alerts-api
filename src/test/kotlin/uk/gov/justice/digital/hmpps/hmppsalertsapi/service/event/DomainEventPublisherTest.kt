@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalI
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.toOffsetString
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
@@ -57,7 +56,6 @@ class DomainEventPublisherTest {
         prisonNumber = PRISON_NUMBER,
         alertCode = ALERT_CODE_VICTIM,
         source = NOMIS,
-        reason = USER,
       ),
       description = ALERT_CREATED.description,
       occurredAt = occurredAt.toOffsetString(),

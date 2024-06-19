@@ -55,7 +55,6 @@ class AlertEventServiceTest {
           prisonNumber = alertEvent.prisonNumber,
           alertCode = alertEvent.alertCode,
           source = alertEvent.source,
-          reason = alertEvent.reason,
         ),
         description = ALERT_CREATED.description,
         occurredAt = alertEvent.occurredAt.toOffsetString(),
