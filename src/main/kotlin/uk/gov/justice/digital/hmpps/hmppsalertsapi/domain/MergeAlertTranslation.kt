@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.domain
 
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.MERGE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlert
 import java.time.LocalDateTime
@@ -24,7 +23,6 @@ fun MergeAlert.toAlertEntity(prisonNumberMergeFrom: String, prisonNumberMergeTo:
     createdBy = "SYS",
     createdByDisplayName = "Merge from $prisonNumberMergeFrom",
     source = NOMIS,
-    reason = MERGE,
     activeCaseLoadId = null,
     publishEvent = publishEvent,
   )
