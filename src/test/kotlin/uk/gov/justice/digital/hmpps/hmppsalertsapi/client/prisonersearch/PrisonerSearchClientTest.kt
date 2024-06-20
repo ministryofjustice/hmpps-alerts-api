@@ -96,12 +96,14 @@ class PrisonerSearchClientTest {
   fun `getPrisoners - not found`() {
     server.stubGetPrisonersNotFound()
     assertThat(client.getPrisoners(listOf(PRISON_NUMBER_NOT_FOUND))).isEmpty()
+    server.verify(exactly(1), postRequestedFor(urlEqualTo("/prisoner-search/prisoner-numbers")))
   }
 
   @Test
   fun `getPrisoners - null response`() {
     server.stubGetPrisonersNullResponse()
     assertThat(client.getPrisoners(listOf(PRISON_NUMBER_NULL_RESPONSE))).isEmpty()
+    server.verify(exactly(1), postRequestedFor(urlEqualTo("/prisoner-search/prisoner-numbers")))
   }
 
   @Test
