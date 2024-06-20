@@ -8,9 +8,10 @@ import java.time.Duration
 
 fun <T> Mono<T>.retryNetworkExceptions(): Mono<T> =
   retryWhen(
-      Retry.backoff(3, Duration.ofSeconds(1))
-          .filter {
-              it is IOException || (it is WebClientResponseException && it.statusCode.is5xxServerError)
-          }.onRetryExhaustedThrow { _, signal -> signal.failure()
-        }
+    Retry.backoff(3, Duration.ofMillis(250))
+      .filter {
+        it is IOException || (it is WebClientResponseException && it.statusCode.is5xxServerError)
+      }.onRetryExhaustedThrow { _, signal ->
+        signal.failure()
+      },
   )

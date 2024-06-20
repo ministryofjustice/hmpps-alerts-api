@@ -15,7 +15,7 @@ class WebClientConfiguration(
   @Value("\${api.base.url.manage-users}") private val manageUsersBaseUri: String,
   @Value("\${api.base.url.prisoner-search}") private val prisonerSearchBaseUri: String,
   @Value("\${api.health-timeout:2s}") val healthTimeout: Duration,
-  @Value("\${api.timeout:90s}") val timeout: Duration,
+  @Value("\${api.timeout:2s}") val timeout: Duration,
 ) {
   @Bean
   fun hmppsAuthHealthWebClient(builder: WebClient.Builder): WebClient =
