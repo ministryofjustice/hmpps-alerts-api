@@ -1,5 +1,9 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch
 
+import com.github.tomakehurst.wiremock.client.WireMock.exactly
+import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -43,6 +47,7 @@ class PrisonerSearchClientTest {
         LocalDate.of(1988, 4, 3),
       ),
     )
+    server.verify(exactly(1), getRequestedFor(urlEqualTo("/prisoner/$PRISON_NUMBER")))
   }
 
   @Test
@@ -50,6 +55,7 @@ class PrisonerSearchClientTest {
     val result = client.getPrisoner(PRISON_NUMBER_NOT_FOUND)
 
     assertThat(result).isNull()
+    server.verify(exactly(1), getRequestedFor(urlEqualTo("/prisoner/$PRISON_NUMBER_NOT_FOUND")))
   }
 
   @Test
@@ -62,6 +68,7 @@ class PrisonerSearchClientTest {
       assertThat(this).isInstanceOf(WebClientResponseException::class.java)
       assertThat(this!!.message).isEqualTo("500 Internal Server Error from GET http://localhost:8112/prisoner/${PRISON_NUMBER_THROW_EXCEPTION}")
     }
+    server.verify(exactly(4), getRequestedFor(urlEqualTo("/prisoner/$PRISON_NUMBER_THROW_EXCEPTION")))
   }
 
   @Test
@@ -107,6 +114,7 @@ class PrisonerSearchClientTest {
       assertThat(this).isInstanceOf(WebClientResponseException::class.java)
       assertThat(this!!.message).isEqualTo("500 Internal Server Error from POST http://localhost:8112/prisoner-search/prisoner-numbers")
     }
+    server.verify(exactly(4), postRequestedFor(urlEqualTo("/prisoner-search/prisoner-numbers")))
   }
 
   companion object {
