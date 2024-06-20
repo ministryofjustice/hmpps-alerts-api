@@ -1,5 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.client.manageusers
 
+import com.github.tomakehurst.wiremock.client.WireMock.exactly
+import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
+import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -46,6 +49,7 @@ class ManageUsersClientTest {
       ),
     )
     assertThat(result.uuid).isNotEqualTo(DEFAULT_UUID)
+    server.verify(exactly(1), getRequestedFor(urlEqualTo("/users/$TEST_USER")))
   }
 
   @Test
@@ -53,6 +57,7 @@ class ManageUsersClientTest {
     val result = client.getUserDetails(USER_NOT_FOUND)
 
     assertThat(result).isNull()
+    server.verify(exactly(1), getRequestedFor(urlEqualTo("/users/$USER_NOT_FOUND")))
   }
 
   @Test
@@ -65,6 +70,7 @@ class ManageUsersClientTest {
       assertThat(this).isInstanceOf(WebClientResponseException::class.java)
       assertThat(this!!.message).isEqualTo("500 Internal Server Error from GET http://localhost:8111/users/${USER_THROW_EXCEPTION}")
     }
+    server.verify(exactly(4), getRequestedFor(urlEqualTo("/users/$USER_THROW_EXCEPTION")))
   }
 
   companion object {
