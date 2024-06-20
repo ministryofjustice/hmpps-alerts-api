@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertsMergedEvent
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.MERGE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts
@@ -102,7 +101,7 @@ class MergeAlertService(
 
     val alertsDeleted = alertRepository.saveAllAndFlush(
       alertsToDelete.onEach {
-        it.delete(mergedAt, "SYS", "Merge deleted from $prisonNumberOfAlertsToCopy", NOMIS, MERGE, null, false)
+        it.delete(mergedAt, "SYS", "Merge deleted from $prisonNumberOfAlertsToCopy", NOMIS, null, false)
       }.also {
         if (it.isNotEmpty() && !domainEventRegistered) {
           it.first().registerAlertsMergedEvent(domainEvent)

@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
@@ -530,7 +529,6 @@ Comment '$appendComment' was added""",
           alert.prisonNumber,
           alert.alertCode.code,
           DPS,
-          USER,
         ),
         1,
         ALERT_UPDATED.description,
@@ -563,7 +561,6 @@ Comment '$appendComment' was added""",
           alert.prisonNumber,
           alert.alertCode.code,
           NOMIS,
-          USER,
         ),
         1,
         ALERT_UPDATED.description,

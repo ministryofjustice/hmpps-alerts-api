@@ -16,7 +16,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalI
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Reason.USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
@@ -519,7 +518,6 @@ class CreateAlertIntTest : IntegrationTestBase() {
           request.prisonNumber,
           request.alertCode,
           DPS,
-          USER,
         ),
         1,
         ALERT_CREATED.description,
@@ -549,7 +547,6 @@ class CreateAlertIntTest : IntegrationTestBase() {
           request.prisonNumber,
           request.alertCode,
           NOMIS,
-          USER,
         ),
         1,
         ALERT_CREATED.description,
