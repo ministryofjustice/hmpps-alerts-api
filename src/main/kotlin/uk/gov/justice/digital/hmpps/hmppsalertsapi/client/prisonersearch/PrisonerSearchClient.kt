@@ -7,6 +7,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerNumbersDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.retryNetworkExceptions
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.DownstreamServiceException
 
 inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
@@ -20,6 +21,7 @@ class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val web
         .uri("/prisoner/{prisonerId}", prisonerId)
         .retrieve()
         .bodyToMono(PrisonerDto::class.java)
+        .retryNetworkExceptions()
         .block()
     } catch (e: WebClientResponseException.NotFound) {
       null
@@ -41,6 +43,7 @@ class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val web
           .bodyValue(PrisonerNumbersDto(it))
           .retrieve()
           .bodyToMono(typeReference<List<PrisonerDto>>())
+          .retryNetworkExceptions()
           .block() ?: emptyList()
       }
     } catch (e: Exception) {
