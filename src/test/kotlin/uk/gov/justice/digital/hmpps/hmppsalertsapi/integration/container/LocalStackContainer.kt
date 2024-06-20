@@ -29,7 +29,7 @@ object LocalStackContainer {
       withServices(LocalStackContainer.Service.SQS, LocalStackContainer.Service.SNS)
       withEnv("DEFAULT_REGION", "eu-west-2")
       waitingFor(
-        Wait.forLogMessage(".*Ready.*", 1),
+        Wait.forLogMessage(".*start_runtime_components.*", 1),
       )
       start()
       followOutput(logConsumer)
