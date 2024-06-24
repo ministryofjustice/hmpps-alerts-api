@@ -53,9 +53,15 @@ abstract class IntegrationTestBase {
   @SpyBean
   lateinit var hmppsQueueService: HmppsQueueService
 
-  internal val hmppsEventsQueue by lazy { hmppsQueueService.findByQueueId("hmppseventtestqueue") ?: throw MissingQueueException("hmppseventtestqueue queue not found") }
+  internal val hmppsEventsQueue by lazy {
+    hmppsQueueService.findByQueueId("hmppseventtestqueue")
+      ?: throw MissingQueueException("hmppseventtestqueue queue not found")
+  }
 
-  internal val hmppsEventTopic by lazy { hmppsQueueService.findByTopicId("hmppseventtopic") ?: throw MissingQueueException("HmppsTopic hmpps event topic not found") }
+  internal val hmppsEventTopic by lazy {
+    hmppsQueueService.findByTopicId("hmppseventtopic")
+      ?: throw MissingQueueException("HmppsTopic hmpps event topic not found")
+  }
 
   @BeforeEach
   fun `clear queues`() {
@@ -82,6 +88,14 @@ abstract class IntegrationTestBase {
 
   internal fun HmppsQueue.receiveMessageOnQueue() =
     sqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build()).get().messages().single()
+
+  internal fun HmppsQueue.receiveMessageTypeCounts(messageCount: Int = 1) =
+    sqsClient.receiveMessage(
+      ReceiveMessageRequest.builder().maxNumberOfMessages(messageCount).queueUrl(queueUrl).build(),
+    ).get().messages()
+      .map { objectMapper.readValue<MsgBody>(it.body()) }
+      .map { objectMapper.readValue<AlertDomainEvent>(it.Message) }
+      .groupingBy { it.eventType }.eachCount()
 
   internal fun HmppsQueue.receiveAlertDomainEventOnQueue() =
     receiveMessageOnQueue()

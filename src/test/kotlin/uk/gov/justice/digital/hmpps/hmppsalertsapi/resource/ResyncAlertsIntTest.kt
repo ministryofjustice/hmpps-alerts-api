@@ -12,10 +12,8 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.ReferenceDataAdditionalInformation
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.ResynchedAlert
@@ -28,6 +26,7 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 class ResyncAlertsIntTest : IntegrationTestBase() {
   @Autowired
@@ -101,7 +100,11 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     val alert = alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!
 
     with(alert) {
-      assertThat(lastModifiedAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(request.lastModifiedAt?.truncatedTo(ChronoUnit.SECONDS))
+      assertThat(lastModifiedAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(
+        request.lastModifiedAt?.truncatedTo(
+          ChronoUnit.SECONDS,
+        ),
+      )
       with(lastModifiedAuditEvent()!!) {
         assertThat(actionedAt.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(request.lastModifiedAt?.truncatedTo(ChronoUnit.SECONDS))
         assertThat(actionedBy).isEqualTo(request.lastModifiedBy)
@@ -142,28 +145,31 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
   @ParameterizedTest(name = "{0} allowed")
   @ValueSource(strings = [ROLE_ALERTS_ADMIN, ROLE_NOMIS_ALERTS])
   fun `Successful resync results in 201 created response and sending of domain events`(role: String) {
+    val existingAlert = Alert(
+      alertUuid = UUID.randomUUID(),
+      alertCode = alertCodeRepository.findByCode(ALERT_CODE_VICTIM)!!,
+      prisonNumber = PRISON_NUMBER,
+      description = "Existing alert - to be deleted",
+      authorisedBy = "J Smith",
+      activeFrom = LocalDate.now().minusDays(60),
+      activeTo = LocalDate.now().plusDays(5),
+      createdAt = LocalDateTime.now().minusDays(60),
+    ).also { it.lastModifiedAt = null }
+    alertRepository.save(existingAlert)
+
     val alert = resyncAlert()
     val response = webTestClient.resyncAlerts(role, listOf(alert)).single()
 
     assertThat(response.offenderBookId).isEqualTo(alert.offenderBookId)
     assertThat(response.alertSeq).isEqualTo(alert.alertSeq)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
-    val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts(2)
+    assertThat(typeCounts[DomainEventType.ALERT_CREATED.eventType]).isEqualTo(1)
+    assertThat(typeCounts[DomainEventType.ALERT_DELETED.eventType]).isEqualTo(1)
 
-    assertThat(event).isEqualTo(
-      AlertDomainEvent(
-        DomainEventType.ALERT_TYPE_CREATED.eventType,
-        ReferenceDataAdditionalInformation(
-          "http://localhost:8080/alert-types/${alert.alertCode}",
-          alert.alertCode,
-          Source.NOMIS,
-        ),
-        1,
-        DomainEventType.ALERT_TYPE_CREATED.description,
-        event.occurredAt,
-      ),
-    )
+    val deletedAlert = alertRepository.findByAlertUuid(existingAlert.alertUuid)
+    assertThat(deletedAlert).isNull()
   }
 
   @ParameterizedTest(name = "{2}")

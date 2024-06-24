@@ -19,7 +19,8 @@ class ResyncAlertsService(
   private val alertCodeRepository: AlertCodeRepository,
 ) {
   fun resyncAlerts(prisonNumber: String, alerts: List<ResyncAlert>): List<ResynchedAlert> {
-    alertRepository.findByPrisonNumber(prisonNumber).forEach {
+    val existingAlerts = alertRepository.findByPrisonNumber(prisonNumber)
+    existingAlerts.forEach {
       it.delete(
         deletedBy = "SYS",
         deletedByDisplayName = "SYS",
@@ -27,6 +28,7 @@ class ResyncAlertsService(
         activeCaseLoadId = null,
         description = "Alert deleted via resync",
       )
+      alertRepository.saveAll(existingAlerts)
     }
     val alertCodes = getValidatedAlertCodes(alerts)
     alerts.logActiveToBeforeActiveFrom(prisonNumber)
@@ -55,13 +57,13 @@ class ResyncAlertsService(
     createdAt = createdAt,
   ).let {
     it.lastModifiedAt = lastModifiedAt
-    alertRepository.save(it)
     it.resync(
       createdBy = createdBy,
       createdByDisplayName = createdByDisplayName,
       lastModifiedBy = lastModifiedBy,
       lastModifiedByDisplayName = lastModifiedByDisplayName,
     )
+    alertRepository.save(it)
     ResynchedAlert(offenderBookId, alertSeq, it.alertUuid)
   }
 
