@@ -68,7 +68,11 @@ data class Alert(
 
   fun isActive() = activeTo == null || activeTo!! > LocalDate.now()
 
-  @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE])
+  @OneToMany(
+    mappedBy = "alert",
+    fetch = FetchType.EAGER,
+    cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE],
+  )
   private val comments: MutableList<Comment> = mutableListOf()
 
   fun comments() = comments.toList().sortedByDescending { it.createdAt }
@@ -91,7 +95,11 @@ data class Alert(
     return commentEntity
   }
 
-  @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE])
+  @OneToMany(
+    mappedBy = "alert",
+    fetch = FetchType.EAGER,
+    cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE],
+  )
   @OrderBy("actioned_at DESC")
   private val auditEvents: MutableList<AuditEvent> = mutableListOf()
 
@@ -137,6 +145,33 @@ data class Alert(
   private var deletedAt: LocalDateTime? = null
 
   fun deletedAt() = deletedAt
+
+  fun resync(
+    createdBy: String,
+    createdByDisplayName: String,
+    lastModifiedBy: String?,
+    lastModifiedByDisplayName: String?,
+  ) = apply {
+    create(
+      description = "Alert created via resync",
+      createdBy = createdBy,
+      createdByDisplayName = createdByDisplayName,
+      source = Source.NOMIS,
+      activeCaseLoadId = null,
+      publishEvent = true,
+    )
+    if (lastModifiedAt != null) {
+      auditEvent(
+        action = AuditEventAction.UPDATED,
+        description = "Alert updated via resync",
+        actionedAt = lastModifiedAt!!,
+        actionedBy = lastModifiedBy!!,
+        actionedByDisplayName = lastModifiedByDisplayName!!,
+        source = Source.NOMIS,
+        activeCaseLoadId = null,
+      )
+    }
+  }
 
   fun create(
     description: String = "Alert created",
@@ -213,7 +248,12 @@ data class Alert(
     }
     if (commentAppended) {
       sb.appendLine("Comment '$trimmedAppendComment' was added")
-      addComment(comment = trimmedAppendComment!!, createdAt = updatedAt, createdBy = updatedBy, createdByDisplayName = updatedByDisplayName)
+      addComment(
+        comment = trimmedAppendComment!!,
+        createdAt = updatedAt,
+        createdBy = updatedBy,
+        createdByDisplayName = updatedByDisplayName,
+      )
       updated = true
     }
 
@@ -258,12 +298,13 @@ data class Alert(
     source: Source,
     activeCaseLoadId: String?,
     publishEvent: Boolean = true,
+    description: String = "Alert deleted",
   ): AuditEvent {
     lastModifiedAt = deletedAt
     this.deletedAt = deletedAt
     return auditEvent(
       action = AuditEventAction.DELETED,
-      description = "Alert deleted",
+      description = description,
       actionedAt = deletedAt,
       actionedBy = deletedBy,
       actionedByDisplayName = deletedByDisplayName,
