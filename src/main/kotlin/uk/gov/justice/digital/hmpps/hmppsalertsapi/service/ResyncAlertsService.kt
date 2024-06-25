@@ -19,6 +19,7 @@ class ResyncAlertsService(
   private val alertCodeRepository: AlertCodeRepository,
 ) {
   fun resyncAlerts(prisonNumber: String, alerts: List<ResyncAlert>): List<ResyncedAlert> {
+    val alertCodes = getValidatedAlertCodes(alerts)
     val existingAlerts = alertRepository.findByPrisonNumber(prisonNumber)
     existingAlerts.forEach {
       it.delete(
@@ -30,7 +31,6 @@ class ResyncAlertsService(
       )
       alertRepository.saveAll(existingAlerts)
     }
-    val alertCodes = getValidatedAlertCodes(alerts)
     alerts.logActiveToBeforeActiveFrom(prisonNumber)
     alerts.logDuplicateActiveAlerts(prisonNumber)
     return alerts.map { it.alertFor(prisonNumber, alertCodes) }
