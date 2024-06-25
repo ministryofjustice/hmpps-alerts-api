@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.model
 import io.swagger.v3.oas.annotations.media.Schema
 import java.util.UUID
 
-data class ResynchedAlert(
+data class ResyncedAlert(
   @Schema(
     description = "The internal NOMIS id for the offender booking. " +
       "An alert in NOMIS is uniquely identified by the offender booking id and alert sequence." +

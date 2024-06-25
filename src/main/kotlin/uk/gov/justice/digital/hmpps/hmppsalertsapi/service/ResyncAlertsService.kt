@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.ResynchedAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.ResyncedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.ResyncAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
@@ -18,7 +18,7 @@ class ResyncAlertsService(
   private val alertRepository: AlertRepository,
   private val alertCodeRepository: AlertCodeRepository,
 ) {
-  fun resyncAlerts(prisonNumber: String, alerts: List<ResyncAlert>): List<ResynchedAlert> {
+  fun resyncAlerts(prisonNumber: String, alerts: List<ResyncAlert>): List<ResyncedAlert> {
     val existingAlerts = alertRepository.findByPrisonNumber(prisonNumber)
     existingAlerts.forEach {
       it.delete(
@@ -64,7 +64,7 @@ class ResyncAlertsService(
       lastModifiedByDisplayName = lastModifiedByDisplayName,
     )
     alertRepository.save(it)
-    ResynchedAlert(offenderBookId, alertSeq, it.alertUuid)
+    ResyncedAlert(offenderBookId, alertSeq, it.alertUuid)
   }
 
   private fun List<ResyncAlert>.logActiveToBeforeActiveFrom(prisonNumber: String) {

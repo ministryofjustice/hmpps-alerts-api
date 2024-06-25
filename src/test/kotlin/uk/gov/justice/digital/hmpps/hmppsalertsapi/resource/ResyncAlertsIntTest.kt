@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.ResynchedAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.ResyncedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.ResyncAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
@@ -52,16 +52,6 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
       .headers(setAuthorisation())
       .exchange()
       .expectStatus().isForbidden
-  }
-
-  @Test
-  fun `when no body - 400 bad request`() {
-    val response = webTestClient.resyncResponseSpec(ROLE_NOMIS_ALERTS, listOf())
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-
-    assertThat(response?.status).isEqualTo(400)
   }
 
   @Test
@@ -115,11 +105,11 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `resync alert with inactive alert code`() {
-    val resynchedAlert =
+    val resyncedAlert =
       webTestClient.resyncAlerts(request = listOf(resyncAlert().copy(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)))
         .single()
 
-    with(alertRepository.findByAlertUuid(resynchedAlert.alertUuid)!!.alertCode) {
+    with(alertRepository.findByAlertUuid(resyncedAlert.alertUuid)!!.alertCode) {
       assertThat(code).isEqualTo(ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
       assertThat(isActive()).isFalse()
     }
@@ -168,6 +158,30 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     assertThat(typeCounts[DomainEventType.ALERT_CREATED.eventType]).isEqualTo(1)
     assertThat(typeCounts[DomainEventType.ALERT_DELETED.eventType]).isEqualTo(1)
 
+    val deletedAlert = alertRepository.findByAlertUuid(existingAlert.alertUuid)
+    assertThat(deletedAlert).isNull()
+  }
+
+  @ParameterizedTest(name = "{0} allowed")
+  @ValueSource(strings = [ROLE_ALERTS_ADMIN, ROLE_NOMIS_ALERTS])
+  fun `Passing empty list to resync removes alerts and sends domain events`(role: String) {
+    val existingAlert = Alert(
+      alertUuid = UUID.randomUUID(),
+      alertCode = alertCodeRepository.findByCode(ALERT_CODE_VICTIM)!!,
+      prisonNumber = PRISON_NUMBER,
+      description = "Existing alert - to be deleted",
+      authorisedBy = "J Smith",
+      activeFrom = LocalDate.now().minusDays(60),
+      activeTo = LocalDate.now().plusDays(5),
+      createdAt = LocalDateTime.now().minusDays(60),
+    ).also { it.lastModifiedAt = null }
+    alertRepository.save(existingAlert)
+
+    webTestClient.resyncAlerts(role, emptyList())
+
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts()
+    assertThat(typeCounts[DomainEventType.ALERT_DELETED.eventType]).isEqualTo(1)
     val deletedAlert = alertRepository.findByAlertUuid(existingAlert.alertUuid)
     assertThat(deletedAlert).isNull()
   }
@@ -296,6 +310,6 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
   private fun WebTestClient.resyncAlerts(role: String = ROLE_NOMIS_ALERTS, request: Collection<ResyncAlert>) =
     resyncResponseSpec(role, request)
       .expectStatus().isCreated
-      .expectBodyList(ResynchedAlert::class.java)
+      .expectBodyList(ResyncedAlert::class.java)
       .returnResult().responseBody!!
 }

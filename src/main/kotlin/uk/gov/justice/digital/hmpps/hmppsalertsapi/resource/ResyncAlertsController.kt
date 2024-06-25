@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import jakarta.validation.Valid
-import jakarta.validation.constraints.NotEmpty
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -18,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.ResynchedAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.ResyncedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.ResyncAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.ResyncAlertsService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
@@ -32,7 +31,7 @@ class ResyncAlertsController(private val resyncAlertsService: ResyncAlertsServic
       ApiResponse(
         responseCode = "201",
         description = "Resync of alerts successful",
-        content = [Content(array = ArraySchema(schema = Schema(implementation = ResynchedAlert::class)))],
+        content = [Content(array = ArraySchema(schema = Schema(implementation = ResyncedAlert::class)))],
       ),
       ApiResponse(
         responseCode = "400",
@@ -63,12 +62,11 @@ class ResyncAlertsController(private val resyncAlertsService: ResyncAlertsServic
     )
     prisonNumber: String,
     @Valid
-    @NotEmpty(message = "Cannot resync with an empty list")
     @RequestBody
     @Parameter(
       description = "The alert data to use to resync alerts in the service",
       required = true,
     )
     alerts: List<ResyncAlert>,
-  ): List<ResynchedAlert> = resyncAlertsService.resyncAlerts(prisonNumber, alerts)
+  ): List<ResyncedAlert> = resyncAlertsService.resyncAlerts(prisonNumber, alerts)
 }
