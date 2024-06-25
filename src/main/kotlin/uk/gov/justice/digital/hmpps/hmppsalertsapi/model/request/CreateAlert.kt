@@ -11,13 +11,13 @@ import java.time.LocalDate
 )
 @DateComparison("Active from must be before active to")
 data class CreateAlert(
+  @Deprecated("the prison number is to be removed from here as it has been added to the new url /prisoners/{prisonNumber}/alerts")
   @Schema(
-    description = "The prison number of the person the alert is for. " +
-      "Also referred to as the offender number, offender id or NOMS id.",
+    description = "The prison number of the person the alert is for. Also referred to as the offender number, offender id or NOMS id.",
     example = "A1234AA",
   )
   @field:Size(min = 1, max = 10, message = "Prison number must be <= 10 characters")
-  val prisonNumber: String,
+  val prisonNumber: String?,
 
   @Schema(
     description = "The alert code for the alert. A person can only have one alert using each code active at any one time. " +

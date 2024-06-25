@@ -24,6 +24,7 @@ val alertCodeDescriptionMap = mapOf(
 )
 
 fun CreateAlert.toAlertEntity(
+  prisonNumber: String,
   alertCode: AlertCode,
   createdAt: LocalDateTime = LocalDateTime.now(),
   createdBy: String,
@@ -34,7 +35,7 @@ fun CreateAlert.toAlertEntity(
   Alert(
     alertUuid = UUID.randomUUID(),
     alertCode = alertCode,
-    prisonNumber = this.prisonNumber,
+    prisonNumber = prisonNumber,
     description = alertCodeDescriptionMap[this.alertCode] ?: this.description,
     authorisedBy = this.authorisedBy,
     activeFrom = this.activeFrom ?: LocalDate.now(),
