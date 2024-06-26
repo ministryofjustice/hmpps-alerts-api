@@ -187,7 +187,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_WRITER', '$ROLE_ALERTS_ADMIN', '$UPDATE_ALERT', '$ROLE_NOMIS_ALERTS')")
   @UsernameHeader
   @SourceHeader
-  fun createAlert(
+  fun createPrisonerAlert(
     @PathVariable
     @Parameter(
       description = "Prison number of the prisoner. Also referred to as the offender number, offender id or NOMS id",
