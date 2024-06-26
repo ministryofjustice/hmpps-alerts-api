@@ -39,13 +39,13 @@ class AlertTranslationTest {
       activeCaseLoadId = PRISON_CODE_MOORLANDS,
     )
 
-    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source, context.activeCaseLoadId)
+    val entity = request.toAlertEntity(PRISON_NUMBER, alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source, context.activeCaseLoadId)
 
     assertThat(entity).isEqualTo(
       AlertEntity(
         alertUuid = entity.alertUuid,
         alertCode = alertCodeVictim(),
-        prisonNumber = request.prisonNumber,
+        prisonNumber = PRISON_NUMBER,
         description = request.description,
         authorisedBy = request.authorisedBy,
         activeFrom = request.activeFrom!!,
@@ -81,7 +81,7 @@ class AlertTranslationTest {
       activeCaseLoadId = PRISON_CODE_LEEDS,
     )
 
-    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source, context.activeCaseLoadId)
+    val entity = request.toAlertEntity(PRISON_NUMBER, alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source, context.activeCaseLoadId)
 
     assertThat(entity.description).isEqualTo(alertCodeDescriptionMap[ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL])
   }
@@ -102,7 +102,7 @@ class AlertTranslationTest {
       activeCaseLoadId = PRISON_CODE_LEEDS,
     )
 
-    val entity = request.toAlertEntity(alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source, context.activeCaseLoadId)
+    val entity = request.toAlertEntity(PRISON_NUMBER, alertCodeVictim(), context.requestAt, context.username, context.userDisplayName, context.source, context.activeCaseLoadId)
 
     assertThat(entity.activeFrom).isEqualTo(LocalDate.now())
   }

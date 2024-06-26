@@ -32,17 +32,18 @@ class AlertService(
   private val auditEventRepository: AuditEventRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
 ) {
-  fun createAlert(request: CreateAlert, context: AlertRequestContext) =
+  fun createAlert(prisonNumber: String, request: CreateAlert, context: AlertRequestContext) =
     request.let {
       // Perform database checks first prior to checks that require API calls
       val alertCode = it.getAlertCode()
-      it.checkForExistingActiveAlert()
+      checkForExistingActiveAlert(prisonNumber, request.alertCode)
 
       // Uses API call
-      it.validatePrisonNumber()
+      validatePrisonNumber(prisonNumber)
 
       alertRepository.saveAndFlush(
         it.toAlertEntity(
+          prisonNumber = prisonNumber,
           alertCode = alertCode,
           createdAt = context.requestAt,
           createdBy = context.username,
@@ -58,11 +59,11 @@ class AlertService(
       require(it.isActive()) { "Alert code '$alertCode' is inactive" }
     } ?: throw IllegalArgumentException("Alert code '$alertCode' not found")
 
-  private fun CreateAlert.checkForExistingActiveAlert() =
+  private fun checkForExistingActiveAlert(prisonNumber: String, alertCode: String) =
     alertRepository.findByPrisonNumberAndAlertCodeCode(prisonNumber, alertCode)
       .any { it.isActive() } && throw ExistingActiveAlertWithCodeException(prisonNumber, alertCode)
 
-  private fun CreateAlert.validatePrisonNumber() =
+  private fun validatePrisonNumber(prisonNumber: String) =
     require(prisonerSearchClient.getPrisoner(prisonNumber) != null) { "Prison number '$prisonNumber' not found" }
 
   fun retrieveAlert(alertUuid: UUID): AlertModel =

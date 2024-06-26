@@ -35,6 +35,7 @@ import java.util.UUID
 class AlertsController(
   private val alertService: AlertService,
 ) {
+  @Deprecated(message = "Deprecated as it does not represent the prisoner/alert hierarchy", replaceWith = ReplaceWith("uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.PrisonerAlertsController.createAlert"))
   @ResponseStatus(HttpStatus.CREATED)
   @PostMapping
   @Operation(
@@ -81,7 +82,7 @@ class AlertsController(
     )
     request: CreateAlert,
     httpRequest: HttpServletRequest,
-  ): Alert = alertService.createAlert(request, httpRequest.alertRequestContext())
+  ): Alert = alertService.createAlert(checkNotNull(request.prisonNumber), request, httpRequest.alertRequestContext())
 
   @ResponseStatus(HttpStatus.OK)
   @GetMapping("/{alertUuid}")

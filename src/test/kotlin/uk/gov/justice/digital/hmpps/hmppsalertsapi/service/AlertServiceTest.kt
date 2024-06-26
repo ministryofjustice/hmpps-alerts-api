@@ -77,7 +77,7 @@ class AlertServiceTest {
   fun `Alert code not found`() {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(null)
     val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(createAlertRequest(alertCode = "A"), context)
+      underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"), context)
     }
     assertThat(error.message).isEqualTo("Alert code 'A' not found")
   }
@@ -87,7 +87,7 @@ class AlertServiceTest {
     whenever(mockAlertCode.isActive()).thenReturn(false)
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(mockAlertCode)
     val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(createAlertRequest(alertCode = "A"), context)
+      underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"), context)
     }
     assertThat(error.message).isEqualTo("Alert code 'A' is inactive")
   }
@@ -98,7 +98,7 @@ class AlertServiceTest {
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now(), activeTo = null)))
     val error = assertThrows<ExistingActiveAlertWithCodeException> {
-      underTest.createAlert(createAlertRequest(), context)
+      underTest.createAlert(PRISON_NUMBER, createAlertRequest(), context)
     }
     assertThat(error.message).isEqualTo("Active alert with code '$ALERT_CODE_VICTIM' already exists for prison number '$PRISON_NUMBER'")
   }
@@ -109,7 +109,7 @@ class AlertServiceTest {
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().plusDays(1), activeTo = null)))
     val error = assertThrows<ExistingActiveAlertWithCodeException> {
-      underTest.createAlert(createAlertRequest(), context)
+      underTest.createAlert(PRISON_NUMBER, createAlertRequest(), context)
     }
     assertThat(error.message).isEqualTo("Active alert with code '$ALERT_CODE_VICTIM' already exists for prison number '$PRISON_NUMBER'")
   }
@@ -121,7 +121,7 @@ class AlertServiceTest {
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().minusDays(1), activeTo = LocalDate.now())))
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
-    underTest.createAlert(createAlertRequest(), context)
+    underTest.createAlert(PRISON_NUMBER, createAlertRequest(), context)
     verify(alertRepository).saveAndFlush(any<Alert>())
   }
 
@@ -130,7 +130,7 @@ class AlertServiceTest {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(null)
     val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(createAlertRequest(), context)
+      underTest.createAlert(PRISON_NUMBER, createAlertRequest(), context)
     }
     assertThat(error.message).isEqualTo("Prison number '${PRISON_NUMBER}' not found")
   }
@@ -142,7 +142,7 @@ class AlertServiceTest {
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     val request = createAlertRequest()
-    underTest.createAlert(request, context)
+    underTest.createAlert(PRISON_NUMBER, request, context)
     with(alertCaptor.firstValue.alertCode) {
       assertThat(code).isEqualTo(request.alertCode)
       assertThat(this).isEqualTo(alertCodeVictim())
@@ -155,7 +155,7 @@ class AlertServiceTest {
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
     val request = createAlertRequest()
-    val result = underTest.createAlert(request, context)
+    val result = underTest.createAlert(PRISON_NUMBER, request, context)
     with(result.alertCode) {
       assertThat(code).isEqualTo(request.alertCode)
       assertThat(this).isEqualTo(alertCodeVictim().toAlertCodeSummary())
@@ -169,7 +169,7 @@ class AlertServiceTest {
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     val request = createAlertRequest()
-    underTest.createAlert(request, context)
+    underTest.createAlert(PRISON_NUMBER, request, context)
     with(alertCaptor.firstValue.auditEvents().single()) {
       assertThat(action).isEqualTo(AuditEventAction.CREATED)
       assertThat(description).isEqualTo("Alert created")
@@ -187,7 +187,7 @@ class AlertServiceTest {
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
     val request = createAlertRequest()
-    val result = underTest.createAlert(request, context)
+    val result = underTest.createAlert(PRISON_NUMBER, request, context)
     with(result) {
       assertThat(createdAt).isEqualTo(context.requestAt)
       assertThat(createdBy).isEqualTo(context.username)
@@ -202,9 +202,10 @@ class AlertServiceTest {
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     val request = createAlertRequest()
-    val result = underTest.createAlert(request, context)
+    val result = underTest.createAlert(PRISON_NUMBER, request, context)
     assertThat(alertCaptor.firstValue).isEqualTo(
       request.toAlertEntity(
+        prisonNumber = PRISON_NUMBER,
         alertCode = alertCodeVictim(),
         createdAt = context.requestAt,
         createdBy = context.username,
@@ -222,7 +223,7 @@ class AlertServiceTest {
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     val request = createAlertRequest()
-    val result = underTest.createAlert(request, context)
+    val result = underTest.createAlert(PRISON_NUMBER, request, context)
     assertThat(result).isEqualTo(alertCaptor.firstValue.toAlertModel())
   }
 

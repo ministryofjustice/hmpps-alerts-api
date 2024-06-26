@@ -56,7 +56,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `401 unauthorised`() {
     webTestClient.post()
-      .uri("/alerts")
+      .uri("/prisoners/$PRISON_NUMBER/alerts")
       .exchange()
       .expectStatus().isUnauthorized
   }
@@ -64,7 +64,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `403 forbidden - no roles`() {
     webTestClient.post()
-      .uri("/alerts")
+      .uri("/prisoners/$PRISON_NUMBER/alerts")
       .bodyValue(createAlertRequest())
       .headers(setAuthorisation())
       .headers(setAlertRequestContext())
@@ -75,7 +75,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `403 forbidden - alerts reader`() {
     webTestClient.post()
-      .uri("/alerts")
+      .uri("/prisoners/$PRISON_NUMBER/alerts")
       .bodyValue(createAlertRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
       .headers(setAlertRequestContext())
@@ -86,7 +86,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `400 bad request - invalid source`() {
     val response = webTestClient.post()
-      .uri("/alerts")
+      .uri("/prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers { it.set(SOURCE, "INVALID") }
       .exchange()
@@ -106,7 +106,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `400 bad request - username not supplied`() {
     val response = webTestClient.post()
-      .uri("/alerts")
+      .uri("/prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .exchange()
       .expectStatus().isBadRequest
@@ -125,7 +125,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `400 bad request - username not found`() {
     val response = webTestClient.post()
-      .uri("/alerts")
+      .uri("/prisoners/$PRISON_NUMBER/alerts")
       .bodyValue(createAlertRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
@@ -146,7 +146,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `400 bad request - no body`() {
     val response = webTestClient.post()
-      .uri("/alerts")
+      .uri("/prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext())
       .exchange()
@@ -158,7 +158,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Couldn't read request body")
-      assertThat(developerMessage).isEqualTo("Required request body is missing: public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.AlertsController.createAlert(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert,jakarta.servlet.http.HttpServletRequest)")
+      assertThat(developerMessage).startsWith("Required request body is missing:")
       assertThat(moreInfo).isNull()
     }
   }
@@ -167,7 +167,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `400 bad request - prisoner not found`() {
     val request = createAlertRequest(prisonNumber = PRISON_NUMBER_NOT_FOUND)
 
-    val response = webTestClient.createAlertResponseSpec(request = request)
+    val response = webTestClient.createAlertResponseSpec(prisonNumber = PRISON_NUMBER_NOT_FOUND, request = request)
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody
@@ -175,8 +175,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Prison number '${request.prisonNumber}' not found")
-      assertThat(developerMessage).isEqualTo("Prison number '${request.prisonNumber}' not found")
+      assertThat(userMessage).isEqualTo("Validation failure: Prison number '$PRISON_NUMBER_NOT_FOUND' not found")
+      assertThat(developerMessage).isEqualTo("Prison number '$PRISON_NUMBER_NOT_FOUND' not found")
       assertThat(moreInfo).isNull()
     }
   }
@@ -220,7 +220,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `405 method not allowed`() {
     val response = webTestClient.patch()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.METHOD_NOT_ALLOWED)
@@ -239,7 +239,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `502 bad gateway - get user details request failed`() {
     val response = webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER/alerts")
       .bodyValue(createAlertRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext(username = USER_THROW_EXCEPTION))
@@ -260,7 +260,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `502 bad gateway - get prisoner request failed`() {
     val response = webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER_THROW_EXCEPTION/alerts")
       .bodyValue(createAlertRequest(prisonNumber = PRISON_NUMBER_THROW_EXCEPTION))
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext())
@@ -283,7 +283,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val request = createAlertRequest()
 
     val alert = webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_WRITER), isUserToken = true))
       .exchange()
@@ -303,7 +303,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val request = createAlertRequest()
 
     val alert = webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_WRITER), isUserToken = false))
       .exchange()
@@ -323,7 +323,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val request = createAlertRequest()
 
     val alert = webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext())
@@ -344,7 +344,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val request = createAlertRequest()
 
     val alert = webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext(source = NOMIS, username = NOMIS_SYS_USER))
@@ -374,7 +374,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val request = createAlertRequest()
 
     val alert = webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .header(SOURCE, NOMIS.name)
@@ -408,7 +408,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     assertThat(alert).isEqualTo(
       AlertModel(
         alert.alertUuid,
-        request.prisonNumber,
+        request.prisonNumber!!,
         alertCodeVictimSummary(),
         request.description,
         request.authorisedBy,
@@ -444,7 +444,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         alertId = 1,
         alertUuid = alert.alertUuid,
         alertCode = alertCode,
-        prisonNumber = request.prisonNumber,
+        prisonNumber = request.prisonNumber!!,
         description = request.description,
         authorisedBy = request.authorisedBy,
         activeFrom = request.activeFrom!!,
@@ -479,7 +479,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         alertId = 1,
         alertUuid = alert.alertUuid,
         alertCode = alertCode,
-        prisonNumber = request.prisonNumber,
+        prisonNumber = request.prisonNumber!!,
         description = request.description,
         authorisedBy = request.authorisedBy,
         activeFrom = request.activeFrom!!,
@@ -515,7 +515,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         AlertAdditionalInformation(
           "http://localhost:8080/alerts/${alert.alertUuid}",
           alert.alertUuid,
-          request.prisonNumber,
+          request.prisonNumber!!,
           request.alertCode,
           DPS,
         ),
@@ -544,7 +544,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         AlertAdditionalInformation(
           "http://localhost:8080/alerts/${alert.alertUuid}",
           alert.alertUuid,
-          request.prisonNumber,
+          request.prisonNumber!!,
           request.alertCode,
           NOMIS,
         ),
@@ -656,9 +656,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
   private fun WebTestClient.createAlertResponseSpec(
     source: Source = DPS,
     request: CreateAlert,
+    prisonNumber: String = PRISON_NUMBER,
   ) =
     post()
-      .uri("/alerts")
+      .uri("/prisoners/$prisonNumber/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext(source = source))
