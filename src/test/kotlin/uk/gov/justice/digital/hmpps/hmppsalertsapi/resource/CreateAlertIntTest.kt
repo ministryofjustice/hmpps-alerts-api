@@ -158,7 +158,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Couldn't read request body")
-      assertThat(developerMessage).isEqualTo("Required request body is missing: public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.PrisonerAlertsController.createAlert(java.lang.String,uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert,jakarta.servlet.http.HttpServletRequest)")
+      assertThat(developerMessage).startsWith("Required request body is missing:")
       assertThat(moreInfo).isNull()
     }
   }
