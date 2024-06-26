@@ -590,7 +590,6 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   private fun createAlertRequest() =
     CreateAlert(
-      prisonNumber = PRISON_NUMBER,
       alertCode = ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL,
       description = null,
       authorisedBy = null,
@@ -598,9 +597,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       activeTo = null,
     )
 
-  private fun WebTestClient.createAlert(request: CreateAlert) =
+  private fun WebTestClient.createAlert(prisonNumber: String = PRISON_NUMBER, request: CreateAlert) =
     post()
-      .uri("/alerts")
+      .uri("prisoners/$prisonNumber/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext(source = DPS))

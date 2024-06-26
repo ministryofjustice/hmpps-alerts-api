@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
@@ -17,13 +18,12 @@ class ValidationIntTest : IntegrationTestBase() {
   @Test
   fun `Validate active to before active from`() {
     val response = webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
       .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
-          prisonNumber = "ABC123ASDG",
           alertCode = "A",
           description = "description",
           authorisedBy = "A. Authorised",
@@ -41,13 +41,12 @@ class ValidationIntTest : IntegrationTestBase() {
   @Test
   fun `Validate active from is equal to active to should pass on creation`() {
     val response = webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
       .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
-          prisonNumber = "A1234AA",
           alertCode = ALERT_CODE_VICTIM,
           description = "description",
           authorisedBy = "A. Authorised",
@@ -67,13 +66,12 @@ class ValidationIntTest : IntegrationTestBase() {
   @Test
   fun `Validate active from is equal to active to should pass on update`() {
     val response = webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
       .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
-          prisonNumber = "A1234AA",
           alertCode = ALERT_CODE_VICTIM,
           description = "description",
           authorisedBy = "A. Authorised",
@@ -110,39 +108,14 @@ class ValidationIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Validate prison number too long`() {
-    val response = webTestClient.post()
-      .uri("/alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
-      .headers(setAlertRequestContext())
-      .accept(MediaType.APPLICATION_JSON)
-      .bodyValue(
-        CreateAlert(
-          prisonNumber = "ABC123ASDGA",
-          alertCode = "A",
-          description = "description",
-          authorisedBy = "A. Authorised",
-          activeFrom = LocalDate.now(),
-          activeTo = null,
-        ),
-      )
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody!!
-    assertThat(response.developerMessage).contains("Prison number must be <= 10 characters")
-  }
-
-  @Test
   fun `Validate description too long`() {
     val response = webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
       .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
-          prisonNumber = "ABC123AS",
           alertCode = "A",
           description = "a".repeat(4001),
           authorisedBy = "A. Authorised",
@@ -160,13 +133,12 @@ class ValidationIntTest : IntegrationTestBase() {
   @Test
   fun `Validate authorised by too long`() {
     val response = webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
       .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
-          prisonNumber = "ABC123A",
           alertCode = "A",
           description = "description",
           authorisedBy = "A. AuthorisedA. AuthorisedA. AuthorisedA.",
@@ -184,13 +156,12 @@ class ValidationIntTest : IntegrationTestBase() {
   @Test
   fun `Validate created by too long`() {
     val response = webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
       .headers(setAlertRequestContext(username = "C. ReatedC. ReatedC. ReatedC. Rea"))
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
-          prisonNumber = "ABC123A",
           alertCode = "A",
           description = "description",
           authorisedBy = "A. Authorised",

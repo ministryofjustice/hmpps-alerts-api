@@ -10,19 +10,19 @@ class CreateAlertDateValidatorTest {
 
   @Test
   fun `same dates returns true`() {
-    val result = underTest.isValid(CreateAlert("", "", "", "", LocalDate.now(), LocalDate.now()), null)
+    val result = underTest.isValid(CreateAlert("", "", "", LocalDate.now(), LocalDate.now()), null)
     Assertions.assertThat(result).isTrue()
   }
 
   @Test
   fun `activeFrom before returns true`() {
-    val result = underTest.isValid(CreateAlert("", "", "", "", LocalDate.now().minusDays(2), LocalDate.now()), null)
+    val result = underTest.isValid(CreateAlert("", "", "", LocalDate.now().minusDays(2), LocalDate.now()), null)
     Assertions.assertThat(result).isTrue()
   }
 
   @Test
   fun `activeFrom after returns false`() {
-    val result = underTest.isValid(CreateAlert("", "", "", "", LocalDate.now().plusDays(2), LocalDate.now()), null)
+    val result = underTest.isValid(CreateAlert("", "", "", LocalDate.now().plusDays(2), LocalDate.now()), null)
     Assertions.assertThat(result).isFalse()
   }
 }

@@ -12,15 +12,11 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.springframework.data.domain.PageImpl
-import org.springframework.data.domain.PageRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertNotFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ExistingActiveAlertWithCodeException
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertCodeSummary
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
@@ -29,7 +25,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_MOORLANDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
@@ -126,62 +121,6 @@ class AlertServiceTest {
   }
 
   @Test
-  fun `Prisoner not found`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(null)
-    val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(PRISON_NUMBER, createAlertRequest(), context)
-    }
-    assertThat(error.message).isEqualTo("Prison number '${PRISON_NUMBER}' not found")
-  }
-
-  @Test
-  fun `uses alert code from request`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
-    val alertCaptor = argumentCaptor<Alert>()
-    whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
-    val request = createAlertRequest()
-    underTest.createAlert(PRISON_NUMBER, request, context)
-    with(alertCaptor.firstValue.alertCode) {
-      assertThat(code).isEqualTo(request.alertCode)
-      assertThat(this).isEqualTo(alertCodeVictim())
-    }
-  }
-
-  @Test
-  fun `returns alert code from request`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
-    whenever(alertRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
-    val request = createAlertRequest()
-    val result = underTest.createAlert(PRISON_NUMBER, request, context)
-    with(result.alertCode) {
-      assertThat(code).isEqualTo(request.alertCode)
-      assertThat(this).isEqualTo(alertCodeVictim().toAlertCodeSummary())
-    }
-  }
-
-  @Test
-  fun `populates audit event from request context`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
-    val alertCaptor = argumentCaptor<Alert>()
-    whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
-    val request = createAlertRequest()
-    underTest.createAlert(PRISON_NUMBER, request, context)
-    with(alertCaptor.firstValue.auditEvents().single()) {
-      assertThat(action).isEqualTo(AuditEventAction.CREATED)
-      assertThat(description).isEqualTo("Alert created")
-      assertThat(actionedAt).isEqualTo(context.requestAt)
-      assertThat(actionedBy).isEqualTo(context.username)
-      assertThat(actionedByDisplayName).isEqualTo(context.userDisplayName)
-      assertThat(source).isEqualTo(context.source)
-      assertThat(activeCaseLoadId).isEqualTo(context.activeCaseLoadId)
-    }
-  }
-
-  @Test
   fun `returns properties from request context`() {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
@@ -193,49 +132,6 @@ class AlertServiceTest {
       assertThat(createdBy).isEqualTo(context.username)
       assertThat(createdByDisplayName).isEqualTo(context.userDisplayName)
     }
-  }
-
-  @Test
-  fun `converts request using toAlertEntity`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
-    val alertCaptor = argumentCaptor<Alert>()
-    whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
-    val request = createAlertRequest()
-    val result = underTest.createAlert(PRISON_NUMBER, request, context)
-    assertThat(alertCaptor.firstValue).isEqualTo(
-      request.toAlertEntity(
-        prisonNumber = PRISON_NUMBER,
-        alertCode = alertCodeVictim(),
-        createdAt = context.requestAt,
-        createdBy = context.username,
-        createdByDisplayName = context.userDisplayName,
-        source = context.source,
-        activeCaseLoadId = context.activeCaseLoadId,
-      ).copy(alertUuid = result.alertUuid),
-    )
-  }
-
-  @Test
-  fun `converts alert entity to model`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
-    val alertCaptor = argumentCaptor<Alert>()
-    whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
-    val request = createAlertRequest()
-    val result = underTest.createAlert(PRISON_NUMBER, request, context)
-    assertThat(result).isEqualTo(alertCaptor.firstValue.toAlertModel())
-  }
-
-  @Test
-  fun `should throw if cannot find alert to update`() {
-    whenever(alertRepository.findByAlertUuid(any())).thenReturn(null)
-    val request = updateAlertRequestNoChange()
-    val alertUuid = UUID.randomUUID()
-    val exception = assertThrows<AlertNotFoundException> {
-      underTest.updateAlert(alertUuid, request, context)
-    }
-    assertThat(exception.message).isEqualTo("Could not find alert with ID $alertUuid")
   }
 
   @Test
@@ -357,14 +253,6 @@ Comment '${updateRequest.appendComment}' was added""",
   }
 
   @Test
-  fun `retrieve all alerts`() {
-    val alert = alert()
-    whenever(alertRepository.findAll(any(), any())).thenReturn(PageImpl(listOf(alert)))
-    val result = underTest.retrieveAlertsForPrisonNumber("ABC123AA", null, null, null, null, null, null, PageRequest.of(0, 10))
-    assertThat(result).containsExactly(alert.toAlertModel())
-  }
-
-  @Test
   fun `should throw exception if alert not found when retrieving audit events`() {
     whenever(alertRepository.findByAlertUuid(any())).thenReturn(null)
     val alertUuid = UUID.randomUUID()
@@ -374,38 +262,10 @@ Comment '${updateRequest.appendComment}' was added""",
     assertThat(exception.message).isEqualTo("Could not find alert with uuid $alertUuid")
   }
 
-  @Test
-  fun `should return models if exist`() {
-    val alertEntity = alertEntity()
-    whenever(alertRepository.findByAlertUuid(any())).thenReturn(alertEntity)
-    val alertUuid = UUID.randomUUID()
-    val result = underTest.retrieveAuditEventsForAlert(alertUuid)
-    assertThat(result).isNotEmpty()
-    with(result.single()) {
-      val comparisonAuditEvent = alertEntity.auditEvents().single()
-      assertThat(action).isEqualTo(comparisonAuditEvent.action)
-      assertThat(description).isEqualTo(comparisonAuditEvent.description)
-      assertThat(actionedAt).isEqualTo(comparisonAuditEvent.actionedAt)
-      assertThat(actionedBy).isEqualTo(comparisonAuditEvent.actionedBy)
-      assertThat(actionedByDisplayName).isEqualTo(comparisonAuditEvent.actionedByDisplayName)
-    }
-  }
-
-  @Test
-  fun `retrieve alerts for prison numbers`() {
-    val alert = alert()
-    whenever(alertRepository.findByPrisonNumberInOrderByActiveFromDesc(any())).thenReturn(listOf(alert))
-    val result = underTest.retrieveAlertsForPrisonNumbers(listOf(PRISON_NUMBER, PRISON_NUMBER_NOT_FOUND))
-    assertThat(result.keys).containsExactly(PRISON_NUMBER)
-    assertThat(result.values).containsExactly(listOf(alert.toAlertModel()))
-  }
-
   private fun createAlertRequest(
-    prisonNumber: String = PRISON_NUMBER,
     alertCode: String = ALERT_CODE_VICTIM,
   ) =
     CreateAlert(
-      prisonNumber = prisonNumber,
       alertCode = alertCode,
       description = "Alert description",
       authorisedBy = "A. Authorizer",

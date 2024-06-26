@@ -573,11 +573,9 @@ Comment '$appendComment' was added""",
   }
 
   private fun createAlertRequest(
-    prisonNumber: String = PRISON_NUMBER,
     alertCode: String = ALERT_CODE_VICTIM,
   ) =
     CreateAlert(
-      prisonNumber = prisonNumber,
       alertCode = alertCode,
       description = "Alert description",
       authorisedBy = "A. Authorizer",
@@ -585,9 +583,9 @@ Comment '$appendComment' was added""",
       activeTo = null,
     )
 
-  private fun createAlert() =
+  private fun createAlert(prisonNumber: String = PRISON_NUMBER) =
     webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$prisonNumber/alerts")
       .bodyValue(createAlertRequest())
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_WRITER), isUserToken = true))
       .exchange()

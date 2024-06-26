@@ -26,7 +26,6 @@ class AlertTranslationTest {
   @Test
   fun `convert create alert to alert entity`() {
     val request = CreateAlert(
-      prisonNumber = PRISON_NUMBER,
       alertCode = ALERT_CODE_VICTIM,
       description = "Alert description",
       authorisedBy = "A. Authorizer",
@@ -68,7 +67,6 @@ class AlertTranslationTest {
   @Test
   fun `replace supplied description with fixed description for security alerts`() {
     val request = CreateAlert(
-      prisonNumber = PRISON_NUMBER,
       alertCode = ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL,
       description = "Alert description",
       authorisedBy = "A. Authorizer",
@@ -89,7 +87,6 @@ class AlertTranslationTest {
   @Test
   fun `use today when active from is not supplied`() {
     val request = CreateAlert(
-      prisonNumber = PRISON_NUMBER,
       alertCode = ALERT_CODE_VICTIM,
       description = "Alert description",
       authorisedBy = "A. Authorizer",

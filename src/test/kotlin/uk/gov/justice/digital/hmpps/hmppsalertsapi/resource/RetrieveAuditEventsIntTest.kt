@@ -98,11 +98,9 @@ class RetrieveAuditEventsIntTest : IntegrationTestBase() {
   }
 
   private fun createAlertRequest(
-    prisonNumber: String = PRISON_NUMBER,
     alertCode: String = ALERT_CODE_VICTIM,
   ) =
     CreateAlert(
-      prisonNumber = prisonNumber,
       alertCode = alertCode,
       description = "Alert description",
       authorisedBy = "A. Authorizer",
@@ -110,10 +108,10 @@ class RetrieveAuditEventsIntTest : IntegrationTestBase() {
       activeTo = null,
     )
 
-  private fun createAlert(): Alert {
+  private fun createAlert(prisonNumber: String = PRISON_NUMBER): Alert {
     val request = createAlertRequest()
     return webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$prisonNumber/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_WRITER), isUserToken = true))
       .exchange()

@@ -165,7 +165,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - prisoner not found`() {
-    val request = createAlertRequest(prisonNumber = PRISON_NUMBER_NOT_FOUND)
+    val request = createAlertRequest()
 
     val response = webTestClient.createAlertResponseSpec(prisonNumber = PRISON_NUMBER_NOT_FOUND, request = request)
       .expectStatus().isBadRequest
@@ -261,7 +261,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `502 bad gateway - get prisoner request failed`() {
     val response = webTestClient.post()
       .uri("prisoners/$PRISON_NUMBER_THROW_EXCEPTION/alerts")
-      .bodyValue(createAlertRequest(prisonNumber = PRISON_NUMBER_THROW_EXCEPTION))
+      .bodyValue(createAlertRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext())
       .exchange()
@@ -408,7 +408,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     assertThat(alert).isEqualTo(
       AlertModel(
         alert.alertUuid,
-        request.prisonNumber!!,
+        PRISON_NUMBER,
         alertCodeVictimSummary(),
         request.description,
         request.authorisedBy,
@@ -444,7 +444,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         alertId = 1,
         alertUuid = alert.alertUuid,
         alertCode = alertCode,
-        prisonNumber = request.prisonNumber!!,
+        prisonNumber = PRISON_NUMBER,
         description = request.description,
         authorisedBy = request.authorisedBy,
         activeFrom = request.activeFrom!!,
@@ -479,7 +479,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         alertId = 1,
         alertUuid = alert.alertUuid,
         alertCode = alertCode,
-        prisonNumber = request.prisonNumber!!,
+        prisonNumber = PRISON_NUMBER,
         description = request.description,
         authorisedBy = request.authorisedBy,
         activeFrom = request.activeFrom!!,
@@ -515,7 +515,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         AlertAdditionalInformation(
           "http://localhost:8080/alerts/${alert.alertUuid}",
           alert.alertUuid,
-          request.prisonNumber!!,
+          PRISON_NUMBER,
           request.alertCode,
           DPS,
         ),
@@ -544,7 +544,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         AlertAdditionalInformation(
           "http://localhost:8080/alerts/${alert.alertUuid}",
           alert.alertUuid,
-          request.prisonNumber!!,
+          PRISON_NUMBER,
           request.alertCode,
           NOMIS,
         ),
@@ -586,8 +586,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(409)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Duplicate failure: Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
-      assertThat(developerMessage).isEqualTo("Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
+      assertThat(userMessage).isEqualTo("Duplicate failure: Active alert with code '${request.alertCode}' already exists for prison number '$PRISON_NUMBER'")
+      assertThat(developerMessage).isEqualTo("Active alert with code '${request.alertCode}' already exists for prison number '$PRISON_NUMBER'")
       assertThat(moreInfo).isNull()
     }
   }
@@ -624,8 +624,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(409)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Duplicate failure: Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
-      assertThat(developerMessage).isEqualTo("Active alert with code '${request.alertCode}' already exists for prison number '${request.prisonNumber}'")
+      assertThat(userMessage).isEqualTo("Duplicate failure: Active alert with code '${request.alertCode}' already exists for prison number '$PRISON_NUMBER'")
+      assertThat(developerMessage).isEqualTo("Active alert with code '${request.alertCode}' already exists for prison number '$PRISON_NUMBER'")
       assertThat(moreInfo).isNull()
     }
   }
@@ -641,11 +641,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   private fun createAlertRequest(
-    prisonNumber: String = PRISON_NUMBER,
     alertCode: String = ALERT_CODE_VICTIM,
   ) =
     CreateAlert(
-      prisonNumber = prisonNumber,
       alertCode = alertCode,
       description = "Alert description",
       authorisedBy = "A. Authorizer",

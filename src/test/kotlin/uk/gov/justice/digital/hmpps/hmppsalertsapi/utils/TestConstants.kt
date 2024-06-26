@@ -112,22 +112,6 @@ fun alertCodeVictimDeactivated() =
     deactivatedBy = "MODIFIED_BY"
   }
 
-fun alertCodeRefusingToShieldInactive() =
-  AlertCode(
-    152,
-    alertTypeCovidUnitManagement(),
-    ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD,
-    "Refusing to shield",
-    1,
-    LocalDateTime.of(2020, 6, 4, 14, 13, 41),
-    "CREATED_BY",
-  ).apply {
-    modifiedAt = LocalDateTime.of(2023, 11, 23, 16, 57, 34)
-    modifiedBy = "MODIFIED_BY"
-    deactivatedAt = LocalDateTime.of(2023, 11, 23, 0, 0, 0)
-    modifiedBy = "DEACTIVATED_BY"
-  }
-
 fun alertCodeVictimSummary() =
   AlertCodeSummary(
     ALERT_TYPE_CODE_VULNERABILITY,

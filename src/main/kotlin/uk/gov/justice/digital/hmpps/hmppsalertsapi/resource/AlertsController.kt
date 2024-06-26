@@ -15,7 +15,6 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
@@ -35,54 +33,6 @@ import java.util.UUID
 class AlertsController(
   private val alertService: AlertService,
 ) {
-  @Deprecated(message = "Deprecated as it does not represent the prisoner/alert hierarchy", replaceWith = ReplaceWith("uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.PrisonerAlertsController.createAlert"))
-  @ResponseStatus(HttpStatus.CREATED)
-  @PostMapping
-  @Operation(
-    summary = "Create an alert",
-  )
-  @ApiResponses(
-    value = [
-      ApiResponse(
-        responseCode = "201",
-        description = "Alert created successfully",
-        content = [Content(schema = Schema(implementation = Alert::class))],
-      ),
-      ApiResponse(
-        responseCode = "400",
-        description = "Bad request",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorised, requires a valid Oauth2 token",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Forbidden, requires an appropriate role",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "409",
-        description = "Conflict, the person already has an active alert using the supplied alert code",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_WRITER', '$ROLE_ALERTS_ADMIN', '$UPDATE_ALERT', '$ROLE_NOMIS_ALERTS')")
-  @UsernameHeader
-  @SourceHeader
-  fun createAlert(
-    @Valid
-    @RequestBody
-    @Parameter(
-      description = "The alert data to use to create an alert in the service",
-      required = true,
-    )
-    request: CreateAlert,
-    httpRequest: HttpServletRequest,
-  ): Alert = alertService.createAlert(checkNotNull(request.prisonNumber), request, httpRequest.alertRequestContext())
 
   @ResponseStatus(HttpStatus.OK)
   @GetMapping("/{alertUuid}")
