@@ -151,6 +151,7 @@ data class Alert(
     createdByDisplayName: String,
     lastModifiedBy: String?,
     lastModifiedByDisplayName: String?,
+    original: Alert?,
   ) = apply {
     create(
       description = "Alert created via resync",
@@ -159,8 +160,9 @@ data class Alert(
       source = Source.NOMIS,
       activeCaseLoadId = null,
       publishEvent = true,
+      auditHistory = original?.auditEvents ?: emptyList(),
     )
-    if (lastModifiedAt != null) {
+    if (original.withoutAuditHistory && lastModifiedAt != null) {
       auditEvent(
         action = AuditEventAction.UPDATED,
         description = "Alert updated via resync",
@@ -181,16 +183,36 @@ data class Alert(
     source: Source,
     activeCaseLoadId: String?,
     publishEvent: Boolean = true,
+    auditHistory: List<AuditEvent> = emptyList(),
   ) = apply {
-    auditEvent(
-      action = AuditEventAction.CREATED,
-      description = description,
-      actionedAt = createdAt,
-      actionedBy = createdBy,
-      actionedByDisplayName = createdByDisplayName,
-      source = source,
-      activeCaseLoadId = activeCaseLoadId,
-    )
+    if (auditHistory.isEmpty()) {
+      auditEvent(
+        action = AuditEventAction.CREATED,
+        description = description,
+        actionedAt = createdAt,
+        actionedBy = createdBy,
+        actionedByDisplayName = createdByDisplayName,
+        source = source,
+        activeCaseLoadId = activeCaseLoadId,
+      )
+    } else {
+      auditHistory.forEach {
+        auditEvent(
+          it.action,
+          it.description,
+          it.actionedAt,
+          it.actionedBy,
+          it.actionedByDisplayName,
+          it.source,
+          it.activeCaseLoadId,
+          it.descriptionUpdated,
+          it.authorisedByUpdated,
+          it.activeFromUpdated,
+          it.activeToUpdated,
+          it.commentAppended,
+        )
+      }
+    }
     if (publishEvent) {
       registerEvent(
         AlertCreatedEvent(
@@ -338,3 +360,5 @@ data class Alert(
    */
   internal fun publishedDomainEvents() = this.domainEvents()
 }
+
+val Alert?.withoutAuditHistory get() = this?.auditEvents()?.isEmpty() ?: true
