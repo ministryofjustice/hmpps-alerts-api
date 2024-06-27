@@ -56,6 +56,13 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
       .expectStatus().isForbidden
   }
 
+  @ParameterizedTest(name = "{0} allowed")
+  @ValueSource(strings = [ROLE_ALERTS_ADMIN, ROLE_NOMIS_ALERTS])
+  fun `specified roles are allowed to call the endpoint`(role: String) {
+    val alert = resyncAlert()
+    webTestClient.resyncResponseSpec(role, listOf(alert)).expectStatus().isCreated
+  }
+
   @Test
   fun `400 bad request - alert codes not found`() {
     val request = listOf(
@@ -134,9 +141,8 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     }
   }
 
-  @ParameterizedTest(name = "{0} allowed")
-  @ValueSource(strings = [ROLE_ALERTS_ADMIN, ROLE_NOMIS_ALERTS])
-  fun `Successful resync results in 201 created response and sending of domain events`(role: String) {
+  @Test
+  fun `Successful resync results in 201 created response and sending of domain events`() {
     val existingAlert = Alert(
       alertUuid = UUID.randomUUID(),
       alertCode = alertCodeRepository.findByCode(ALERT_CODE_VICTIM)!!,
@@ -150,7 +156,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     alertRepository.save(existingAlert)
 
     val alert = resyncAlert()
-    val response = webTestClient.resyncAlerts(role, listOf(alert)).single()
+    val response = webTestClient.resyncAlerts(request = listOf(alert)).single()
 
     assertThat(response.offenderBookId).isEqualTo(alert.offenderBookId)
     assertThat(response.alertSeq).isEqualTo(alert.alertSeq)
@@ -164,9 +170,8 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     assertThat(deletedAlert).isNull()
   }
 
-  @ParameterizedTest(name = "{0} allowed")
-  @ValueSource(strings = [ROLE_ALERTS_ADMIN, ROLE_NOMIS_ALERTS])
-  fun `Successful resync copies audit history when matching existing alert`(role: String) {
+  @Test
+  fun `Successful resync copies audit history when matching existing alert`() {
     val originalAlert = alertWithAuditHistory()
     val originalAudit = originalAlert.auditEvents()
     assertThat(originalAudit.size).isEqualTo(2)
@@ -176,7 +181,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
       activeFrom = originalAlert.activeFrom,
       activeTo = originalAlert.activeTo,
     )
-    val response = webTestClient.resyncAlerts(role, listOf(alert)).single()
+    val response = webTestClient.resyncAlerts(request = listOf(alert)).single()
 
     assertThat(response.offenderBookId).isEqualTo(alert.offenderBookId)
     assertThat(response.alertSeq).isEqualTo(alert.alertSeq)
@@ -209,9 +214,8 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     assertThat(newAudit.source).isEqualTo(originalAudit.source)
   }
 
-  @ParameterizedTest(name = "{0} allowed")
-  @ValueSource(strings = [ROLE_ALERTS_ADMIN, ROLE_NOMIS_ALERTS])
-  fun `Passing empty list to resync removes alerts and sends domain events`(role: String) {
+  @Test
+  fun `Passing empty list to resync removes alerts and sends domain events`() {
     val existingAlert = Alert(
       alertUuid = UUID.randomUUID(),
       alertCode = alertCodeRepository.findByCode(ALERT_CODE_VICTIM)!!,
@@ -224,7 +228,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     ).also { it.lastModifiedAt = null }
     alertRepository.save(existingAlert)
 
-    webTestClient.resyncAlerts(role, emptyList())
+    webTestClient.resyncAlerts(request = emptyList())
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts()
