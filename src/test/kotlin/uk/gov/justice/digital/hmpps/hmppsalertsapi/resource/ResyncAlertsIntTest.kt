@@ -13,7 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.ResyncedAlert
@@ -164,6 +166,49 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @ParameterizedTest(name = "{0} allowed")
   @ValueSource(strings = [ROLE_ALERTS_ADMIN, ROLE_NOMIS_ALERTS])
+  fun `Successful resync copies audit history when matching existing alert`(role: String) {
+    val originalAlert = alertWithAuditHistory()
+    val originalAudit = originalAlert.auditEvents()
+    assertThat(originalAudit.size).isEqualTo(2)
+
+    val alert = resyncAlert().copy(
+      alertCode = originalAlert.alertCode.code,
+      activeFrom = originalAlert.activeFrom,
+      activeTo = originalAlert.activeTo,
+    )
+    val response = webTestClient.resyncAlerts(role, listOf(alert)).single()
+
+    assertThat(response.offenderBookId).isEqualTo(alert.offenderBookId)
+    assertThat(response.alertSeq).isEqualTo(alert.alertSeq)
+
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
+    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts(4)
+    assertThat(typeCounts[DomainEventType.ALERT_CREATED.eventType]).isEqualTo(2)
+    assertThat(typeCounts[DomainEventType.ALERT_UPDATED.eventType]).isEqualTo(1)
+    assertThat(typeCounts[DomainEventType.ALERT_DELETED.eventType]).isEqualTo(1)
+
+    // original alert has been deleted
+    val deletedAlert = alertRepository.findByAlertUuid(originalAlert.alertUuid)
+    assertThat(deletedAlert).isNull()
+
+    // new alert created with original audit history
+    val newAlert = checkNotNull(alertRepository.findByAlertUuid(response.alertUuid))
+    val newAudit = newAlert.auditEvents()
+    assertThat(newAudit.size).isEqualTo(originalAudit.size)
+    assertAuditEventsEqual(newAudit[0], originalAudit[0])
+    assertAuditEventsEqual(newAudit[1], originalAudit[1])
+  }
+
+  private fun assertAuditEventsEqual(newAudit: AuditEvent, originalAudit: AuditEvent) {
+    assertThat(newAudit.action).isEqualTo(originalAudit.action)
+    assertThat(newAudit.actionedAt).isEqualTo(originalAudit.actionedAt)
+    assertThat(newAudit.actionedBy).isEqualTo(originalAudit.actionedBy)
+    assertThat(newAudit.actionedByDisplayName).isEqualTo(originalAudit.actionedByDisplayName)
+    assertThat(newAudit.source).isEqualTo(originalAudit.source)
+  }
+
+  @ParameterizedTest(name = "{0} allowed")
+  @ValueSource(strings = [ROLE_ALERTS_ADMIN, ROLE_NOMIS_ALERTS])
   fun `Passing empty list to resync removes alerts and sends domain events`(role: String) {
     val existingAlert = Alert(
       alertUuid = UUID.randomUUID(),
@@ -186,9 +231,45 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     assertThat(deletedAlert).isNull()
   }
 
+  private fun alertWithAuditHistory() = alertRepository.save(
+    Alert(
+      alertUuid = UUID.randomUUID(),
+      alertCode = alertCodeRepository.findByCode(ALERT_CODE_VICTIM)!!,
+      prisonNumber = PRISON_NUMBER,
+      description = "Existing alert - to be deleted",
+      authorisedBy = "J Smith",
+      activeFrom = LocalDate.now().minusDays(60),
+      activeTo = LocalDate.now().plusDays(5),
+      createdAt = LocalDateTime.now().minusDays(60),
+    ).also {
+      it.lastModifiedAt = LocalDateTime.now()
+      it.create(
+        createdBy = "J Smith",
+        createdByDisplayName = "John Smith",
+        source = Source.NOMIS,
+        activeCaseLoadId = null,
+      )
+      it.update(
+        description = "Updated for testing",
+        authorisedBy = null,
+        activeFrom = null,
+        activeTo = null,
+        appendComment = null,
+        updatedBy = "A Jones",
+        updatedByDisplayName = "Andrew Jones",
+        source = Source.DPS,
+        activeCaseLoadId = null,
+      )
+    },
+  )
+
   @ParameterizedTest(name = "{2}")
   @MethodSource("badRequestParameters")
-  fun `400 bad request - property validation`(request: ResyncAlert, expectedUserMessage: String, displayName: String) {
+  fun `400 bad request - property validation`(
+    request: ResyncAlert,
+    expectedUserMessage: String,
+    displayName: String,
+  ) {
     val response = webTestClient.resyncResponseSpec(request = listOf(request))
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
