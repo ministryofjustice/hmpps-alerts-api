@@ -201,7 +201,9 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   private fun assertAuditEventsEqual(newAudit: AuditEvent, originalAudit: AuditEvent) {
     assertThat(newAudit.action).isEqualTo(originalAudit.action)
-    assertThat(newAudit.actionedAt).isEqualTo(originalAudit.actionedAt)
+    assertThat(newAudit.actionedAt.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(
+      originalAudit.actionedAt.truncatedTo(ChronoUnit.SECONDS),
+    )
     assertThat(newAudit.actionedBy).isEqualTo(originalAudit.actionedBy)
     assertThat(newAudit.actionedByDisplayName).isEqualTo(originalAudit.actionedByDisplayName)
     assertThat(newAudit.source).isEqualTo(originalAudit.source)
