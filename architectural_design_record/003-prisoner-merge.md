@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed, accepted by @Andy Marke
+Approved by @Andy Marke
 
 ## Context
 
