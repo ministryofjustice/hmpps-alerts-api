@@ -14,6 +14,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
@@ -162,7 +163,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     assertThat(response.alertSeq).isEqualTo(alert.alertSeq)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts(2)
+    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts<AlertAdditionalInformation>(2)
     assertThat(typeCounts[DomainEventType.ALERT_CREATED.eventType]).isEqualTo(1)
     assertThat(typeCounts[DomainEventType.ALERT_DELETED.eventType]).isEqualTo(1)
 
@@ -187,7 +188,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     assertThat(response.alertSeq).isEqualTo(alert.alertSeq)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
-    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts(4)
+    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts<AlertAdditionalInformation>(4)
     assertThat(typeCounts[DomainEventType.ALERT_CREATED.eventType]).isEqualTo(2)
     assertThat(typeCounts[DomainEventType.ALERT_UPDATED.eventType]).isEqualTo(1)
     assertThat(typeCounts[DomainEventType.ALERT_DELETED.eventType]).isEqualTo(1)
@@ -231,7 +232,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     webTestClient.resyncAlerts(request = emptyList())
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
-    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts()
+    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts<AlertAdditionalInformation>()
     assertThat(typeCounts[DomainEventType.ALERT_DELETED.eventType]).isEqualTo(1)
     val deletedAlert = alertRepository.findByAlertUuid(existingAlert.alertUuid)
     assertThat(deletedAlert).isNull()

@@ -33,7 +33,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
@@ -252,8 +251,8 @@ class DeleteAlertIntTest : IntegrationTestBase() {
     webTestClient.deleteAlert(alert.alertUuid, DPS)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
-    val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
+    val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
     assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(deleteAlertEvent.additionalInformation.identifier())
@@ -272,7 +271,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         deleteAlertEvent.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!.deletedAt(), within(1, ChronoUnit.MICROS))
+    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!.deletedAt(), within(1, ChronoUnit.MICROS))
   }
 
   @Test
@@ -282,8 +281,8 @@ class DeleteAlertIntTest : IntegrationTestBase() {
     webTestClient.deleteAlert(alert.alertUuid, NOMIS)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
-    val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
+    val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
     assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(deleteAlertEvent.additionalInformation.identifier())
@@ -302,7 +301,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         deleteAlertEvent.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!.deletedAt(), within(1, ChronoUnit.MICROS))
+    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!.deletedAt(), within(1, ChronoUnit.MICROS))
   }
 
   private fun createAlertRequest(

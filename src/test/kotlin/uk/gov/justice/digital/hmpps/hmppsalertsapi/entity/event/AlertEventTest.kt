@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
@@ -17,7 +18,8 @@ class AlertEventTest {
 
   @Test
   fun `alert created event to string`() {
-    val alertEvent = AlertCreatedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
+    val alertEvent =
+      AlertCreatedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
     assertThat(alertEvent.toString()).isEqualTo(
       "Alert with UUID '${alertEvent.alertUuid}' " +
         "created for prison number '${alertEvent.prisonNumber}' " +
@@ -30,7 +32,8 @@ class AlertEventTest {
 
   @Test
   fun `alert created event to domain event`() {
-    val alertEvent = AlertCreatedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
+    val alertEvent =
+      AlertCreatedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
 
     val domainEvent = alertEvent.toDomainEvent(baseUrl)
 
@@ -45,7 +48,7 @@ class AlertEventTest {
           source = alertEvent.source,
         ),
         description = ALERT_CREATED.description,
-        occurredAt = alertEvent.occurredAt.toOffsetString(),
+        occurredAt = alertEvent.occurredAt.toZoneDateTime(),
       ),
     )
     assertThat(domainEvent.toString()).isEqualTo(
@@ -117,7 +120,7 @@ class AlertEventTest {
           source = alertEvent.source,
         ),
         description = ALERT_UPDATED.description,
-        occurredAt = alertEvent.occurredAt.toOffsetString(),
+        occurredAt = alertEvent.occurredAt.toZoneDateTime(),
       ),
     )
     assertThat(domainEvent.toString()).isEqualTo(
@@ -131,7 +134,8 @@ class AlertEventTest {
 
   @Test
   fun `alert deleted event to string`() {
-    val alertEvent = AlertDeletedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
+    val alertEvent =
+      AlertDeletedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
     assertThat(alertEvent.toString()).isEqualTo(
       "Alert with UUID '${alertEvent.alertUuid}' " +
         "deleted for prison number '${alertEvent.prisonNumber}' " +
@@ -144,7 +148,8 @@ class AlertEventTest {
 
   @Test
   fun `alert deleted event to domain event`() {
-    val alertEvent = AlertDeletedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
+    val alertEvent =
+      AlertDeletedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
 
     val domainEvent = alertEvent.toDomainEvent(baseUrl)
 
@@ -159,7 +164,7 @@ class AlertEventTest {
           source = alertEvent.source,
         ),
         description = ALERT_DELETED.description,
-        occurredAt = alertEvent.occurredAt.toOffsetString(),
+        occurredAt = alertEvent.occurredAt.toZoneDateTime(),
       ),
     )
     assertThat(domainEvent.toString()).isEqualTo(

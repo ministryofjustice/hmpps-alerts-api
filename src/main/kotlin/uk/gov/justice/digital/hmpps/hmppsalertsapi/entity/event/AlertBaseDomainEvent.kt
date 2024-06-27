@@ -1,17 +1,46 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlert
+import java.time.ZonedDateTime
 import java.util.UUID
 
-abstract class DomainEvent<T : AdditionalInformation> {
-  abstract val eventType: String
-  abstract val additionalInformation: T
-  abstract val version: Int
-  abstract val description: String
-  abstract val occurredAt: String
+interface DomainEvent {
+  val eventType: String
+  val version: Int
+  val detailUrl: String?
+  val occurredAt: ZonedDateTime
+  val description: String?
+  val additionalInformation: AdditionalInformation
+  val personReference: PersonReference?
+}
+
+data class HmppsDomainEvent(
+  override val eventType: String,
+  override val version: Int = 1,
+  override val detailUrl: String? = null,
+  override val occurredAt: ZonedDateTime = ZonedDateTime.now(),
+  override val description: String? = null,
+  override val additionalInformation: AdditionalInformation,
+  override val personReference: PersonReference = PersonReference(),
+) : DomainEvent
+
+data class PersonReference(val identifiers: List<PersonIdentifier> = listOf()) {
+  fun findCrn() = get("CRN")
+  fun findNomsNumber() = get("NOMS")
+  operator fun get(key: String) = identifiers.find { it.type == key }?.value
+}
+
+data class PersonIdentifier(val type: String, val value: String)
+
+abstract class AlertBaseDomainEvent<T : AlertBaseAdditionalInformation> : DomainEvent {
+  abstract override val eventType: String
+  abstract override val additionalInformation: T
+  abstract override val version: Int
+  abstract override val description: String
+  abstract override val occurredAt: ZonedDateTime
+  override val detailUrl: String? = null
+  override val personReference: PersonReference? = null
 
   override fun toString(): String {
     return "v$version domain event '$eventType' " +
@@ -20,26 +49,22 @@ abstract class DomainEvent<T : AdditionalInformation> {
   }
 }
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-@JsonSubTypes(
-  JsonSubTypes.Type(value = AlertAdditionalInformation::class, name = "alert"),
-  JsonSubTypes.Type(value = MergeAlertsAdditionalInformation::class, name = "alertsMerge"),
-  JsonSubTypes.Type(value = ReferenceDataAdditionalInformation::class, name = "alertCode"),
-)
-interface AdditionalInformation {
+interface AdditionalInformation
+
+interface AlertBaseAdditionalInformation : AdditionalInformation {
   val url: String
   val source: Source
   fun asString(): String
   fun identifier(): String
 }
 
-data class AlertDomainEvent(
+data class AlertDomainEvent<T : AlertBaseAdditionalInformation>(
   override val eventType: String,
-  override val additionalInformation: AdditionalInformation,
+  override val additionalInformation: T,
   override val version: Int = 1,
   override val description: String,
-  override val occurredAt: String,
-) : DomainEvent<AdditionalInformation>() {
+  override val occurredAt: ZonedDateTime,
+) : AlertBaseDomainEvent<T>() {
   override fun toString(): String {
     return "v$version alert domain event '$eventType' " + additionalInformation.asString()
   }
@@ -51,7 +76,7 @@ data class AlertAdditionalInformation(
   val prisonNumber: String,
   val alertCode: String,
   override val source: Source,
-) : AdditionalInformation {
+) : AlertBaseAdditionalInformation {
   override fun asString(): String =
     "for alert with UUID '$alertUuid' " +
       "for prison number '$prisonNumber' " +
@@ -67,7 +92,7 @@ data class MergeAlertsAdditionalInformation(
   val prisonNumberMergeTo: String,
   val mergedAlerts: List<MergedAlert>,
   override val source: Source,
-) : AdditionalInformation {
+) : AlertBaseAdditionalInformation {
   override fun asString(): String =
     "for prison number merged to '$prisonNumberMergeTo' " +
       "and prison number merged from'$prisonNumberMergeFrom' " +
@@ -81,7 +106,7 @@ data class ReferenceDataAdditionalInformation(
   override val url: String,
   val alertCode: String,
   override val source: Source,
-) : AdditionalInformation {
+) : AlertBaseAdditionalInformation {
   override fun identifier(): String = alertCode
 
   override fun asString(): String =

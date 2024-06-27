@@ -24,7 +24,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
 class CreateAlertTypeIntTest : IntegrationTestBase() {
@@ -339,7 +338,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
     val alertType = webTestClient.createAlertType(request = request)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
-    val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
 
     assertThat(event).isEqualTo(
       AlertDomainEvent(
@@ -354,7 +353,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
         event.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(event.occurredAt).toLocalDateTime()).isCloseTo(alertTypeRepository.findByCode(alertType.code)!!.createdAt, within(1, ChronoUnit.MICROS))
+    assertThat(event.occurredAt.toLocalDateTime()).isCloseTo(alertTypeRepository.findByCode(alertType.code)!!.createdAt, within(1, ChronoUnit.MICROS))
   }
   private fun createAlertTypeRequest() = CreateAlertTypeRequest("CO", "Description")
 

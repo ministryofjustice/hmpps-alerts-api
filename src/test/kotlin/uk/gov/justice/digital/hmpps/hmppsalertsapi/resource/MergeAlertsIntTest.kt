@@ -40,6 +40,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.mergeAlerts
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.Duration
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.UUID
 
 class MergeAlertsIntTest : IntegrationTestBase() {
@@ -446,7 +447,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
 
     await withPollDelay Duration.ofSeconds(2) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
 
-    val message = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    val message = hmppsEventsQueue.receiveAlertDomainEventOnQueue<MergeAlertsAdditionalInformation>()
 
     assertThat(message.eventType).isNotEqualTo(ALERT_CREATED.eventType)
     assertThat(message.eventType).isNotEqualTo(ALERT_DELETED.eventType)
@@ -469,7 +470,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
         ),
         version = 1,
         description = ALERTS_MERGED.description,
-        occurredAt = "",
+        occurredAt = ZonedDateTime.now(),
       ),
     )
   }
@@ -555,7 +556,7 @@ class MergeAlertsIntTest : IntegrationTestBase() {
     assertThat(alertRepository.findByPrisonNumber(prisonNumberMergeFrom)).isEmpty()
 
     await withPollDelay Duration.ofSeconds(2) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue()) {
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<MergeAlertsAdditionalInformation>()) {
       assertThat(eventType).isNotEqualTo(ALERT_DELETED.eventType)
     }
   }
