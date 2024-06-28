@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PrisonerAlertsChangedByPrisonNumber
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertNotFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ExistingActiveAlertWithCodeException
@@ -32,6 +33,7 @@ class AlertService(
   private val auditEventRepository: AuditEventRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
 ) {
+  @PrisonerAlertsChangedByPrisonNumber
   fun createAlert(prisonNumber: String, request: CreateAlert, context: AlertRequestContext) =
     request.let {
       // Perform database checks first prior to checks that require API calls

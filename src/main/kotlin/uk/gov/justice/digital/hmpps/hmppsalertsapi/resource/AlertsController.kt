@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PrisonerAlertsChangedByAlertUuid
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent
@@ -156,6 +157,7 @@ class AlertsController(
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_WRITER', '$ROLE_ALERTS_ADMIN', '$UPDATE_ALERT', '$ROLE_NOMIS_ALERTS')")
   @UsernameHeader
   @SourceHeader
+  @PrisonerAlertsChangedByAlertUuid
   fun updateAlert(
     @PathVariable
     @Parameter(
@@ -207,6 +209,7 @@ class AlertsController(
   @PreAuthorize("hasAnyRole('$ROLE_ALERTS_WRITER', '$ROLE_ALERTS_ADMIN', '$UPDATE_ALERT', '$ROLE_NOMIS_ALERTS')")
   @UsernameHeader
   @SourceHeader
+  @PrisonerAlertsChangedByAlertUuid
   fun deleteAlert(
     @PathVariable
     @Parameter(

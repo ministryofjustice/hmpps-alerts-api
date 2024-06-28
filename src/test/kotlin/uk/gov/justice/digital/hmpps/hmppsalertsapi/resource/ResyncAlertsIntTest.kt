@@ -14,7 +14,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
@@ -162,10 +161,11 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     assertThat(response.offenderBookId).isEqualTo(alert.offenderBookId)
     assertThat(response.alertSeq).isEqualTo(alert.alertSeq)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts<AlertAdditionalInformation>(2)
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
+    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts(3)
     assertThat(typeCounts[DomainEventType.ALERT_CREATED.eventType]).isEqualTo(1)
     assertThat(typeCounts[DomainEventType.ALERT_DELETED.eventType]).isEqualTo(1)
+    assertThat(typeCounts[DomainEventType.PERSON_ALERTS_CHANGED.eventType]).isEqualTo(1)
 
     val deletedAlert = alertRepository.findByAlertUuid(existingAlert.alertUuid)
     assertThat(deletedAlert).isNull()
@@ -187,11 +187,12 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     assertThat(response.offenderBookId).isEqualTo(alert.offenderBookId)
     assertThat(response.alertSeq).isEqualTo(alert.alertSeq)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
-    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts<AlertAdditionalInformation>(4)
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 5 }
+    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts(5)
     assertThat(typeCounts[DomainEventType.ALERT_CREATED.eventType]).isEqualTo(2)
     assertThat(typeCounts[DomainEventType.ALERT_UPDATED.eventType]).isEqualTo(1)
     assertThat(typeCounts[DomainEventType.ALERT_DELETED.eventType]).isEqualTo(1)
+    assertThat(typeCounts[DomainEventType.PERSON_ALERTS_CHANGED.eventType]).isEqualTo(1)
 
     // original alert has been deleted
     val deletedAlert = alertRepository.findByAlertUuid(originalAlert.alertUuid)
@@ -231,8 +232,9 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
     webTestClient.resyncAlerts(request = emptyList())
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
-    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts<AlertAdditionalInformation>()
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts(2)
+    assertThat(typeCounts[DomainEventType.PERSON_ALERTS_CHANGED.eventType]).isEqualTo(1)
     assertThat(typeCounts[DomainEventType.ALERT_DELETED.eventType]).isEqualTo(1)
     val deletedAlert = alertRepository.findByAlertUuid(existingAlert.alertUuid)
     assertThat(deletedAlert).isNull()
@@ -395,7 +397,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
-  private fun WebTestClient.resyncAlerts(role: String = ROLE_NOMIS_ALERTS, request: Collection<ResyncAlert>) =
+  fun WebTestClient.resyncAlerts(role: String = ROLE_NOMIS_ALERTS, request: Collection<ResyncAlert>) =
     resyncResponseSpec(role, request)
       .expectStatus().isCreated
       .expectBodyList(ResyncedAlert::class.java)

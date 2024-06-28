@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PrisonerAlertsChangedInBulk
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toBulkAlertAlertModel
@@ -30,8 +31,9 @@ class BulkAlertService(
   private val prisonerSearchClient: PrisonerSearchClient,
   private val objectMapper: ObjectMapper,
 ) {
-  fun bulkCreateAlerts(request: BulkCreateAlerts, context: AlertRequestContext, batchSize: Int = 1000) =
-    request.let {
+  @PrisonerAlertsChangedInBulk
+  fun bulkCreateAlerts(bulk: BulkCreateAlerts, context: AlertRequestContext, batchSize: Int = 1000) =
+    bulk.let {
       require(batchSize in 1..1000) {
         "Batch size must be between 1 and 1000"
       }

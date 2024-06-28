@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PrisonerAlertsChangedByPrisonNumber
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
@@ -18,6 +19,7 @@ class ResyncAlertsService(
   private val alertRepository: AlertRepository,
   private val alertCodeRepository: AlertCodeRepository,
 ) {
+  @PrisonerAlertsChangedByPrisonNumber
   fun resyncAlerts(prisonNumber: String, alerts: List<ResyncAlert>): List<ResyncedAlert> {
     val alertCodes = getValidatedAlertCodes(alerts)
     val existingAlerts = alertRepository.findByPrisonNumber(prisonNumber)

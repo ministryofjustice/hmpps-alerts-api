@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMo
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.EXPIRE_AND_REPLACE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.PERSON_ALERTS_CHANGED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
@@ -362,7 +363,10 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
     val response = webTestClient.bulkCreateAlert(request)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
 
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
@@ -413,10 +417,16 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       }
     }
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(existingActiveAlert.alertUuid.toString())
+    }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
@@ -453,10 +463,16 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       }
     }
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
+    }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
@@ -487,10 +503,16 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       assertThat(alertRepository.findByAlertUuid(alertUuid)!!.isActive()).isFalse()
     }
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 5 }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(existingActiveAlert.alertUuid.toString())
+    }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
@@ -529,10 +551,16 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       }
     }
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 5 }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
+    }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
@@ -578,7 +606,10 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     assertThat(alertsForFirstPrisonerNotInList.single { it.isActive() }.alertCode.code).isEqualTo("ADSC")
     assertThat(alertsForSecondPrisonerNotInList.filter { it.isActive() }).isEmpty()
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
     val messages = listOf(
       hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>(),
       hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>(),

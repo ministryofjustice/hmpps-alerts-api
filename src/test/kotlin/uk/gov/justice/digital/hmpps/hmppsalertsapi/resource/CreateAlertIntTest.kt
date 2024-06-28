@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalI
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.PERSON_ALERTS_CHANGED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
@@ -505,7 +506,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
     val alert = webTestClient.createAlert(source = DPS, request = request)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
     val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
 
     assertThat(event).isEqualTo(
@@ -534,7 +538,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
     val alert = webTestClient.createAlert(source = NOMIS, request = request)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
     val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
 
     assertThat(event).isEqualTo(
@@ -665,7 +672,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
-  private fun WebTestClient.createAlert(
+  fun WebTestClient.createAlert(
     source: Source = DPS,
     request: CreateAlert,
   ) =

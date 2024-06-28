@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertBaseAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer.setLocalStackProperties
@@ -89,20 +90,26 @@ abstract class IntegrationTestBase {
   internal fun HmppsQueue.receiveMessageOnQueue() =
     sqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build()).get().messages().single()
 
-  internal final inline fun <reified T : AlertBaseAdditionalInformation> HmppsQueue.receiveMessageTypeCounts(
+  internal final fun HmppsQueue.receiveMessageTypeCounts(
     messageCount: Int = 1,
   ) =
     sqsClient.receiveMessage(
       ReceiveMessageRequest.builder().maxNumberOfMessages(messageCount).queueUrl(queueUrl).build(),
     ).get().messages()
       .map { objectMapper.readValue<MsgBody>(it.body()) }
-      .map { objectMapper.readValue<AlertDomainEvent<T>>(it.message) }
+      .map { objectMapper.readValue<EventType>(it.message) }
       .groupingBy { it.eventType }.eachCount()
+
+  data class EventType(val eventType: String)
 
   internal final inline fun <reified T : AlertBaseAdditionalInformation> HmppsQueue.receiveAlertDomainEventOnQueue() =
     receiveMessageOnQueue()
       .let { objectMapper.readValue<MsgBody>(it.body()) }
       .let { objectMapper.readValue<AlertDomainEvent<T>>(it.message) }
+
+  internal fun HmppsQueue.hmppsDomainEventOnQueue() = receiveMessageOnQueue()
+    .let { objectMapper.readValue<MsgBody>(it.body()) }
+    .let { objectMapper.readValue<HmppsDomainEvent>(it.message) }
 
   data class MsgBody(@JsonProperty("Message") val message: String)
 

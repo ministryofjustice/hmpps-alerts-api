@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.PERSON_ALERTS_CHANGED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
@@ -249,9 +250,14 @@ class DeleteAlertIntTest : IntegrationTestBase() {
     val alert = createAlert()
 
     webTestClient.deleteAlert(alert.alertUuid, DPS)
-
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
     val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
     val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
@@ -280,8 +286,14 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
     webTestClient.deleteAlert(alert.alertUuid, NOMIS)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
     val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
     val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)

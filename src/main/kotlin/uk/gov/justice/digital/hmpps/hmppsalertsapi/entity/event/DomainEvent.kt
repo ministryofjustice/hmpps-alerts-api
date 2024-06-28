@@ -21,14 +21,17 @@ data class HmppsDomainEvent(
   override val detailUrl: String? = null,
   override val occurredAt: ZonedDateTime = ZonedDateTime.now(),
   override val description: String? = null,
-  override val additionalInformation: AdditionalInformation,
+  override val additionalInformation: HmppsAdditionalInformation = HmppsAdditionalInformation(),
   override val personReference: PersonReference = PersonReference(),
 ) : DomainEvent
 
 data class PersonReference(val identifiers: List<PersonIdentifier> = listOf()) {
-  fun findCrn() = get("CRN")
-  fun findNomsNumber() = get("NOMS")
   operator fun get(key: String) = identifiers.find { it.type == key }?.value
+  fun findNomsNumber() = get("NOMS")
+
+  companion object {
+    fun withPrisonNumber(prisonNumber: String) = PersonReference(listOf(PersonIdentifier("NOMS", prisonNumber)))
+  }
 }
 
 data class PersonIdentifier(val type: String, val value: String)
@@ -50,6 +53,9 @@ abstract class AlertBaseDomainEvent<T : AlertBaseAdditionalInformation> : Domain
 }
 
 interface AdditionalInformation
+
+data class HmppsAdditionalInformation(private val mutableMap: MutableMap<String, Any?> = mutableMapOf()) :
+  AdditionalInformation
 
 interface AlertBaseAdditionalInformation : AdditionalInformation {
   val url: String

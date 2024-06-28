@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERTS_MERGED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.PERSON_ALERTS_CHANGED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -445,34 +446,40 @@ class MergeAlertsIntTest : IntegrationTestBase() {
       assertThat(alertsCreated).hasSize(1)
     }
 
-    await withPollDelay Duration.ofSeconds(2) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    await withPollDelay Duration.ofSeconds(2) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
+    repeat(2) {
+      with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+        assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+      }
+    }
 
     val message = hmppsEventsQueue.receiveAlertDomainEventOnQueue<MergeAlertsAdditionalInformation>()
 
     assertThat(message.eventType).isNotEqualTo(ALERT_CREATED.eventType)
     assertThat(message.eventType).isNotEqualTo(ALERT_DELETED.eventType)
 
-    assertThat(message).usingRecursiveComparison().ignoringFields("occurredAt", "additionalInformation.mergedAlerts.alertUuid").isEqualTo(
-      AlertDomainEvent(
-        eventType = ALERTS_MERGED.eventType,
-        additionalInformation = MergeAlertsAdditionalInformation(
-          url = "http://localhost:8080/prisoners/${request.prisonNumberMergeTo}/alerts?size=2147483647",
-          prisonNumberMergeFrom = request.prisonNumberMergeFrom,
-          prisonNumberMergeTo = request.prisonNumberMergeTo,
-          mergedAlerts = listOf(
-            MergedAlert(
-              offenderBookId = 12345,
-              alertSeq = 1,
-              alertUuid = UUID.randomUUID(),
+    assertThat(message).usingRecursiveComparison()
+      .ignoringFields("occurredAt", "additionalInformation.mergedAlerts.alertUuid").isEqualTo(
+        AlertDomainEvent(
+          eventType = ALERTS_MERGED.eventType,
+          additionalInformation = MergeAlertsAdditionalInformation(
+            url = "http://localhost:8080/prisoners/${request.prisonNumberMergeTo}/alerts?size=2147483647",
+            prisonNumberMergeFrom = request.prisonNumberMergeFrom,
+            prisonNumberMergeTo = request.prisonNumberMergeTo,
+            mergedAlerts = listOf(
+              MergedAlert(
+                offenderBookId = 12345,
+                alertSeq = 1,
+                alertUuid = UUID.randomUUID(),
+              ),
             ),
+            source = NOMIS,
           ),
-          source = NOMIS,
+          version = 1,
+          description = ALERTS_MERGED.description,
+          occurredAt = ZonedDateTime.now(),
         ),
-        version = 1,
-        description = ALERTS_MERGED.description,
-        occurredAt = ZonedDateTime.now(),
-      ),
-    )
+      )
   }
 
   @Test
@@ -555,7 +562,12 @@ class MergeAlertsIntTest : IntegrationTestBase() {
     assertThat(response.alertsDeleted).isEqualTo(prisonNumberMergeFromAlertUuids)
     assertThat(alertRepository.findByPrisonNumber(prisonNumberMergeFrom)).isEmpty()
 
-    await withPollDelay Duration.ofSeconds(2) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    await withPollDelay Duration.ofSeconds(2) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
+    repeat(2) {
+      with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+        assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+      }
+    }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<MergeAlertsAdditionalInformation>()) {
       assertThat(eventType).isNotEqualTo(ALERT_DELETED.eventType)
     }
