@@ -40,7 +40,7 @@ import java.util.UUID
 class PersonAlertsChangedIntTest : IntegrationTestBase() {
 
   @Test
-  fun `create alert creates a person alerts changed event`() {
+  fun `create alert publishes a person alerts changed event`() {
     webTestClient.createAlert(
       request = CreateAlert(
         prisonNumber = PRISON_NUMBER,
@@ -54,10 +54,13 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     verifyPersonAlertsChanged(PRISON_NUMBER)
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
+      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
+    }
   }
 
   @Test
-  fun `update alert creates a person alerts changed event`() {
+  fun `update alert publishes a person alerts changed event`() {
     val alert = createAlert()
     webTestClient.updateAlert(
       alertUuid = alert.alertUuid,
@@ -78,7 +81,7 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `delete alert creates a person alerts changed event`() {
+  fun `delete alert publishes a person alerts changed event`() {
     val alert = createAlert()
     webTestClient.deleteAlert(alertUuid = alert.alertUuid)
 
@@ -90,7 +93,7 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `resync of alerts creates a person alerts changed event`() {
+  fun `resync of alerts publishes a person alerts changed event`() {
     webTestClient.resyncAlert(
       request = listOf(
         ResyncAlert(
@@ -119,7 +122,7 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `merge alerts creates a person alerts changed event for both prisoner numbers`() {
+  fun `merge alerts publishes a person alerts changed event for both prisoner numbers`() {
     val request = MergeAlerts(
       prisonNumberMergeFrom = "B2345BB",
       prisonNumberMergeTo = PRISON_NUMBER,
@@ -148,7 +151,7 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `bulk alert creates a person alerts changed event for each prisoner number`() {
+  fun `bulk alert publishes a person alerts changed event for each prisoner number`() {
     val prisonerNumbers = listOf("A1234BC", "B2345CD", "C3456DE")
     prisonerSearch.stubGetPrisoners(prisonerNumbers)
 
@@ -162,7 +165,9 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     webTestClient.bulkCreateAlert(request)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 6 }
-    prisonerNumbers.forEach(::verifyPersonAlertsChanged)
+    val types = hmppsEventsQueue.receiveMessageTypeCounts(6)
+    assertThat(types[PERSON_ALERTS_CHANGED.eventType]).isEqualTo(3)
+    assertThat(types[ALERT_CREATED.eventType]).isEqualTo(3)
   }
 
   private fun verifyPersonAlertsChanged(prisonNumber: String) {
