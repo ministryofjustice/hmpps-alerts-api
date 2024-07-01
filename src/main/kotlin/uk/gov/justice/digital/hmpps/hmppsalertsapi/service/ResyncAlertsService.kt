@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PublishPersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
@@ -18,9 +19,13 @@ class ResyncAlertsService(
   private val alertRepository: AlertRepository,
   private val alertCodeRepository: AlertCodeRepository,
 ) {
+  @PublishPersonAlertsChanged
   fun resyncAlerts(prisonNumber: String, alerts: List<ResyncAlert>): List<ResyncedAlert> {
     val alertCodes = getValidatedAlertCodes(alerts)
     val existingAlerts = alertRepository.findByPrisonNumber(prisonNumber)
+    alerts.logActiveToBeforeActiveFrom(prisonNumber)
+    alerts.logDuplicateActiveAlerts(prisonNumber)
+    val newAlerts = alerts.map { ResyncAlertMerge(it, existingAlerts.find(it)) }.map { it.alertFor(prisonNumber, alertCodes) }
     existingAlerts.forEach {
       it.delete(
         deletedBy = "SYS",
@@ -31,9 +36,7 @@ class ResyncAlertsService(
       )
       alertRepository.saveAll(existingAlerts)
     }
-    alerts.logActiveToBeforeActiveFrom(prisonNumber)
-    alerts.logDuplicateActiveAlerts(prisonNumber)
-    return alerts.map { it.alertFor(prisonNumber, alertCodes) }
+    return newAlerts
   }
 
   private fun getValidatedAlertCodes(alerts: List<ResyncAlert>): Map<String, AlertCode> {
@@ -46,25 +49,31 @@ class ResyncAlertsService(
     return alertCodes
   }
 
-  private fun ResyncAlert.alertFor(prisonNumber: String, alertCodes: Map<String, AlertCode>) = Alert(
-    alertUuid = UUID.randomUUID(),
-    alertCode = alertCodes[alertCode]!!,
-    prisonNumber = prisonNumber,
-    description = description,
-    authorisedBy = authorisedBy,
-    activeFrom = activeFrom,
-    activeTo = activeTo,
-    createdAt = createdAt,
-  ).let {
-    it.lastModifiedAt = lastModifiedAt
-    it.resync(
-      createdBy = createdBy,
-      createdByDisplayName = createdByDisplayName,
-      lastModifiedBy = lastModifiedBy,
-      lastModifiedByDisplayName = lastModifiedByDisplayName,
-    )
-    alertRepository.save(it)
-    ResyncedAlert(offenderBookId, alertSeq, it.alertUuid)
+  private fun ResyncAlertMerge.alertFor(prisonNumber: String, alertCodes: Map<String, AlertCode>): ResyncedAlert {
+    with(resync) {
+      val alert = Alert(
+        alertUuid = UUID.randomUUID(),
+        alertCode = alertCodes[alertCode]!!,
+        prisonNumber = prisonNumber,
+        description = description,
+        authorisedBy = authorisedBy,
+        activeFrom = activeFrom,
+        activeTo = activeTo,
+        createdAt = createdAt,
+      )
+      alert.let {
+        it.lastModifiedAt = lastModifiedAt
+        it.resync(
+          createdBy = createdBy,
+          createdByDisplayName = createdByDisplayName,
+          lastModifiedBy = lastModifiedBy,
+          lastModifiedByDisplayName = lastModifiedByDisplayName,
+          original,
+        )
+        alertRepository.save(it)
+        return ResyncedAlert(offenderBookId, alertSeq, it.alertUuid)
+      }
+    }
   }
 
   private fun List<ResyncAlert>.logActiveToBeforeActiveFrom(prisonNumber: String) {
@@ -85,7 +94,13 @@ class ResyncAlertsService(
     }
   }
 
+  private fun Collection<Alert>.find(resync: ResyncAlert): Alert? = firstOrNull {
+    it.alertCode.code == resync.alertCode && it.activeFrom == resync.activeFrom && it.activeTo == resync.activeTo
+  }
+
   companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
   }
 }
+
+private data class ResyncAlertMerge(val resync: ResyncAlert, val original: Alert?)

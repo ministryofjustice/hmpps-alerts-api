@@ -24,7 +24,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_VULNERABILITY
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
@@ -149,8 +148,8 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
     webTestClient.deleteAlertCode(alertCode.code)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
-    val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
+    val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
 
     assertThat(createAlertEvent.eventType).isEqualTo(DomainEventType.ALERT_CODE_CREATED.eventType)
     assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(deleteAlertEvent.additionalInformation.identifier())
@@ -167,7 +166,7 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
         deleteAlertEvent.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(deleteAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(alertCodeRepository.findByCode(alertCode.code)!!.deactivatedAt, within(1, ChronoUnit.MICROS))
+    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(alertCodeRepository.findByCode(alertCode.code)!!.deactivatedAt, within(1, ChronoUnit.MICROS))
   }
 
   private fun createAlertCodeRequest(

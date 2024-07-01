@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import software.amazon.awssdk.services.sns.model.PublishRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.DomainEvent
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 
@@ -19,7 +18,7 @@ class DomainEventPublisher(
     hmppsQueueService.findByTopicId("hmppseventtopic") ?: throw IllegalStateException("hmppseventtopic not found")
   }
 
-  fun <T : AdditionalInformation> publish(domainEvent: DomainEvent<T>) {
+  fun publish(domainEvent: DomainEvent) {
     val request = PublishRequest.builder()
       .topicArn(domainEventsTopic.arn)
       .message(objectMapper.writeValueAsString(domainEvent))
@@ -35,7 +34,7 @@ class DomainEventPublisher(
     }
   }
 
-  private fun <T : AdditionalInformation> DomainEvent<T>.attributes() =
+  private fun DomainEvent.attributes() =
     mapOf("eventType" to MessageAttributeValue.builder().dataType("String").stringValue(eventType).build())
 
   private companion object {

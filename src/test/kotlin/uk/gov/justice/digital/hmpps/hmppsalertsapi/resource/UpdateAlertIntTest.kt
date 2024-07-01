@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.PERSON_ALERTS_CHANGED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
@@ -36,7 +37,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert as AlertEntity
@@ -514,9 +514,15 @@ Comment '$appendComment' was added""",
 
     webTestClient.updateAlert(alert.alertUuid, DPS, updateAlertRequest())
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
-    val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
+    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
+    val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
     assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(updateAlertEvent.additionalInformation.identifier())
@@ -536,7 +542,7 @@ Comment '$appendComment' was added""",
       ),
     )
     assertThat(
-      OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime(),
+      updateAlertEvent.occurredAt.toLocalDateTime(),
     ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
   }
 
@@ -546,9 +552,15 @@ Comment '$appendComment' was added""",
 
     webTestClient.updateAlert(alert.alertUuid, NOMIS, updateAlertRequest())
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
-    val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
+    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
+    val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+    }
 
     assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
     assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(updateAlertEvent.additionalInformation.identifier())
@@ -568,7 +580,7 @@ Comment '$appendComment' was added""",
       ),
     )
     assertThat(
-      OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime(),
+      updateAlertEvent.occurredAt.toLocalDateTime(),
     ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
   }
 

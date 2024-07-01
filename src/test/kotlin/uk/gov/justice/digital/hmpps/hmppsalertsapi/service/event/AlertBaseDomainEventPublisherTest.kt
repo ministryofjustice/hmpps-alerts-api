@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service.event
 
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonMapperBuilder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -11,9 +12,9 @@ import org.mockito.kotlin.whenever
 import software.amazon.awssdk.services.sns.SnsAsyncClient
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import software.amazon.awssdk.services.sns.model.PublishRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.toOffsetString
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -23,11 +24,11 @@ import uk.gov.justice.hmpps.sqs.HmppsTopic
 import java.time.LocalDateTime
 import java.util.UUID
 
-class DomainEventPublisherTest {
+class AlertBaseDomainEventPublisherTest {
   private val hmppsQueueService = mock<HmppsQueueService>()
   private val domainEventsTopic = mock<HmppsTopic>()
   private val domainEventsSnsClient = mock<SnsAsyncClient>()
-  private val objectMapper = jacksonMapperBuilder().build()
+  private val objectMapper = jacksonMapperBuilder().addModule(JavaTimeModule()).build()
 
   private val domainEventsTopicArn = "arn:aws:sns:eu-west-2:000000000000:${UUID.randomUUID()}"
   private val baseUrl = "http://localhost:8080"
@@ -36,7 +37,7 @@ class DomainEventPublisherTest {
   fun `throws IllegalStateException when topic not found`() {
     whenever(hmppsQueueService.findByTopicId("hmppseventtopic")).thenReturn(null)
     val domainEventPublisher = DomainEventPublisher(hmppsQueueService, objectMapper)
-    val exception = assertThrows<IllegalStateException> { domainEventPublisher.publish(mock<AlertDomainEvent>()) }
+    val exception = assertThrows<IllegalStateException> { domainEventPublisher.publish(mock<AlertDomainEvent<AlertAdditionalInformation>>()) }
     assertThat(exception.message).isEqualTo("hmppseventtopic not found")
   }
 
@@ -58,7 +59,7 @@ class DomainEventPublisherTest {
         source = NOMIS,
       ),
       description = ALERT_CREATED.description,
-      occurredAt = occurredAt.toOffsetString(),
+      occurredAt = occurredAt.toZoneDateTime(),
     )
 
     domainEventPublisher.publish(domainEvent)
@@ -78,7 +79,7 @@ class DomainEventPublisherTest {
     whenever(domainEventsTopic.snsClient).thenReturn(domainEventsSnsClient)
     whenever(domainEventsTopic.arn).thenReturn(domainEventsTopicArn)
     val domainEventPublisher = DomainEventPublisher(hmppsQueueService, objectMapper)
-    val domainEvent = mock<AlertDomainEvent>()
+    val domainEvent = mock<AlertDomainEvent<AlertAdditionalInformation>>()
     whenever(domainEventsSnsClient.publish(any<PublishRequest>())).thenThrow(RuntimeException("Failed to publish"))
 
     domainEventPublisher.publish(domainEvent)

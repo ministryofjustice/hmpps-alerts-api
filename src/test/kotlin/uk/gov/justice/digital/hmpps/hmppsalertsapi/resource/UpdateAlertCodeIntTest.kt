@@ -23,7 +23,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_VULNERABILITY
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
-import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
 class UpdateAlertCodeIntTest : IntegrationTestBase() {
@@ -180,8 +179,8 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
     webTestClient.updateAlertCodeDescription(alertCode.code, "New Description Value")
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
-    val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
+    val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
 
     assertThat(createAlertEvent.eventType).isEqualTo(DomainEventType.ALERT_CODE_CREATED.eventType)
     assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(updateAlertEvent.additionalInformation.identifier())
@@ -198,7 +197,7 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
         updateAlertEvent.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(updateAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(alertCodeRepository.findByCode(alertCode.code)!!.modifiedAt, within(1, ChronoUnit.MICROS))
+    assertThat(updateAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(alertCodeRepository.findByCode(alertCode.code)!!.modifiedAt, within(1, ChronoUnit.MICROS))
   }
 
   private fun createAlertCode(): AlertCode {

@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PersonAlertsChanged
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PublishPersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
@@ -25,46 +27,47 @@ class MergeAlertService(
   private val alertRepository: AlertRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
 ) {
-  fun mergePrisonerAlerts(request: MergeAlerts): MergedAlerts {
+  @PublishPersonAlertsChanged
+  fun mergePrisonerAlerts(mergeAlerts: MergeAlerts): MergedAlerts {
     val mergedAt = LocalDateTime.now()
-    val alertCodes = request.alertCodes()
-    request.checkForNotFoundAlertCodes(alertCodes)
-    request.validatePrisonNumberMergeTo()
-    request.logActiveToBeforeActiveFrom(request.prisonNumberMergeTo)
+    val alertCodes = mergeAlerts.alertCodes()
+    mergeAlerts.checkForNotFoundAlertCodes(alertCodes)
+    mergeAlerts.validatePrisonNumberMergeTo()
+    mergeAlerts.logActiveToBeforeActiveFrom(mergeAlerts.prisonNumberMergeTo)
 
-    val retainedAlerts = alertRepository.findByAlertUuidIn(request.retainedAlertUuids)
+    val retainedAlerts = alertRepository.findByAlertUuidIn(mergeAlerts.retainedAlertUuids)
 
-    request.retainedAlertUuids.filter { uuid -> retainedAlerts.none { it.alertUuid == uuid } }
+    mergeAlerts.retainedAlertUuids.filter { uuid -> retainedAlerts.none { it.alertUuid == uuid } }
       .takeIf { it.isNotEmpty() }?.let {
         throw IllegalArgumentException("Could not find alert(s) with id(s) ${it.join()}")
       }
 
     val (prisonNumberOfAlertsToReassign, prisonNumberOfAlertsToCopy) = retainedAlerts.groupBy { it.prisonNumber }.keys.also {
       if (it.size > 1) {
-        throw IllegalArgumentException("Alert(s) with id(s) ${request.retainedAlertUuids.join()} are not all associated with the same prison numbers")
-      } else if (it.any { key -> key != request.prisonNumberMergeTo && key != request.prisonNumberMergeFrom }) {
-        throw IllegalArgumentException("Alert(s) with id(s) ${request.retainedAlertUuids.join()} are not associated with either '${request.prisonNumberMergeFrom}' or '${request.prisonNumberMergeTo}'")
+        throw IllegalArgumentException("Alert(s) with id(s) ${mergeAlerts.retainedAlertUuids.join()} are not all associated with the same prison numbers")
+      } else if (it.any { key -> key != mergeAlerts.prisonNumberMergeTo && key != mergeAlerts.prisonNumberMergeFrom }) {
+        throw IllegalArgumentException("Alert(s) with id(s) ${mergeAlerts.retainedAlertUuids.join()} are not associated with either '${mergeAlerts.prisonNumberMergeFrom}' or '${mergeAlerts.prisonNumberMergeTo}'")
       }
     }.let {
-      if (it.isEmpty() || it.single() == request.prisonNumberMergeTo) {
-        Pair(request.prisonNumberMergeTo, request.prisonNumberMergeFrom)
+      if (it.isEmpty() || it.single() == mergeAlerts.prisonNumberMergeTo) {
+        Pair(mergeAlerts.prisonNumberMergeTo, mergeAlerts.prisonNumberMergeFrom)
       } else {
-        Pair(request.prisonNumberMergeFrom, request.prisonNumberMergeTo)
+        Pair(mergeAlerts.prisonNumberMergeFrom, mergeAlerts.prisonNumberMergeTo)
       }
     }
 
     val alertsToReassign = alertRepository.findByPrisonNumber(prisonNumberOfAlertsToReassign).apply {
-      if (size != request.retainedAlertUuids.size) {
+      if (size != mergeAlerts.retainedAlertUuids.size) {
         throw IllegalArgumentException("Retained Alert UUIDs does not cover all the alerts associated to '$prisonNumberOfAlertsToReassign'")
       }
     }
     val alertsToDelete = alertRepository.findByPrisonNumber(prisonNumberOfAlertsToCopy)
     val alertsCreated = mutableListOf<MergedAlert>()
 
-    val newAlerts = request.newAlerts.map {
+    val newAlerts = mergeAlerts.newAlerts.map {
       val alert = it.toAlertEntity(
-        request.prisonNumberMergeFrom,
-        request.prisonNumberMergeTo,
+        mergeAlerts.prisonNumberMergeFrom,
+        mergeAlerts.prisonNumberMergeTo,
         alertCodes[it.alertCode]!!,
         mergedAt,
         false,
@@ -83,10 +86,12 @@ class MergeAlertService(
     // since there is not a single entity to represent the whole merge operation
     var domainEventRegistered = false
     val domainEvent = AlertsMergedEvent(
-      prisonNumberMergeFrom = request.prisonNumberMergeFrom,
-      prisonNumberMergeTo = request.prisonNumberMergeTo,
+      prisonNumberMergeFrom = mergeAlerts.prisonNumberMergeFrom,
+      prisonNumberMergeTo = mergeAlerts.prisonNumberMergeTo,
       mergedAlerts = alertsCreated,
     )
+    PersonAlertsChanged.registerChange(mergeAlerts.prisonNumberMergeFrom)
+    PersonAlertsChanged.registerChange(mergeAlerts.prisonNumberMergeTo)
 
     newAlerts.map {
       if (!domainEventRegistered) {
@@ -95,7 +100,7 @@ class MergeAlertService(
       }
       alertRepository.save(it)
     }.also {
-      it.logDuplicateActiveAlerts(request.prisonNumberMergeTo)
+      it.logDuplicateActiveAlerts(mergeAlerts.prisonNumberMergeTo)
       alertRepository.flush()
     }
 
@@ -110,10 +115,10 @@ class MergeAlertService(
       },
     )
 
-    if (prisonNumberOfAlertsToReassign != request.prisonNumberMergeTo) {
+    if (prisonNumberOfAlertsToReassign != mergeAlerts.prisonNumberMergeTo) {
       alertRepository.saveAllAndFlush(
         alertsToReassign.onEach {
-          it.reassign(request.prisonNumberMergeTo)
+          it.reassign(mergeAlerts.prisonNumberMergeTo)
           if (!domainEventRegistered) {
             it.registerAlertsMergedEvent(domainEvent)
             domainEventRegistered = true
@@ -122,11 +127,11 @@ class MergeAlertService(
       )
     }
 
-    if (alertsDeleted.size != request.newAlerts.size) {
+    if (alertsDeleted.size != mergeAlerts.newAlerts.size) {
       log.warn(
         "Non-matching count while copying alerts " +
-          "from prison number $prisonNumberOfAlertsToCopy to ${request.prisonNumberMergeTo}: " +
-          "${alertsDeleted.size} deleted, and ${request.newAlerts.size} created.",
+          "from prison number $prisonNumberOfAlertsToCopy to ${mergeAlerts.prisonNumberMergeTo}: " +
+          "${alertsDeleted.size} deleted, and ${mergeAlerts.newAlerts.size} created.",
       )
     }
 

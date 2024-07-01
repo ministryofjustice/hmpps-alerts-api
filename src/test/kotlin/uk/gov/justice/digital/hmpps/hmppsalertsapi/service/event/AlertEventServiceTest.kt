@@ -8,11 +8,11 @@ import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.EventProperties
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.toOffsetString
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -42,7 +42,7 @@ class AlertEventServiceTest {
 
     alertEventService.handleAlertEvent(alertEvent)
 
-    val domainEventCaptor = argumentCaptor<AlertDomainEvent>()
+    val domainEventCaptor = argumentCaptor<AlertDomainEvent<AlertAdditionalInformation>>()
     verify(domainEventPublisher).publish(domainEventCaptor.capture())
     assertThat(domainEventCaptor.firstValue).isEqualTo(
       AlertDomainEvent(
@@ -55,7 +55,7 @@ class AlertEventServiceTest {
           source = alertEvent.source,
         ),
         description = ALERT_CREATED.description,
-        occurredAt = alertEvent.occurredAt.toOffsetString(),
+        occurredAt = alertEvent.occurredAt.toZoneDateTime(),
       ),
     )
   }
@@ -75,6 +75,6 @@ class AlertEventServiceTest {
 
     alertEventService.handleAlertEvent(alertEvent)
 
-    verify(domainEventPublisher, never()).publish(any<AlertDomainEvent>())
+    verify(domainEventPublisher, never()).publish(any<AlertDomainEvent<AlertAdditionalInformation>>())
   }
 }

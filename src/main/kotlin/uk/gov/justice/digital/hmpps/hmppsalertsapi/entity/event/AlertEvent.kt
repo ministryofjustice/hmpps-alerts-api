@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event
 
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERTS_MERGED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
@@ -10,8 +11,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlert
 import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 abstract class AlertEvent {
@@ -21,9 +20,9 @@ abstract class AlertEvent {
   abstract val occurredAt: LocalDateTime
   abstract val source: Source
 
-  abstract fun toDomainEvent(baseUrl: String): AlertDomainEvent
+  abstract fun toDomainEvent(baseUrl: String): AlertDomainEvent<AlertAdditionalInformation>
 
-  protected fun toDomainEvent(type: DomainEventType, baseUrl: String): AlertDomainEvent =
+  protected fun toDomainEvent(type: DomainEventType, baseUrl: String): AlertDomainEvent<AlertAdditionalInformation> =
     AlertDomainEvent(
       eventType = type.eventType,
       additionalInformation = AlertAdditionalInformation(
@@ -34,7 +33,7 @@ abstract class AlertEvent {
         source = source,
       ),
       description = type.description,
-      occurredAt = occurredAt.toOffsetString(),
+      occurredAt = occurredAt.toZoneDateTime(),
     )
 }
 
@@ -55,8 +54,7 @@ data class AlertCreatedEvent(
       "from source '$source' "
   }
 
-  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
-    toDomainEvent(ALERT_CREATED, baseUrl)
+  override fun toDomainEvent(baseUrl: String) = toDomainEvent(ALERT_CREATED, baseUrl)
 }
 
 data class AlertUpdatedEvent(
@@ -87,8 +85,7 @@ data class AlertUpdatedEvent(
       "comment appended: $commentAppended."
   }
 
-  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
-    toDomainEvent(ALERT_UPDATED, baseUrl)
+  override fun toDomainEvent(baseUrl: String) = toDomainEvent(ALERT_UPDATED, baseUrl)
 }
 
 data class AlertDeletedEvent(
@@ -108,17 +105,19 @@ data class AlertDeletedEvent(
       "from source '$source' "
   }
 
-  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
-    toDomainEvent(ALERT_DELETED, baseUrl)
+  override fun toDomainEvent(baseUrl: String) = toDomainEvent(ALERT_DELETED, baseUrl)
 }
 
 abstract class AlertCodeEvent {
   abstract val alertCode: String
   abstract val occurredAt: LocalDateTime
 
-  abstract fun toDomainEvent(baseUrl: String): AlertDomainEvent
+  abstract fun toDomainEvent(baseUrl: String): AlertDomainEvent<ReferenceDataAdditionalInformation>
 
-  protected fun toDomainEvent(type: DomainEventType, baseUrl: String): AlertDomainEvent =
+  protected fun toDomainEvent(
+    type: DomainEventType,
+    baseUrl: String,
+  ): AlertDomainEvent<ReferenceDataAdditionalInformation> =
     AlertDomainEvent(
       eventType = type.eventType,
       additionalInformation = ReferenceDataAdditionalInformation(
@@ -127,7 +126,7 @@ abstract class AlertCodeEvent {
         source = DPS,
       ),
       description = type.description,
-      occurredAt = occurredAt.toOffsetString(),
+      occurredAt = occurredAt.toZoneDateTime(),
     )
 }
 
@@ -136,32 +135,28 @@ data class AlertCodeCreatedEvent(
   override val occurredAt: LocalDateTime,
 
 ) : AlertCodeEvent() {
-  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
-    toDomainEvent(DomainEventType.ALERT_CODE_CREATED, baseUrl)
+  override fun toDomainEvent(baseUrl: String) = toDomainEvent(DomainEventType.ALERT_CODE_CREATED, baseUrl)
 }
 
 data class AlertCodeDeactivatedEvent(
   override val alertCode: String,
   override val occurredAt: LocalDateTime,
 ) : AlertCodeEvent() {
-  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
-    toDomainEvent(DomainEventType.ALERT_CODE_DEACTIVATED, baseUrl)
+  override fun toDomainEvent(baseUrl: String) = toDomainEvent(DomainEventType.ALERT_CODE_DEACTIVATED, baseUrl)
 }
 
 data class AlertCodeReactivatedEvent(
   override val alertCode: String,
   override val occurredAt: LocalDateTime,
 ) : AlertCodeEvent() {
-  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
-    toDomainEvent(DomainEventType.ALERT_CODE_REACTIVATED, baseUrl)
+  override fun toDomainEvent(baseUrl: String) = toDomainEvent(DomainEventType.ALERT_CODE_REACTIVATED, baseUrl)
 }
 
 data class AlertCodeUpdatedEvent(
   override val alertCode: String,
   override val occurredAt: LocalDateTime,
 ) : AlertCodeEvent() {
-  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
-    toDomainEvent(DomainEventType.ALERT_CODE_UPDATED, baseUrl)
+  override fun toDomainEvent(baseUrl: String) = toDomainEvent(DomainEventType.ALERT_CODE_UPDATED, baseUrl)
 }
 
 data class AlertsMergedEvent(
@@ -170,7 +165,7 @@ data class AlertsMergedEvent(
   val mergedAlerts: List<MergedAlert>,
   val occurredAt: LocalDateTime = LocalDateTime.now(),
 ) {
-  fun toDomainEvent(baseUrl: String): AlertDomainEvent =
+  fun toDomainEvent(baseUrl: String): AlertDomainEvent<MergeAlertsAdditionalInformation> =
     AlertDomainEvent(
       eventType = ALERTS_MERGED.eventType,
       additionalInformation = MergeAlertsAdditionalInformation(
@@ -181,7 +176,7 @@ data class AlertsMergedEvent(
         source = NOMIS,
       ),
       description = ALERTS_MERGED.description,
-      occurredAt = occurredAt.toOffsetString(),
+      occurredAt = occurredAt.toZoneDateTime(),
     )
 }
 
@@ -189,9 +184,12 @@ abstract class AlertTypeEvent {
   abstract val alertCode: String
   abstract val occurredAt: LocalDateTime
 
-  abstract fun toDomainEvent(baseUrl: String): AlertDomainEvent
+  abstract fun toDomainEvent(baseUrl: String): AlertDomainEvent<ReferenceDataAdditionalInformation>
 
-  protected fun toDomainEvent(type: DomainEventType, baseUrl: String): AlertDomainEvent =
+  protected fun toDomainEvent(
+    type: DomainEventType,
+    baseUrl: String,
+  ): AlertDomainEvent<ReferenceDataAdditionalInformation> =
     AlertDomainEvent(
       eventType = type.eventType,
       additionalInformation = ReferenceDataAdditionalInformation(
@@ -200,7 +198,7 @@ abstract class AlertTypeEvent {
         source = DPS,
       ),
       description = type.description,
-      occurredAt = occurredAt.toOffsetString(),
+      occurredAt = occurredAt.toZoneDateTime(),
     )
 }
 
@@ -208,33 +206,26 @@ data class AlertTypeCreatedEvent(
   override val alertCode: String,
   override val occurredAt: LocalDateTime,
 ) : AlertTypeEvent() {
-  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
-    toDomainEvent(DomainEventType.ALERT_TYPE_CREATED, baseUrl)
+  override fun toDomainEvent(baseUrl: String) = toDomainEvent(DomainEventType.ALERT_TYPE_CREATED, baseUrl)
 }
 
 data class AlertTypeDeactivatedEvent(
   override val alertCode: String,
   override val occurredAt: LocalDateTime,
 ) : AlertTypeEvent() {
-  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
-    toDomainEvent(DomainEventType.ALERT_TYPE_DEACTIVATED, baseUrl)
+  override fun toDomainEvent(baseUrl: String) = toDomainEvent(DomainEventType.ALERT_TYPE_DEACTIVATED, baseUrl)
 }
 
 data class AlertTypeReactivatedEvent(
   override val alertCode: String,
   override val occurredAt: LocalDateTime,
 ) : AlertTypeEvent() {
-  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
-    toDomainEvent(DomainEventType.ALERT_TYPE_REACTIVATED, baseUrl)
+  override fun toDomainEvent(baseUrl: String) = toDomainEvent(DomainEventType.ALERT_TYPE_REACTIVATED, baseUrl)
 }
 
 data class AlertTypeUpdatedEvent(
   override val alertCode: String,
   override val occurredAt: LocalDateTime,
 ) : AlertTypeEvent() {
-  override fun toDomainEvent(baseUrl: String): AlertDomainEvent =
-    toDomainEvent(DomainEventType.ALERT_TYPE_UPDATED, baseUrl)
+  override fun toDomainEvent(baseUrl: String) = toDomainEvent(DomainEventType.ALERT_TYPE_UPDATED, baseUrl)
 }
-
-fun LocalDateTime.toOffsetString(): String =
-  DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(this.atOffset(ZoneId.of("Europe/London").rules.getOffset(this)))
