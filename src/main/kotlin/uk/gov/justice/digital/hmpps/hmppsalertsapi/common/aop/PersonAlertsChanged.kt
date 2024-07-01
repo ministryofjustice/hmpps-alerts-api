@@ -30,6 +30,7 @@ class PersonAlertsChanged(private val eventPublisher: ApplicationEventPublisher)
   @After("@annotation(uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PublishPersonAlertsChanged)")
   fun publish() {
     prisonerNumbers.get().forEach(::publishPersonAlertsChanged)
+    prisonerNumbers.get().clear()
   }
 
   private fun publishPersonAlertsChanged(prisonNumber: String) {
