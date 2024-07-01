@@ -351,6 +351,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
         1,
         DomainEventType.ALERT_TYPE_CREATED.description,
         event.occurredAt,
+        "http://localhost:8080/alert-types/${request.code}",
       ),
     )
     assertThat(event.occurredAt.toLocalDateTime()).isCloseTo(alertTypeRepository.findByCode(alertType.code)!!.createdAt, within(1, ChronoUnit.MICROS))

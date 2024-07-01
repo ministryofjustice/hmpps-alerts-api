@@ -49,6 +49,8 @@ class AlertEventTest {
         ),
         description = ALERT_CREATED.description,
         occurredAt = alertEvent.occurredAt.toZoneDateTime(),
+        detailUrl = "$baseUrl/alerts/${alertEvent.alertUuid}",
+        personReference = PersonReference.withPrisonNumber(alertEvent.prisonNumber),
       ),
     )
     assertThat(domainEvent.toString()).isEqualTo(
@@ -121,6 +123,8 @@ class AlertEventTest {
         ),
         description = ALERT_UPDATED.description,
         occurredAt = alertEvent.occurredAt.toZoneDateTime(),
+        detailUrl = "$baseUrl/alerts/${alertEvent.alertUuid}",
+        personReference = PersonReference.withPrisonNumber(alertEvent.prisonNumber),
       ),
     )
     assertThat(domainEvent.toString()).isEqualTo(
@@ -165,6 +169,8 @@ class AlertEventTest {
         ),
         description = ALERT_DELETED.description,
         occurredAt = alertEvent.occurredAt.toZoneDateTime(),
+        detailUrl = "$baseUrl/alerts/${alertEvent.alertUuid}",
+        personReference = PersonReference.withPrisonNumber(alertEvent.prisonNumber),
       ),
     )
     assertThat(domainEvent.toString()).isEqualTo(

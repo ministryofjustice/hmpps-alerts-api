@@ -164,6 +164,7 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
         1,
         DomainEventType.ALERT_CODE_DEACTIVATED.description,
         deleteAlertEvent.occurredAt,
+        "http://localhost:8080/alert-codes/${alertCode.code}",
       ),
     )
     assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(alertCodeRepository.findByCode(alertCode.code)!!.deactivatedAt, within(1, ChronoUnit.MICROS))

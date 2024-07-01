@@ -18,6 +18,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.MergeAlertsAdditionalInformation
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.PersonReference
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERTS_MERGED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
@@ -477,6 +478,8 @@ class MergeAlertsIntTest : IntegrationTestBase() {
           version = 1,
           description = ALERTS_MERGED.description,
           occurredAt = ZonedDateTime.now(),
+          "http://localhost:8080/prisoners/${request.prisonNumberMergeTo}/alerts?size=2147483647",
+          PersonReference.withPrisonNumber(request.prisonNumberMergeTo),
         ),
       )
   }

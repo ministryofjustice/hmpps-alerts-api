@@ -70,6 +70,8 @@ data class AlertDomainEvent<T : AlertBaseAdditionalInformation>(
   override val version: Int = 1,
   override val description: String,
   override val occurredAt: ZonedDateTime,
+  override val detailUrl: String? = null,
+  override val personReference: PersonReference? = null,
 ) : AlertBaseDomainEvent<T>() {
   override fun toString(): String {
     return "v$version alert domain event '$eventType' " + additionalInformation.asString()

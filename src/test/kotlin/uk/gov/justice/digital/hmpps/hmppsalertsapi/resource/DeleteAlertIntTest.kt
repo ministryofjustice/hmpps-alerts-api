@@ -12,6 +12,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.PersonReference
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
@@ -275,6 +276,8 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         1,
         ALERT_DELETED.description,
         deleteAlertEvent.occurredAt,
+        "http://localhost:8080/alerts/${alert.alertUuid}",
+        PersonReference.withPrisonNumber(PRISON_NUMBER),
       ),
     )
     assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
@@ -316,6 +319,8 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         1,
         ALERT_DELETED.description,
         deleteAlertEvent.occurredAt,
+        "http://localhost:8080/alerts/${alert.alertUuid}",
+        PersonReference.withPrisonNumber(PRISON_NUMBER),
       ),
     )
     assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
