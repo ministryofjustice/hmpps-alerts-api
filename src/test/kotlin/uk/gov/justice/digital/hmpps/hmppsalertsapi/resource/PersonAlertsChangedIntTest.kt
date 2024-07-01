@@ -43,7 +43,6 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
   fun `create alert publishes a person alerts changed event`() {
     webTestClient.createAlert(
       request = CreateAlert(
-        prisonNumber = PRISON_NUMBER,
         alertCode = ALERT_CODE_VICTIM,
         description = "Alert description",
         authorisedBy = "C Smith",
@@ -200,7 +199,6 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
   private fun createAlert(): Alert {
     val alert = webTestClient.createAlert(
       request = CreateAlert(
-        prisonNumber = PRISON_NUMBER,
         alertCode = ALERT_CODE_VICTIM,
         description = "Alert description",
         authorisedBy = "C Smith",
