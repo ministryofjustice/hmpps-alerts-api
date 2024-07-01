@@ -507,10 +507,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val alert = webTestClient.createAlert(source = DPS, request = request)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
     with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
       assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
-    val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
 
     assertThat(event).isEqualTo(
       AlertDomainEvent(
@@ -539,10 +539,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val alert = webTestClient.createAlert(source = NOMIS, request = request)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
     with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
       assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
-    val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
 
     assertThat(event).isEqualTo(
       AlertDomainEvent(

@@ -53,10 +53,10 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     )
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    verifyPersonAlertsChanged(PRISON_NUMBER)
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
     }
+    verifyPersonAlertsChanged(PRISON_NUMBER)
   }
 
   @Test
@@ -73,11 +73,28 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
       ),
     )
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
-    verifyPersonAlertsChanged(PRISON_NUMBER)
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
     }
+    verifyPersonAlertsChanged(PRISON_NUMBER)
+  }
+
+  @Test
+  fun `update alert does not publish if no changes`() {
+    val alert = createAlert()
+    webTestClient.updateAlert(
+      alertUuid = alert.alertUuid,
+      request = UpdateAlert(
+        description = alert.description,
+        authorisedBy = alert.authorisedBy,
+        activeFrom = alert.activeFrom,
+        activeTo = alert.activeTo,
+        appendComment = null,
+      ),
+    )
+
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 0 }
   }
 
   @Test
@@ -85,11 +102,11 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     val alert = createAlert()
     webTestClient.deleteAlert(alertUuid = alert.alertUuid)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
-    verifyPersonAlertsChanged(PRISON_NUMBER)
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_DELETED.eventType)
     }
+    verifyPersonAlertsChanged(PRISON_NUMBER)
   }
 
   @Test
@@ -115,10 +132,10 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     )
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    verifyPersonAlertsChanged(PRISON_NUMBER)
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
     }
+    verifyPersonAlertsChanged(PRISON_NUMBER)
   }
 
   @Test
@@ -143,11 +160,11 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     webTestClient.mergeAlerts(request = request)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
-    verifyPersonAlertsChanged(request.prisonNumberMergeFrom)
-    verifyPersonAlertsChanged(request.prisonNumberMergeTo)
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<MergeAlertsAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERTS_MERGED.eventType)
     }
+    verifyPersonAlertsChanged(request.prisonNumberMergeFrom)
+    verifyPersonAlertsChanged(request.prisonNumberMergeTo)
   }
 
   @Test
@@ -189,13 +206,12 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
       ),
     )
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-      assertThat(personReference.findNomsNumber()).isEqualTo(PRISON_NUMBER)
-    }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
     }
+    verifyPersonAlertsChanged(PRISON_NUMBER)
+
+    `clear queues`()
     return alert
   }
 

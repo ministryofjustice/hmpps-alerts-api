@@ -5,7 +5,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PrisonerAlertsChangedByMerge
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PersonAlertsChanged
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PublishPersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
@@ -26,7 +27,7 @@ class MergeAlertService(
   private val alertRepository: AlertRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
 ) {
-  @PrisonerAlertsChangedByMerge
+  @PublishPersonAlertsChanged
   fun mergePrisonerAlerts(mergeAlerts: MergeAlerts): MergedAlerts {
     val mergedAt = LocalDateTime.now()
     val alertCodes = mergeAlerts.alertCodes()
@@ -89,6 +90,8 @@ class MergeAlertService(
       prisonNumberMergeTo = mergeAlerts.prisonNumberMergeTo,
       mergedAlerts = alertsCreated,
     )
+    PersonAlertsChanged.registerChange(mergeAlerts.prisonNumberMergeFrom)
+    PersonAlertsChanged.registerChange(mergeAlerts.prisonNumberMergeTo)
 
     newAlerts.map {
       if (!domainEventRegistered) {

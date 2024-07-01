@@ -364,13 +364,12 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     val response = webTestClient.bulkCreateAlert(request)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
-
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(response.alertsCreated.single().alertUuid.toString())
+    }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
   }
 
@@ -418,9 +417,6 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     }
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(existingActiveAlert.alertUuid.toString())
@@ -431,6 +427,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(existingActiveAlert.alertUuid.toString())
+    }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
   }
 
@@ -464,9 +463,6 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     }
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
@@ -477,6 +473,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
+    }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
   }
 
@@ -504,9 +503,6 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     }
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 5 }
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(existingActiveAlert.alertUuid.toString())
@@ -521,6 +517,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(response.alertsCreated.single().alertUuid.toString())
+    }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
   }
 
@@ -552,9 +551,6 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     }
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 5 }
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
@@ -569,6 +565,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
       assertThat(additionalInformation.identifier()).isEqualTo(response.alertsCreated.single().alertUuid.toString())
+    }
+    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
   }
 
@@ -606,10 +605,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     assertThat(alertsForFirstPrisonerNotInList.single { it.isActive() }.alertCode.code).isEqualTo("ADSC")
     assertThat(alertsForSecondPrisonerNotInList.filter { it.isActive() }).isEmpty()
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 6 }
     val messages = listOf(
       hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>(),
       hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>(),
@@ -627,6 +623,11 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       assertThat(this.map { it.additionalInformation.identifier() }).containsExactlyInAnyOrder(
         response.alertsCreated.single().alertUuid.toString(),
       )
+    }
+    repeat(3) {
+      with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
+        assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
+      }
     }
   }
 

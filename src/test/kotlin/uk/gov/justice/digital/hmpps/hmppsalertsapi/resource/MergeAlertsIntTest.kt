@@ -447,13 +447,12 @@ class MergeAlertsIntTest : IntegrationTestBase() {
     }
 
     await withPollDelay Duration.ofSeconds(2) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
+    val message = hmppsEventsQueue.receiveAlertDomainEventOnQueue<MergeAlertsAdditionalInformation>()
     repeat(2) {
       with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
         assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
       }
     }
-
-    val message = hmppsEventsQueue.receiveAlertDomainEventOnQueue<MergeAlertsAdditionalInformation>()
 
     assertThat(message.eventType).isNotEqualTo(ALERT_CREATED.eventType)
     assertThat(message.eventType).isNotEqualTo(ALERT_DELETED.eventType)
@@ -563,13 +562,13 @@ class MergeAlertsIntTest : IntegrationTestBase() {
     assertThat(alertRepository.findByPrisonNumber(prisonNumberMergeFrom)).isEmpty()
 
     await withPollDelay Duration.ofSeconds(2) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
+    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<MergeAlertsAdditionalInformation>()) {
+      assertThat(eventType).isNotEqualTo(ALERT_DELETED.eventType)
+    }
     repeat(2) {
       with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
         assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
       }
-    }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<MergeAlertsAdditionalInformation>()) {
-      assertThat(eventType).isNotEqualTo(ALERT_DELETED.eventType)
     }
   }
 
