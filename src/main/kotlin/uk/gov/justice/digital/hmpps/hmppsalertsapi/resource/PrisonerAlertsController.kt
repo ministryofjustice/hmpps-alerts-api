@@ -103,7 +103,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
     )
     search: String?,
     @ParameterObject
-    @PageableDefault(sort = ["activeFrom"], direction = Direction.DESC)
+    @PageableDefault(sort = ["activeFrom"], direction = Direction.DESC, size = Int.MAX_VALUE)
     pageable: Pageable,
   ): Page<Alert> = alertService.retrieveAlertsForPrisonNumber(
     prisonNumber = prisonNumber,
