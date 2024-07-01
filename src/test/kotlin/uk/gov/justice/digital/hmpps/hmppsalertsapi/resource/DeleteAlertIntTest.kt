@@ -277,7 +277,12 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         deleteAlertEvent.occurredAt,
       ),
     )
-    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!.deletedAt(), within(1, ChronoUnit.MICROS))
+    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
+      alertRepository.findByAlertUuidIncludingSoftDelete(
+        alert.alertUuid,
+      )!!.deletedAt(),
+      within(1, ChronoUnit.MICROS),
+    )
   }
 
   @Test
@@ -313,26 +318,28 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         deleteAlertEvent.occurredAt,
       ),
     )
-    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!.deletedAt(), within(1, ChronoUnit.MICROS))
+    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
+      alertRepository.findByAlertUuidIncludingSoftDelete(
+        alert.alertUuid,
+      )!!.deletedAt(),
+      within(1, ChronoUnit.MICROS),
+    )
   }
 
   private fun createAlertRequest(
-    prisonNumber: String = PRISON_NUMBER,
     alertCode: String = ALERT_CODE_VICTIM,
-  ) =
-    CreateAlert(
-      prisonNumber = prisonNumber,
-      alertCode = alertCode,
-      description = "Alert description",
-      authorisedBy = "A. Authorizer",
-      activeFrom = LocalDate.now().minusDays(3),
-      activeTo = null,
-    )
+  ) = CreateAlert(
+    alertCode = alertCode,
+    description = "Alert description",
+    authorisedBy = "A. Authorizer",
+    activeFrom = LocalDate.now().minusDays(3),
+    activeTo = null,
+  )
 
-  private fun createAlert(): Alert {
+  private fun createAlert(prisonNumber: String = PRISON_NUMBER): Alert {
     val request = createAlertRequest()
     return webTestClient.post()
-      .uri("/alerts")
+      .uri("prisoners/$prisonNumber/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_WRITER), isUserToken = true))
       .exchange()
@@ -345,12 +352,11 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   private fun WebTestClient.deleteAlert(
     alertUuid: UUID,
     source: Source = DPS,
-  ) =
-    delete()
-      .uri("/alerts/$alertUuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext(source = source))
-      .exchange()
-      .expectStatus().isNoContent
-      .expectBody().isEmpty
+  ) = delete()
+    .uri("/alerts/$alertUuid")
+    .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+    .headers(setAlertRequestContext(source = source))
+    .exchange()
+    .expectStatus().isNoContent
+    .expectBody().isEmpty
 }

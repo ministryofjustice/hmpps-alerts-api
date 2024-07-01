@@ -441,12 +441,11 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       .expectBodyList(MigratedAlert::class.java)
       .returnResult().responseBody!!
 
-  private fun WebTestClient.createAlert() =
+  private fun WebTestClient.createAlert(prisonNumber: String = PRISON_NUMBER) =
     post()
-      .uri("/alerts")
+      .uri("prisoners/$prisonNumber/alerts")
       .bodyValue(
         CreateAlert(
-          prisonNumber = PRISON_NUMBER,
           alertCode = ALERT_CODE_VICTIM,
           description = "Alert description",
           authorisedBy = "A. Authorizer",
