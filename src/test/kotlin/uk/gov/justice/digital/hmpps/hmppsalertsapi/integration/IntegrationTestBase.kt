@@ -1,8 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.integration
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.annotation.JsonNaming
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
@@ -19,7 +18,9 @@ import org.springframework.test.context.jdbc.SqlMergeMode
 import org.springframework.test.web.reactive.server.WebTestClient
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertBaseAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer.setLocalStackProperties
@@ -89,21 +90,28 @@ abstract class IntegrationTestBase {
   internal fun HmppsQueue.receiveMessageOnQueue() =
     sqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build()).get().messages().single()
 
-  internal fun HmppsQueue.receiveMessageTypeCounts(messageCount: Int = 1) =
+  internal final fun HmppsQueue.receiveMessageTypeCounts(
+    messageCount: Int = 1,
+  ) =
     sqsClient.receiveMessage(
       ReceiveMessageRequest.builder().maxNumberOfMessages(messageCount).queueUrl(queueUrl).build(),
     ).get().messages()
       .map { objectMapper.readValue<MsgBody>(it.body()) }
-      .map { objectMapper.readValue<AlertDomainEvent>(it.Message) }
+      .map { objectMapper.readValue<EventType>(it.message) }
       .groupingBy { it.eventType }.eachCount()
 
-  internal fun HmppsQueue.receiveAlertDomainEventOnQueue() =
+  data class EventType(val eventType: String)
+
+  internal final inline fun <reified T : AlertBaseAdditionalInformation> HmppsQueue.receiveAlertDomainEventOnQueue() =
     receiveMessageOnQueue()
       .let { objectMapper.readValue<MsgBody>(it.body()) }
-      .let { objectMapper.readValue<AlertDomainEvent>(it.Message) }
+      .let { objectMapper.readValue<AlertDomainEvent<T>>(it.message) }
 
-  @JsonNaming(value = PropertyNamingStrategies.UpperCamelCaseStrategy::class)
-  private data class MsgBody(val Message: String)
+  internal fun HmppsQueue.hmppsDomainEventOnQueue() = receiveMessageOnQueue()
+    .let { objectMapper.readValue<MsgBody>(it.body()) }
+    .let { objectMapper.readValue<HmppsDomainEvent>(it.message) }
+
+  data class MsgBody(@JsonProperty("Message") val message: String)
 
   companion object {
     private val pgContainer = PostgresContainer.instance

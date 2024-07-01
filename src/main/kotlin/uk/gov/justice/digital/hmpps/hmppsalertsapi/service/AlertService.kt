@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PersonAlertsChanged
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PublishPersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertNotFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ExistingActiveAlertWithCodeException
@@ -32,6 +34,7 @@ class AlertService(
   private val auditEventRepository: AuditEventRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
 ) {
+  @PublishPersonAlertsChanged
   fun createAlert(prisonNumber: String, request: CreateAlert, context: AlertRequestContext) =
     request.let {
       // Perform database checks first prior to checks that require API calls
@@ -67,8 +70,10 @@ class AlertService(
     require(prisonerSearchClient.getPrisoner(prisonNumber) != null) { "Prison number '$prisonNumber' not found" }
 
   fun retrieveAlert(alertUuid: UUID): AlertModel =
-    alertRepository.findByAlertUuid(alertUuid)?.toAlertModel() ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
+    alertRepository.findByAlertUuid(alertUuid)?.toAlertModel()
+      ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
 
+  @PublishPersonAlertsChanged
   fun updateAlert(alertUuid: UUID, request: UpdateAlert, context: AlertRequestContext) =
     alertRepository.findByAlertUuid(alertUuid)?.let {
       alertRepository.saveAndFlush(
@@ -87,8 +92,10 @@ class AlertService(
       ).toAlertModel()
     } ?: throw AlertNotFoundException("Could not find alert with ID $alertUuid")
 
+  @PublishPersonAlertsChanged
   fun deleteAlert(alertUuid: UUID, context: AlertRequestContext) {
-    val alert = alertRepository.findByAlertUuid(alertUuid) ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
+    val alert = alertRepository.findByAlertUuid(alertUuid)
+      ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
     with(alert) {
       delete(
         deletedAt = context.requestAt,
@@ -99,6 +106,7 @@ class AlertService(
       )
     }
     alertRepository.saveAndFlush(alert)
+    PersonAlertsChanged.registerChange(alert.prisonNumber)
   }
 
   fun retrieveAlertsForPrisonNumber(
@@ -124,8 +132,10 @@ class AlertService(
       pageable = pageable,
     ).let { alerts ->
       val alertIds = alerts.content.map { it.alertId }
-      val comments = commentRepository.findCommentsByAlertAlertIdInOrderByCreatedAtDesc(alertIds).groupBy { it.alert.alertId }
-      val auditEvents = auditEventRepository.findAuditEventsByAlertAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.alertId }
+      val comments =
+        commentRepository.findCommentsByAlertAlertIdInOrderByCreatedAtDesc(alertIds).groupBy { it.alert.alertId }
+      val auditEvents =
+        auditEventRepository.findAuditEventsByAlertAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.alertId }
       alerts.map { it.toAlertModel(comments[it.alertId] ?: emptyList(), auditEvents[it.alertId]) }
     }
 
@@ -137,8 +147,11 @@ class AlertService(
   fun retrieveAlertsForPrisonNumbers(prisonNumbers: Collection<String>) =
     alertRepository.findByPrisonNumberInOrderByActiveFromDesc(prisonNumbers).let { alerts ->
       val alertIds = alerts.map { it.alertId }
-      val comments = commentRepository.findCommentsByAlertAlertIdInOrderByCreatedAtDesc(alertIds).groupBy { it.alert.alertId }
-      val auditEvents = auditEventRepository.findAuditEventsByAlertAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.alertId }
-      alerts.map { it.toAlertModel(comments[it.alertId] ?: emptyList(), auditEvents[it.alertId]) }.groupBy { it.prisonNumber }
+      val comments =
+        commentRepository.findCommentsByAlertAlertIdInOrderByCreatedAtDesc(alertIds).groupBy { it.alert.alertId }
+      val auditEvents =
+        auditEventRepository.findAuditEventsByAlertAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.alertId }
+      alerts.map { it.toAlertModel(comments[it.alertId] ?: emptyList(), auditEvents[it.alertId]) }
+        .groupBy { it.prisonNumber }
     }
 }

@@ -17,6 +17,7 @@ import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
 import org.hibernate.annotations.SQLRestriction
 import org.springframework.data.domain.AbstractAggregateRoot
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDeletedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertUpdatedEvent
@@ -224,6 +225,7 @@ data class Alert(
           createdBy = createdBy,
         ),
       )
+      PersonAlertsChanged.registerChange(prisonNumber)
     }
   }
 
@@ -310,6 +312,7 @@ data class Alert(
           commentAppended = commentAppended,
         ),
       )
+      PersonAlertsChanged.registerChange(prisonNumber)
     }
   }
 
@@ -344,6 +347,7 @@ data class Alert(
             deletedBy = deletedBy,
           ),
         )
+        PersonAlertsChanged.registerChange(prisonNumber)
       }
     }
   }

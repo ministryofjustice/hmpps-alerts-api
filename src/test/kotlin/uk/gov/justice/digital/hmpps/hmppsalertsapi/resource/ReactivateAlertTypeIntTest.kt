@@ -21,7 +21,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.time.temporal.ChronoUnit
 
 class ReactivateAlertTypeIntTest : IntegrationTestBase() {
@@ -148,8 +147,8 @@ class ReactivateAlertTypeIntTest : IntegrationTestBase() {
     webTestClient.reactivateAlertType(alertType.code)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
-    val reactivateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue()
+    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
+    val reactivateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
 
     assertThat(createAlertEvent.eventType).isEqualTo(DomainEventType.ALERT_TYPE_CREATED.eventType)
     assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(reactivateAlertEvent.additionalInformation.identifier())
@@ -166,7 +165,7 @@ class ReactivateAlertTypeIntTest : IntegrationTestBase() {
         reactivateAlertEvent.occurredAt,
       ),
     )
-    assertThat(OffsetDateTime.parse(reactivateAlertEvent.occurredAt).toLocalDateTime()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+    assertThat(reactivateAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
   }
 
   private fun createAlertTypeRequest(code: String = "ABC") =

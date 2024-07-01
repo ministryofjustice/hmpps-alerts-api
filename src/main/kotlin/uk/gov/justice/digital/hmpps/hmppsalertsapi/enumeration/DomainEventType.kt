@@ -16,4 +16,5 @@ enum class DomainEventType(
   ALERT_TYPE_DEACTIVATED("prisoner-alerts.alert-type-deactivated", "An alert type has been deactivated in the alerts reference data service"),
   ALERT_TYPE_REACTIVATED("prisoner-alerts.alert-type-reactivated", "An alert type has been reactivated in the alerts reference data service"),
   ALERT_TYPE_UPDATED("prisoner-alerts.alert-type-updated", "An alert type has been updated in the alerts reference data service"),
+  PERSON_ALERTS_CHANGED("person.alerts.changed", "The alerts for a given person have been updated in the alerts service"),
 }
