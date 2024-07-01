@@ -73,7 +73,8 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
       ),
     )
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    // Two of these messages are from the create
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
     }
@@ -94,7 +95,8 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
       ),
     )
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 0 }
+    // These two messages are from the create
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
   }
 
   @Test
@@ -102,7 +104,8 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     val alert = createAlert()
     webTestClient.deleteAlert(alertUuid = alert.alertUuid)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    // Two of these messages are from the create
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_DELETED.eventType)
     }
@@ -210,8 +213,6 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
     }
     verifyPersonAlertsChanged(PRISON_NUMBER)
-
-    `clear queues`()
     return alert
   }
 
