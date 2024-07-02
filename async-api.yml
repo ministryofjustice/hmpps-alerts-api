@@ -1,0 +1,58 @@
+asyncapi: 3.0.0
+info:
+  title: Prisoner Alert Events
+  version: 1.0.0
+  description: Reflect changes to prisoner alerts
+
+servers:
+  development:
+    host: "hmpps-domain-events-dev.live-1.cloud-platform.service.justice.gov.uk"
+    protocol: sqs
+    description: Development Environment
+  preproduction:
+    host: "hmpps-domain-events-preprod.live-1.cloud-platform.service.justice.gov.uk"
+    protocol: sqs
+    description: Pre-production Environment
+  production:
+    host: "hmpps-domain-events-prod.live-1.cloud-platform.service.justice.gov.uk"
+    protocol: sqs
+    description: Production Environment
+
+components:
+  messages:
+    person.alert.created:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-created.yaml
+    person.alert.updated:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-updated.yaml
+    person.alert.deleted:
+      $ref: "https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-deleted.yaml"
+    person.alerts.changed:
+      $ref: "https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alerts-changed.yaml"
+
+
+channels:
+  hmpps-domain-events:
+    description: HMPPS domain events SNS topic
+    bindings:
+      sns:
+        name: domainevents
+    messages:
+      person.alert.created:
+        $ref: '#/components/messages/person.alert.created'
+      person.alert.updated:
+        $ref: '#/components/messages/person.alert.updated'
+      person.alert.deleted:
+        $ref: '#/components/messages/person.alert.deleted'
+      person.alerts.changed:
+        $ref: '#/components/messages/person.alerts.changed'
+
+operations:
+  publish-event:
+    action: send
+    channel:
+      $ref: '#/channels/hmpps-domain-events'
+    messages:
+      - $ref: '#/channels/hmpps-domain-events/messages/person.alert.created'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.alert.updated'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.alert.deleted'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.alerts.changed'
