@@ -22,14 +22,14 @@ components:
     person:
       alert:
         created:
-          $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-created.yml
+          $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-created.yaml
         updated:
-          $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-updated.yml
+          $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-updated.yaml
         deleted:
-          $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-deleted.yml
+          $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-deleted.yaml
       alerts:
         changed:
-          $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alerts-changed.yml
+          $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alerts-changed.yaml
 
 
 channels:

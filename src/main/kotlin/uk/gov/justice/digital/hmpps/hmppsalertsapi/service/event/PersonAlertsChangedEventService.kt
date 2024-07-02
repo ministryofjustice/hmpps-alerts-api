@@ -27,7 +27,7 @@ class PersonAlertsChangedEventService(
           detailUrl = "${eventProperties.baseUrl}/prisoners/${event.prisonNumber}/alerts",
           additionalInformation = HmppsAdditionalInformation(),
           personReference = PersonReference.withPrisonNumber(event.prisonNumber),
-          description = event.type.description
+          description = event.type.description,
         ),
       )
       telemetryClient.trackEvent(event.type.eventType, mapOf("prisonNumber" to event.prisonNumber), null)
