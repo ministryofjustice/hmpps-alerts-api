@@ -21,7 +21,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PersonAlertsChange
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDeletedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertUpdatedEvent
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertsMergedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import java.time.LocalDate
@@ -351,12 +350,6 @@ data class Alert(
       }
     }
   }
-
-  fun reassign(prisonNumberMergeTo: String) = apply {
-    prisonNumber = prisonNumberMergeTo
-  }
-
-  fun registerAlertsMergedEvent(event: AlertsMergedEvent) = apply { registerEvent(event) }
 
   /**
    * Function exists for testing purposes. The AbstractAggregateRoot.domainEvents() function is protected so this

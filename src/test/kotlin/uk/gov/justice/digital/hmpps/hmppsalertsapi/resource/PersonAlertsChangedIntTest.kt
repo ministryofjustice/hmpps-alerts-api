@@ -8,10 +8,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.MergeAlertsAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertCleanupMode.KEEP_ALL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.ADD_MISSING
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERTS_MERGED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
@@ -23,15 +21,11 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_N
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.ResyncedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MergeAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.ResyncAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_HIDDEN_DISABILITY
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -141,35 +135,6 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `merge alerts publishes a person alerts changed event for both prisoner numbers`() {
-    val request = MergeAlerts(
-      prisonNumberMergeFrom = "B2345BB",
-      prisonNumberMergeTo = PRISON_NUMBER,
-      newAlerts = listOf(
-        MergeAlert(
-          offenderBookId = 12345,
-          alertSeq = 1,
-          alertCode = ALERT_CODE_HIDDEN_DISABILITY,
-          description = "Alert description",
-          authorisedBy = "A. Nurse, An Agency",
-          activeFrom = LocalDate.now().minusDays(1),
-          activeTo = null,
-        ),
-      ),
-      retainedAlertUuids = listOf(),
-    )
-
-    webTestClient.mergeAlerts(request = request)
-
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<MergeAlertsAdditionalInformation>()) {
-      assertThat(eventType).isEqualTo(ALERTS_MERGED.eventType)
-    }
-    verifyPersonAlertsChanged(request.prisonNumberMergeFrom)
-    verifyPersonAlertsChanged(request.prisonNumberMergeTo)
-  }
-
-  @Test
   fun `bulk alert publishes a person alerts changed event for each prisoner number`() {
     val prisonerNumbers = listOf("A1234BC", "B2345CD", "C3456DE")
     prisonerSearch.stubGetPrisoners(prisonerNumbers)
@@ -257,15 +222,6 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isCreated
       .expectBodyList(ResyncedAlert::class.java)
-      .returnResult().responseBody!!
-
-  private fun WebTestClient.mergeAlerts(request: MergeAlerts) =
-    post().uri("/merge-alerts")
-      .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
-      .exchange()
-      .expectStatus().isCreated
-      .expectBody(MergedAlerts::class.java)
       .returnResult().responseBody!!
 
   private fun WebTestClient.bulkCreateAlert(request: BulkCreateAlerts) =
