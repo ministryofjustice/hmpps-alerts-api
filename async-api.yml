@@ -6,31 +6,28 @@ info:
 
 servers:
   development:
-    url: hmpps-domain-events-dev.live-1.cloud-platform.service.justice.gov.uk
+    host: "hmpps-domain-events-dev.live-1.cloud-platform.service.justice.gov.uk"
     protocol: sqs
     description: Development Environment
   preproduction:
-    url: hmpps-domain-events-preprod.live-1.cloud-platform.service.justice.gov.uk
+    host: "hmpps-domain-events-preprod.live-1.cloud-platform.service.justice.gov.uk"
     protocol: sqs
     description: Pre-production Environment
   production:
-    url: hmpps-domain-events-prod.live-1.cloud-platform.service.justice.gov.uk
+    host: "hmpps-domain-events-prod.live-1.cloud-platform.service.justice.gov.uk"
     protocol: sqs
     description: Production Environment
 
 components:
   messages:
-    person:
-      alert:
-        created:
-          $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-created.yaml
-        updated:
-          $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-updated.yaml
-        deleted:
-          $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-deleted.yaml
-      alerts:
-        changed:
-          $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alerts-changed.yaml
+    person.alert.created:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-created.yaml
+    person.alert.updated:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-updated.yaml
+    person.alert.deleted:
+      $ref: "https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-deleted.yaml"
+    person.alerts.changed:
+      $ref: "https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alerts-changed.yaml"
 
 
 channels:
@@ -40,17 +37,14 @@ channels:
       sns:
         name: domainevents
     messages:
-      person:
-        alert:
-          created:
-            $ref: '#/components/messages/person.alert.created'
-          updated:
-            $ref: '#/components/messages/person.alert.updated'
-          deleted:
-            $ref: '#/components/messages/person.alert.deleted'
-        alerts:
-          changed:
-            $ref: '#/components/messages/person.alerts.changed'
+      person.alert.created:
+        $ref: '#/components/messages/person.alert.created'
+      person.alert.updated:
+        $ref: '#/components/messages/person.alert.updated'
+      person.alert.deleted:
+        $ref: '#/components/messages/person.alert.deleted'
+      person.alerts.changed:
+        $ref: '#/components/messages/person.alerts.changed'
 
 operations:
   publish-event:
