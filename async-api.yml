@@ -3,6 +3,7 @@ info:
   title: Prisoner Alert Events
   version: 1.0.0
   description: Reflect changes to prisoner alerts
+
 servers:
   development:
     url: hmpps-domain-events-dev.live-1.cloud-platform.service.justice.gov.uk
