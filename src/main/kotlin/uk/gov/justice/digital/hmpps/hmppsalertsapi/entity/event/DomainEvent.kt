@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event
 
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MergedAlert
 import java.time.ZonedDateTime
 import java.util.UUID
 
@@ -92,22 +91,6 @@ data class AlertAdditionalInformation(
       "from source '$source' "
 
   override fun identifier(): String = alertUuid.toString()
-}
-
-data class MergeAlertsAdditionalInformation(
-  override val url: String,
-  val prisonNumberMergeFrom: String,
-  val prisonNumberMergeTo: String,
-  val mergedAlerts: List<MergedAlert>,
-  override val source: Source,
-) : AlertBaseAdditionalInformation {
-  override fun asString(): String =
-    "for prison number merged to '$prisonNumberMergeTo' " +
-      "and prison number merged from'$prisonNumberMergeFrom' " +
-      "with ${mergedAlerts.count()} merged alerts " +
-      "from source '$source' "
-
-  override fun identifier(): String = "$prisonNumberMergeFrom->$prisonNumberMergeTo"
 }
 
 data class ReferenceDataAdditionalInformation(

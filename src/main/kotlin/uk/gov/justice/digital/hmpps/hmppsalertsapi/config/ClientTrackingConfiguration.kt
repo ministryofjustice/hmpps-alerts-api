@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.context.annotation.Configuration
+import org.springframework.core.Ordered
 import org.springframework.http.HttpHeaders
 import org.springframework.web.servlet.HandlerInterceptor
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
@@ -19,7 +20,7 @@ import java.text.ParseException
 class ClientTrackingConfiguration(private val clientTrackingInterceptor: ClientTrackingInterceptor) : WebMvcConfigurer {
   override fun addInterceptors(registry: InterceptorRegistry) {
     log.info("Adding application insights client tracking interceptor")
-    registry.addInterceptor(clientTrackingInterceptor).addPathPatterns("/**")
+    registry.addInterceptor(clientTrackingInterceptor).addPathPatterns("/**").order(Ordered.HIGHEST_PRECEDENCE)
   }
 
   companion object {
