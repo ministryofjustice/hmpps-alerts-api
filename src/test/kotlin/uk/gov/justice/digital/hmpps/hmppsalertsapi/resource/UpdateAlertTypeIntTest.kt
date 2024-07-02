@@ -193,6 +193,7 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
         1,
         DomainEventType.ALERT_TYPE_UPDATED.description,
         updateAlertEvent.occurredAt,
+        "http://localhost:8080/alert-types/${alertType.code}",
       ),
     )
     assertThat(updateAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(alertTypeRepository.findByCode(alertType.code)!!.modifiedAt, within(1, ChronoUnit.MICROS))

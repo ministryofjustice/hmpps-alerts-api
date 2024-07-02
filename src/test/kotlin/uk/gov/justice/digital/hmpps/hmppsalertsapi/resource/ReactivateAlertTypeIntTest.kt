@@ -163,6 +163,7 @@ class ReactivateAlertTypeIntTest : IntegrationTestBase() {
         1,
         DomainEventType.ALERT_TYPE_REACTIVATED.description,
         reactivateAlertEvent.occurredAt,
+        "http://localhost:8080/alert-types/${alertType.code}",
       ),
     )
     assertThat(reactivateAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))

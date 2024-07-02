@@ -31,6 +31,8 @@ abstract class AlertEvent {
       ),
       description = type.description,
       occurredAt = occurredAt.toZoneDateTime(),
+      detailUrl = "$baseUrl/alerts/$alertUuid",
+      personReference = PersonReference.withPrisonNumber(prisonNumber),
     )
 }
 
@@ -124,6 +126,7 @@ abstract class AlertCodeEvent {
       ),
       description = type.description,
       occurredAt = occurredAt.toZoneDateTime(),
+      detailUrl = "$baseUrl/alert-codes/$alertCode",
     )
 }
 
@@ -175,6 +178,7 @@ abstract class AlertTypeEvent {
       ),
       description = type.description,
       occurredAt = occurredAt.toZoneDateTime(),
+      detailUrl = "$baseUrl/alert-types/$alertCode",
     )
 }
 

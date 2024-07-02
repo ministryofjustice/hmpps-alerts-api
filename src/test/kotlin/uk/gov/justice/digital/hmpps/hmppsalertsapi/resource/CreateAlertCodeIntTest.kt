@@ -415,6 +415,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
         1,
         DomainEventType.ALERT_CODE_CREATED.description,
         event.occurredAt,
+        "http://localhost:8080/alert-codes/${request.code}",
       ),
     )
     assertThat(event.occurredAt.toLocalDateTime()).isCloseTo(

@@ -12,6 +12,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.PersonReference
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
@@ -539,6 +540,8 @@ Comment '$appendComment' was added""",
         1,
         ALERT_UPDATED.description,
         updateAlertEvent.occurredAt,
+        "http://localhost:8080/alerts/${alert.alertUuid}",
+        PersonReference.withPrisonNumber(PRISON_NUMBER),
       ),
     )
     assertThat(
@@ -577,6 +580,8 @@ Comment '$appendComment' was added""",
         1,
         ALERT_UPDATED.description,
         updateAlertEvent.occurredAt,
+        "http://localhost:8080/alerts/${alert.alertUuid}",
+        PersonReference.withPrisonNumber(PRISON_NUMBER),
       ),
     )
     assertThat(
