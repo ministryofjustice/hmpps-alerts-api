@@ -47,6 +47,7 @@ class AlertTypeEventServiceTest {
         ),
         description = ALERT_TYPE_CREATED.description,
         occurredAt = alertEvent.occurredAt.toZoneDateTime(),
+        detailUrl = "$baseUrl/alert-types/${ALERT_CODE_VICTIM}",
       ),
     )
   }

@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.EventProperties
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.PersonReference
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -56,6 +57,8 @@ class AlertEventServiceTest {
         ),
         description = ALERT_CREATED.description,
         occurredAt = alertEvent.occurredAt.toZoneDateTime(),
+        detailUrl = "$baseUrl/alerts/${alertEvent.alertUuid}",
+        personReference = PersonReference.withPrisonNumber(alertEvent.prisonNumber),
       ),
     )
   }
