@@ -66,6 +66,8 @@ spring:
       dpr_user: ${DPR_USER}
       dpr_password: ${DPR_PASSWORD}
 
+  threads.virtual.enabled: true
+
 server:
   port: 8080
   servlet:

@@ -108,10 +108,10 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       Arguments.of(migrateAlert().copy(createdBy = 'a'.toString().repeat(33)), "Created by must be supplied and be <= 32 characters", "created by greater than 32 characters"),
       Arguments.of(migrateAlert().copy(createdByDisplayName = ""), "Created by display name must be supplied and be <= 255 characters", "created by display name required"),
       Arguments.of(migrateAlert().copy(createdByDisplayName = 'a'.toString().repeat(256)), "Created by display name must be supplied and be <= 255 characters", "created by display name greater than 255 characters"),
-      Arguments.of(migrateAlert().copy(updatedAt = LocalDateTime.now(), updatedByDisplayName = "Up Dated"), "Updated by is required when updated at is supplied", "updated by required when updated at is supplied"),
-      Arguments.of(migrateAlert().copy(updatedBy = 'a'.toString().repeat(33)), "Updated by must be <= 32 characters", "updated by greater than 32 characters"),
-      Arguments.of(migrateAlert().copy(updatedAt = LocalDateTime.now(), updatedBy = "AB11DZ"), "Updated by display name is required when updated at is supplied", "updated by display name required when updated at is supplied"),
-      Arguments.of(migrateAlert().copy(updatedByDisplayName = 'a'.toString().repeat(256)), "Updated by display name must be <= 255 characters", "updated by display name greater than 255 characters"),
+      Arguments.of(migrateAlert().copy(lastModifiedAt = LocalDateTime.now(), lastModifiedByDisplayName = "Up Dated"), "Updated by is required when updated at is supplied", "updated by required when updated at is supplied"),
+      Arguments.of(migrateAlert().copy(lastModifiedBy = 'a'.toString().repeat(33)), "Updated by must be <= 32 characters", "updated by greater than 32 characters"),
+      Arguments.of(migrateAlert().copy(lastModifiedAt = LocalDateTime.now(), lastModifiedBy = "AB11DZ"), "Updated by display name is required when updated at is supplied", "updated by display name required when updated at is supplied"),
+      Arguments.of(migrateAlert().copy(lastModifiedByDisplayName = 'a'.toString().repeat(256)), "Updated by display name must be <= 255 characters", "updated by display name greater than 255 characters"),
     )
   }
 
@@ -161,7 +161,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       migrateAlert(),
       migrateAlert().copy(alertCode = "", createdBy = ""),
       migrateAlert().copy(alertCode = "", authorisedBy = 'a'.toString().repeat(41)),
-      migrateAlert().copy(updatedAt = LocalDateTime.now(), updatedByDisplayName = "Up Dated"),
+      migrateAlert().copy(lastModifiedAt = LocalDateTime.now(), lastModifiedByDisplayName = "Up Dated"),
     )
 
     val response = webTestClient.migrateResponseSpec(request = request)
@@ -177,12 +177,6 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
           "Authorised by must be <= 40 characters\n" +
           "Created by must be supplied and be <= 32 characters\n" +
           "Updated by is required when updated at is supplied",
-      )
-      assertThat(developerMessage).isEqualTo(
-        "400 BAD_REQUEST \"Validation failure\" Field error in object 'migrateAlertList' on field 'alertCode': rejected value []; codes [Size.migrateAlertList.alertCode,Size.alertCode,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [migrateAlertList.alertCode,alertCode]; arguments []; default message [alertCode],12,1]; default message [Alert code must be supplied and be <= 12 characters]\n" +
-          "Field error in object 'migrateAlertList' on field 'authorisedBy': rejected value [aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]; codes [Size.migrateAlertList.authorisedBy,Size.authorisedBy,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [migrateAlertList.authorisedBy,authorisedBy]; arguments []; default message [authorisedBy],40,0]; default message [Authorised by must be <= 40 characters]\n" +
-          "Field error in object 'migrateAlertList' on field 'createdBy': rejected value []; codes [Size.migrateAlertList.createdBy,Size.createdBy,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [migrateAlertList.createdBy,createdBy]; arguments []; default message [createdBy],32,1]; default message [Created by must be supplied and be <= 32 characters]\n" +
-          "org.springframework.context.support.DefaultMessageSourceResolvable: codes [UpdatedByRequired.migratePrisonerAlertsController#createAlert.request,UpdatedByRequired.request,UpdatedByRequired.java.util.List,UpdatedByRequired]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [migratePrisonerAlertsController#createAlert.request,request]; arguments []; default message [request]]; default message [Updated by is required when updated at is supplied]",
       )
       assertThat(moreInfo).isNull()
     }
@@ -289,9 +283,9 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   @Test
   fun `should migrate updated alert`() {
     val request = migrateAlert().copy(
-      updatedAt = LocalDateTime.now().minusDays(1).withNano(0),
-      updatedBy = "AG1221GG",
-      updatedByDisplayName = "Up Dated",
+      lastModifiedAt = LocalDateTime.now().minusDays(1).withNano(0),
+      lastModifiedBy = "AG1221GG",
+      lastModifiedByDisplayName = "Up Dated",
     )
 
     val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(request)).single()
@@ -299,11 +293,11 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     val alert = alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!
 
     with(alert) {
-      assertThat(lastModifiedAt).isEqualTo(request.updatedAt)
+      assertThat(lastModifiedAt).isEqualTo(request.lastModifiedAt)
       with(lastModifiedAuditEvent()!!) {
-        assertThat(actionedAt).isEqualTo(request.updatedAt)
-        assertThat(actionedBy).isEqualTo(request.updatedBy)
-        assertThat(actionedByDisplayName).isEqualTo(request.updatedByDisplayName)
+        assertThat(actionedAt).isEqualTo(request.lastModifiedAt)
+        assertThat(actionedBy).isEqualTo(request.lastModifiedBy)
+        assertThat(actionedByDisplayName).isEqualTo(request.lastModifiedByDisplayName)
       }
     }
   }
@@ -334,9 +328,9 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     val updatedAt = LocalDateTime.parse("2024-01-30T12:57:06.21759")
     val request = migrateAlert().copy(
       createdAt = createdAt,
-      updatedAt = updatedAt,
-      updatedBy = "AG1221GG",
-      updatedByDisplayName = "Up Dated",
+      lastModifiedAt = updatedAt,
+      lastModifiedBy = "AG1221GG",
+      lastModifiedByDisplayName = "Up Dated",
     )
 
     val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(request)).single()

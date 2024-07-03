@@ -10,8 +10,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.Modifiable
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-@LastModifiedByRequired("Last modified by is required when last modified at is supplied")
-@LastModifiedByDisplayNameRequired("Last modified by display name is required when last modified at is supplied")
+@LastModifiedByRequired
+@LastModifiedByDisplayNameRequired
 data class ResyncAlert(
   @Schema(
     description = "The internal NOMIS id for the offender booking. " +

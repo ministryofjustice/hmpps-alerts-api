@@ -25,7 +25,8 @@ class ResyncAlertsService(
     val existingAlerts = alertRepository.findByPrisonNumber(prisonNumber)
     alerts.logActiveToBeforeActiveFrom(prisonNumber)
     alerts.logDuplicateActiveAlerts(prisonNumber)
-    val newAlerts = alerts.map { ResyncAlertMerge(it, existingAlerts.find(it)) }.map { it.alertFor(prisonNumber, alertCodes) }
+    val newAlerts =
+      alerts.map { ResyncAlertMerge(it, existingAlerts.find(it)) }.map { it.alertFor(prisonNumber, alertCodes) }
     existingAlerts.forEach {
       it.delete(
         deletedBy = "SYS",
@@ -83,7 +84,7 @@ class ResyncAlertsService(
   }
 
   private fun List<ResyncAlert>.logDuplicateActiveAlerts(prisonNumber: String) {
-    this.filter { it.isActive() }.groupBy { it.alertCode }.filter { it.value.size > 1 }.run {
+    with(filter { it.isActive() }.groupBy { it.alertCode }.filter { it.value.size > 1 }) {
       if (any()) {
         log.warn(
           "Person with prison number '$prisonNumber' has ${this.size} duplicate active alert(s) for code(s) ${

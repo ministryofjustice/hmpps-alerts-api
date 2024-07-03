@@ -29,11 +29,11 @@ class MigrateAlertService(
     alertRepository.flush()
 
     return request.map {
-      alertRepository.save(it.toAlertEntity(prisonNumber, alertCodes[it.alertCode]!!, migratedAt))
+      it.toAlertEntity(prisonNumber, alertCodes[it.alertCode]!!, migratedAt)
     }.also {
+      alertRepository.saveAll(it)
       it.logDuplicateActiveAlerts(prisonNumber)
       it.logHistoricAlerts(prisonNumber)
-      alertRepository.flush()
     }.map {
       MigratedAlert(
         offenderBookId = it.migratedAlert!!.offenderBookId,
@@ -50,11 +50,12 @@ class MigrateAlertService(
     }
 
   private fun List<MigrateAlert>.checkForNotFoundAlertCodes(alertCodes: Map<String, AlertCode>) =
-    map { it.alertCode }.distinct().filterNot { alertCodes.containsKey(it) }.sorted().run {
-      if (this.isNotEmpty()) {
-        throw IllegalArgumentException("Alert code(s) '${this.joinToString("', '") }' not found")
+    with(map { it.alertCode }.distinct().filterNot { alertCodes.containsKey(it) }.sorted()) {
+      require(isEmpty()) {
+        joinToString(prefix = "Alert code(s) '", separator = "', '", postfix = "' not found")
       }
     }
+
 
   private fun List<MigrateAlert>.logActiveToBeforeActiveFrom(prisonNumber: String) {
     this.filter { it.activeTo?.isBefore(it.activeFrom) == true }.forEach {
@@ -65,7 +66,11 @@ class MigrateAlertService(
   private fun List<Alert>.logDuplicateActiveAlerts(prisonNumber: String) {
     this.filter { it.isActive() }.groupBy { it.alertCode.code }.filter { it.value.size > 1 }.run {
       if (any()) {
-        log.warn("Person with prison number '$prisonNumber' has ${this.size} duplicate active alert(s) for code(s) ${this.map { "'${it.key}' (${it.value.size} active)" }.joinToString(", ")}")
+        log.warn(
+          "Person with prison number '$prisonNumber' has ${this.size} duplicate active alert(s) for code(s) ${
+            this.map { "'${it.key}' (${it.value.size} active)" }.joinToString(", ")
+          }",
+        )
       }
     }
   }

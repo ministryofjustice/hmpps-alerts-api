@@ -48,18 +48,19 @@ class HmppsAlertsApiExceptionHandler {
         userMessage = "Authentication problem. Check token and roles - ${e.message}",
         developerMessage = e.message,
       ),
-    ).also { log.info("Access denied exception: {}", e.message) }
+    )
 
   @ExceptionHandler(MissingServletRequestParameterException::class)
-  fun handleMissingServletRequestParameterException(e: MissingServletRequestParameterException): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(BAD_REQUEST)
-    .body(
-      ErrorResponse(
-        status = BAD_REQUEST,
-        userMessage = "Validation failure: ${e.message}",
-        developerMessage = e.message,
-      ),
-    ).also { log.info("Missing servlet request parameter exception: {}", e.message) }
+  fun handleMissingServletRequestParameterException(e: MissingServletRequestParameterException): ResponseEntity<ErrorResponse> =
+    ResponseEntity
+      .status(BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = BAD_REQUEST,
+          userMessage = "Validation failure: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
 
   @ExceptionHandler(MethodArgumentTypeMismatchException::class)
   fun handleMethodArgumentTypeMismatchException(e: MethodArgumentTypeMismatchException): ResponseEntity<ErrorResponse> {
@@ -78,19 +79,20 @@ class HmppsAlertsApiExceptionHandler {
           userMessage = "Validation failure: $message",
           developerMessage = e.message,
         ),
-      ).also { log.info("Method argument type mismatch exception: {}", e.message) }
+      )
   }
 
   @ExceptionHandler(HttpMessageNotReadableException::class)
-  fun handleHttpMessageNotReadableException(e: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(BAD_REQUEST)
-    .body(
-      ErrorResponse(
-        status = BAD_REQUEST,
-        userMessage = "Validation failure: Couldn't read request body",
-        developerMessage = e.message,
-      ),
-    ).also { log.info("HTTP message not readable exception: {}", e.message) }
+  fun handleHttpMessageNotReadableException(e: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> =
+    ResponseEntity
+      .status(BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = BAD_REQUEST,
+          userMessage = "Validation failure: Couldn't read request body",
+          developerMessage = e.message,
+        ),
+      )
 
   @ExceptionHandler(MethodArgumentNotValidException::class)
   fun handleValidationException(e: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -99,11 +101,11 @@ class HmppsAlertsApiExceptionHandler {
       ErrorResponse(
         status = BAD_REQUEST,
         userMessage = "Validation failure(s): ${
-          e.allErrors.map { it.defaultMessage }.distinct().sorted().joinToString("\n")
+          e.allErrors.map { it.defaultMessage }.distinct().sorted().joinToString(System.lineSeparator())
         }",
         developerMessage = e.message,
       ),
-    ).also { log.info("Validation exception: {}", e.message) }
+    )
 
   @ExceptionHandler(IllegalArgumentException::class)
   fun handleIllegalArgumentException(e: IllegalArgumentException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -114,7 +116,7 @@ class HmppsAlertsApiExceptionHandler {
         userMessage = "Validation failure: ${e.message}",
         developerMessage = e.message,
       ),
-    ).also { log.info("Illegal argument exception: {}", e.message) }
+    )
 
   @ExceptionHandler(ValidationException::class)
   fun handleValidationException(e: ValidationException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -125,22 +127,22 @@ class HmppsAlertsApiExceptionHandler {
         userMessage = "Validation failure: ${e.message}",
         developerMessage = e.message,
       ),
-    ).also { log.info("Validation exception: {}", e.message) }
+    )
 
   @ExceptionHandler(HandlerMethodValidationException::class)
   fun handleHandlerMethodValidationException(e: HandlerMethodValidationException): ResponseEntity<ErrorResponse> =
-    e.allErrors.map { it.toString() }.distinct().sorted().joinToString("\n").let { validationErrors ->
+    e.allErrors.map { it.toString() }.distinct().sorted().joinToString(System.lineSeparator()).let { validationErrors ->
       ResponseEntity
         .status(BAD_REQUEST)
         .body(
           ErrorResponse(
             status = BAD_REQUEST,
             userMessage = "Validation failure(s): ${
-              e.allErrors.map { it.defaultMessage }.distinct().sorted().joinToString("\n")
+              e.allErrors.map { it.defaultMessage }.distinct().sorted().joinToString(System.lineSeparator())
             }",
             developerMessage = "${e.message} $validationErrors",
           ),
-        ).also { log.info("Validation exception: $validationErrors\n {}", e.message) }
+        )
     }
 
   @ExceptionHandler(AlertNotFoundException::class)
@@ -152,7 +154,7 @@ class HmppsAlertsApiExceptionHandler {
         userMessage = "Alert not found: ${e.message}",
         developerMessage = e.message,
       ),
-    ).also { log.info("Alert not found exception: {}", e.message) }
+    )
 
   @ExceptionHandler(NoResourceFoundException::class)
   fun handleNoResourceFoundException(e: NoResourceFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -163,7 +165,7 @@ class HmppsAlertsApiExceptionHandler {
         userMessage = "No resource found failure: ${e.message}",
         developerMessage = e.message,
       ),
-    ).also { log.info("No resource found exception: {}", e.message) }
+    )
 
   @ExceptionHandler(AlertCodeNotFoundException::class)
   fun handleAlertCodeNotFoundException(e: AlertCodeNotFoundException): ResponseEntity<ErrorResponse> =
@@ -190,26 +192,28 @@ class HmppsAlertsApiExceptionHandler {
       )
 
   @ExceptionHandler(HttpRequestMethodNotSupportedException::class)
-  fun handleHttpRequestMethodNotSupportedException(e: HttpRequestMethodNotSupportedException): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(METHOD_NOT_ALLOWED)
-    .body(
-      ErrorResponse(
-        status = METHOD_NOT_ALLOWED,
-        userMessage = "Method not allowed failure: ${e.message}",
-        developerMessage = e.message,
-      ),
-    ).also { log.info("Method not allowed exception: {}", e.message) }
+  fun handleHttpRequestMethodNotSupportedException(e: HttpRequestMethodNotSupportedException): ResponseEntity<ErrorResponse> =
+    ResponseEntity
+      .status(METHOD_NOT_ALLOWED)
+      .body(
+        ErrorResponse(
+          status = METHOD_NOT_ALLOWED,
+          userMessage = "Method not allowed failure: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
 
   @ExceptionHandler(ExistingActiveAlertWithCodeException::class)
-  fun handleExistingActiveAlertWithCodeException(e: ExistingActiveAlertWithCodeException): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(HttpStatus.CONFLICT)
-    .body(
-      ErrorResponse(
-        status = HttpStatus.CONFLICT.value(),
-        userMessage = "Duplicate failure: ${e.message}",
-        developerMessage = e.message,
-      ),
-    ).also { log.info("Existing active alert with code exception: {}", e.message) }
+  fun handleExistingActiveAlertWithCodeException(e: ExistingActiveAlertWithCodeException): ResponseEntity<ErrorResponse> =
+    ResponseEntity
+      .status(HttpStatus.CONFLICT)
+      .body(
+        ErrorResponse(
+          status = HttpStatus.CONFLICT.value(),
+          userMessage = "Duplicate failure: ${e.message}",
+          developerMessage = e.message,
+        ),
+      ).also { log.info("Existing active alert with code exception: {}", e.message) }
 
   @ExceptionHandler(DownstreamServiceException::class)
   fun handleException(e: DownstreamServiceException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -220,7 +224,7 @@ class HmppsAlertsApiExceptionHandler {
         userMessage = "Downstream service exception: ${e.message}",
         developerMessage = e.message,
       ),
-    ).also { log.warn("Downstream service exception", e.cause) }
+    )
 
   @ExceptionHandler(Exception::class)
   fun handleException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -231,7 +235,7 @@ class HmppsAlertsApiExceptionHandler {
         userMessage = "Unexpected error: ${e.message}",
         developerMessage = e.message,
       ),
-    ).also { log.error("Unexpected exception", e) }
+    )
 
   private companion object {
     private val log = LoggerFactory.getLogger(this::class.java)
@@ -240,4 +244,5 @@ class HmppsAlertsApiExceptionHandler {
 
 class DownstreamServiceException(message: String, cause: Throwable) : Exception(message, cause)
 class AlertNotFoundException(message: String) : Exception(message)
-class ExistingActiveAlertWithCodeException(prisonNumber: String, alertCode: String) : Exception("Active alert with code '$alertCode' already exists for prison number '$prisonNumber'")
+class ExistingActiveAlertWithCodeException(prisonNumber: String, alertCode: String) :
+  Exception("Active alert with code '$alertCode' already exists for prison number '$prisonNumber'")

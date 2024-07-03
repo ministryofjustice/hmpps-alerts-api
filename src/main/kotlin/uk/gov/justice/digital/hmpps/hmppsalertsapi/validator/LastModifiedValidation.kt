@@ -29,7 +29,7 @@ class LastModifiedByDisplayNameValidator : ConstraintValidator<LastModifiedByDis
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class LastModifiedByRequired(
-  val message: String,
+  val message: String = "Last modified by is required when last modified at is supplied",
   val groups: Array<KClass<*>> = [],
   val payload: Array<KClass<out Payload>> = [],
 )
@@ -38,7 +38,7 @@ annotation class LastModifiedByRequired(
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class LastModifiedByDisplayNameRequired(
-  val message: String,
+  val message: String = "Last modified by display name is required when last modified at is supplied",
   val groups: Array<KClass<*>> = [],
   val payload: Array<KClass<out Payload>> = [],
 )

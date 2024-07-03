@@ -55,9 +55,9 @@ class MigrateAlertTranslationTest {
   @Test
   fun `convert migrate alert request with updated audit event`() {
     val request = migrateAlert().copy(
-      updatedAt = LocalDateTime.now().minusDays(1),
-      updatedBy = "AG1221GG",
-      updatedByDisplayName = "Up Dated",
+      lastModifiedAt = LocalDateTime.now().minusDays(1),
+      lastModifiedBy = "AG1221GG",
+      lastModifiedByDisplayName = "Up Dated",
     )
     val entity = request.toAlertEntity(PRISON_NUMBER, alertCodeVictim())
     assertThat(entity.auditEvents()).usingRecursiveComparison().isEqualTo(
@@ -66,9 +66,9 @@ class MigrateAlertTranslationTest {
           alert = entity,
           action = UPDATED,
           description = "Migrated alert updated",
-          actionedAt = request.updatedAt!!,
-          actionedBy = request.updatedBy!!,
-          actionedByDisplayName = request.updatedByDisplayName!!,
+          actionedAt = request.lastModifiedAt!!,
+          actionedBy = request.lastModifiedBy!!,
+          actionedByDisplayName = request.lastModifiedByDisplayName!!,
           source = NOMIS,
           activeCaseLoadId = null,
         ),

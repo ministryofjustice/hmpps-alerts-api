@@ -42,14 +42,14 @@ fun MigrateAlert.toAlertEntity(
       source = NOMIS,
       activeCaseLoadId = null,
     )
-    if (this.updatedAt != null) {
-      al.lastModifiedAt = this.updatedAt
+    if (this.lastModifiedAt != null) {
+      al.lastModifiedAt = this.lastModifiedAt
       al.auditEvent(
         action = UPDATED,
         description = "Migrated alert updated",
-        actionedAt = this.updatedAt,
-        actionedBy = this.updatedBy!!,
-        actionedByDisplayName = LanguageFormatUtils.formatDisplayName(this.updatedByDisplayName!!),
+        actionedAt = this.lastModifiedAt,
+        actionedBy = this.lastModifiedBy!!,
+        actionedByDisplayName = LanguageFormatUtils.formatDisplayName(this.lastModifiedByDisplayName!!),
         source = NOMIS,
         activeCaseLoadId = null,
       )

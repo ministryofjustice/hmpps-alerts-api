@@ -131,9 +131,9 @@ fun migrateAlert() =
     createdAt = LocalDateTime.now().minusDays(2).withNano(0),
     createdBy = "AB11DZ",
     createdByDisplayName = "C REATED",
-    updatedAt = null,
-    updatedBy = null,
-    updatedByDisplayName = null,
+    lastModifiedAt = null,
+    lastModifiedBy = null,
+    lastModifiedByDisplayName = null,
   )
 
 fun bulkCreateAlertRequest() =
