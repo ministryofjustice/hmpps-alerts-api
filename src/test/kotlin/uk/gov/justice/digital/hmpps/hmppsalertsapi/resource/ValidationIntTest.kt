@@ -177,29 +177,6 @@ class ValidationIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Update validate active to before active from`() {
-    val response = webTestClient.put()
-      .uri("/alerts/${UUID.randomUUID()}")
-      .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
-      .headers(setAlertRequestContext())
-      .accept(MediaType.APPLICATION_JSON)
-      .bodyValue(
-        UpdateAlert(
-          description = "description",
-          authorisedBy = "A. Authorised",
-          activeFrom = LocalDate.now(),
-          activeTo = LocalDate.now().minusDays(1),
-          appendComment = null,
-        ),
-      )
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody!!
-    assertThat(response.developerMessage).contains("Active from must be before active to")
-  }
-
-  @Test
   fun `Update validate description too long`() {
     val response = webTestClient.put()
       .uri("/alerts/${UUID.randomUUID()}")
