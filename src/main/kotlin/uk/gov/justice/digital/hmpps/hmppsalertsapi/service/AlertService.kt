@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ExistingActiveAlertWit
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAuditEventModel
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
@@ -39,7 +40,9 @@ class AlertService(
     request.let {
       // Perform database checks first prior to checks that require API calls
       val alertCode = it.getAlertCode()
-      checkForExistingActiveAlert(prisonNumber, request.alertCode)
+      if (context.source != Source.NOMIS) {
+        checkForExistingActiveAlert(prisonNumber, request.alertCode)
+      }
 
       // Uses API call
       validatePrisonNumber(prisonNumber)

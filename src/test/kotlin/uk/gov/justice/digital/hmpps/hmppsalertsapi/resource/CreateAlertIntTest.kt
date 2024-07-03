@@ -581,7 +581,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   @Sql("classpath:test_data/duplicate-checking-alerts.sql")
-  fun `409 conflict - active alert with code already exists for prison number - alert active from today with no active to date`() {
+  fun `409 conflict - source dps - active alert with code already exists for prison number - alert active from today with no active to date`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_HIDDEN_DISABILITY)
 
     val response = webTestClient.createAlertResponseSpec(request = request)
@@ -596,6 +596,16 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(developerMessage).isEqualTo("Active alert with code '${request.alertCode}' already exists for prison number '$PRISON_NUMBER'")
       assertThat(moreInfo).isNull()
     }
+  }
+
+  @Test
+  @Sql("classpath:test_data/duplicate-checking-alerts.sql")
+  fun `201 created - source nomis - active alert with code already exists for prison number - alert active from today with no active to date`() {
+    val request = createAlertRequest(alertCode = ALERT_CODE_HIDDEN_DISABILITY)
+
+    val alert = webTestClient.createAlert(NOMIS, request)
+
+    assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
   }
 
   @Test
@@ -619,7 +629,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   @Sql("classpath:test_data/duplicate-checking-alerts.sql")
-  fun `409 conflict - active alert with code already exists for prison number - alert active from tomorrow with no active to date`() {
+  fun `409 conflict - source dps - active alert with code already exists for prison number - alert active from tomorrow with no active to date`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_SOCIAL_CARE)
 
     val response = webTestClient.createAlertResponseSpec(request = request)
@@ -634,6 +644,16 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(developerMessage).isEqualTo("Active alert with code '${request.alertCode}' already exists for prison number '$PRISON_NUMBER'")
       assertThat(moreInfo).isNull()
     }
+  }
+
+  @Test
+  @Sql("classpath:test_data/duplicate-checking-alerts.sql")
+  fun `201 created - source nomis - active alert with code already exists for prison number - alert active from tomorrow with no active to date`() {
+    val request = createAlertRequest(alertCode = ALERT_CODE_SOCIAL_CARE)
+
+    val alert = webTestClient.createAlert(NOMIS, request)
+
+    assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
   }
 
   @Test
