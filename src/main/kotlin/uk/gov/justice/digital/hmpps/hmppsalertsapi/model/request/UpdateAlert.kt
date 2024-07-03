@@ -3,13 +3,11 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Size
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.DateComparison
 import java.time.LocalDate
 
 @Schema(
   description = "The request body for updating an existing alert for a person",
 )
-@DateComparison("Active from must be before active to")
 data class UpdateAlert(
   @Schema(
     description = "The updated description of the alert. Will be ignored if null and will clear the description if empty. " +
