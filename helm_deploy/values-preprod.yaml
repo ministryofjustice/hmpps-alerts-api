@@ -6,6 +6,7 @@ generic-service:
 
   ingress:
     host: alerts-api-preprod.hmpps.service.justice.gov.uk
+    modsecurity_enabled: false
 
   env:
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
