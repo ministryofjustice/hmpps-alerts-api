@@ -140,22 +140,22 @@ class HmppsAlertsApiExceptionHandler {
   fun handleHandlerMethodValidationException(e: HandlerMethodValidationException): ResponseEntity<ErrorResponse> =
     e.allErrors.map { it.defaultMessage }.distinct().sorted().let {
       val validationFailure = "Validation failure"
-      val message = it.joinToString(System.lineSeparator())
+      val message = if (it.size > 1) {
+        """
+              |${validationFailure}s: 
+              |${it.joinToString(System.lineSeparator())}
+              |
+        """.trimMargin()
+      } else {
+        "$validationFailure: ${it.joinToString(System.lineSeparator())}"
+      }
       ResponseEntity
         .status(BAD_REQUEST)
         .body(
           ErrorResponse(
             status = BAD_REQUEST,
-            userMessage = if (it.size > 1) {
-              """
-              |${validationFailure}s: 
-              |$message
-              |
-              """.trimMargin()
-            } else {
-              "$validationFailure: $message"
-            },
-            developerMessage = "${e.message}${System.lineSeparator()}$message",
+            userMessage = message,
+            developerMessage = "400 BAD_REQUEST $message",
           ),
         ).also { res -> log.info(res.body?.developerMessage) }
     }

@@ -187,7 +187,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: $expectedUserMessage")
-      assertThat(developerMessage).startsWith("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST Validation failure: $expectedUserMessage")
       assertThat(moreInfo).isNull()
     }
   }
@@ -229,19 +229,19 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody
 
-    with(response!!) {
-      assertThat(status).isEqualTo(400)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo(
-        """
+    val validationMessage = """
           |Validation failures: 
           |Alert code must be supplied and be <= 12 characters
           |Authorised by must be <= 40 characters
           |Created by must be supplied and be <= 32 characters
           |Updated by is required when updated at is supplied
           |
-        """.trimMargin(),
-      )
+    """.trimMargin()
+    with(response!!) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo(validationMessage)
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST $validationMessage")
       assertThat(moreInfo).isNull()
     }
   }
