@@ -97,21 +97,81 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   companion object {
     @JvmStatic
     fun badRequestParameters(): List<Arguments> = listOf(
-      Arguments.of(migrateAlert().copy(offenderBookId = 0), "Offender book id must be supplied and be > 0", "offender book id required"),
-      Arguments.of(migrateAlert().copy(bookingSeq = 0), "Booking sequence must be supplied and be > 0", "booking sequence required"),
-      Arguments.of(migrateAlert().copy(alertSeq = 0), "Alert sequence must be supplied and be > 0", "alert sequence required"),
-      Arguments.of(migrateAlert().copy(alertCode = ""), "Alert code must be supplied and be <= 12 characters", "alert code required"),
-      Arguments.of(migrateAlert().copy(alertCode = 'a'.toString().repeat(13)), "Alert code must be supplied and be <= 12 characters", "alert code greater than 12 characters"),
-      Arguments.of(migrateAlert().copy(description = 'a'.toString().repeat(4001)), "Description must be <= 4000 characters", "description greater than 4000 characters"),
-      Arguments.of(migrateAlert().copy(authorisedBy = 'a'.toString().repeat(41)), "Authorised by must be <= 40 characters", "authorised by greater than 40 characters"),
-      Arguments.of(migrateAlert().copy(createdBy = ""), "Created by must be supplied and be <= 32 characters", "created by required"),
-      Arguments.of(migrateAlert().copy(createdBy = 'a'.toString().repeat(33)), "Created by must be supplied and be <= 32 characters", "created by greater than 32 characters"),
-      Arguments.of(migrateAlert().copy(createdByDisplayName = ""), "Created by display name must be supplied and be <= 255 characters", "created by display name required"),
-      Arguments.of(migrateAlert().copy(createdByDisplayName = 'a'.toString().repeat(256)), "Created by display name must be supplied and be <= 255 characters", "created by display name greater than 255 characters"),
-      Arguments.of(migrateAlert().copy(updatedAt = LocalDateTime.now(), updatedByDisplayName = "Up Dated"), "Updated by is required when updated at is supplied", "updated by required when updated at is supplied"),
-      Arguments.of(migrateAlert().copy(updatedBy = 'a'.toString().repeat(33)), "Updated by must be <= 32 characters", "updated by greater than 32 characters"),
-      Arguments.of(migrateAlert().copy(updatedAt = LocalDateTime.now(), updatedBy = "AB11DZ"), "Updated by display name is required when updated at is supplied", "updated by display name required when updated at is supplied"),
-      Arguments.of(migrateAlert().copy(updatedByDisplayName = 'a'.toString().repeat(256)), "Updated by display name must be <= 255 characters", "updated by display name greater than 255 characters"),
+      Arguments.of(
+        migrateAlert().copy(offenderBookId = 0),
+        "Offender book id must be supplied and be > 0",
+        "offender book id required",
+      ),
+      Arguments.of(
+        migrateAlert().copy(bookingSeq = 0),
+        "Booking sequence must be supplied and be > 0",
+        "booking sequence required",
+      ),
+      Arguments.of(
+        migrateAlert().copy(alertSeq = 0),
+        "Alert sequence must be supplied and be > 0",
+        "alert sequence required",
+      ),
+      Arguments.of(
+        migrateAlert().copy(alertCode = ""),
+        "Alert code must be supplied and be <= 12 characters",
+        "alert code required",
+      ),
+      Arguments.of(
+        migrateAlert().copy(alertCode = 'a'.toString().repeat(13)),
+        "Alert code must be supplied and be <= 12 characters",
+        "alert code greater than 12 characters",
+      ),
+      Arguments.of(
+        migrateAlert().copy(description = 'a'.toString().repeat(4001)),
+        "Description must be <= 4000 characters",
+        "description greater than 4000 characters",
+      ),
+      Arguments.of(
+        migrateAlert().copy(authorisedBy = 'a'.toString().repeat(41)),
+        "Authorised by must be <= 40 characters",
+        "authorised by greater than 40 characters",
+      ),
+      Arguments.of(
+        migrateAlert().copy(createdBy = ""),
+        "Created by must be supplied and be <= 32 characters",
+        "created by required",
+      ),
+      Arguments.of(
+        migrateAlert().copy(createdBy = 'a'.toString().repeat(33)),
+        "Created by must be supplied and be <= 32 characters",
+        "created by greater than 32 characters",
+      ),
+      Arguments.of(
+        migrateAlert().copy(createdByDisplayName = ""),
+        "Created by display name must be supplied and be <= 255 characters",
+        "created by display name required",
+      ),
+      Arguments.of(
+        migrateAlert().copy(createdByDisplayName = 'a'.toString().repeat(256)),
+        "Created by display name must be supplied and be <= 255 characters",
+        "created by display name greater than 255 characters",
+      ),
+      Arguments.of(
+        migrateAlert().copy(updatedAt = LocalDateTime.now(), updatedByDisplayName = "Up Dated"),
+        "Updated by is required when updated at is supplied",
+        "updated by required when updated at is supplied",
+      ),
+      Arguments.of(
+        migrateAlert().copy(updatedBy = 'a'.toString().repeat(33)),
+        "Updated by must be <= 32 characters",
+        "updated by greater than 32 characters",
+      ),
+      Arguments.of(
+        migrateAlert().copy(updatedAt = LocalDateTime.now(), updatedBy = "AB11DZ"),
+        "Updated by display name is required when updated at is supplied",
+        "updated by display name required when updated at is supplied",
+      ),
+      Arguments.of(
+        migrateAlert().copy(updatedByDisplayName = 'a'.toString().repeat(256)),
+        "Updated by display name must be <= 255 characters",
+        "updated by display name greater than 255 characters",
+      ),
     )
   }
 
@@ -126,7 +186,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure(s): $expectedUserMessage")
+      assertThat(userMessage).isEqualTo("Validation failure: $expectedUserMessage")
       assertThat(developerMessage).startsWith("400 BAD_REQUEST \"Validation failure\"")
       assertThat(moreInfo).isNull()
     }
@@ -173,16 +233,14 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo(
-        "Validation failure(s): Alert code must be supplied and be <= 12 characters\n" +
-          "Authorised by must be <= 40 characters\n" +
-          "Created by must be supplied and be <= 32 characters\n" +
-          "Updated by is required when updated at is supplied",
-      )
-      assertThat(developerMessage).isEqualTo(
-        "400 BAD_REQUEST \"Validation failure\" Field error in object 'migrateAlertList' on field 'alertCode': rejected value []; codes [Size.migrateAlertList.alertCode,Size.alertCode,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [migrateAlertList.alertCode,alertCode]; arguments []; default message [alertCode],12,1]; default message [Alert code must be supplied and be <= 12 characters]\n" +
-          "Field error in object 'migrateAlertList' on field 'authorisedBy': rejected value [aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa]; codes [Size.migrateAlertList.authorisedBy,Size.authorisedBy,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [migrateAlertList.authorisedBy,authorisedBy]; arguments []; default message [authorisedBy],40,0]; default message [Authorised by must be <= 40 characters]\n" +
-          "Field error in object 'migrateAlertList' on field 'createdBy': rejected value []; codes [Size.migrateAlertList.createdBy,Size.createdBy,Size.java.lang.String,Size]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [migrateAlertList.createdBy,createdBy]; arguments []; default message [createdBy],32,1]; default message [Created by must be supplied and be <= 32 characters]\n" +
-          "org.springframework.context.support.DefaultMessageSourceResolvable: codes [UpdatedByRequired.migratePrisonerAlertsController#createAlert.request,UpdatedByRequired.request,UpdatedByRequired.java.util.List,UpdatedByRequired]; arguments [org.springframework.context.support.DefaultMessageSourceResolvable: codes [migratePrisonerAlertsController#createAlert.request,request]; arguments []; default message [request]]; default message [Updated by is required when updated at is supplied]",
+        """
+          |Validation failures: 
+          |Alert code must be supplied and be <= 12 characters
+          |Authorised by must be <= 40 characters
+          |Created by must be supplied and be <= 32 characters
+          |Updated by is required when updated at is supplied
+          |
+        """.trimMargin(),
       )
       assertThat(moreInfo).isNull()
     }
@@ -310,7 +368,9 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `migrate alert with inactive alert code`() {
-    val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(migrateAlert().copy(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD))).single()
+    val migratedAlert =
+      webTestClient.migratePrisonerAlerts(request = listOf(migrateAlert().copy(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)))
+        .single()
 
     with(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!.alertCode) {
       assertThat(code).isEqualTo(ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
@@ -320,7 +380,14 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `migrate alert with active to before active from`() {
-    val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(migrateAlert().copy(activeFrom = LocalDate.now(), activeTo = LocalDate.now().minusDays(1)))).single()
+    val migratedAlert = webTestClient.migratePrisonerAlerts(
+      request = listOf(
+        migrateAlert().copy(
+          activeFrom = LocalDate.now(),
+          activeTo = LocalDate.now().minusDays(1),
+        ),
+      ),
+    ).single()
 
     with(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!) {
       assertThat(activeTo).isBefore(activeFrom)

@@ -6,9 +6,10 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertCodeModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertCodeModels
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toEntity
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertCodeNotFoundException
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertTypeNotFound
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.ExistingActiveAlertTypeWithCodeException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlreadyExistsException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.verifyDoesNotExist
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.verifyExists
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertCodeRequest
@@ -35,13 +36,13 @@ class AlertCodeService(
     }
 
   private fun CreateAlertCodeRequest.checkForExistingAlertCode() =
-    alertCodeRepository.findByCode(code) != null && throw ExistingActiveAlertTypeWithCodeException("Alert code exists with code '$code'")
+    verifyDoesNotExist(alertCodeRepository.findByCode(code)) { AlreadyExistsException("Alert code", code) }
 
   private fun CreateAlertCodeRequest.checkAlertTypeExists() =
-    alertTypeRepository.findByCode(parent) == null && throw AlertTypeNotFound("Alert type with code $parent could not be found")
+    verifyExists(alertTypeRepository.findByCode(parent)) { NotFoundException("Alert type", parent) }
 
   private fun String.checkAlertCodeExists() =
-    alertCodeRepository.findByCode(this) == null && throw AlertCodeNotFoundException("Alert with code $this could not be found")
+    verifyExists(alertCodeRepository.findByCode(this)) { NotFoundException("Alert code", this) }
 
   @Transactional
   fun deactivateAlertCode(alertCode: String, alertRequestContext: AlertRequestContext): AlertCode =
