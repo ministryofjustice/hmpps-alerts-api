@@ -73,15 +73,6 @@ erDiagram
         varchar(32) deactivated_by
     }
 
-    migrated_alert {
-        bigserial migrated_alert_id PK "not null"
-        bigint offender_book_id "not null"
-        integer booking_seq "not null"
-        integer alert_seq "not null"
-        bigint alert_id FK "not null"
-        timestamp migrated_at "not null"
-    }
-
     bulk_alert {
         bigserial bulk_alert_id PK "not null"
         uuid bulk_alert_uuid "not null"
