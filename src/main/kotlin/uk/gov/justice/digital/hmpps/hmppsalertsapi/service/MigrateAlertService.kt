@@ -32,7 +32,6 @@ class MigrateAlertService(
       val alerts = it.map { m -> m.second }
       alertRepository.saveAll(alerts)
       alerts.logDuplicateActiveAlerts(prisonNumber)
-      it.logHistoricAlerts(prisonNumber)
     }.map {
       MigratedAlert(
         offenderBookId = it.first.offenderBookId,
@@ -67,20 +66,6 @@ class MigrateAlertService(
         log.warn(
           "Person with prison number '$prisonNumber' has ${this.size} duplicate active alert(s) for code(s) ${
             this.map { "'${it.key}' (${it.value.size} active)" }.joinToString(", ")
-          }",
-        )
-      }
-    }
-  }
-
-  private fun List<Pair<MigrateAlert, Alert>>.logHistoricAlerts(prisonNumber: String) {
-    this.filter { (it.first.bookingSeq) > 1 }.run {
-      if (any()) {
-        log.warn(
-          "Person with prison number '$prisonNumber' has ${this.size} historic alert(s) for code(s) ${
-            this.joinToString(
-              ", ",
-            ) { "'${it.second.alertCode.code}' (${if (it.second.isActive()) "active" else "inactive"})" }
           }",
         )
       }
