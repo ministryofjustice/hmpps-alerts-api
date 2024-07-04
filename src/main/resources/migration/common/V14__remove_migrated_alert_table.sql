@@ -1,0 +1,1 @@
+DROP TABLE migrated_alert;

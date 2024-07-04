@@ -5,10 +5,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.ArgumentCaptor
+import org.mockito.ArgumentMatchers.anyList
 import org.mockito.Captor
 import org.mockito.InjectMocks
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.firstValue
 import org.mockito.kotlin.lastValue
 import org.mockito.kotlin.mock
@@ -50,27 +52,28 @@ class MigrateAlertServiceTest {
   fun `converts migration request and saves alert`() {
     val request = migrateAlert()
     val alertCode = alertCodeVictim()
+    val argumentCaptor = argumentCaptor<List<Alert>>()
     whenever(alertCodeRepository.findByCodeIn(listOf(request.alertCode))).thenReturn(listOf(alertCode))
-    whenever(alertRepository.save(argumentCaptor.capture())).thenAnswer { argumentCaptor.firstValue }
+    whenever(alertRepository.saveAll(argumentCaptor.capture())).thenAnswer { argumentCaptor.firstValue }
     underTest.migratePrisonerAlerts(PRISON_NUMBER, listOf(request))
-    with(argumentCaptor.firstValue) {
-      assertThat(this).isEqualTo(request.toAlertEntity(PRISON_NUMBER, alertCode, migratedAlert!!.migratedAt).copy(alertUuid = alertUuid))
+    with(argumentCaptor.firstValue.first()) {
+      assertThat(this).isEqualTo(request.toAlertEntity(PRISON_NUMBER, alertCode).copy(alertUuid = alertUuid))
     }
-    verify(alertRepository, times(2)).flush()
   }
 
   @Test
   fun `returns migrated alert mapping`() {
     val request = migrateAlert()
+    val argumentCaptor = argumentCaptor<List<Alert>>()
     whenever(alertCodeRepository.findByCodeIn(any())).thenReturn(listOf(alertCodeVictim()))
-    whenever(alertRepository.save(argumentCaptor.capture())).thenAnswer { argumentCaptor.firstValue }
+    whenever(alertRepository.saveAll(argumentCaptor.capture())).thenAnswer { argumentCaptor.firstValue }
     val migratedAlert = underTest.migratePrisonerAlerts(PRISON_NUMBER, listOf(request)).single()
     assertThat(migratedAlert).isEqualTo(
       MigratedAlert(
         offenderBookId = request.offenderBookId,
         bookingSeq = request.bookingSeq,
         alertSeq = request.alertSeq,
-        alertUuid = argumentCaptor.firstValue.alertUuid,
+        alertUuid = argumentCaptor.firstValue.first().alertUuid,
       ),
     )
   }
@@ -86,7 +89,6 @@ class MigrateAlertServiceTest {
     val migratedAlert = underTest.migratePrisonerAlerts(PRISON_NUMBER, listOf(request)).single()
     assertThat(migratedAlert.alertUuid).isNotEqualTo(existingAlert.alertUuid)
     verify(alertRepository).deleteAll(listOf(existingAlert))
-    verify(alertRepository, times(2)).flush()
   }
 
   @Test
@@ -111,7 +113,7 @@ class MigrateAlertServiceTest {
     whenever(alertRepository.save(argumentCaptor.capture())).thenAnswer { argumentCaptor.lastValue }
     val migratedAlerts = underTest.migratePrisonerAlerts(PRISON_NUMBER, request)
     assertThat(migratedAlerts).hasSize(2)
-    verify(alertRepository, times(2)).save(any())
+    verify(alertRepository).saveAll(anyList())
   }
 
   @Test
@@ -136,7 +138,7 @@ class MigrateAlertServiceTest {
     whenever(alertRepository.save(argumentCaptor.capture())).thenAnswer { argumentCaptor.lastValue }
     val migratedAlerts = underTest.migratePrisonerAlerts(PRISON_NUMBER, request)
     assertThat(migratedAlerts).hasSize(2)
-    verify(alertRepository, times(2)).save(any())
+    verify(alertRepository).saveAll(anyList())
   }
 
   @Test
@@ -174,6 +176,6 @@ class MigrateAlertServiceTest {
     whenever(alertRepository.save(argumentCaptor.capture())).thenAnswer { argumentCaptor.lastValue }
     val migratedAlerts = underTest.migratePrisonerAlerts(PRISON_NUMBER, request)
     assertThat(migratedAlerts).hasSize(3)
-    verify(alertRepository, times(3)).save(any())
+    verify(alertRepository).saveAll(anyList())
   }
 }

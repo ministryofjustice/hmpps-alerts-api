@@ -11,7 +11,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MigratedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
-import java.time.LocalDateTime
 
 @Service
 @Transactional
@@ -20,7 +19,6 @@ class MigrateAlertService(
   private val alertRepository: AlertRepository,
 ) {
   fun migratePrisonerAlerts(prisonNumber: String, request: List<MigrateAlert>): List<MigratedAlert> {
-    val migratedAt = LocalDateTime.now()
     val alertCodes = request.alertCodes()
     request.checkForNotFoundAlertCodes(alertCodes)
     request.logActiveToBeforeActiveFrom(prisonNumber)
@@ -29,17 +27,17 @@ class MigrateAlertService(
     alertRepository.flush()
 
     return request.map {
-      alertRepository.save(it.toAlertEntity(prisonNumber, alertCodes[it.alertCode]!!, migratedAt))
+      it to it.toAlertEntity(prisonNumber, alertCodes[it.alertCode]!!)
     }.also {
-      it.logDuplicateActiveAlerts(prisonNumber)
-      it.logHistoricAlerts(prisonNumber)
-      alertRepository.flush()
+      val alerts = it.map { m -> m.second }
+      alertRepository.saveAll(alerts)
+      alerts.logDuplicateActiveAlerts(prisonNumber)
     }.map {
       MigratedAlert(
-        offenderBookId = it.migratedAlert!!.offenderBookId,
-        bookingSeq = it.migratedAlert!!.bookingSeq,
-        alertSeq = it.migratedAlert!!.alertSeq,
-        alertUuid = it.alertUuid,
+        offenderBookId = it.first.offenderBookId,
+        bookingSeq = it.first.bookingSeq,
+        alertSeq = it.first.alertSeq,
+        alertUuid = it.second.alertUuid,
       )
     }
   }
@@ -52,7 +50,7 @@ class MigrateAlertService(
   private fun List<MigrateAlert>.checkForNotFoundAlertCodes(alertCodes: Map<String, AlertCode>) =
     map { it.alertCode }.distinct().filterNot { alertCodes.containsKey(it) }.sorted().run {
       if (this.isNotEmpty()) {
-        throw IllegalArgumentException("Alert code(s) '${this.joinToString("', '") }' not found")
+        throw IllegalArgumentException("Alert code(s) '${this.joinToString("', '")}' not found")
       }
     }
 
@@ -65,19 +63,9 @@ class MigrateAlertService(
   private fun List<Alert>.logDuplicateActiveAlerts(prisonNumber: String) {
     this.filter { it.isActive() }.groupBy { it.alertCode.code }.filter { it.value.size > 1 }.run {
       if (any()) {
-        log.warn("Person with prison number '$prisonNumber' has ${this.size} duplicate active alert(s) for code(s) ${this.map { "'${it.key}' (${it.value.size} active)" }.joinToString(", ")}")
-      }
-    }
-  }
-
-  private fun List<Alert>.logHistoricAlerts(prisonNumber: String) {
-    this.filter { (it.migratedAlert?.bookingSeq ?: 1) > 1 }.run {
-      if (any()) {
         log.warn(
-          "Person with prison number '$prisonNumber' has ${this.size} historic alert(s) for code(s) ${
-            this.joinToString(
-              ", ",
-            ) { "'${it.alertCode.code}' (${if (it.isActive()) "active" else "inactive"})" }
+          "Person with prison number '$prisonNumber' has ${this.size} duplicate active alert(s) for code(s) ${
+            this.map { "'${it.key}' (${it.value.size} active)" }.joinToString(", ")
           }",
         )
       }

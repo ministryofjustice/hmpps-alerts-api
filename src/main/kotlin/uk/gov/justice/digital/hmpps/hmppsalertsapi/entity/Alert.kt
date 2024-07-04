@@ -12,7 +12,6 @@ import jakarta.persistence.NamedAttributeNode
 import jakarta.persistence.NamedEntityGraph
 import jakarta.persistence.NamedSubgraph
 import jakarta.persistence.OneToMany
-import jakarta.persistence.OneToOne
 import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
 import org.hibernate.annotations.SQLRestriction
@@ -32,10 +31,7 @@ import java.util.UUID
 @SQLRestriction("deleted_at IS NULL")
 @NamedEntityGraph(
   name = "alert",
-  attributeNodes = [
-    NamedAttributeNode("alertCode", subgraph = "alertType"),
-    NamedAttributeNode("migratedAlert"),
-  ],
+  attributeNodes = [NamedAttributeNode("alertCode", subgraph = "alertType")],
   subgraphs = [NamedSubgraph(name = "alertType", attributeNodes = [NamedAttributeNode("alertType")])],
 )
 data class Alert(
@@ -62,9 +58,6 @@ data class Alert(
   val createdAt: LocalDateTime,
 ) : AbstractAggregateRoot<Alert>() {
   var lastModifiedAt: LocalDateTime? = null
-
-  @OneToOne(mappedBy = "alert", cascade = [CascadeType.PERSIST, CascadeType.REMOVE])
-  var migratedAlert: MigratedAlert? = null
 
   fun isActive() = activeTo == null || activeTo!! > LocalDate.now()
 

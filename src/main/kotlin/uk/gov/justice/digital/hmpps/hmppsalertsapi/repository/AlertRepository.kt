@@ -17,8 +17,6 @@ interface AlertRepository : JpaRepository<Alert, Long> {
 
   fun findByAlertUuid(alertUuid: UUID): Alert?
 
-  fun findByAlertUuidIn(alertUuids: Collection<UUID>): Collection<Alert>
-
   @EntityGraph(value = "alert")
   fun findByPrisonNumber(prisonNumber: String): Collection<Alert>
 
@@ -31,10 +29,7 @@ interface AlertRepository : JpaRepository<Alert, Long> {
   @EntityGraph(value = "alert")
   fun findByPrisonNumberNotInAndAlertCodeCode(prisonNumbers: Collection<String>, alertCode: String): Collection<Alert>
 
-  @Query(
-    value = "SELECT * FROM alert a WHERE a.alert_uuid = :alertUuid",
-    nativeQuery = true,
-  )
+  @Query(value = "SELECT * FROM alert a WHERE a.alert_uuid = :alertUuid", nativeQuery = true)
   fun findByAlertUuidIncludingSoftDelete(alertUuid: UUID): Alert?
 
   @EntityGraph(value = "alert")
