@@ -194,8 +194,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Alert code '${request.alertCode}' not found")
-      assertThat(developerMessage).isEqualTo("Alert code '${request.alertCode}' not found")
+      assertThat(userMessage).isEqualTo("Validation failure: Alert code is invalid")
+      assertThat(developerMessage).isEqualTo("Details => Alert code:NOT_FOUND")
       assertThat(moreInfo).isNull()
     }
   }
@@ -212,8 +212,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Alert code '${request.alertCode}' is inactive")
-      assertThat(developerMessage).isEqualTo("Alert code '${request.alertCode}' is inactive")
+      assertThat(userMessage).isEqualTo("Validation failure: Alert code is inactive")
+      assertThat(developerMessage).isEqualTo("Alert code is inactive")
       assertThat(moreInfo).isNull()
     }
   }
@@ -597,8 +597,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(409)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Duplicate failure: Active alert with code '${request.alertCode}' already exists for prison number '$PRISON_NUMBER'")
-      assertThat(developerMessage).isEqualTo("Active alert with code '${request.alertCode}' already exists for prison number '$PRISON_NUMBER'")
+      assertThat(userMessage).isEqualTo("Duplicate failure: Alert already exists")
+      assertThat(developerMessage).isEqualTo("Alert already exists with identifier ${request.alertCode}")
       assertThat(moreInfo).isNull()
     }
   }
@@ -626,8 +626,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Alert code '${request.alertCode}' is inactive")
-      assertThat(developerMessage).isEqualTo("Alert code '${request.alertCode}' is inactive")
+      assertThat(userMessage).isEqualTo("Validation failure: Alert code is inactive")
+      assertThat(developerMessage).isEqualTo("Alert code is inactive")
       assertThat(moreInfo).isNull()
     }
   }
@@ -645,8 +645,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(409)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Duplicate failure: Active alert with code '${request.alertCode}' already exists for prison number '$PRISON_NUMBER'")
-      assertThat(developerMessage).isEqualTo("Active alert with code '${request.alertCode}' already exists for prison number '$PRISON_NUMBER'")
+      assertThat(userMessage).isEqualTo("Duplicate failure: Alert already exists")
+      assertThat(developerMessage).isEqualTo("Alert already exists with identifier ${request.alertCode}")
       assertThat(moreInfo).isNull()
     }
   }

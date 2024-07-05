@@ -7,13 +7,15 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PublishPersonAlertsChanged
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertNotFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ExistingActiveAlertWithCodeException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAuditEventModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlreadyExistsException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidInputException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.verifyExists
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
@@ -61,20 +63,22 @@ class AlertService(
     }
 
   private fun CreateAlert.getAlertCode() =
-    alertCodeRepository.findByCode(alertCode)?.also {
-      require(it.isActive()) { "Alert code '$alertCode' is inactive" }
-    } ?: throw IllegalArgumentException("Alert code '$alertCode' not found")
+    verifyExists(alertCodeRepository.findByCode(alertCode)) {
+      InvalidInputException("Alert code", alertCode)
+    }.also {
+      require(it.isActive()) { "Alert code is inactive" }
+    }
 
   private fun checkForExistingActiveAlert(prisonNumber: String, alertCode: String) =
     alertRepository.findByPrisonNumberAndAlertCodeCode(prisonNumber, alertCode)
-      .any { it.isActive() } && throw ExistingActiveAlertWithCodeException(prisonNumber, alertCode)
+      .any { it.isActive() } && throw AlreadyExistsException("Alert", alertCode)
 
   private fun validatePrisonNumber(prisonNumber: String) =
     require(prisonerSearchClient.getPrisoner(prisonNumber) != null) { "Prison number '$prisonNumber' not found" }
 
   fun retrieveAlert(alertUuid: UUID): AlertModel =
     alertRepository.findByAlertUuid(alertUuid)?.toAlertModel()
-      ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
+      ?: throw NotFoundException("Alert", alertUuid.toString())
 
   @PublishPersonAlertsChanged
   fun updateAlert(alertUuid: UUID, request: UpdateAlert, context: AlertRequestContext) =
@@ -93,12 +97,12 @@ class AlertService(
           activeCaseLoadId = context.activeCaseLoadId,
         ),
       ).toAlertModel()
-    } ?: throw AlertNotFoundException("Could not find alert with ID $alertUuid")
+    } ?: throw NotFoundException("Alert", alertUuid.toString())
 
   @PublishPersonAlertsChanged
   fun deleteAlert(alertUuid: UUID, context: AlertRequestContext) {
     val alert = alertRepository.findByAlertUuid(alertUuid)
-      ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
+      ?: throw NotFoundException("Alert", alertUuid.toString())
     with(alert) {
       delete(
         deletedAt = context.requestAt,
@@ -145,7 +149,7 @@ class AlertService(
   fun retrieveAuditEventsForAlert(alertUuid: UUID): Collection<AuditEvent> =
     alertRepository.findByAlertUuid(alertUuid)?.let { alert ->
       alert.auditEvents().map { it.toAuditEventModel() }
-    } ?: throw AlertNotFoundException("Could not find alert with uuid $alertUuid")
+    } ?: throw NotFoundException("Alert", alertUuid.toString())
 
   fun retrieveAlertsForPrisonNumbers(prisonNumbers: Collection<String>) =
     alertRepository.findByPrisonNumberInOrderByActiveFromDesc(prisonNumbers).let { alerts ->

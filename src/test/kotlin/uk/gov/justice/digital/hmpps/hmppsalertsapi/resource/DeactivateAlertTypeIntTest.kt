@@ -120,9 +120,8 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(404)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Not found: Alert type with code ALK could not be found")
-      assertThat(developerMessage)
-        .isEqualTo("Alert type with code ALK could not be found")
+      assertThat(userMessage).isEqualTo("Not found: Alert type not found")
+      assertThat(developerMessage).isEqualTo("Alert type not found with identifier ALK")
       assertThat(moreInfo).isNull()
     }
   }
