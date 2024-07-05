@@ -169,8 +169,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo(
-        "Validation failure(s): Alert code must be supplied and be <= 12 characters\n" +
-          "At least one prison number must be supplied",
+        """Validation failure(s): Alert code must be supplied and be <= 12 characters
+          |At least one prison number must be supplied
+        """.trimMargin(),
       )
       assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.BulkAlertsController.bulkCreateAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts,jakarta.servlet.http.HttpServletRequest) with 2 errors:")
       assertThat(moreInfo).isNull()

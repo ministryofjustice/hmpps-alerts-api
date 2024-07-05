@@ -112,9 +112,8 @@ class ReactivateAlertCodeIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(404)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Not found: Alert with code ALK could not be found")
-      assertThat(developerMessage)
-        .isEqualTo("Alert with code ALK could not be found")
+      assertThat(userMessage).isEqualTo("Not found: Alert code not found")
+      assertThat(developerMessage).isEqualTo("Alert code not found with identifier ALK")
       assertThat(moreInfo).isNull()
     }
   }

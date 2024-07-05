@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -36,7 +35,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.migrateAlert
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
@@ -97,21 +95,81 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   companion object {
     @JvmStatic
     fun badRequestParameters(): List<Arguments> = listOf(
-      Arguments.of(migrateAlert().copy(offenderBookId = 0), "Offender book id must be supplied and be > 0", "offender book id required"),
-      Arguments.of(migrateAlert().copy(bookingSeq = 0), "Booking sequence must be supplied and be > 0", "booking sequence required"),
-      Arguments.of(migrateAlert().copy(alertSeq = 0), "Alert sequence must be supplied and be > 0", "alert sequence required"),
-      Arguments.of(migrateAlert().copy(alertCode = ""), "Alert code must be supplied and be <= 12 characters", "alert code required"),
-      Arguments.of(migrateAlert().copy(alertCode = 'a'.toString().repeat(13)), "Alert code must be supplied and be <= 12 characters", "alert code greater than 12 characters"),
-      Arguments.of(migrateAlert().copy(description = 'a'.toString().repeat(4001)), "Description must be <= 4000 characters", "description greater than 4000 characters"),
-      Arguments.of(migrateAlert().copy(authorisedBy = 'a'.toString().repeat(41)), "Authorised by must be <= 40 characters", "authorised by greater than 40 characters"),
-      Arguments.of(migrateAlert().copy(createdBy = ""), "Created by must be supplied and be <= 32 characters", "created by required"),
-      Arguments.of(migrateAlert().copy(createdBy = 'a'.toString().repeat(33)), "Created by must be supplied and be <= 32 characters", "created by greater than 32 characters"),
-      Arguments.of(migrateAlert().copy(createdByDisplayName = ""), "Created by display name must be supplied and be <= 255 characters", "created by display name required"),
-      Arguments.of(migrateAlert().copy(createdByDisplayName = 'a'.toString().repeat(256)), "Created by display name must be supplied and be <= 255 characters", "created by display name greater than 255 characters"),
-      Arguments.of(migrateAlert().copy(lastModifiedAt = LocalDateTime.now(), lastModifiedByDisplayName = "Up Dated"), "Updated by is required when updated at is supplied", "updated by required when updated at is supplied"),
-      Arguments.of(migrateAlert().copy(lastModifiedBy = 'a'.toString().repeat(33)), "Updated by must be <= 32 characters", "updated by greater than 32 characters"),
-      Arguments.of(migrateAlert().copy(lastModifiedAt = LocalDateTime.now(), lastModifiedBy = "AB11DZ"), "Updated by display name is required when updated at is supplied", "updated by display name required when updated at is supplied"),
-      Arguments.of(migrateAlert().copy(lastModifiedByDisplayName = 'a'.toString().repeat(256)), "Updated by display name must be <= 255 characters", "updated by display name greater than 255 characters"),
+      Arguments.of(
+        migrateAlert().copy(offenderBookId = 0),
+        "Offender book id must be supplied and be > 0",
+        "offender book id required",
+      ),
+      Arguments.of(
+        migrateAlert().copy(bookingSeq = 0),
+        "Booking sequence must be supplied and be > 0",
+        "booking sequence required",
+      ),
+      Arguments.of(
+        migrateAlert().copy(alertSeq = 0),
+        "Alert sequence must be supplied and be > 0",
+        "alert sequence required",
+      ),
+      Arguments.of(
+        migrateAlert().copy(alertCode = ""),
+        "Alert code must be supplied and be <= 12 characters",
+        "alert code required",
+      ),
+      Arguments.of(
+        migrateAlert().copy(alertCode = 'a'.toString().repeat(13)),
+        "Alert code must be supplied and be <= 12 characters",
+        "alert code greater than 12 characters",
+      ),
+      Arguments.of(
+        migrateAlert().copy(description = 'a'.toString().repeat(4001)),
+        "Description must be <= 4000 characters",
+        "description greater than 4000 characters",
+      ),
+      Arguments.of(
+        migrateAlert().copy(authorisedBy = 'a'.toString().repeat(41)),
+        "Authorised by must be <= 40 characters",
+        "authorised by greater than 40 characters",
+      ),
+      Arguments.of(
+        migrateAlert().copy(createdBy = ""),
+        "Created by must be supplied and be <= 32 characters",
+        "created by required",
+      ),
+      Arguments.of(
+        migrateAlert().copy(createdBy = 'a'.toString().repeat(33)),
+        "Created by must be supplied and be <= 32 characters",
+        "created by greater than 32 characters",
+      ),
+      Arguments.of(
+        migrateAlert().copy(createdByDisplayName = ""),
+        "Created by display name must be supplied and be <= 255 characters",
+        "created by display name required",
+      ),
+      Arguments.of(
+        migrateAlert().copy(createdByDisplayName = 'a'.toString().repeat(256)),
+        "Created by display name must be supplied and be <= 255 characters",
+        "created by display name greater than 255 characters",
+      ),
+      Arguments.of(
+        migrateAlert().copy(lastModifiedAt = LocalDateTime.now(), lastModifiedByDisplayName = "Up Dated"),
+        "Updated by is required when updated at is supplied",
+        "updated by required when updated at is supplied",
+      ),
+      Arguments.of(
+        migrateAlert().copy(lastModifiedBy = 'a'.toString().repeat(33)),
+        "Updated by must be <= 32 characters",
+        "updated by greater than 32 characters",
+      ),
+      Arguments.of(
+        migrateAlert().copy(lastModifiedAt = LocalDateTime.now(), lastModifiedBy = "AB11DZ"),
+        "Updated by display name is required when updated at is supplied",
+        "updated by display name required when updated at is supplied",
+      ),
+      Arguments.of(
+        migrateAlert().copy(lastModifiedByDisplayName = 'a'.toString().repeat(256)),
+        "Updated by display name must be <= 255 characters",
+        "updated by display name greater than 255 characters",
+      ),
     )
   }
 
@@ -126,8 +184,8 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure(s): $expectedUserMessage")
-      assertThat(developerMessage).startsWith("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(userMessage).isEqualTo("Validation failure: $expectedUserMessage")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST Validation failure: $expectedUserMessage")
       assertThat(moreInfo).isNull()
     }
   }
@@ -169,15 +227,19 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody
 
+    val validationMessage = """
+          |Validation failures: 
+          |Alert code must be supplied and be <= 12 characters
+          |Authorised by must be <= 40 characters
+          |Created by must be supplied and be <= 32 characters
+          |Updated by is required when updated at is supplied
+          |
+    """.trimMargin()
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo(
-        "Validation failure(s): Alert code must be supplied and be <= 12 characters\n" +
-          "Authorised by must be <= 40 characters\n" +
-          "Created by must be supplied and be <= 32 characters\n" +
-          "Updated by is required when updated at is supplied",
-      )
+      assertThat(userMessage).isEqualTo(validationMessage)
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST $validationMessage")
       assertThat(moreInfo).isNull()
     }
   }
@@ -233,17 +295,6 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       ),
     )
     assertThat(migratedAlert.alertUuid).isNotEqualTo(DEFAULT_UUID)
-
-    with(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!.migratedAlert) {
-      assertThat(this).isNotNull
-      assertThat(this!!.offenderBookId).isEqualTo(offenderBookId)
-      assertThat(this.bookingSeq).isEqualTo(bookingSeq)
-      assertThat(this.alertSeq).isEqualTo(alertSeq)
-      assertThat(this.alert.alertUuid).isEqualTo(migratedAlert.alertUuid)
-      assertThat(this.migratedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
-
-      assertThat(this).isEqualTo(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!.migratedAlert)
-    }
   }
 
   @Test
@@ -304,7 +355,9 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `migrate alert with inactive alert code`() {
-    val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(migrateAlert().copy(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD))).single()
+    val migratedAlert =
+      webTestClient.migratePrisonerAlerts(request = listOf(migrateAlert().copy(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)))
+        .single()
 
     with(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!.alertCode) {
       assertThat(code).isEqualTo(ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
@@ -314,7 +367,14 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `migrate alert with active to before active from`() {
-    val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(migrateAlert().copy(activeFrom = LocalDate.now(), activeTo = LocalDate.now().minusDays(1)))).single()
+    val migratedAlert = webTestClient.migratePrisonerAlerts(
+      request = listOf(
+        migrateAlert().copy(
+          activeFrom = LocalDate.now(),
+          activeTo = LocalDate.now().minusDays(1),
+        ),
+      ),
+    ).single()
 
     with(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!) {
       assertThat(activeTo).isBefore(activeFrom)

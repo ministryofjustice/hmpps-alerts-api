@@ -68,9 +68,8 @@ class RetrieveAuditEventsIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(404)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Alert not found: Could not find alert with uuid $uuid")
-      assertThat(developerMessage)
-        .isEqualTo("Could not find alert with uuid $uuid")
+      assertThat(userMessage).isEqualTo("Not found: Alert not found")
+      assertThat(developerMessage).isEqualTo("Alert not found with identifier $uuid")
       assertThat(moreInfo).isNull()
     }
   }

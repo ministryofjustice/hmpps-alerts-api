@@ -20,22 +20,22 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.HandlerMethodValidationException
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.servlet.resource.NoResourceFoundException
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertCodeNotFoundException
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertTypeNotFound
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.ExistingActiveAlertTypeWithCodeException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlreadyExistsException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidInputException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @RestControllerAdvice
 class HmppsAlertsApiExceptionHandler {
-  @ExceptionHandler(ExistingActiveAlertTypeWithCodeException::class)
-  fun handleExistingActiveAlertTypeWithCodeException(e: ExistingActiveAlertTypeWithCodeException): ResponseEntity<ErrorResponse> =
+  @ExceptionHandler(AlreadyExistsException::class)
+  fun handleAlreadyExistsException(e: AlreadyExistsException): ResponseEntity<ErrorResponse> =
     ResponseEntity
       .status(409)
       .body(
         ErrorResponse(
           status = HttpStatus.CONFLICT.value(),
           userMessage = "Duplicate failure: ${e.message}",
-          developerMessage = e.message,
+          developerMessage = "${e.resource} already exists with identifier ${e.identifier}",
         ),
       )
 
@@ -107,16 +107,23 @@ class HmppsAlertsApiExceptionHandler {
       ),
     )
 
-  @ExceptionHandler(IllegalArgumentException::class)
-  fun handleIllegalArgumentException(e: IllegalArgumentException): ResponseEntity<ErrorResponse> = ResponseEntity
+  @ExceptionHandler(IllegalArgumentException::class, IllegalStateException::class)
+  fun handleIllegalArgumentOrStateException(e: RuntimeException): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(BAD_REQUEST)
     .body(
       ErrorResponse(
         status = BAD_REQUEST,
         userMessage = "Validation failure: ${e.message}",
-        developerMessage = e.message,
+        developerMessage = e.devMessage(),
       ),
-    )
+    ).also {
+      log.info("${e::class.simpleName}: {}", e.devMessage())
+    }
+
+  private fun RuntimeException.devMessage(): String = when (this) {
+    is InvalidInputException -> "Details => $name:$value"
+    else -> message ?: "${this::class.simpleName}: ${cause?.message ?: ""}"
+  }
 
   @ExceptionHandler(ValidationException::class)
   fun handleValidationException(e: ValidationException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -125,36 +132,33 @@ class HmppsAlertsApiExceptionHandler {
       ErrorResponse(
         status = BAD_REQUEST,
         userMessage = "Validation failure: ${e.message}",
-        developerMessage = e.message,
+        developerMessage = e.devMessage(),
       ),
-    )
+    ).also { log.info(e.devMessage()) }
 
   @ExceptionHandler(HandlerMethodValidationException::class)
   fun handleHandlerMethodValidationException(e: HandlerMethodValidationException): ResponseEntity<ErrorResponse> =
-    e.allErrors.map { it.toString() }.distinct().sorted().joinToString(System.lineSeparator()).let { validationErrors ->
+    e.allErrors.map { it.defaultMessage }.distinct().sorted().let {
+      val validationFailure = "Validation failure"
+      val message = if (it.size > 1) {
+        """
+              |${validationFailure}s: 
+              |${it.joinToString(System.lineSeparator())}
+              |
+        """.trimMargin()
+      } else {
+        "$validationFailure: ${it.joinToString(System.lineSeparator())}"
+      }
       ResponseEntity
         .status(BAD_REQUEST)
         .body(
           ErrorResponse(
             status = BAD_REQUEST,
-            userMessage = "Validation failure(s): ${
-              e.allErrors.map { it.defaultMessage }.distinct().sorted().joinToString(System.lineSeparator())
-            }",
-            developerMessage = "${e.message} $validationErrors",
+            userMessage = message,
+            developerMessage = "400 BAD_REQUEST $message",
           ),
-        )
+        ).also { res -> log.info(res.body?.developerMessage) }
     }
-
-  @ExceptionHandler(AlertNotFoundException::class)
-  fun handleAlertNotFoundException(e: AlertNotFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(NOT_FOUND)
-    .body(
-      ErrorResponse(
-        status = NOT_FOUND,
-        userMessage = "Alert not found: ${e.message}",
-        developerMessage = e.message,
-      ),
-    )
 
   @ExceptionHandler(NoResourceFoundException::class)
   fun handleNoResourceFoundException(e: NoResourceFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -167,27 +171,15 @@ class HmppsAlertsApiExceptionHandler {
       ),
     )
 
-  @ExceptionHandler(AlertCodeNotFoundException::class)
-  fun handleAlertCodeNotFoundException(e: AlertCodeNotFoundException): ResponseEntity<ErrorResponse> =
+  @ExceptionHandler(NotFoundException::class)
+  fun handleNotFoundException(e: NotFoundException): ResponseEntity<ErrorResponse> =
     ResponseEntity
       .status(404)
       .body(
         ErrorResponse(
           status = NOT_FOUND.value(),
           userMessage = "Not found: ${e.message}",
-          developerMessage = e.message,
-        ),
-      )
-
-  @ExceptionHandler(AlertTypeNotFound::class)
-  fun handleExistingActiveAlertTypeWithCodeException(e: AlertTypeNotFound): ResponseEntity<ErrorResponse> =
-    ResponseEntity
-      .status(404)
-      .body(
-        ErrorResponse(
-          status = NOT_FOUND.value(),
-          userMessage = "Not found: ${e.message}",
-          developerMessage = e.message,
+          developerMessage = "${e.resource} not found with identifier ${e.identifier}",
         ),
       )
 
@@ -202,18 +194,6 @@ class HmppsAlertsApiExceptionHandler {
           developerMessage = e.message,
         ),
       )
-
-  @ExceptionHandler(ExistingActiveAlertWithCodeException::class)
-  fun handleExistingActiveAlertWithCodeException(e: ExistingActiveAlertWithCodeException): ResponseEntity<ErrorResponse> =
-    ResponseEntity
-      .status(HttpStatus.CONFLICT)
-      .body(
-        ErrorResponse(
-          status = HttpStatus.CONFLICT.value(),
-          userMessage = "Duplicate failure: ${e.message}",
-          developerMessage = e.message,
-        ),
-      ).also { log.info("Existing active alert with code exception: {}", e.message) }
 
   @ExceptionHandler(DownstreamServiceException::class)
   fun handleException(e: DownstreamServiceException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -243,6 +223,3 @@ class HmppsAlertsApiExceptionHandler {
 }
 
 class DownstreamServiceException(message: String, cause: Throwable) : Exception(message, cause)
-class AlertNotFoundException(message: String) : Exception(message)
-class ExistingActiveAlertWithCodeException(prisonNumber: String, alertCode: String) :
-  Exception("Active alert with code '$alertCode' already exists for prison number '$prisonNumber'")
