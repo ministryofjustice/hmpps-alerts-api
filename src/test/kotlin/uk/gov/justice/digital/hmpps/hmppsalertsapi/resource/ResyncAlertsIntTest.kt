@@ -16,7 +16,6 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.ResyncAuditRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.ResyncAuditRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
@@ -238,9 +237,8 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
     val response = webTestClient.resyncAlerts(request = listOf(alert1, alert2))
 
-    val resyncAudit = resyncAuditRepository.findResyncAuditsByPrisonNumber(PRISON_NUMBER).single()
-    assertThat(objectMapper.treeToValue<ResyncAuditRequest>(resyncAudit.request))
-      .isEqualTo(ResyncAuditRequest(PRISON_NUMBER, listOf(alert1, alert2)))
+    val resyncAudit = resyncAuditRepository.findByPrisonNumber(PRISON_NUMBER).single()
+    assertThat(objectMapper.treeToValue<List<ResyncAlert>>(resyncAudit.request)).isEqualTo(listOf(alert1, alert2))
     assertThat(resyncAudit.alertsCreated).containsAll(response.map { it.alertUuid })
     assertThat(resyncAudit.alertsDeleted).contains(originalAlert.alertUuid)
   }

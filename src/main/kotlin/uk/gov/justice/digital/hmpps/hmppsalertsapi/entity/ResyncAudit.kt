@@ -12,14 +12,14 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import org.hibernate.annotations.Type
 import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.jpa.repository.Query
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.ResyncAlert
 import java.time.LocalDateTime
 import java.util.UUID
 
 @Entity
 class ResyncAudit(
+
+  val prisonNumber: String,
 
   @Type(JsonType::class)
   @Column(columnDefinition = "jsonb")
@@ -46,8 +46,5 @@ class ResyncAudit(
 )
 
 interface ResyncAuditRepository : JpaRepository<ResyncAudit, Long> {
-  @Query(value = "select * from resync_audit where request ->> 'prisonNumber' = :prisonNumber", nativeQuery = true)
-  fun findResyncAuditsByPrisonNumber(prisonNumber: String): List<ResyncAudit>
+  fun findByPrisonNumber(prisonNumber: String): List<ResyncAudit>
 }
-
-data class ResyncAuditRequest(val prisonNumber: String, val alerts: List<ResyncAlert>)

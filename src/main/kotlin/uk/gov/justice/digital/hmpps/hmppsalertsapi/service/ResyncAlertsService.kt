@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.ResyncAudit
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.ResyncAuditRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.ResyncAuditRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.ResyncedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.ResyncAlert
@@ -51,7 +50,8 @@ class ResyncAlertsService(
       alertRepository.saveAll(existingAlerts)
     }
     resyncAudit(
-      ResyncAuditRequest(prisonNumber, alerts),
+      prisonNumber,
+      alerts,
       requestedAt,
       existingAlerts,
       newAlerts.mapNotNull { it.alert },
@@ -70,13 +70,15 @@ class ResyncAlertsService(
   }
 
   private fun resyncAudit(
-    request: ResyncAuditRequest,
+    prisonNumber: String,
+    request: List<ResyncAlert>,
     requestedAt: LocalDateTime,
     deleted: Collection<Alert>,
     created: Collection<Alert>,
   ) {
     resyncAuditRepository.save(
       ResyncAudit(
+        prisonNumber,
         request = objectMapper.valueToTree(request),
         requestedAt = requestedAt,
         requestedBy = REQUESTED_BY_SYS,

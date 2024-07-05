@@ -2,6 +2,7 @@ create table if not exists resync_audit
 (
     id                        bigserial    not null
         constraint pk_resync_audit primary key,
+    prison_number             varchar(10)  not null,
     request                   jsonb        not null,
     requested_at              timestamp    not null,
     requested_by              varchar(32)  not null,
@@ -12,4 +13,4 @@ create table if not exists resync_audit
     alerts_created            uuid[]       not null
 );
 
-create index idx_request_prison_number on resync_audit using hash ((request -> 'prisonNumber'));
+CREATE INDEX idx_resync_audit_prison_number ON resync_audit (prison_number);

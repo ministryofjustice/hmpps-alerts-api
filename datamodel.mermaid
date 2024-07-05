@@ -3,7 +3,6 @@ erDiagram
     alert one to one or more audit_event : "detailed change history"
     alert many to one alert_code : "categorised by"
     alert_code one to one or more alert_type : "grouped by"
-    alert one to zero or one migrated_alert : "records NOMIS alert information (no longer required)"
 
     alert {
         bigserial alert_id PK "not null"
@@ -91,6 +90,7 @@ erDiagram
 
     resync_audit {
         bigserial resync_audit_id PK "not null"
+        varchar(10) prison_number "not null"
         jsonb request "not null"
         timestamp requested_at "not null"
         varchar(32) requested_by "not null"
