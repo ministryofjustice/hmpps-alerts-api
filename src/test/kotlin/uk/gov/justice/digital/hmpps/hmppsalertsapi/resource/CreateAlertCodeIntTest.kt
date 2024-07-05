@@ -283,9 +283,9 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(409)
       assertThat(errorCode).isNull()
       assertThat(userMessage)
-        .isEqualTo("Duplicate failure: Alert code exists with code '${request.code}'")
+        .isEqualTo("Duplicate failure: Alert code already exists")
       assertThat(developerMessage)
-        .isEqualTo("Alert code exists with code '${request.code}'")
+        .isEqualTo("Alert code already exists with identifier ${request.code}")
       assertThat(moreInfo).isNull()
     }
   }
@@ -314,8 +314,8 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .returnResult().responseBody
     with(response!!) {
       assertThat(status).isEqualTo(404)
-      assertThat(userMessage).isEqualTo("Not found: Alert type with code ABCDE could not be found")
-      assertThat(developerMessage).isEqualTo("Alert type with code ABCDE could not be found")
+      assertThat(userMessage).isEqualTo("Not found: Alert type not found")
+      assertThat(developerMessage).isEqualTo("Alert type not found with identifier ABCDE")
     }
   }
 

@@ -316,8 +316,8 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure(s): $expectedUserMessage")
-      assertThat(developerMessage).startsWith("400 BAD_REQUEST \"Validation failure\"")
+      assertThat(userMessage).isEqualTo("Validation failure: $expectedUserMessage")
+      assertThat(developerMessage).isEqualTo("400 BAD_REQUEST Validation failure: $expectedUserMessage")
       assertThat(moreInfo).isNull()
     }
   }

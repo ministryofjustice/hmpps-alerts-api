@@ -6,8 +6,10 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertTypeModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertTypeModels
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toEntity
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlertTypeNotFound
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.ExistingActiveAlertTypeWithCodeException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlreadyExistsException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.verifyDoesNotExist
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.verifyExists
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeRequest
@@ -82,8 +84,8 @@ class AlertTypeService(
     }
 
   fun CreateAlertTypeRequest.checkForExistingAlertType() =
-    alertTypeRepository.findByCode(code) != null && throw ExistingActiveAlertTypeWithCodeException("Alert type exists with code '$code'")
+    verifyDoesNotExist(alertTypeRepository.findByCode(code)) { AlreadyExistsException("Alert type", code) }
 
   private fun String.checkAlertTypeExists() =
-    alertTypeRepository.findByCode(this) == null && throw AlertTypeNotFound("Alert type with code $this could not be found")
+    verifyExists(alertTypeRepository.findByCode(this)) { NotFoundException("Alert type", this) }
 }

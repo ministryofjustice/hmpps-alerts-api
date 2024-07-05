@@ -269,8 +269,8 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(409)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Duplicate failure: Alert type exists with code '${request.code}'")
-      assertThat(developerMessage).isEqualTo("Alert type exists with code '${request.code}'")
+      assertThat(userMessage).isEqualTo("Duplicate failure: Alert type already exists")
+      assertThat(developerMessage).isEqualTo("Alert type already exists with identifier ${request.code}")
       assertThat(moreInfo).isNull()
     }
   }

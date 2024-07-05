@@ -14,14 +14,14 @@ import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertNotFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ExistingActiveAlertWithCodeException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlreadyExistsException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_MOORLANDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -74,7 +74,7 @@ class AlertServiceTest {
     val error = assertThrows<IllegalArgumentException> {
       underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"), context)
     }
-    assertThat(error.message).isEqualTo("Alert code 'A' not found")
+    assertThat(error.message).isEqualTo("Alert code is invalid")
   }
 
   @Test
@@ -84,7 +84,7 @@ class AlertServiceTest {
     val error = assertThrows<IllegalArgumentException> {
       underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"), context)
     }
-    assertThat(error.message).isEqualTo("Alert code 'A' is inactive")
+    assertThat(error.message).isEqualTo("Alert code is inactive")
   }
 
   @Test
@@ -92,10 +92,10 @@ class AlertServiceTest {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now(), activeTo = null)))
-    val error = assertThrows<ExistingActiveAlertWithCodeException> {
+    val error = assertThrows<AlreadyExistsException> {
       underTest.createAlert(PRISON_NUMBER, createAlertRequest(), context)
     }
-    assertThat(error.message).isEqualTo("Active alert with code '$ALERT_CODE_VICTIM' already exists for prison number '$PRISON_NUMBER'")
+    assertThat(error.message).isEqualTo("Alert already exists")
   }
 
   @Test
@@ -103,10 +103,10 @@ class AlertServiceTest {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().plusDays(1), activeTo = null)))
-    val error = assertThrows<ExistingActiveAlertWithCodeException> {
+    val error = assertThrows<AlreadyExistsException> {
       underTest.createAlert(PRISON_NUMBER, createAlertRequest(), context)
     }
-    assertThat(error.message).isEqualTo("Active alert with code '$ALERT_CODE_VICTIM' already exists for prison number '$PRISON_NUMBER'")
+    assertThat(error.message).isEqualTo("Alert already exists")
   }
 
   @Test
@@ -205,10 +205,10 @@ Comment '${updateRequest.appendComment}' was added""",
   fun `alert uuid not found`() {
     whenever(alertRepository.findByAlertUuid(any())).thenReturn(null)
     val alertUuid = UUID.randomUUID()
-    val exception = assertThrows<AlertNotFoundException> {
+    val exception = assertThrows<NotFoundException> {
       underTest.retrieveAlert(alertUuid)
     }
-    assertThat(exception.message).isEqualTo("Could not find alert with uuid $alertUuid")
+    assertThat(exception.message).isEqualTo("Alert not found")
   }
 
   @Test
@@ -223,10 +223,10 @@ Comment '${updateRequest.appendComment}' was added""",
   fun `delete alert uuid not found throws exception`() {
     whenever(alertRepository.findByAlertUuid(any())).thenReturn(null)
     val alertUuid = UUID.randomUUID()
-    val exception = assertThrows<AlertNotFoundException> {
+    val exception = assertThrows<NotFoundException> {
       underTest.deleteAlert(alertUuid, context)
     }
-    assertThat(exception.message).isEqualTo("Could not find alert with uuid $alertUuid")
+    assertThat(exception.message).isEqualTo("Alert not found")
   }
 
   @Test
@@ -256,10 +256,10 @@ Comment '${updateRequest.appendComment}' was added""",
   fun `should throw exception if alert not found when retrieving audit events`() {
     whenever(alertRepository.findByAlertUuid(any())).thenReturn(null)
     val alertUuid = UUID.randomUUID()
-    val exception = assertThrows<AlertNotFoundException> {
+    val exception = assertThrows<NotFoundException> {
       underTest.retrieveAuditEventsForAlert(alertUuid)
     }
-    assertThat(exception.message).isEqualTo("Could not find alert with uuid $alertUuid")
+    assertThat(exception.message).isEqualTo("Alert not found")
   }
 
   private fun createAlertRequest(
@@ -273,7 +273,10 @@ Comment '${updateRequest.appendComment}' was added""",
       activeTo = null,
     )
 
-  private fun updateAlertRequestNoChange(comment: String = "Update alert", activeFrom: LocalDate? = LocalDate.now().minusDays(2)) =
+  private fun updateAlertRequestNoChange(
+    comment: String = "Update alert",
+    activeFrom: LocalDate? = LocalDate.now().minusDays(2),
+  ) =
     UpdateAlert(
       description = "new description",
       authorisedBy = "B Bauthorizer",
@@ -303,7 +306,17 @@ Comment '${updateRequest.appendComment}' was added""",
         activeTo = updateAlert.activeTo,
         activeFrom = updateAlert.activeFrom!!,
         createdAt = it,
-      ).apply { auditEvent(AuditEventAction.CREATED, "Alert created", it, "CREATED_BY", "CREATED_BY_DISPLAY_NAME", DPS, PRISON_CODE_LEEDS) }
+      ).apply {
+        auditEvent(
+          AuditEventAction.CREATED,
+          "Alert created",
+          it,
+          "CREATED_BY",
+          "CREATED_BY_DISPLAY_NAME",
+          DPS,
+          PRISON_CODE_LEEDS,
+        )
+      }
     }
 
   private fun prisoner() =

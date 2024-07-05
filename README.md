@@ -13,6 +13,7 @@ For detailed insights into the architectural decisions made during the developme
 - [ADR001: Associating Alerts at the Person Level](architectural_design_record/001-person-level-association.md)
 - [ADR002: Adopting a Two-Way Sync for Alerts](architectural_design_record/002-two-way-sync.md)
 - [ADR003: Prisoner and Booking Merge Events](architectural_design_record/003-prisoner-merge.md)
+- [ADR004: Prisoner and booking changes in NOMIS triggers a prisoner alerts resync](architectural_design_record/004-prisoner-alerts-resync.md)
 
 ## HMPPS Project Setup instructions
 
