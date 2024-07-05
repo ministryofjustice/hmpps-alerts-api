@@ -88,3 +88,15 @@ erDiagram
         jsonb alerts_updated "not null"
         jsonb alerts_expired "not null"
     }
+
+    resync_audit {
+        bigserial resync_audit_id PK "not null"
+        jsonb request "not null"
+        timestamp requested_at "not null"
+        varchar(32) requested_by "not null"
+        varchar(255) requested_by_display_name "not null"
+        varchar(12) source "not null"
+        timestamp completed_at "not null"
+        uuid[] alerts_deleted "not null"
+        uuid[] alerts_created "not null"
+    }

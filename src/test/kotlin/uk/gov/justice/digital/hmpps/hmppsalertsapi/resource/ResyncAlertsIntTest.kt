@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
@@ -14,6 +15,8 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.ResyncAuditRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.ResyncAuditRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
@@ -23,6 +26,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.ResyncAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_POOR_COPER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
@@ -36,6 +40,9 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @Autowired
   lateinit var alertCodeRepository: AlertCodeRepository
+
+  @Autowired
+  lateinit var resyncAuditRepository: ResyncAuditRepository
 
   @Test
   fun `when not authorised - 401 unauthorised`() {
@@ -214,6 +221,28 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     assertThat(newAudit.actionedBy).isEqualTo(originalAudit.actionedBy)
     assertThat(newAudit.actionedByDisplayName).isEqualTo(originalAudit.actionedByDisplayName)
     assertThat(newAudit.source).isEqualTo(originalAudit.source)
+  }
+
+  @Test
+  fun `Successful resync creates a resync audit record`() {
+    val originalAlert = alertWithAuditHistory()
+    val alert1 = resyncAlert().copy(
+      alertCode = originalAlert.alertCode.code,
+      activeFrom = originalAlert.activeFrom,
+      activeTo = originalAlert.activeTo,
+      createdAt = originalAlert.createdAt,
+    )
+    val alert2 = resyncAlert().copy(
+      alertCode = ALERT_CODE_POOR_COPER,
+    )
+
+    val response = webTestClient.resyncAlerts(request = listOf(alert1, alert2))
+
+    val resyncAudit = resyncAuditRepository.findResyncAuditsByPrisonNumber(PRISON_NUMBER).single()
+    assertThat(objectMapper.treeToValue<ResyncAuditRequest>(resyncAudit.request))
+      .isEqualTo(ResyncAuditRequest(PRISON_NUMBER, listOf(alert1, alert2)))
+    assertThat(resyncAudit.alertsCreated).containsAll(response.map { it.alertUuid })
+    assertThat(resyncAudit.alertsDeleted).contains(originalAlert.alertUuid)
   }
 
   @Test
