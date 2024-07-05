@@ -7,28 +7,23 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.EventProperties
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCodeEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertReferenceDataEvent
 
 @Service
-class AlertCodeEventService(
+class AlertReferenceDataEventService(
   private val eventProperties: EventProperties,
-  // Will be used for tracking events for metrics
   private val telemetryClient: TelemetryClient,
   private val domainEventPublisher: DomainEventPublisher,
 ) {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-  fun handleAlertEvent(event: AlertCodeEvent) {
-    log.info(event.toString())
-
-    event.toDomainEvent(eventProperties.baseUrl).run {
-      if (eventProperties.publish) {
-        domainEventPublisher.publish(this)
-      } else {
-        log.info("$eventType event publishing is disabled")
-      }
+  fun handleAlertEvent(event: AlertReferenceDataEvent) {
+    if (eventProperties.publish) {
+      val de = event.toDomainEvent(eventProperties.baseUrl)
+      domainEventPublisher.publish(de)
+      telemetryClient.trackEvent(de.eventType, mapOf("alertCode" to event.alertCode), null)
+    } else {
+      log.trace("{} publishing is disabled", event::class.simpleName)
     }
-
-    // TODO: Track event for metrics
   }
 
   private companion object {

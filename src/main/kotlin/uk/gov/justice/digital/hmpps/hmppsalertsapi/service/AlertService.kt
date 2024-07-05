@@ -49,7 +49,7 @@ class AlertService(
       // Uses API call
       validatePrisonNumber(prisonNumber)
 
-      alertRepository.saveAndFlush(
+      alertRepository.save(
         it.toAlertEntity(
           prisonNumber = prisonNumber,
           alertCode = alertCode,
@@ -74,7 +74,7 @@ class AlertService(
       .any { it.isActive() } && throw AlreadyExistsException("Alert", alertCode)
 
   private fun validatePrisonNumber(prisonNumber: String) =
-    require(prisonerSearchClient.getPrisoner(prisonNumber) != null) { "Prison number '$prisonNumber' not found" }
+    require(prisonerSearchClient.getPrisoner(prisonNumber) != null) { "Prison number not found" }
 
   fun retrieveAlert(alertUuid: UUID): AlertModel =
     alertRepository.findByAlertUuid(alertUuid)?.toAlertModel()
@@ -83,7 +83,7 @@ class AlertService(
   @PublishPersonAlertsChanged
   fun updateAlert(alertUuid: UUID, request: UpdateAlert, context: AlertRequestContext) =
     alertRepository.findByAlertUuid(alertUuid)?.let {
-      alertRepository.saveAndFlush(
+      alertRepository.save(
         it.update(
           description = request.description,
           authorisedBy = request.authorisedBy,
@@ -112,7 +112,7 @@ class AlertService(
         activeCaseLoadId = context.activeCaseLoadId,
       )
     }
-    alertRepository.saveAndFlush(alert)
+    alertRepository.save(alert)
     PersonAlertsChanged.registerChange(alert.prisonNumber)
   }
 

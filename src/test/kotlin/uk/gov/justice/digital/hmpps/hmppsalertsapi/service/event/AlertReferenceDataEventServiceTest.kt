@@ -18,7 +18,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import java.time.LocalDateTime
 
-class AlertTypeEventServiceTest {
+class AlertReferenceDataEventServiceTest {
   private val telemetryClient = mock<TelemetryClient>()
   private val domainEventPublisher = mock<DomainEventPublisher>()
 
@@ -27,13 +27,13 @@ class AlertTypeEventServiceTest {
   @Test
   fun `handle alert event - publish enabled`() {
     val eventProperties = EventProperties(true, baseUrl)
-    val alertTypeEventService = AlertTypeEventService(eventProperties, telemetryClient, domainEventPublisher)
+    val alertReferenceDataEventService = AlertReferenceDataEventService(eventProperties, telemetryClient, domainEventPublisher)
     val alertEvent = AlertTypeCreatedEvent(
       ALERT_CODE_VICTIM,
       LocalDateTime.now(),
     )
 
-    alertTypeEventService.handleAlertEvent(alertEvent)
+    alertReferenceDataEventService.handleAlertEvent(alertEvent)
 
     val domainEventCaptor = argumentCaptor<AlertDomainEvent<ReferenceDataAdditionalInformation>>()
     verify(domainEventPublisher).publish(domainEventCaptor.capture())
@@ -55,13 +55,13 @@ class AlertTypeEventServiceTest {
   @Test
   fun `handle alert event - publish disabled`() {
     val eventProperties = EventProperties(false, baseUrl)
-    val alertTypeEventService = AlertTypeEventService(eventProperties, telemetryClient, domainEventPublisher)
+    val alertReferenceDataEventService = AlertReferenceDataEventService(eventProperties, telemetryClient, domainEventPublisher)
     val alertEvent = AlertTypeCreatedEvent(
       ALERT_CODE_VICTIM,
       LocalDateTime.now(),
     )
 
-    alertTypeEventService.handleAlertEvent(alertEvent)
+    alertReferenceDataEventService.handleAlertEvent(alertEvent)
 
     verify(domainEventPublisher, never()).publish(any<AlertDomainEvent<ReferenceDataAdditionalInformation>>())
   }

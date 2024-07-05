@@ -74,12 +74,12 @@ class AlertTypeServiceTest {
 
   @Test
   fun `save an alert type`() {
-    whenever(alertTypeRepository.saveAndFlush(any())).thenReturn(alertType())
+    whenever(alertTypeRepository.save(any())).thenReturn(alertType())
     service.createAlertType(
       CreateAlertTypeRequest(code = "A", description = "Alert type A"),
       AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
     )
-    verify(alertTypeRepository).saveAndFlush(entityCaptor.capture())
+    verify(alertTypeRepository).save(entityCaptor.capture())
     val value = entityCaptor.firstValue
     assertThat(value).isNotNull
     assertThat(value.createdBy).isEqualTo("USER")
@@ -90,12 +90,12 @@ class AlertTypeServiceTest {
   @Test
   fun `delete an alert type`() {
     whenever(alertTypeRepository.findByCode(any())).thenReturn(alertTypeVulnerability())
-    whenever(alertTypeRepository.saveAndFlush(any())).thenReturn(alertTypeVulnerability())
+    whenever(alertTypeRepository.save(any())).thenReturn(alertTypeVulnerability())
     service.deactivateAlertType(
       "VI",
       AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
     )
-    verify(alertTypeRepository).saveAndFlush(entityCaptor.capture())
+    verify(alertTypeRepository).save(entityCaptor.capture())
     val value = entityCaptor.firstValue
     assertThat(value).isNotNull
     assertThat(value.deactivatedBy).isEqualTo("USER")
@@ -105,12 +105,12 @@ class AlertTypeServiceTest {
   @Test
   fun `reactivate an alert type`() {
     whenever(alertTypeRepository.findByCode(any())).thenReturn(alertTypeVulnerabilityDeactivated())
-    whenever(alertTypeRepository.saveAndFlush(any())).thenReturn(alertType())
+    whenever(alertTypeRepository.save(any())).thenReturn(alertType())
     service.reactivateAlertType(
       "VI",
       AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
     )
-    verify(alertTypeRepository).saveAndFlush(entityCaptor.capture())
+    verify(alertTypeRepository).save(entityCaptor.capture())
     val value = entityCaptor.firstValue
     assertThat(value).isNotNull
     assertThat(value.deactivatedBy).isNull()
@@ -120,13 +120,13 @@ class AlertTypeServiceTest {
   @Test
   fun `update alert type description`() {
     whenever(alertTypeRepository.findByCode(any())).thenReturn(alertTypeVulnerability())
-    whenever(alertTypeRepository.saveAndFlush(any())).thenReturn(alertType())
+    whenever(alertTypeRepository.save(any())).thenReturn(alertType())
     service.updateAlertType(
       "VI",
       UpdateAlertTypeRequest("New Description Value"),
       AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
     )
-    verify(alertTypeRepository).saveAndFlush(entityCaptor.capture())
+    verify(alertTypeRepository).save(entityCaptor.capture())
     val value = entityCaptor.firstValue
     assertThat(value).isNotNull
     assertThat(value.description).isEqualTo("New Description Value")
@@ -136,13 +136,13 @@ class AlertTypeServiceTest {
   @Test
   fun `update alert type with unchanged description`() {
     whenever(alertTypeRepository.findByCode(any())).thenReturn(alertTypeVulnerability())
-    whenever(alertTypeRepository.saveAndFlush(any())).thenReturn(alertType())
+    whenever(alertTypeRepository.save(any())).thenReturn(alertType())
     service.updateAlertType(
       "VI",
       UpdateAlertTypeRequest("Vulnerability"),
       AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
     )
-    verify(alertTypeRepository).saveAndFlush(entityCaptor.capture())
+    verify(alertTypeRepository).save(entityCaptor.capture())
     val value = entityCaptor.firstValue
     assertThat(value).isNotNull
     assertThat(value.description).isEqualTo("Vulnerability")

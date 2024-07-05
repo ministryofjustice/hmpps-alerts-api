@@ -107,12 +107,14 @@ data class AlertDeletedEvent(
   override fun toDomainEvent(baseUrl: String) = toDomainEvent(ALERT_DELETED, baseUrl)
 }
 
-abstract class AlertCodeEvent {
-  abstract val alertCode: String
-  abstract val occurredAt: LocalDateTime
+interface AlertReferenceDataEvent {
+  val alertCode: String
+  val occurredAt: LocalDateTime
 
-  abstract fun toDomainEvent(baseUrl: String): AlertDomainEvent<ReferenceDataAdditionalInformation>
+  fun toDomainEvent(baseUrl: String): AlertDomainEvent<ReferenceDataAdditionalInformation>
+}
 
+abstract class AlertCodeEvent : AlertReferenceDataEvent {
   protected fun toDomainEvent(
     type: DomainEventType,
     baseUrl: String,
@@ -159,12 +161,7 @@ data class AlertCodeUpdatedEvent(
   override fun toDomainEvent(baseUrl: String) = toDomainEvent(DomainEventType.ALERT_CODE_UPDATED, baseUrl)
 }
 
-abstract class AlertTypeEvent {
-  abstract val alertCode: String
-  abstract val occurredAt: LocalDateTime
-
-  abstract fun toDomainEvent(baseUrl: String): AlertDomainEvent<ReferenceDataAdditionalInformation>
-
+abstract class AlertTypeEvent : AlertReferenceDataEvent {
   protected fun toDomainEvent(
     type: DomainEventType,
     baseUrl: String,

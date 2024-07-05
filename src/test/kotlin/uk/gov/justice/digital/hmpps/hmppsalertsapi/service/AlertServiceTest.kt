@@ -115,16 +115,16 @@ class AlertServiceTest {
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().minusDays(1), activeTo = LocalDate.now())))
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
-    whenever(alertRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
+    whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
     underTest.createAlert(PRISON_NUMBER, createAlertRequest(), context)
-    verify(alertRepository).saveAndFlush(any<Alert>())
+    verify(alertRepository).save(any<Alert>())
   }
 
   @Test
   fun `returns properties from request context`() {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
-    whenever(alertRepository.saveAndFlush(any())).thenAnswer { it.arguments[0] }
+    whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
     val request = createAlertRequest()
     val result = underTest.createAlert(PRISON_NUMBER, request, context)
     with(result) {
@@ -141,7 +141,7 @@ class AlertServiceTest {
     val alert = alert(updateAlert = updateRequest, uuid = uuid)
     whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
     val alertCaptor = argumentCaptor<Alert>()
-    whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
+    whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
 
     underTest.updateAlert(uuid, updateRequest, context)
     val savedAlert = alertCaptor.firstValue
@@ -156,7 +156,7 @@ class AlertServiceTest {
     val alert = alert(uuid = uuid)
     whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
     val alertCaptor = argumentCaptor<Alert>()
-    whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
+    whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
 
     underTest.updateAlert(uuid, updateRequest, context)
     val savedAlert = alertCaptor.firstValue
@@ -173,7 +173,7 @@ class AlertServiceTest {
     val unchangedAlert = alert(uuid = uuid)
     whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
     val alertCaptor = argumentCaptor<Alert>()
-    whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
+    whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     underTest.updateAlert(uuid, updateRequest, context)
     val savedAlert = alertCaptor.firstValue
     assertThat(savedAlert.activeTo).isEqualTo(updateRequest.activeTo)
@@ -235,7 +235,7 @@ Comment '${updateRequest.appendComment}' was added""",
     val alert = alert(uuid = uuid)
     whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
     val alertCaptor = argumentCaptor<Alert>()
-    whenever(alertRepository.saveAndFlush(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
+    whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     underTest.deleteAlert(uuid, context)
 
     val savedAlert = alertCaptor.firstValue

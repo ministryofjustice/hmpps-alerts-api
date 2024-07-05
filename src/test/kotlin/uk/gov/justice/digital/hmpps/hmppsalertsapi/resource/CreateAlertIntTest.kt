@@ -176,8 +176,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Prison number '$PRISON_NUMBER_NOT_FOUND' not found")
-      assertThat(developerMessage).isEqualTo("Prison number '$PRISON_NUMBER_NOT_FOUND' not found")
+      assertThat(userMessage).isEqualTo("Validation failure: Prison number not found")
+      assertThat(developerMessage).isEqualTo("Prison number not found")
       assertThat(moreInfo).isNull()
     }
   }

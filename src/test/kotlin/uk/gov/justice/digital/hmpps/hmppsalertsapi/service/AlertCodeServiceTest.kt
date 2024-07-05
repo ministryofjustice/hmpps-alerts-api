@@ -42,12 +42,12 @@ class AlertCodeServiceTest {
   @Test
   fun `save an alert code`() {
     whenever(alertTypeRepository.findByCode(any())).thenReturn(alertType())
-    whenever(alertCodeRepository.saveAndFlush(any())).thenReturn(alertCodeVictim())
+    whenever(alertCodeRepository.save(any())).thenReturn(alertCodeVictim())
     underTest.createAlertCode(
       CreateAlertCodeRequest(code = "A", description = "Alert code A", parent = "T"),
       AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
     )
-    verify(alertCodeRepository).saveAndFlush(entityCaptor.capture())
+    verify(alertCodeRepository).save(entityCaptor.capture())
     val value = entityCaptor.firstValue
     assertThat(value).isNotNull
     assertThat(value.createdBy).isEqualTo("USER")
@@ -58,12 +58,12 @@ class AlertCodeServiceTest {
   @Test
   fun `delete an alert code`() {
     whenever(alertCodeRepository.findByCode(any())).thenReturn(alertCodeVictim())
-    whenever(alertCodeRepository.saveAndFlush(any())).thenReturn(alertCodeVictim())
+    whenever(alertCodeRepository.save(any())).thenReturn(alertCodeVictim())
     underTest.deactivateAlertCode(
       "VI",
       AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
     )
-    verify(alertCodeRepository).saveAndFlush(entityCaptor.capture())
+    verify(alertCodeRepository).save(entityCaptor.capture())
     val value = entityCaptor.firstValue
     assertThat(value).isNotNull
     assertThat(value.deactivatedBy).isEqualTo("USER")
@@ -73,12 +73,12 @@ class AlertCodeServiceTest {
   @Test
   fun `reactivate an alert code`() {
     whenever(alertCodeRepository.findByCode(any())).thenReturn(alertCodeVictimDeactivated())
-    whenever(alertCodeRepository.saveAndFlush(any())).thenReturn(alertCodeVictimDeactivated())
+    whenever(alertCodeRepository.save(any())).thenReturn(alertCodeVictimDeactivated())
     underTest.reactivateAlertCode(
       "VI",
       AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
     )
-    verify(alertCodeRepository).saveAndFlush(entityCaptor.capture())
+    verify(alertCodeRepository).save(entityCaptor.capture())
     val value = entityCaptor.firstValue
     assertThat(value).isNotNull
     assertThat(value.deactivatedBy).isNull()
@@ -88,13 +88,13 @@ class AlertCodeServiceTest {
   @Test
   fun `update alert code description`() {
     whenever(alertCodeRepository.findByCode(any())).thenReturn(alertCodeVictim())
-    whenever(alertCodeRepository.saveAndFlush(any())).thenReturn(alertCodeVictim())
+    whenever(alertCodeRepository.save(any())).thenReturn(alertCodeVictim())
     underTest.updateAlertCode(
       "VI",
       UpdateAlertCodeRequest(description = "New Description"),
       AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
     )
-    verify(alertCodeRepository).saveAndFlush(entityCaptor.capture())
+    verify(alertCodeRepository).save(entityCaptor.capture())
     val value = entityCaptor.firstValue
     assertThat(value.description).isEqualTo("New Description")
     assertThat(value.modifiedBy).isEqualTo("USER")
@@ -105,13 +105,13 @@ class AlertCodeServiceTest {
   fun `update alert code with no actual change`() {
     val alertCode = alertCodeVictim()
     whenever(alertCodeRepository.findByCode(alertCode.code)).thenReturn(alertCode)
-    whenever(alertCodeRepository.saveAndFlush(any())).thenReturn(alertCode)
+    whenever(alertCodeRepository.save(any())).thenReturn(alertCode)
     underTest.updateAlertCode(
       alertCode.code,
       UpdateAlertCodeRequest(description = alertCode.description),
       AlertRequestContext(username = "USER", userDisplayName = "USER", activeCaseLoadId = null),
     )
-    verify(alertCodeRepository).saveAndFlush(entityCaptor.capture())
+    verify(alertCodeRepository).save(entityCaptor.capture())
     val value = entityCaptor.firstValue
     assertThat(value.description).isEqualTo(alertCode.description)
     assertThat(value.modifiedBy).isNotEqualTo("USER")

@@ -190,8 +190,8 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Alert code 'NOT_FOUND' not found")
-      assertThat(developerMessage).isEqualTo("Alert code 'NOT_FOUND' not found")
+      assertThat(userMessage).isEqualTo("Validation failure: Alert code is invalid")
+      assertThat(developerMessage).isEqualTo("Details => Alert code:NOT_FOUND")
       assertThat(moreInfo).isNull()
     }
   }
@@ -208,8 +208,8 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Alert code '${request.alertCode}' is inactive")
-      assertThat(developerMessage).isEqualTo("Alert code '${request.alertCode}' is inactive")
+      assertThat(userMessage).isEqualTo("Validation failure: Alert code is inactive")
+      assertThat(developerMessage).isEqualTo("Alert code is inactive")
       assertThat(moreInfo).isNull()
     }
   }
@@ -226,8 +226,8 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     with(response!!) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Prison number(s) '$PRISON_NUMBER_NOT_FOUND' not found")
-      assertThat(developerMessage).isEqualTo("Prison number(s) '$PRISON_NUMBER_NOT_FOUND' not found")
+      assertThat(userMessage).isEqualTo("Validation failure: Prison number(s) not found")
+      assertThat(developerMessage).isEqualTo("Prison number(s) not found")
       assertThat(moreInfo).isNull()
     }
   }

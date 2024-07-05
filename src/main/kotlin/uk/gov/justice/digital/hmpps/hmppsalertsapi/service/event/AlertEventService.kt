@@ -12,23 +12,18 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertEvent
 @Service
 class AlertEventService(
   private val eventProperties: EventProperties,
-  // Will be used for tracking events for metrics
   private val telemetryClient: TelemetryClient,
   private val domainEventPublisher: DomainEventPublisher,
 ) {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   fun handleAlertEvent(event: AlertEvent) {
-    log.info(event.toString())
-
-    event.toDomainEvent(eventProperties.baseUrl).run {
-      if (eventProperties.publish) {
-        domainEventPublisher.publish(this)
-      } else {
-        log.info("$eventType event publishing is disabled")
-      }
+    if (eventProperties.publish) {
+      val de = event.toDomainEvent(eventProperties.baseUrl)
+      domainEventPublisher.publish(de)
+      telemetryClient.trackEvent(de.eventType, mapOf("prisonNumber" to event.prisonNumber), null)
+    } else {
+      log.trace("{} publishing is disabled", event::class.simpleName)
     }
-
-    // TODO: Track event for metrics
   }
 
   private companion object {
