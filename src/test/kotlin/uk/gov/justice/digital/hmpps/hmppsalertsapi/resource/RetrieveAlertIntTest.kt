@@ -107,7 +107,6 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
   }
 
   private fun createAlertRequest(
-    prisonNumber: String = PRISON_NUMBER,
     alertCode: String = ALERT_CODE_VICTIM,
   ) =
     CreateAlert(

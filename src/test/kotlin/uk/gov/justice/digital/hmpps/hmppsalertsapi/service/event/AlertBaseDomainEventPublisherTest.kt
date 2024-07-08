@@ -30,7 +30,6 @@ class AlertBaseDomainEventPublisherTest {
   private val objectMapper = jacksonMapperBuilder().addModule(JavaTimeModule()).build()
 
   private val domainEventsTopicArn = "arn:aws:sns:eu-west-2:000000000000:${UUID.randomUUID()}"
-  private val baseUrl = "http://localhost:8080"
 
   @Test
   fun `throws IllegalStateException when topic not found`() {

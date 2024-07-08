@@ -36,19 +36,4 @@ class AlertTypeTest {
       modifiedAt = LocalDateTime.now().minusDays(2)
       modifiedBy = "MODIFIED_BY"
     }
-
-  private fun alertCode(alertType: AlertType, alertCodeId: Long = 1, code: String = "ABC") =
-    AlertCode(
-      alertCodeId,
-      alertType,
-      code,
-      "Alert code $code",
-      1,
-      LocalDateTime.now().minusDays(3),
-      "CREATED_BY",
-    ).apply {
-      modifiedAt = LocalDateTime.now().minusDays(2)
-      modifiedBy = "MODIFIED_BY"
-      alertType.addAlertCode(this)
-    }
 }

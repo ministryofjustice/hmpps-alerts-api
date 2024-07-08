@@ -424,7 +424,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
-  fun WebTestClient.resyncAlerts(role: String = ROLE_NOMIS_ALERTS, request: Collection<ResyncAlert>) =
+  fun WebTestClient.resyncAlerts(role: String = ROLE_NOMIS_ALERTS, request: Collection<ResyncAlert>): MutableList<ResyncedAlert> =
     resyncResponseSpec(role, request)
       .expectStatus().isCreated
       .expectBodyList(ResyncedAlert::class.java)

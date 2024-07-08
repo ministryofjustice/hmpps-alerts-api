@@ -424,29 +424,27 @@ Comment '$appendComment' was added""",
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val lastModifiedAuditEvent = alertEntity.lastModifiedAuditEvent()!!
 
-    with(request) {
-      with(updatedAlert.comments.single()) {
-        assertThat(comment).isEqualTo(appendComment)
-        assertThat(createdAt).isEqualTo(lastModifiedAuditEvent.actionedAt.withNano(0))
-        assertThat(createdBy).isEqualTo(TEST_USER)
-        assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
-      }
-      assertThat(alertEntity.lastModifiedAt).isEqualTo(lastModifiedAuditEvent.actionedAt)
-      with(alertEntity.comments().single()) {
-        assertThat(comment).isEqualTo(appendComment)
-        assertThat(createdAt).isEqualTo(lastModifiedAuditEvent.actionedAt)
-        assertThat(createdBy).isEqualTo(TEST_USER)
-        assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
-      }
-      with(lastModifiedAuditEvent) {
-        assertThat(action).isEqualTo(AuditEventAction.UPDATED)
-        assertThat(description).isEqualTo("Comment '$appendComment' was added")
-        assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
-        assertThat(actionedBy).isEqualTo(TEST_USER)
-        assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
-        assertThat(source).isEqualTo(DPS)
-        assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
-      }
+    with(updatedAlert.comments.single()) {
+      assertThat(comment).isEqualTo(request.appendComment)
+      assertThat(createdAt).isEqualTo(lastModifiedAuditEvent.actionedAt.withNano(0))
+      assertThat(createdBy).isEqualTo(TEST_USER)
+      assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
+    }
+    assertThat(alertEntity.lastModifiedAt).isEqualTo(lastModifiedAuditEvent.actionedAt)
+    with(alertEntity.comments().single()) {
+      assertThat(comment).isEqualTo(request.appendComment)
+      assertThat(createdAt).isEqualTo(lastModifiedAuditEvent.actionedAt)
+      assertThat(createdBy).isEqualTo(TEST_USER)
+      assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
+    }
+    with(lastModifiedAuditEvent) {
+      assertThat(action).isEqualTo(AuditEventAction.UPDATED)
+      assertThat(description).isEqualTo("Comment '${request.appendComment}' was added")
+      assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+      assertThat(actionedBy).isEqualTo(TEST_USER)
+      assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+      assertThat(source).isEqualTo(DPS)
+      assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
     }
   }
 

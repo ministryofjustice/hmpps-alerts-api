@@ -14,7 +14,7 @@ import java.time.format.DateTimeFormatterBuilder
 @JsonComponent
 class ZonedDateTimeDeserializer : JsonDeserializer<ZonedDateTime>() {
   companion object {
-    val formatter: DateTimeFormatter = DateTimeFormatterBuilder().parseCaseInsensitive()
+    private val formatter: DateTimeFormatter = DateTimeFormatterBuilder().parseCaseInsensitive()
       .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
       .parseLenient()
       .optionalStart()
