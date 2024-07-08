@@ -22,7 +22,7 @@ class AlertReferenceDataEventService(
       domainEventPublisher.publish(de)
       telemetryClient.trackEvent(de.eventType, mapOf("alertCode" to event.alertCode), null)
     } else {
-      log.trace("{} publishing is disabled", event::class.simpleName)
+      log.trace("{} publishing is disabled", event.type.eventType)
     }
   }
 

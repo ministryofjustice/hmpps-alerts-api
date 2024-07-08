@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 
 @Entity
 @Table
-data class AlertType(
+class AlertType(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val alertTypeId: Long = 0,

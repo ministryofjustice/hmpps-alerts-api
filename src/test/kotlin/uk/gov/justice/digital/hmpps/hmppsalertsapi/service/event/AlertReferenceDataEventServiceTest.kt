@@ -41,7 +41,6 @@ class AlertReferenceDataEventServiceTest {
       AlertDomainEvent(
         eventType = ALERT_TYPE_CREATED.eventType,
         additionalInformation = ReferenceDataAdditionalInformation(
-          url = "$baseUrl/alert-types/${ALERT_CODE_VICTIM}",
           alertCode = alertEvent.alertCode,
           source = DPS,
         ),

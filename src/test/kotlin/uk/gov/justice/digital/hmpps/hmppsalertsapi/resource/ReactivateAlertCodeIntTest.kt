@@ -157,7 +157,6 @@ class ReactivateAlertCodeIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         DomainEventType.ALERT_CODE_REACTIVATED.eventType,
         ReferenceDataAdditionalInformation(
-          "http://localhost:8080/alert-codes/${alertType.code}",
           alertType.code,
           Source.DPS,
         ),

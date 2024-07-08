@@ -230,7 +230,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
         assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
       }
 
-      assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+      assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
         AlertEntity(
           alertId = alertEntity.alertId,
           alertUuid = alertEntity.alertUuid,
@@ -305,7 +305,7 @@ Comment '$appendComment' was added""",
         ),
       )
 
-      assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+      assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
         AlertEntity(
           alertId = alertEntity.alertId,
           alertUuid = alertEntity.alertUuid,
@@ -379,7 +379,7 @@ Comment '$appendComment' was added""",
         assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
       }
 
-      assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+      assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
         AlertEntity(
           alertId = alertEntity.alertId,
           alertUuid = alertEntity.alertUuid,
@@ -530,9 +530,7 @@ Comment '$appendComment' was added""",
       AlertDomainEvent(
         ALERT_UPDATED.eventType,
         AlertAdditionalInformation(
-          "http://localhost:8080/alerts/${alert.alertUuid}",
           alert.alertUuid,
-          alert.prisonNumber,
           alert.alertCode.code,
           DPS,
         ),
@@ -570,9 +568,7 @@ Comment '$appendComment' was added""",
       AlertDomainEvent(
         ALERT_UPDATED.eventType,
         AlertAdditionalInformation(
-          "http://localhost:8080/alerts/${alert.alertUuid}",
           alert.alertUuid,
-          alert.prisonNumber,
           alert.alertCode.code,
           NOMIS,
         ),

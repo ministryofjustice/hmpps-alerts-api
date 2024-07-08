@@ -344,7 +344,6 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         DomainEventType.ALERT_TYPE_CREATED.eventType,
         ReferenceDataAdditionalInformation(
-          "http://localhost:8080/alert-types/${request.code}",
           request.code,
           Source.DPS,
         ),

@@ -22,7 +22,7 @@ class AlertEventService(
       domainEventPublisher.publish(de)
       telemetryClient.trackEvent(de.eventType, mapOf("prisonNumber" to event.prisonNumber), null)
     } else {
-      log.trace("{} publishing is disabled", event::class.simpleName)
+      log.trace("{} publishing is disabled", event.type.eventType)
     }
   }
 

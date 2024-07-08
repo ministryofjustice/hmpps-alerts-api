@@ -306,7 +306,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     val alert = alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
-    assertThat(alert).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+    assertThat(alert).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
       Alert(
         alertId = 1,
         alertUuid = alert.alertUuid,

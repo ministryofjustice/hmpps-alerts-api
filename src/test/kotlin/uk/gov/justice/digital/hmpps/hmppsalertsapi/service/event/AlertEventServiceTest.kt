@@ -49,9 +49,7 @@ class AlertEventServiceTest {
       AlertDomainEvent(
         eventType = ALERT_CREATED.eventType,
         additionalInformation = AlertAdditionalInformation(
-          url = "$baseUrl/alerts/${alertEvent.alertUuid}",
           alertUuid = alertEvent.alertUuid,
-          prisonNumber = alertEvent.prisonNumber,
           alertCode = alertEvent.alertCode,
           source = alertEvent.source,
         ),

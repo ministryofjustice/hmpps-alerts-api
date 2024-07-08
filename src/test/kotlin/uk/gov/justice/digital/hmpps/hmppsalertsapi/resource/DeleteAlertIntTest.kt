@@ -266,9 +266,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         ALERT_DELETED.eventType,
         AlertAdditionalInformation(
-          "http://localhost:8080/alerts/${alert.alertUuid}",
           alert.alertUuid,
-          alert.prisonNumber,
           alert.alertCode.code,
           DPS,
         ),
@@ -309,9 +307,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         ALERT_DELETED.eventType,
         AlertAdditionalInformation(
-          "http://localhost:8080/alerts/${alert.alertUuid}",
           alert.alertUuid,
-          alert.prisonNumber,
           alert.alertCode.code,
           NOMIS,
         ),

@@ -16,7 +16,7 @@ import java.time.LocalDateTime
 
 @Entity
 @Table
-data class AlertCode(
+class AlertCode(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val alertCodeId: Long = 0,

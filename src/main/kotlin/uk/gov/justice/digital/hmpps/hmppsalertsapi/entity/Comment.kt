@@ -12,7 +12,7 @@ import java.util.UUID
 
 @Entity
 @Table
-data class Comment(
+class Comment(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Id
   val commentId: Long = 0,

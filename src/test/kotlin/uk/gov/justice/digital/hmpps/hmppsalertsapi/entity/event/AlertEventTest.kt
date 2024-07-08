@@ -17,20 +17,6 @@ class AlertEventTest {
   private val baseUrl = "http://localhost:8080"
 
   @Test
-  fun `alert created event to string`() {
-    val alertEvent =
-      AlertCreatedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
-    assertThat(alertEvent.toString()).isEqualTo(
-      "Alert with UUID '${alertEvent.alertUuid}' " +
-        "created for prison number '${alertEvent.prisonNumber}' " +
-        "with alert code '${alertEvent.alertCode}' " +
-        "at '${alertEvent.occurredAt}' " +
-        "by '${alertEvent.createdBy}' " +
-        "from source '${alertEvent.source}' ",
-    )
-  }
-
-  @Test
   fun `alert created event to domain event`() {
     val alertEvent =
       AlertCreatedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
@@ -41,9 +27,7 @@ class AlertEventTest {
       AlertDomainEvent(
         eventType = ALERT_CREATED.eventType,
         additionalInformation = AlertAdditionalInformation(
-          url = "$baseUrl/alerts/${alertEvent.alertUuid}",
           alertUuid = alertEvent.alertUuid,
-          prisonNumber = alertEvent.prisonNumber,
           alertCode = alertEvent.alertCode,
           source = alertEvent.source,
         ),
@@ -52,44 +36,6 @@ class AlertEventTest {
         detailUrl = "$baseUrl/alerts/${alertEvent.alertUuid}",
         personReference = PersonReference.withPrisonNumber(alertEvent.prisonNumber),
       ),
-    )
-    assertThat(domainEvent.toString()).isEqualTo(
-      "v1 alert domain event '${ALERT_CREATED.eventType}' " +
-        "for alert with UUID '${alertEvent.alertUuid}' " +
-        "for prison number '${alertEvent.prisonNumber}' " +
-        "with alert code '${alertEvent.alertCode}' " +
-        "from source '${alertEvent.source}' ",
-    )
-  }
-
-  @Test
-  fun `alert updated event to string`() {
-    val alertEvent = AlertUpdatedEvent(
-      alertUuid = UUID.randomUUID(),
-      prisonNumber = PRISON_NUMBER,
-      alertCode = ALERT_CODE_VICTIM,
-      occurredAt = LocalDateTime.now(),
-      source = NOMIS,
-      updatedBy = TEST_USER,
-      descriptionUpdated = true,
-      authorisedByUpdated = false,
-      activeFromUpdated = true,
-      activeToUpdated = false,
-      commentAppended = true,
-    )
-    assertThat(alertEvent.toString()).isEqualTo(
-      "Alert with UUID '${alertEvent.alertUuid}' " +
-        "updated for prison number '${alertEvent.prisonNumber}' " +
-        "with alert code '${alertEvent.alertCode}' " +
-        "at '${alertEvent.occurredAt}' " +
-        "by '${alertEvent.updatedBy}' " +
-        "from source '${alertEvent.source}' " +
-        "Properties updated: " +
-        "description: true, " +
-        "authorisedBy: false, " +
-        "activeFrom: true, " +
-        "activeTo: false, " +
-        "comment appended: true.",
     )
   }
 
@@ -115,9 +61,7 @@ class AlertEventTest {
       AlertDomainEvent(
         eventType = ALERT_UPDATED.eventType,
         additionalInformation = AlertAdditionalInformation(
-          url = "$baseUrl/alerts/${alertEvent.alertUuid}",
           alertUuid = alertEvent.alertUuid,
-          prisonNumber = alertEvent.prisonNumber,
           alertCode = alertEvent.alertCode,
           source = alertEvent.source,
         ),
@@ -126,27 +70,6 @@ class AlertEventTest {
         detailUrl = "$baseUrl/alerts/${alertEvent.alertUuid}",
         personReference = PersonReference.withPrisonNumber(alertEvent.prisonNumber),
       ),
-    )
-    assertThat(domainEvent.toString()).isEqualTo(
-      "v1 alert domain event '${ALERT_UPDATED.eventType}' " +
-        "for alert with UUID '${alertEvent.alertUuid}' " +
-        "for prison number '${alertEvent.prisonNumber}' " +
-        "with alert code '${alertEvent.alertCode}' " +
-        "from source '${alertEvent.source}' ",
-    )
-  }
-
-  @Test
-  fun `alert deleted event to string`() {
-    val alertEvent =
-      AlertDeletedEvent(UUID.randomUUID(), PRISON_NUMBER, ALERT_CODE_VICTIM, LocalDateTime.now(), NOMIS, TEST_USER)
-    assertThat(alertEvent.toString()).isEqualTo(
-      "Alert with UUID '${alertEvent.alertUuid}' " +
-        "deleted for prison number '${alertEvent.prisonNumber}' " +
-        "with alert code '${alertEvent.alertCode}' " +
-        "at '${alertEvent.occurredAt}' " +
-        "by '${alertEvent.deletedBy}' " +
-        "from source '${alertEvent.source}' ",
     )
   }
 
@@ -161,9 +84,7 @@ class AlertEventTest {
       AlertDomainEvent(
         eventType = ALERT_DELETED.eventType,
         additionalInformation = AlertAdditionalInformation(
-          url = "$baseUrl/alerts/${alertEvent.alertUuid}",
           alertUuid = alertEvent.alertUuid,
-          prisonNumber = alertEvent.prisonNumber,
           alertCode = alertEvent.alertCode,
           source = alertEvent.source,
         ),
@@ -172,13 +93,6 @@ class AlertEventTest {
         detailUrl = "$baseUrl/alerts/${alertEvent.alertUuid}",
         personReference = PersonReference.withPrisonNumber(alertEvent.prisonNumber),
       ),
-    )
-    assertThat(domainEvent.toString()).isEqualTo(
-      "v1 alert domain event '${ALERT_DELETED.eventType}' " +
-        "for alert with UUID '${alertEvent.alertUuid}' " +
-        "for prison number '${alertEvent.prisonNumber}' " +
-        "with alert code '${alertEvent.alertCode}' " +
-        "from source '${alertEvent.source}' ",
     )
   }
 }

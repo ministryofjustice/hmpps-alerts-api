@@ -440,7 +440,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
-    assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+    assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
       Alert(
         alertId = 1,
         alertUuid = alert.alertUuid,
@@ -475,7 +475,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
-    assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+    assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
       Alert(
         alertId = 1,
         alertUuid = alert.alertUuid,
@@ -517,9 +517,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         ALERT_CREATED.eventType,
         AlertAdditionalInformation(
-          "http://localhost:8080/alerts/${alert.alertUuid}",
           alert.alertUuid,
-          PRISON_NUMBER,
           request.alertCode,
           DPS,
         ),
@@ -551,9 +549,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         ALERT_CREATED.eventType,
         AlertAdditionalInformation(
-          "http://localhost:8080/alerts/${alert.alertUuid}",
           alert.alertUuid,
-          PRISON_NUMBER,
           request.alertCode,
           NOMIS,
         ),

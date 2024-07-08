@@ -187,7 +187,6 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         DomainEventType.ALERT_CODE_UPDATED.eventType,
         ReferenceDataAdditionalInformation(
-          "http://localhost:8080/alert-codes/${alertCode.code}",
           alertCode.code,
           Source.DPS,
         ),

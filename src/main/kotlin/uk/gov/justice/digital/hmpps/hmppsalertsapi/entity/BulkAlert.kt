@@ -14,7 +14,7 @@ import java.util.UUID
 
 @Entity
 @Table
-data class BulkAlert(
+class BulkAlert(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val bulkAlertId: Long = 0,

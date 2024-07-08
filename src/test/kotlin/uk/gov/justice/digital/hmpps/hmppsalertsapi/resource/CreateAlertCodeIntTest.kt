@@ -408,7 +408,6 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         DomainEventType.ALERT_CODE_CREATED.eventType,
         ReferenceDataAdditionalInformation(
-          "http://localhost:8080/alert-codes/${request.code}",
           request.code,
           Source.DPS,
         ),

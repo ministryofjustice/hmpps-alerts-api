@@ -58,7 +58,7 @@ class AlertTest {
       comment = addComment("Comment", createdAt, "COMMENT_BY", "COMMENT_BY_DISPLAY_NAME")
     }
 
-    assertThat(entity.comments().single()).isEqualTo(
+    assertThat(entity.comments().single()).usingRecursiveComparison().isEqualTo(
       Comment(
         commentUuid = comment.commentUuid,
         alert = entity,
@@ -96,7 +96,7 @@ class AlertTest {
       )
     }
 
-    assertThat(entity.auditEvents().single { it.action == UPDATED }).isEqualTo(
+    assertThat(entity.auditEvents().single { it.action == UPDATED }).usingRecursiveComparison().isEqualTo(
       AuditEvent(
         alert = entity,
         action = UPDATED,
@@ -178,7 +178,7 @@ class AlertTest {
       )
     }
 
-    assertThat(entity.createdAuditEvent()).isEqualTo(
+    assertThat(entity.createdAuditEvent()).usingRecursiveComparison().isEqualTo(
       AuditEvent(
         alert = entity,
         action = CREATED,
@@ -234,7 +234,7 @@ class AlertTest {
       )
     }
 
-    assertThat(entity.lastModifiedAuditEvent()).isEqualTo(
+    assertThat(entity.lastModifiedAuditEvent()).usingRecursiveComparison().isEqualTo(
       AuditEvent(
         alert = entity,
         action = UPDATED,
@@ -273,7 +273,7 @@ class AlertTest {
       activeCaseLoadId = activeCaseLoadId,
     )
 
-    assertThat(entity.auditEvents().single()).isEqualTo(
+    assertThat(entity.auditEvents().single()).usingRecursiveComparison().isEqualTo(
       AuditEvent(
         alert = entity,
         action = CREATED,
@@ -359,7 +359,7 @@ class AlertTest {
     )
 
     assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
-    assertThat(entity.auditEvents().single { it.action == UPDATED }).isEqualTo(
+    assertThat(entity.auditEvents().single { it.action == UPDATED }).usingRecursiveComparison().isEqualTo(
       AuditEvent(
         alert = entity,
         action = UPDATED,
@@ -809,7 +809,7 @@ class AlertTest {
 
     assertThat(entity.lastModifiedAt).isEqualTo(deletedAt)
     assertThat(entity.deletedAt()).isEqualTo(deletedAt)
-    assertThat(entity.auditEvents().single { it.action == DELETED }).isEqualTo(
+    assertThat(entity.auditEvents().single { it.action == DELETED }).usingRecursiveComparison().isEqualTo(
       AuditEvent(
         alert = entity,
         action = DELETED,

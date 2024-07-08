@@ -154,7 +154,6 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         DomainEventType.ALERT_TYPE_DEACTIVATED.eventType,
         ReferenceDataAdditionalInformation(
-          "http://localhost:8080/alert-types/${alertType.code}",
           alertType.code,
           Source.DPS,
         ),
