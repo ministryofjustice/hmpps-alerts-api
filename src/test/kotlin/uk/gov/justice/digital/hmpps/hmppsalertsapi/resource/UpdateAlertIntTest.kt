@@ -34,7 +34,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -205,7 +205,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
         Alert(
           alert.alertUuid,
           alert.prisonNumber,
-          alertCodeVictimSummary(),
+          alertCodeSummary(),
           description,
           authorisedBy,
           activeFrom!!,
@@ -286,7 +286,7 @@ Comment '$appendComment' was added""",
         Alert(
           alert.alertUuid,
           alert.prisonNumber,
-          alertCodeVictimSummary(),
+          alertCodeSummary(),
           description,
           authorisedBy,
           activeFrom!!,
@@ -354,7 +354,7 @@ Comment '$appendComment' was added""",
         Alert(
           alert.alertUuid,
           alert.prisonNumber,
-          alertCodeVictimSummary(),
+          alertCodeSummary(),
           description,
           authorisedBy,
           activeFrom!!,

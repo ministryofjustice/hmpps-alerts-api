@@ -22,7 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THR
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertTypeVulnerability
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AT_VULNERABILITY
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -292,7 +292,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `validation - code too long`() {
-    val request = CreateAlertCodeRequest("1234567890123", "desc", alertTypeVulnerability().code)
+    val request = CreateAlertCodeRequest("1234567890123", "desc", AT_VULNERABILITY.code)
     val response = webTestClient.createAlertCodeResponseSpec(request = request)
       .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
       .expectBody(ErrorResponse::class.java)
@@ -352,7 +352,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - description too long`() {
     val request =
-      CreateAlertCodeRequest("AB", "descdescdescdescdescdescdescdescdescdescd", alertTypeVulnerability().code)
+      CreateAlertCodeRequest("AB", "descdescdescdescdescdescdescdescdescdescd", AT_VULNERABILITY.code)
     val response = webTestClient.createAlertCodeResponseSpec(request = request)
       .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
       .expectBody(ErrorResponse::class.java)
@@ -367,7 +367,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `validation - empty code`() {
-    val request = CreateAlertCodeRequest("", "desc", alertTypeVulnerability().code)
+    val request = CreateAlertCodeRequest("", "desc", AT_VULNERABILITY.code)
     val response = webTestClient.createAlertCodeResponseSpec(request = request)
       .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
       .expectBody(ErrorResponse::class.java)
@@ -382,7 +382,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `validation - empty description`() {
-    val request = CreateAlertCodeRequest("AB", "", alertTypeVulnerability().code)
+    val request = CreateAlertCodeRequest("AB", "", AT_VULNERABILITY.code)
     val response = webTestClient.createAlertCodeResponseSpec(request = request)
       .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
       .expectBody(ErrorResponse::class.java)
@@ -423,7 +423,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun createAlertCodeRequest() = CreateAlertCodeRequest("CO", "Description", alertTypeVulnerability().code)
+  private fun createAlertCodeRequest() = CreateAlertCodeRequest("CO", "Description", AT_VULNERABILITY.code)
 
   private fun WebTestClient.createAlertCodeResponseSpec(
     request: CreateAlertCodeRequest,

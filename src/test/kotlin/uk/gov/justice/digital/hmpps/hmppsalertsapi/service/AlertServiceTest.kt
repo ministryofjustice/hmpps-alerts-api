@@ -34,7 +34,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AuditEventRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.CommentRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_VICTIM
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -89,7 +89,7 @@ class AlertServiceTest {
 
   @Test
   fun `Existing active alert with code`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now(), activeTo = null)))
     val error = assertThrows<AlreadyExistsException> {
@@ -100,7 +100,7 @@ class AlertServiceTest {
 
   @Test
   fun `Existing alert with code that will become active`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().plusDays(1), activeTo = null)))
     val error = assertThrows<AlreadyExistsException> {
@@ -111,7 +111,7 @@ class AlertServiceTest {
 
   @Test
   fun `Existing inactive alert with code`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().minusDays(1), activeTo = LocalDate.now())))
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
@@ -122,7 +122,7 @@ class AlertServiceTest {
 
   @Test
   fun `returns properties from request context`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(alertCodeVictim())
+    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
     val request = createAlertRequest()
@@ -299,7 +299,7 @@ Comment '${updateRequest.appendComment}' was added""",
       Alert(
         alertId = 1,
         alertUuid = uuid,
-        alertCode = alertCodeVictim(),
+        alertCode = AC_VICTIM,
         prisonNumber = PRISON_NUMBER,
         description = "new description",
         authorisedBy = "B Bauthorizer",
@@ -336,7 +336,7 @@ Comment '${updateRequest.appendComment}' was added""",
   ) =
     Alert(
       alertUuid = UUID.randomUUID(),
-      alertCode = alertCodeVictim(),
+      alertCode = AC_VICTIM,
       prisonNumber = PRISON_NUMBER,
       description = "Alert description",
       authorisedBy = "A. Authorizer",

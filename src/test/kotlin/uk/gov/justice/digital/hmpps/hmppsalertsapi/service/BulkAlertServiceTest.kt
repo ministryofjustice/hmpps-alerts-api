@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.BulkAlertRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.bulkCreateAlertRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.bulkAlertRequest
 
 @ExtendWith(MockitoExtension::class)
 class BulkAlertServiceTest {
@@ -47,7 +47,7 @@ class BulkAlertServiceTest {
   @Test
   fun `batch size must be greater than zero`() {
     val exception = assertThrows<IllegalArgumentException> {
-      underTest.bulkCreateAlerts(bulkCreateAlertRequest(), context, 0)
+      underTest.bulkCreateAlerts(bulkAlertRequest(), context, 0)
     }
     assertThat(exception.message).isEqualTo("Batch size must be between 1 and 1000")
   }
@@ -55,7 +55,7 @@ class BulkAlertServiceTest {
   @Test
   fun `batch size must be less than 1001`() {
     val exception = assertThrows<IllegalArgumentException> {
-      underTest.bulkCreateAlerts(bulkCreateAlertRequest(), context, 1001)
+      underTest.bulkCreateAlerts(bulkAlertRequest(), context, 1001)
     }
     assertThat(exception.message).isEqualTo("Batch size must be between 1 and 1000")
   }

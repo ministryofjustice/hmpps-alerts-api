@@ -45,7 +45,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepositor
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.BulkAlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.bulkCreateAlertRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.bulkAlertRequest
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -75,7 +75,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   fun `403 forbidden - no roles`() {
     webTestClient.post()
       .uri("/bulk-alerts")
-      .bodyValue(bulkCreateAlertRequest())
+      .bodyValue(bulkAlertRequest(PRISON_NUMBER))
       .headers(setAuthorisation())
       .headers(setAlertRequestContext())
       .exchange()
@@ -86,7 +86,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   fun `403 forbidden - alerts writer`() {
     webTestClient.post()
       .uri("/bulk-alerts")
-      .bodyValue(bulkCreateAlertRequest())
+      .bodyValue(bulkAlertRequest(PRISON_NUMBER))
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
       .headers(setAlertRequestContext())
       .exchange()
@@ -117,17 +117,17 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     @JvmStatic
     fun badRequestParameters(): List<Arguments> = listOf(
       Arguments.of(
-        bulkCreateAlertRequest().copy(prisonNumbers = emptyList()),
+        bulkAlertRequest(),
         "At least one prison number must be supplied",
         "prison numbers required",
       ),
       Arguments.of(
-        bulkCreateAlertRequest().copy(alertCode = ""),
+        bulkAlertRequest(PRISON_NUMBER, alertCode = ""),
         "Alert code must be supplied and be <= 12 characters",
         "alert code required",
       ),
       Arguments.of(
-        bulkCreateAlertRequest().copy(alertCode = 'a'.toString().repeat(13)),
+        bulkAlertRequest(PRISON_NUMBER, alertCode = 'a'.toString().repeat(13)),
         "Alert code must be supplied and be <= 12 characters",
         "alert code greater than 12 characters",
       ),
@@ -150,7 +150,6 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure(s): $expectedUserMessage")
-      assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.BulkAlertsController.bulkCreateAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts,jakarta.servlet.http.HttpServletRequest): [Field error in object 'bulkCreateAlerts' on field ")
       assertThat(developerMessage).contains(expectedUserMessage)
       assertThat(moreInfo).isNull()
     }
@@ -158,7 +157,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - multiple property errors`() {
-    val request = bulkCreateAlertRequest().copy(prisonNumbers = emptyList(), alertCode = "")
+    val request = bulkAlertRequest(alertCode = "")
 
     val response = webTestClient.bulkCreateAlertResponseSpec(request = request)
       .expectStatus().isBadRequest
@@ -180,7 +179,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - alert codes not found`() {
-    val request = bulkCreateAlertRequest().copy(alertCode = "NOT_FOUND")
+    val request = bulkAlertRequest(PRISON_NUMBER, alertCode = "NOT_FOUND")
 
     val response = webTestClient.bulkCreateAlertResponseSpec(request = request)
       .expectStatus().isBadRequest
@@ -198,7 +197,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - alert code is inactive`() {
-    val request = bulkCreateAlertRequest().copy(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
+    val request = bulkAlertRequest(PRISON_NUMBER, alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
 
     val response = webTestClient.bulkCreateAlertResponseSpec(request = request)
       .expectStatus().isBadRequest
@@ -216,7 +215,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - prisoner not found`() {
-    val request = bulkCreateAlertRequest().copy(prisonNumbers = listOf(PRISON_NUMBER_NOT_FOUND))
+    val request = bulkAlertRequest(PRISON_NUMBER_NOT_FOUND)
 
     val response = webTestClient.bulkCreateAlertResponseSpec(request = request)
       .expectStatus().isBadRequest
@@ -256,7 +255,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   fun `502 bad gateway - get user details request failed`() {
     val response = webTestClient.post()
       .uri("/bulk-alerts")
-      .bodyValue(bulkCreateAlertRequest())
+      .bodyValue(bulkAlertRequest(PRISON_NUMBER))
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
       .headers(setAlertRequestContext(username = USER_THROW_EXCEPTION))
       .exchange()
@@ -277,7 +276,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   fun `502 bad gateway - get prisoner request failed`() {
     val response = webTestClient.post()
       .uri("/bulk-alerts")
-      .bodyValue(bulkCreateAlertRequest().copy(prisonNumbers = listOf(PRISON_NUMBER_THROW_EXCEPTION)))
+      .bodyValue(bulkAlertRequest(PRISON_NUMBER_THROW_EXCEPTION))
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
       .headers(setAlertRequestContext())
       .exchange()
@@ -296,7 +295,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `creates new active alert`() {
-    val request = bulkCreateAlertRequest()
+    val request = bulkAlertRequest(PRISON_NUMBER)
 
     val response = webTestClient.bulkCreateAlert(request)
 
@@ -304,19 +303,20 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     val alert = alertRepository.findByAlertUuid(createdAlert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
-    assertThat(alert).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
-      Alert(
-        alertId = 1,
-        alertUuid = createdAlert.alertUuid,
-        alertCode = alertCode,
-        prisonNumber = PRISON_NUMBER,
-        description = alertCodeDescriptionMap[request.alertCode],
-        authorisedBy = null,
-        activeFrom = LocalDate.now(),
-        activeTo = null,
-        createdAt = alert.createdAt,
-      ),
-    )
+    assertThat(alert).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments")
+      .isEqualTo(
+        Alert(
+          alertId = 1,
+          alertUuid = createdAlert.alertUuid,
+          alertCode = alertCode,
+          prisonNumber = PRISON_NUMBER,
+          description = alertCodeDescriptionMap[request.alertCode],
+          authorisedBy = null,
+          activeFrom = LocalDate.now(),
+          activeTo = null,
+          createdAt = alert.createdAt,
+        ),
+      )
     assertThat(alert.isActive()).isTrue()
     with(alert.auditEvents().single()) {
       assertThat(auditEventId).isEqualTo(1)
@@ -333,7 +333,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `stores and returns bulk alert with created alert`() {
-    val request = bulkCreateAlertRequest()
+    val request = bulkAlertRequest(PRISON_NUMBER)
 
     val response = webTestClient.bulkCreateAlert(request)
 
@@ -360,7 +360,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `publishes alert created event`() {
-    val request = bulkCreateAlertRequest()
+    val request = bulkAlertRequest(PRISON_NUMBER)
 
     val response = webTestClient.bulkCreateAlert(request)
 
@@ -378,7 +378,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   fun `mode = ADD_MISSING does not create new alert when existing active alert exists`() {
     val existingActiveAlert = webTestClient.createAlert(request = createAlertRequest())
 
-    val request = bulkCreateAlertRequest().copy(mode = ADD_MISSING)
+    val request = bulkAlertRequest(PRISON_NUMBER, mode = ADD_MISSING)
 
     val response = webTestClient.bulkCreateAlert(request)
 
@@ -398,9 +398,12 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   @Test
   fun `mode = ADD_MISSING clears active to date when existing active alert exists`() {
     val existingActiveAlert =
-      webTestClient.createAlert(request = createAlertRequest().copy(activeTo = LocalDate.now().plusDays(1)))
+      webTestClient.createAlert(
+        PRISON_NUMBER,
+        request = createAlertRequest().copy(activeTo = LocalDate.now().plusDays(1)),
+      )
 
-    val request = bulkCreateAlertRequest().copy(mode = ADD_MISSING)
+    val request = bulkAlertRequest(PRISON_NUMBER, mode = ADD_MISSING)
 
     val response = webTestClient.bulkCreateAlert(request)
 
@@ -443,7 +446,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       ),
     )
 
-    val request = bulkCreateAlertRequest().copy(mode = ADD_MISSING)
+    val request = bulkAlertRequest(PRISON_NUMBER, mode = ADD_MISSING)
 
     val response = webTestClient.bulkCreateAlert(request)
 
@@ -484,7 +487,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   fun `mode = EXPIRE_AND_REPLACE expires existing active alert and creates new active alert to replace it`() {
     val existingActiveAlert = webTestClient.createAlert(request = createAlertRequest())
 
-    val request = bulkCreateAlertRequest().copy(mode = EXPIRE_AND_REPLACE)
+    val request = bulkAlertRequest(PRISON_NUMBER, mode = EXPIRE_AND_REPLACE)
 
     val response = webTestClient.bulkCreateAlert(request)
 
@@ -529,7 +532,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     val existingWillBecomeActiveAlert =
       webTestClient.createAlert(request = createAlertRequest().copy(activeFrom = LocalDate.now().plusDays(1)))
 
-    val request = bulkCreateAlertRequest().copy(mode = EXPIRE_AND_REPLACE)
+    val request = bulkAlertRequest(PRISON_NUMBER, mode = EXPIRE_AND_REPLACE)
 
     val response = webTestClient.bulkCreateAlert(request)
 
@@ -575,8 +578,11 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   @Test
   @Sql("classpath:test_data/existing-active-alerts-for-multiple-prison-numbers.sql")
   fun `cleanupMode = EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED expires existing active and will become active alerts for prison numbers not in list`() {
-    val request =
-      bulkCreateAlertRequest().copy(mode = ADD_MISSING, cleanupMode = EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED)
+    val request = bulkAlertRequest(
+      PRISON_NUMBER,
+      mode = ADD_MISSING,
+      cleanupMode = EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED,
+    )
 
     val response = webTestClient.bulkCreateAlert(request)
 

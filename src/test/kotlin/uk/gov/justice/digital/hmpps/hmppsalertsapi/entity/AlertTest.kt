@@ -14,7 +14,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_MOORLANDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictim
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_VICTIM
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -258,7 +258,7 @@ class AlertTest {
 
     val entity = Alert(
       alertUuid = UUID.randomUUID(),
-      alertCode = alertCodeVictim(),
+      alertCode = AC_VICTIM,
       prisonNumber = PRISON_NUMBER,
       description = "Alert description",
       authorisedBy = "A. Authorizer",
@@ -296,7 +296,7 @@ class AlertTest {
 
     val entity = Alert(
       alertUuid = UUID.randomUUID(),
-      alertCode = alertCodeVictim(),
+      alertCode = AC_VICTIM,
       prisonNumber = PRISON_NUMBER,
       description = "Alert description",
       authorisedBy = "A. Authorizer",
@@ -852,7 +852,7 @@ class AlertTest {
   ) =
     Alert(
       alertUuid = UUID.randomUUID(),
-      alertCode = alertCodeVictim(),
+      alertCode = AC_VICTIM,
       prisonNumber = PRISON_NUMBER,
       description = "Alert description",
       authorisedBy = "A. Authorizer",

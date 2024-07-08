@@ -40,7 +40,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_HIDDEN_DISAB
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_SOCIAL_CARE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -410,7 +410,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       AlertModel(
         alert.alertUuid,
         PRISON_NUMBER,
-        alertCodeVictimSummary(),
+        alertCodeSummary(),
         request.description,
         request.authorisedBy,
         request.activeFrom!!,

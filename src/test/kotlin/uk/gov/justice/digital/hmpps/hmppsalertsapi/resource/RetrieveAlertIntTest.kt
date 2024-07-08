@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.util.UUID
@@ -85,7 +85,7 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
         Alert(
           alert.alertUuid,
           alert.prisonNumber,
-          alertCodeVictimSummary(),
+          alertCodeSummary(),
           description,
           authorisedBy,
           activeFrom,
