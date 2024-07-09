@@ -21,3 +21,6 @@ generic-service:
 generic-prometheus-alerts:
   alertSeverity: hmpps-alerts-api-non-prod # sent to Slack channel #move-and-improve-alerts-non-prod
   businessHoursOnly: true
+
+data_analytics:
+  extract: true
