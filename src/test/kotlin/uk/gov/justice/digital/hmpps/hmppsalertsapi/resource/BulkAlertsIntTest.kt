@@ -11,7 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.mockito.kotlin.any
-import org.mockito.kotlin.never
+import org.mockito.kotlin.timeout
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
@@ -40,25 +40,17 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.BulkAlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.bulkAlertRequest
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert as BulkAlertModel
 
 class BulkAlertsIntTest : IntegrationTestBase() {
-  @Autowired
-  lateinit var alertRepository: AlertRepository
-
-  @Autowired
-  lateinit var alertCodeRepository: AlertCodeRepository
 
   @Autowired
   lateinit var bulkAlertRepository: BulkAlertRepository
@@ -295,8 +287,10 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `creates new active alert`() {
-    val request = bulkAlertRequest(PRISON_NUMBER)
+    val prisonNumber = "B1234LK"
+    givenPrisonersExist(prisonNumber)
 
+    val request = bulkAlertRequest(prisonNumber)
     val response = webTestClient.bulkCreateAlert(request)
 
     val createdAlert = response.alertsCreated.single()
@@ -309,7 +303,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
           alertId = 1,
           alertUuid = createdAlert.alertUuid,
           alertCode = alertCode,
-          prisonNumber = PRISON_NUMBER,
+          prisonNumber = prisonNumber,
           description = alertCodeDescriptionMap[request.alertCode],
           authorisedBy = null,
           activeFrom = LocalDate.now(),
@@ -333,8 +327,10 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `stores and returns bulk alert with created alert`() {
-    val request = bulkAlertRequest(PRISON_NUMBER)
+    val prisonNumber = "B1235LK"
+    givenPrisonersExist(prisonNumber)
 
+    val request = bulkAlertRequest(prisonNumber)
     val response = webTestClient.bulkCreateAlert(request)
 
     val bulkAlert = bulkAlertRepository.findByBulkAlertUuid(response.bulkAlertUuid)!!
@@ -360,8 +356,10 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `publishes alert created event`() {
-    val request = bulkAlertRequest(PRISON_NUMBER)
+    val prisonNumber = "B1236LK"
+    givenPrisonersExist(prisonNumber)
 
+    val request = bulkAlertRequest(prisonNumber)
     val response = webTestClient.bulkCreateAlert(request)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
@@ -376,9 +374,12 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `mode = ADD_MISSING does not create new alert when existing active alert exists`() {
-    val existingActiveAlert = webTestClient.createAlert(request = createAlertRequest())
+    val prisonNumber = "B1237LK"
+    givenPrisonersExist(prisonNumber)
+    val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
+    val existingAlert = givenAnAlert(alert(prisonNumber, alertCode))
 
-    val request = bulkAlertRequest(PRISON_NUMBER, mode = ADD_MISSING)
+    val request = bulkAlertRequest(prisonNumber, mode = ADD_MISSING)
 
     val response = webTestClient.bulkCreateAlert(request)
 
@@ -386,51 +387,41 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     assertThat(response.alertsUpdated).isEmpty()
     assertThat(response.alertsExpired).isEmpty()
     with(response.existingActiveAlerts.single()) {
-      assertThat(alertUuid).isEqualTo(existingActiveAlert.alertUuid)
-      assertThat(prisonNumber).isEqualTo(existingActiveAlert.prisonNumber)
+      assertThat(alertUuid).isEqualTo(existingAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingAlert.prisonNumber)
       assertThat(message).isEmpty()
     }
 
-    Thread.sleep(1000)
-    verify(hmppsQueueService, never()).findByTopicId(any())
+    verify(hmppsQueueService, timeout(1000).times(0)).findByTopicId(any())
   }
 
   @Test
   fun `mode = ADD_MISSING clears active to date when existing active alert exists`() {
-    val existingActiveAlert =
-      webTestClient.createAlert(
-        PRISON_NUMBER,
-        request = createAlertRequest().copy(activeTo = LocalDate.now().plusDays(1)),
-      )
+    val prisonNumber = "B1238LK"
+    givenPrisonersExist(prisonNumber)
+    val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
+    val existingAlert = givenAnAlert(alert(prisonNumber, alertCode, activeTo = LocalDate.now().plusDays(1)))
 
-    val request = bulkAlertRequest(PRISON_NUMBER, mode = ADD_MISSING)
-
+    val request = bulkAlertRequest(prisonNumber, mode = ADD_MISSING)
     val response = webTestClient.bulkCreateAlert(request)
 
     assertThat(response.existingActiveAlerts).isEmpty()
     assertThat(response.alertsCreated).isEmpty()
     assertThat(response.alertsExpired).isEmpty()
     with(response.alertsUpdated.single()) {
-      assertThat(alertUuid).isEqualTo(existingActiveAlert.alertUuid)
-      assertThat(prisonNumber).isEqualTo(existingActiveAlert.prisonNumber)
-      assertThat(message).isEqualTo("Updated active to from '${existingActiveAlert.activeTo}' to 'null'")
+      assertThat(alertUuid).isEqualTo(existingAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingAlert.prisonNumber)
+      assertThat(message).isEqualTo("Updated active to from '${existingAlert.activeTo}' to 'null'")
       with(alertRepository.findByAlertUuid(alertUuid)!!) {
         assertThat(isActive()).isTrue()
         assertThat(activeTo).isNull()
       }
     }
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
-      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(existingActiveAlert.alertUuid.toString())
-    }
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(existingActiveAlert.alertUuid.toString())
+      assertThat(additionalInformation.identifier()).isEqualTo(existingAlert.alertUuid.toString())
     }
     with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
       assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
@@ -439,44 +430,41 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `mode = ADD_MISSING sets active from to today when existing will become active alert exists`() {
-    val existingWillBecomeActiveAlert = webTestClient.createAlert(
-      request = createAlertRequest().copy(
+    val prisonNumber = "B1239LK"
+    givenPrisonersExist(prisonNumber)
+    val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
+    val existingAlert = givenAnAlert(
+      alert(
+        prisonNumber,
+        alertCode,
         activeFrom = LocalDate.now().plusDays(1),
         activeTo = LocalDate.now().plusDays(2),
       ),
     )
 
-    val request = bulkAlertRequest(PRISON_NUMBER, mode = ADD_MISSING)
-
+    val request = bulkAlertRequest(prisonNumber, mode = ADD_MISSING)
     val response = webTestClient.bulkCreateAlert(request)
 
     assertThat(response.existingActiveAlerts).isEmpty()
     assertThat(response.alertsCreated).isEmpty()
     assertThat(response.alertsExpired).isEmpty()
     with(response.alertsUpdated.single()) {
-      assertThat(alertUuid).isEqualTo(existingWillBecomeActiveAlert.alertUuid)
-      assertThat(prisonNumber).isEqualTo(existingWillBecomeActiveAlert.prisonNumber)
+      assertThat(alertUuid).isEqualTo(existingAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingAlert.prisonNumber)
       assertThat(message).isEqualTo(
-        "Updated active to from '${existingWillBecomeActiveAlert.activeTo}' to 'null'".trimMargin(),
+        "Updated active to from '${existingAlert.activeTo}' to 'null'".trimMargin(),
       )
       with(alertRepository.findByAlertUuid(alertUuid)!!) {
         assertThat(isActive()).isTrue()
-        assertThat(activeFrom).isEqualTo(existingWillBecomeActiveAlert.activeFrom)
+        assertThat(activeFrom).isEqualTo(existingAlert.activeFrom)
         assertThat(activeTo).isNull()
       }
     }
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
-      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
-    }
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
+      assertThat(additionalInformation.identifier()).isEqualTo(existingAlert.alertUuid.toString())
     }
     with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
       assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
@@ -485,38 +473,34 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `mode = EXPIRE_AND_REPLACE expires existing active alert and creates new active alert to replace it`() {
-    val existingActiveAlert = webTestClient.createAlert(request = createAlertRequest())
+    val prisonNumber = "B1240LK"
+    givenPrisonersExist(prisonNumber)
+    val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
+    val existingAlert = givenAnAlert(alert(prisonNumber, alertCode))
 
-    val request = bulkAlertRequest(PRISON_NUMBER, mode = EXPIRE_AND_REPLACE)
+    val request = bulkAlertRequest(prisonNumber, mode = EXPIRE_AND_REPLACE)
 
     val response = webTestClient.bulkCreateAlert(request)
 
     assertThat(response.existingActiveAlerts).isEmpty()
     assertThat(response.alertsUpdated).isEmpty()
     with(response.alertsCreated.single()) {
-      assertThat(alertUuid).isNotEqualTo(existingActiveAlert.alertUuid)
-      assertThat(prisonNumber).isEqualTo(existingActiveAlert.prisonNumber)
+      assertThat(alertUuid).isNotEqualTo(existingAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingAlert.prisonNumber)
       assertThat(message).isEmpty()
       assertThat(alertRepository.findByAlertUuid(alertUuid)!!.isActive()).isTrue()
     }
     with(response.alertsExpired.single()) {
-      assertThat(alertUuid).isEqualTo(existingActiveAlert.alertUuid)
-      assertThat(prisonNumber).isEqualTo(existingActiveAlert.prisonNumber)
+      assertThat(alertUuid).isEqualTo(existingAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingAlert.prisonNumber)
       assertThat(message).isEmpty()
       assertThat(alertRepository.findByAlertUuid(alertUuid)!!.isActive()).isFalse()
     }
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 5 }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
-      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(existingActiveAlert.alertUuid.toString())
-    }
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(existingActiveAlert.alertUuid.toString())
+      assertThat(additionalInformation.identifier()).isEqualTo(existingAlert.alertUuid.toString())
     }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
@@ -529,24 +513,25 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `mode = EXPIRE_AND_REPLACE expires existing will become active alert and creates new active alert to replace it`() {
-    val existingWillBecomeActiveAlert =
-      webTestClient.createAlert(request = createAlertRequest().copy(activeFrom = LocalDate.now().plusDays(1)))
+    val prisonNumber = "B1241LK"
+    givenPrisonersExist(prisonNumber)
+    val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
+    val existingAlert = givenAnAlert(alert(prisonNumber, alertCode, activeFrom = LocalDate.now().plusDays(1)))
 
-    val request = bulkAlertRequest(PRISON_NUMBER, mode = EXPIRE_AND_REPLACE)
-
+    val request = bulkAlertRequest(prisonNumber, mode = EXPIRE_AND_REPLACE)
     val response = webTestClient.bulkCreateAlert(request)
 
     assertThat(response.existingActiveAlerts).isEmpty()
     assertThat(response.alertsUpdated).isEmpty()
     with(response.alertsCreated.single()) {
-      assertThat(alertUuid).isNotEqualTo(existingWillBecomeActiveAlert.alertUuid)
-      assertThat(prisonNumber).isEqualTo(existingWillBecomeActiveAlert.prisonNumber)
+      assertThat(alertUuid).isNotEqualTo(existingAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingAlert.prisonNumber)
       assertThat(message).isEmpty()
       assertThat(alertRepository.findByAlertUuid(alertUuid)!!.isActive()).isTrue()
     }
     with(response.alertsExpired.single()) {
-      assertThat(alertUuid).isEqualTo(existingWillBecomeActiveAlert.alertUuid)
-      assertThat(prisonNumber).isEqualTo(existingWillBecomeActiveAlert.prisonNumber)
+      assertThat(alertUuid).isEqualTo(existingAlert.alertUuid)
+      assertThat(prisonNumber).isEqualTo(existingAlert.prisonNumber)
       assertThat(message).isEmpty()
       with(alertRepository.findByAlertUuid(alertUuid)!!) {
         assertThat(isActive()).isFalse()
@@ -554,17 +539,10 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       }
     }
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 5 }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
-      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
-    }
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(existingWillBecomeActiveAlert.alertUuid.toString())
+      assertThat(additionalInformation.identifier()).isEqualTo(existingAlert.alertUuid.toString())
     }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
@@ -651,26 +629,5 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     bulkCreateAlertResponseSpec(request)
       .expectStatus().isCreated
       .expectBody(BulkAlertModel::class.java)
-      .returnResult().responseBody!!
-
-  private fun createAlertRequest() =
-    CreateAlert(
-      alertCode = ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL,
-      description = null,
-      authorisedBy = null,
-      activeFrom = LocalDate.now().minusDays(1),
-      activeTo = null,
-    )
-
-  private fun WebTestClient.createAlert(prisonNumber: String = PRISON_NUMBER, request: CreateAlert) =
-    post()
-      .uri("prisoners/$prisonNumber/alerts")
-      .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext(source = DPS))
-      .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertModel::class.java)
       .returnResult().responseBody!!
 }

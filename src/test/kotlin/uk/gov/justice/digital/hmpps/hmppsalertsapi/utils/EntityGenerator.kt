@@ -13,7 +13,7 @@ object EntityGenerator {
 
   fun alertType(
     code: String,
-    description: String,
+    description: String = "Description of $code",
     listSequence: Int = 6,
     createdAt: LocalDateTime = LocalDateTime.of(2006, 6, 28, 16, 19, 42),
     createdBy: String = "CREATED_BY",
@@ -31,7 +31,7 @@ object EntityGenerator {
 
   fun alertCode(
     code: String,
-    description: String,
+    description: String = "Description of $code",
     type: AlertType = AT_VULNERABILITY,
     listSequence: Int = 6,
     createdAt: LocalDateTime = LocalDateTime.of(2006, 6, 28, 16, 19, 44),

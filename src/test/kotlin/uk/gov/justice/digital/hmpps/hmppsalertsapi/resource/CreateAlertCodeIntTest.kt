@@ -7,7 +7,6 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -21,15 +20,12 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AT_VULNERABILITY
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 class CreateAlertCodeIntTest : IntegrationTestBase() {
-  @Autowired
-  lateinit var alertCodeRepository: AlertCodeRepository
 
   @BeforeEach
   fun setup() {
@@ -425,9 +421,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
 
   private fun createAlertCodeRequest() = CreateAlertCodeRequest("CO", "Description", AT_VULNERABILITY.code)
 
-  private fun WebTestClient.createAlertCodeResponseSpec(
-    request: CreateAlertCodeRequest,
-  ) =
+  private fun WebTestClient.createAlertCodeResponseSpec(request: CreateAlertCodeRequest) =
     post()
       .uri("/alert-codes")
       .bodyValue(request)
@@ -435,9 +429,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
-  private fun WebTestClient.createAlertCode(
-    request: CreateAlertCodeRequest,
-  ) =
+  private fun WebTestClient.createAlertCode(request: CreateAlertCodeRequest) =
     createAlertCodeResponseSpec(request)
       .expectStatus().isCreated
       .expectBody(AlertCode::class.java)

@@ -7,7 +7,6 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
@@ -18,17 +17,13 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertType
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class DeactivateAlertTypeIntTest : IntegrationTestBase() {
-
-  @Autowired
-  lateinit var alertTypeRepository: AlertTypeRepository
 
   var uuid: UUID? = null
 
@@ -128,7 +123,7 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `should mark alert type as deactivated`() {
-    val alertCode = createAlertType()
+    val alertCode = createAlertType(alertType("ABC"))
     val response = webTestClient.deleteAlertType(alertCode = alertCode.code)
     with(response) {
       assertThat(isActive).isFalse()
@@ -140,16 +135,12 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `should publish alert types deactivated event with NOMIS source`() {
-    val request = createAlertTypeRequest("DEF")
-    val alertType = createAlertType(request)
+    val alertType = createAlertType(alertType("DEF"))
     webTestClient.deleteAlertType(alertType.code)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
 
-    assertThat(createAlertEvent.eventType).isEqualTo(DomainEventType.ALERT_TYPE_CREATED.eventType)
-    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(deleteAlertEvent.additionalInformation.identifier())
     assertThat(deleteAlertEvent).isEqualTo(
       AlertDomainEvent(
         DomainEventType.ALERT_TYPE_DEACTIVATED.eventType,
@@ -163,27 +154,16 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
         "http://localhost:8080/alert-types/${alertType.code}",
       ),
     )
-    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(alertTypeRepository.findByCode(alertType.code)!!.deactivatedAt, within(1, ChronoUnit.MICROS))
+    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
+      alertTypeRepository.findByCode(alertType.code)!!.deactivatedAt,
+      within(1, ChronoUnit.MICROS),
+    )
   }
 
-  private fun createAlertTypeRequest(code: String = "ABC") =
-    CreateAlertTypeRequest(code, "description")
+  private fun createAlertType(alertType: uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType) =
+    alertTypeRepository.save(alertType)
 
-  private fun createAlertType(request: CreateAlertTypeRequest = createAlertTypeRequest()): AlertType {
-    return webTestClient.post()
-      .uri("/alert-types")
-      .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
-      .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertType::class.java)
-      .returnResult().responseBody!!
-  }
-
-  private fun WebTestClient.deleteAlertType(
-    alertCode: String,
-  ): AlertType =
+  private fun WebTestClient.deleteAlertType(alertCode: String): AlertType =
     patch()
       .uri("/alert-types/$alertCode/deactivate")
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))

@@ -6,7 +6,6 @@ import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
@@ -33,8 +32,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.PrisonerAlertsIntTest.AlertsPage
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_HIDDEN_DISABILITY
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
@@ -48,11 +45,6 @@ import java.time.temporal.ChronoUnit
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 class CreateAlertIntTest : IntegrationTestBase() {
-  @Autowired
-  lateinit var alertRepository: AlertRepository
-
-  @Autowired
-  lateinit var alertCodeRepository: AlertCodeRepository
 
   @Test
   fun `401 unauthorised`() {
@@ -440,19 +432,20 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
-    assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
-      Alert(
-        alertId = 1,
-        alertUuid = alert.alertUuid,
-        alertCode = alertCode,
-        prisonNumber = PRISON_NUMBER,
-        description = request.description,
-        authorisedBy = request.authorisedBy,
-        activeFrom = request.activeFrom!!,
-        activeTo = request.activeTo,
-        createdAt = alertEntity.createdAt,
-      ),
-    )
+    assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments")
+      .isEqualTo(
+        Alert(
+          alertId = 1,
+          alertUuid = alert.alertUuid,
+          alertCode = alertCode,
+          prisonNumber = PRISON_NUMBER,
+          description = request.description,
+          authorisedBy = request.authorisedBy,
+          activeFrom = request.activeFrom!!,
+          activeTo = request.activeTo,
+          createdAt = alertEntity.createdAt,
+        ),
+      )
     with(alertEntity.auditEvents().single()) {
       assertThat(auditEventId).isEqualTo(1)
       assertThat(action).isEqualTo(AuditEventAction.CREATED)
@@ -475,19 +468,20 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
-    assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
-      Alert(
-        alertId = 1,
-        alertUuid = alert.alertUuid,
-        alertCode = alertCode,
-        prisonNumber = PRISON_NUMBER,
-        description = request.description,
-        authorisedBy = request.authorisedBy,
-        activeFrom = request.activeFrom!!,
-        activeTo = request.activeTo,
-        createdAt = alertEntity.createdAt,
-      ),
-    )
+    assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments")
+      .isEqualTo(
+        Alert(
+          alertId = 1,
+          alertUuid = alert.alertUuid,
+          alertCode = alertCode,
+          prisonNumber = PRISON_NUMBER,
+          description = request.description,
+          authorisedBy = request.authorisedBy,
+          activeFrom = request.activeFrom!!,
+          activeTo = request.activeTo,
+          createdAt = alertEntity.createdAt,
+        ),
+      )
     with(alertEntity.auditEvents().single()) {
       assertThat(auditEventId).isEqualTo(1)
       assertThat(action).isEqualTo(AuditEventAction.CREATED)
@@ -667,38 +661,33 @@ class CreateAlertIntTest : IntegrationTestBase() {
     assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
   }
 
-  private fun createAlertRequest(
-    alertCode: String = ALERT_CODE_VICTIM,
-  ) =
-    CreateAlert(
-      alertCode = alertCode,
-      description = "Alert description",
-      authorisedBy = "A. Authorizer",
-      activeFrom = LocalDate.now().minusDays(3),
-      activeTo = null,
-    )
+  private fun createAlertRequest(alertCode: String = ALERT_CODE_VICTIM) = CreateAlert(
+    alertCode = alertCode,
+    description = "Alert description",
+    authorisedBy = "A. Authorizer",
+    activeFrom = LocalDate.now().minusDays(3),
+    activeTo = null,
+  )
 
   private fun WebTestClient.createAlertResponseSpec(
     source: Source = DPS,
     request: CreateAlert,
     prisonNumber: String = PRISON_NUMBER,
-  ) =
-    post()
-      .uri("/prisoners/$prisonNumber/alerts")
-      .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-      .headers(setAlertRequestContext(source = source))
-      .exchange()
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+  ) = post()
+    .uri("/prisoners/$prisonNumber/alerts")
+    .bodyValue(request)
+    .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+    .headers(setAlertRequestContext(source = source))
+    .exchange()
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
   fun WebTestClient.createAlert(
     source: Source = DPS,
     request: CreateAlert,
-  ) =
-    createAlertResponseSpec(source, request)
-      .expectStatus().isCreated
-      .expectBody(AlertModel::class.java)
-      .returnResult().responseBody!!
+  ) = createAlertResponseSpec(source, request)
+    .expectStatus().isCreated
+    .expectBody(AlertModel::class.java)
+    .returnResult().responseBody!!
 
   private fun getActivePrisonerAlerts() =
     webTestClient.get()

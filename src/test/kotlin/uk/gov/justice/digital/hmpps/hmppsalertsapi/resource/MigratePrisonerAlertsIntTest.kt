@@ -9,7 +9,6 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.any
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -22,8 +21,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MigratedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_ADULT_AT_RISK
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_ISOLATED_PRISONER
@@ -38,11 +35,6 @@ import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
-  @Autowired
-  lateinit var alertRepository: AlertRepository
-
-  @Autowired
-  lateinit var alertCodeRepository: AlertCodeRepository
 
   @Test
   fun `401 unauthorised`() {

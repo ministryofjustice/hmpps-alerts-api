@@ -22,8 +22,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.ResyncedAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.ResyncAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_POOR_COPER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
@@ -34,11 +32,6 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class ResyncAlertsIntTest : IntegrationTestBase() {
-  @Autowired
-  lateinit var alertRepository: AlertRepository
-
-  @Autowired
-  lateinit var alertCodeRepository: AlertCodeRepository
 
   @Autowired
   lateinit var resyncAuditRepository: ResyncAuditRepository
@@ -73,9 +66,9 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
   fun `400 bad request - alert codes not found`() {
     val request = listOf(
       resyncAlert(),
-      resyncAlert().copy(alertCode = "NOT_FOUND_1"),
-      resyncAlert().copy(alertCode = "NOT_FOUND_2"),
-      resyncAlert().copy(alertCode = "NOT_FOUND_1"),
+      resyncAlert(alertCode = "NOT_FOUND_1"),
+      resyncAlert(alertCode = "NOT_FOUND_2"),
+      resyncAlert(alertCode = "NOT_FOUND_1"),
     )
 
     val response = webTestClient.resyncResponseSpec(request = request)
@@ -94,7 +87,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `resync of updated alert should create audit event`() {
-    val request = resyncAlert().copy(
+    val request = resyncAlert(
       lastModifiedAt = LocalDateTime.now().minusDays(1),
       lastModifiedBy = "AG1221GG",
       lastModifiedByDisplayName = "Up Dated",
@@ -121,7 +114,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
   @Test
   fun `resync alert with inactive alert code`() {
     val resyncedAlert =
-      webTestClient.resyncAlerts(request = listOf(resyncAlert().copy(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)))
+      webTestClient.resyncAlerts(request = listOf(resyncAlert(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)))
         .single()
 
     with(alertRepository.findByAlertUuid(resyncedAlert.alertUuid)!!.alertCode) {
@@ -134,7 +127,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
   fun `resync alert with active to before active from`() {
     val migratedAlert = webTestClient.resyncAlerts(
       request = listOf(
-        resyncAlert().copy(
+        resyncAlert(
           activeFrom = LocalDate.now(),
           activeTo = LocalDate.now().minusDays(1),
         ),
@@ -183,7 +176,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     val originalAudit = originalAlert.auditEvents()
     assertThat(originalAudit.size).isEqualTo(2)
 
-    val alert = resyncAlert().copy(
+    val alert = resyncAlert(
       alertCode = originalAlert.alertCode.code,
       activeFrom = originalAlert.activeFrom,
       activeTo = originalAlert.activeTo,
@@ -225,13 +218,13 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
   @Test
   fun `Successful resync creates a resync audit record`() {
     val originalAlert = alertWithAuditHistory()
-    val alert1 = resyncAlert().copy(
+    val alert1 = resyncAlert(
       alertCode = originalAlert.alertCode.code,
       activeFrom = originalAlert.activeFrom,
       activeTo = originalAlert.activeTo,
       createdAt = originalAlert.createdAt,
     )
-    val alert2 = resyncAlert().copy(
+    val alert2 = resyncAlert(
       alertCode = ALERT_CODE_POOR_COPER,
     )
 
@@ -324,57 +317,57 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     @JvmStatic
     fun badRequestParameters(): List<Arguments> = listOf(
       Arguments.of(
-        resyncAlert().copy(offenderBookId = 0),
+        resyncAlert(offenderBookId = 0),
         "Offender book id must be supplied and be > 0",
         "offender book id required",
       ),
       Arguments.of(
-        resyncAlert().copy(alertSeq = 0),
+        resyncAlert(alertSeq = 0),
         "Alert sequence must be supplied and be > 0",
         "alert sequence required",
       ),
       Arguments.of(
-        resyncAlert().copy(alertCode = ""),
+        resyncAlert(alertCode = ""),
         "Alert code must be supplied and be <= 12 characters",
         "alert code required",
       ),
       Arguments.of(
-        resyncAlert().copy(alertCode = 'a'.toString().repeat(13)),
+        resyncAlert(alertCode = 'a'.toString().repeat(13)),
         "Alert code must be supplied and be <= 12 characters",
         "alert code greater than 12 characters",
       ),
       Arguments.of(
-        resyncAlert().copy(description = 'a'.toString().repeat(4001)),
+        resyncAlert(description = 'a'.toString().repeat(4001)),
         "Description must be <= 4000 characters",
         "description greater than 4000 characters",
       ),
       Arguments.of(
-        resyncAlert().copy(authorisedBy = 'a'.toString().repeat(41)),
+        resyncAlert(authorisedBy = 'a'.toString().repeat(41)),
         "Authorised by must be <= 40 characters",
         "authorised by greater than 40 characters",
       ),
       Arguments.of(
-        resyncAlert().copy(createdBy = ""),
+        resyncAlert(createdBy = ""),
         "Created by must be supplied and be <= 32 characters",
         "created by required",
       ),
       Arguments.of(
-        resyncAlert().copy(createdBy = 'a'.toString().repeat(33)),
+        resyncAlert(createdBy = 'a'.toString().repeat(33)),
         "Created by must be supplied and be <= 32 characters",
         "created by greater than 32 characters",
       ),
       Arguments.of(
-        resyncAlert().copy(createdByDisplayName = ""),
+        resyncAlert(createdByDisplayName = ""),
         "Created by display name must be supplied and be <= 255 characters",
         "created by display name required",
       ),
       Arguments.of(
-        resyncAlert().copy(createdByDisplayName = 'a'.toString().repeat(256)),
+        resyncAlert(createdByDisplayName = 'a'.toString().repeat(256)),
         "Created by display name must be supplied and be <= 255 characters",
         "created by display name greater than 255 characters",
       ),
       Arguments.of(
-        resyncAlert().copy(
+        resyncAlert(
           lastModifiedAt = LocalDateTime.now(),
           lastModifiedBy = null,
           lastModifiedByDisplayName = "Up Dated",
@@ -383,36 +376,50 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
         "last modified by required when last modified at is supplied",
       ),
       Arguments.of(
-        resyncAlert().copy(lastModifiedBy = 'a'.toString().repeat(33)),
+        resyncAlert(lastModifiedBy = 'a'.toString().repeat(33)),
         "Last modified by must be <= 32 characters",
         "last modified by greater than 32 characters",
       ),
       Arguments.of(
-        resyncAlert().copy(lastModifiedAt = LocalDateTime.now(), lastModifiedBy = "AB11DZ"),
+        resyncAlert(lastModifiedAt = LocalDateTime.now(), lastModifiedBy = "AB11DZ"),
         "Last modified by display name is required when last modified at is supplied",
         "last modified by display name required when last modified at is supplied",
       ),
       Arguments.of(
-        resyncAlert().copy(lastModifiedByDisplayName = 'a'.toString().repeat(256)),
+        resyncAlert(lastModifiedByDisplayName = 'a'.toString().repeat(256)),
         "Last modified by display name must be <= 255 characters",
         "last modified by display name greater than 255 characters",
       ),
     )
 
-    fun resyncAlert() = ResyncAlert(
-      offenderBookId = 12345,
-      alertSeq = 2,
-      alertCode = ALERT_CODE_VICTIM,
-      description = "Alert description",
-      authorisedBy = "A. Nurse, An Agency",
-      activeFrom = LocalDate.now().minusDays(2),
-      activeTo = null,
-      createdAt = LocalDateTime.now().minusDays(2).withNano(0),
-      createdBy = "AB11DZ",
-      createdByDisplayName = "C REATED",
-      lastModifiedAt = null,
-      lastModifiedBy = null,
-      lastModifiedByDisplayName = null,
+    fun resyncAlert(
+      offenderBookId: Long = 12345,
+      alertSeq: Int = 2,
+      alertCode: String = ALERT_CODE_VICTIM,
+      description: String = "Alert description",
+      authorisedBy: String = "A Person",
+      activeFrom: LocalDate = LocalDate.now().minusDays(2),
+      activeTo: LocalDate? = null,
+      createdAt: LocalDateTime = LocalDateTime.now().minusDays(2).withNano(0),
+      createdBy: String = "AB11DZ",
+      createdByDisplayName: String = "C REATED",
+      lastModifiedAt: LocalDateTime? = null,
+      lastModifiedBy: String? = null,
+      lastModifiedByDisplayName: String? = null,
+    ) = ResyncAlert(
+      offenderBookId,
+      alertSeq,
+      alertCode,
+      description,
+      authorisedBy,
+      activeFrom,
+      activeTo,
+      createdAt,
+      createdBy,
+      createdByDisplayName,
+      lastModifiedAt,
+      lastModifiedBy,
+      lastModifiedByDisplayName,
     )
   }
 
@@ -424,7 +431,10 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
-  fun WebTestClient.resyncAlerts(role: String = ROLE_NOMIS_ALERTS, request: Collection<ResyncAlert>): MutableList<ResyncedAlert> =
+  fun WebTestClient.resyncAlerts(
+    role: String = ROLE_NOMIS_ALERTS,
+    request: Collection<ResyncAlert>,
+  ): MutableList<ResyncedAlert> =
     resyncResponseSpec(role, request)
       .expectStatus().isCreated
       .expectBodyList(ResyncedAlert::class.java)

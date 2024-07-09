@@ -7,14 +7,11 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.PersonReference
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.PERSON_ALERTS_CHANGED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
@@ -24,24 +21,17 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER_DISPLAY_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class DeleteAlertIntTest : IntegrationTestBase() {
-
-  @Autowired
-  lateinit var alertRepository: AlertRepository
 
   var uuid: UUID? = null
 
@@ -161,7 +151,10 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `alert deleted via DPS`() {
-    val alert = createAlert()
+    val prisonNumber = "D1234LT"
+    val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
+    val alert = givenAnAlert(alert(prisonNumber, alertCode))
+
     webTestClient.deleteAlert(alert.alertUuid, source = DPS)
     val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
 
@@ -169,7 +162,6 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       assertThat(deletedAt()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
     }
     with(alertEntity.auditEvents()[0]) {
-      assertThat(auditEventId).isEqualTo(2)
       assertThat(action).isEqualTo(AuditEventAction.DELETED)
       assertThat(description).isEqualTo("Alert deleted")
       assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
@@ -182,7 +174,10 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `alert deleted via NOMIS`() {
-    val alert = createAlert()
+    val prisonNumber = "D1235LT"
+    val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
+    val alert = givenAnAlert(alert(prisonNumber, alertCode))
+
     webTestClient.deleteAlert(alert.alertUuid, source = NOMIS)
     val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
 
@@ -190,7 +185,6 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       assertThat(deletedAt()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
     }
     with(alertEntity.auditEvents()[0]) {
-      assertThat(auditEventId).isEqualTo(2)
       assertThat(action).isEqualTo(AuditEventAction.DELETED)
       assertThat(description).isEqualTo("Alert deleted")
       assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
@@ -203,7 +197,9 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should populate deleted by display name using Username header when source is NOMIS`() {
-    val alert = createAlert()
+    val prisonNumber = "D1236LT"
+    val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
+    val alert = givenAnAlert(alert(prisonNumber, alertCode))
 
     webTestClient.delete()
       .uri("/alerts/${alert.alertUuid}")
@@ -225,7 +221,9 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should populate deleted by username and display name as 'NOMIS' when source is NOMIS and no username is supplied`() {
-    val alert = createAlert()
+    val prisonNumber = "D1237LT"
+    val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
+    val alert = givenAnAlert(alert(prisonNumber, alertCode))
 
     webTestClient.delete()
       .uri("/alerts/${alert.alertUuid}")
@@ -247,21 +245,17 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should publish alert deleted event with DPS source`() {
-    val alert = createAlert()
+    val prisonNumber = "D1238LT"
+    val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
+    val alert = givenAnAlert(alert(prisonNumber, alertCode))
 
     webTestClient.deleteAlert(alert.alertUuid, DPS)
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
     with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
       assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
 
-    assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
-    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(deleteAlertEvent.additionalInformation.identifier())
     assertThat(deleteAlertEvent).isEqualTo(
       AlertDomainEvent(
         ALERT_DELETED.eventType,
@@ -274,7 +268,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         ALERT_DELETED.description,
         deleteAlertEvent.occurredAt,
         "http://localhost:8080/alerts/${alert.alertUuid}",
-        PersonReference.withPrisonNumber(PRISON_NUMBER),
+        PersonReference.withPrisonNumber(prisonNumber),
       ),
     )
     assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
@@ -287,22 +281,18 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should publish alert deleted event with NOMIS source`() {
-    val alert = createAlert()
+    val prisonNumber = "D1239LT"
+    val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
+    val alert = givenAnAlert(alert(prisonNumber, alertCode))
 
     webTestClient.deleteAlert(alert.alertUuid, NOMIS)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
     with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
       assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
 
-    assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
-    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(deleteAlertEvent.additionalInformation.identifier())
     assertThat(deleteAlertEvent).isEqualTo(
       AlertDomainEvent(
         ALERT_DELETED.eventType,
@@ -315,7 +305,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         ALERT_DELETED.description,
         deleteAlertEvent.occurredAt,
         "http://localhost:8080/alerts/${alert.alertUuid}",
-        PersonReference.withPrisonNumber(PRISON_NUMBER),
+        PersonReference.withPrisonNumber(prisonNumber),
       ),
     )
     assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
@@ -326,37 +316,12 @@ class DeleteAlertIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun createAlertRequest(
-    alertCode: String = ALERT_CODE_VICTIM,
-  ) = CreateAlert(
-    alertCode = alertCode,
-    description = "Alert description",
-    authorisedBy = "A. Authorizer",
-    activeFrom = LocalDate.now().minusDays(3),
-    activeTo = null,
-  )
-
-  private fun createAlert(prisonNumber: String = PRISON_NUMBER): Alert {
-    val request = createAlertRequest()
-    return webTestClient.post()
-      .uri("prisoners/$prisonNumber/alerts")
-      .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_WRITER), isUserToken = true))
+  private fun WebTestClient.deleteAlert(alertUuid: UUID, source: Source = DPS) =
+    delete()
+      .uri("/alerts/$alertUuid")
+      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAlertRequestContext(source = source))
       .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(Alert::class.java)
-      .returnResult().responseBody!!
-  }
-
-  private fun WebTestClient.deleteAlert(
-    alertUuid: UUID,
-    source: Source = DPS,
-  ) = delete()
-    .uri("/alerts/$alertUuid")
-    .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
-    .headers(setAlertRequestContext(source = source))
-    .exchange()
-    .expectStatus().isNoContent
-    .expectBody().isEmpty
+      .expectStatus().isNoContent
+      .expectBody().isEmpty
 }

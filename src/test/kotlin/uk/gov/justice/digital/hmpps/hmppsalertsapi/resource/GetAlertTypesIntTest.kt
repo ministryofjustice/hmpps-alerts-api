@@ -55,9 +55,7 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
     assertThat(alertType.code).isEqualTo("L")
   }
 
-  private fun WebTestClient.getAlertTypes(
-    includeInactive: Boolean?,
-  ) =
+  private fun WebTestClient.getAlertTypes(includeInactive: Boolean?) =
     get()
       .uri { builder ->
         builder
@@ -72,15 +70,9 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
       .expectBodyList(AlertType::class.java)
       .returnResult().responseBody!!
 
-  private fun WebTestClient.getAlertType(
-    alertTypeCode: String,
-  ) =
+  private fun WebTestClient.getAlertType(alertTypeCode: String) =
     get()
-      .uri { builder ->
-        builder
-          .path("/alert-types/$alertTypeCode")
-          .build()
-      }
+      .uri { builder -> builder.path("/alert-types/$alertTypeCode").build() }
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
       .exchange()
       .expectStatus().isOk

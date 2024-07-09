@@ -6,7 +6,6 @@ import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
@@ -17,15 +16,12 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertType
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 class ReactivateAlertTypeIntTest : IntegrationTestBase() {
-  @Autowired
-  lateinit var alertTypeRepository: AlertTypeRepository
 
   @Test
   fun `401 unauthorised`() {
@@ -118,7 +114,7 @@ class ReactivateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `should mark alert type as active`() {
-    val alertType = createAlertType()
+    val alertType = givenNewAlertType(alertType("ACT"))
     alertTypeRepository.findByCode(alertType.code)!!.apply {
       deactivatedAt = LocalDateTime.of(2010, 3, 7, 16, 27, 58)
       deactivatedBy = "MODIFIED_BY"
@@ -136,7 +132,7 @@ class ReactivateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `should publish alert types reactivated event with NOMIS source`() {
-    val alertType = createAlertType()
+    val alertType = givenNewAlertType(alertType("REA"))
     alertTypeRepository.findByCode(alertType.code)!!.apply {
       deactivatedAt = LocalDateTime.of(2010, 3, 7, 16, 27, 58)
       deactivatedBy = "MODIFIED_BY"
@@ -145,12 +141,8 @@ class ReactivateAlertTypeIntTest : IntegrationTestBase() {
 
     webTestClient.reactivateAlertType(alertType.code)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val reactivateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
-
-    assertThat(createAlertEvent.eventType).isEqualTo(DomainEventType.ALERT_TYPE_CREATED.eventType)
-    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(reactivateAlertEvent.additionalInformation.identifier())
     assertThat(reactivateAlertEvent).usingRecursiveComparison().isEqualTo(
       AlertDomainEvent(
         DomainEventType.ALERT_TYPE_REACTIVATED.eventType,
@@ -164,22 +156,10 @@ class ReactivateAlertTypeIntTest : IntegrationTestBase() {
         "http://localhost:8080/alert-types/${alertType.code}",
       ),
     )
-    assertThat(reactivateAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
-  }
-
-  private fun createAlertTypeRequest(code: String = "ABC") =
-    CreateAlertTypeRequest(code, "description")
-
-  private fun createAlertType(request: CreateAlertTypeRequest = createAlertTypeRequest()): AlertType {
-    return webTestClient.post()
-      .uri("/alert-types")
-      .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
-      .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertType::class.java)
-      .returnResult().responseBody!!
+    assertThat(reactivateAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
+      LocalDateTime.now(),
+      within(3, ChronoUnit.SECONDS),
+    )
   }
 
   private fun WebTestClient.reactivateAlertType(

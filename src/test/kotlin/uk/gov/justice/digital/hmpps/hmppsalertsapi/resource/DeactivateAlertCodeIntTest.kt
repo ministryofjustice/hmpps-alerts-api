@@ -7,7 +7,6 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
@@ -18,19 +17,14 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_VULNERABILITY
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class DeactivateAlertCodeIntTest : IntegrationTestBase() {
-
-  @Autowired
-  lateinit var alertCodeRepository: AlertCodeRepository
 
   var uuid: UUID? = null
 
@@ -130,7 +124,8 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `should mark alert code as deactivated`() {
-    val alertCode = createAlertCode("HJK")
+    val alertType = givenExistingAlertType(ALERT_TYPE_CODE_VULNERABILITY)
+    val alertCode = givenNewAlertCode(alertCode("DEA", type = alertType))
     val response = webTestClient.deleteAlertCode(alertCode = alertCode.code)
     with(response) {
       assertThat(isActive).isFalse()
@@ -142,16 +137,14 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `should publish alert deactivated event with NOMIS source`() {
-    val alertCode = createAlertCode("DEF")
+    val alertType = givenExistingAlertType(ALERT_TYPE_CODE_VULNERABILITY)
+    val alertCode = givenNewAlertCode(alertCode("GHJ", type = alertType))
 
     webTestClient.deleteAlertCode(alertCode.code)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
 
-    assertThat(createAlertEvent.eventType).isEqualTo(DomainEventType.ALERT_CODE_CREATED.eventType)
-    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(deleteAlertEvent.additionalInformation.identifier())
     assertThat(deleteAlertEvent).isEqualTo(
       AlertDomainEvent(
         DomainEventType.ALERT_CODE_DEACTIVATED.eventType,
@@ -165,31 +158,13 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
         "http://localhost:8080/alert-codes/${alertCode.code}",
       ),
     )
-    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(alertCodeRepository.findByCode(alertCode.code)!!.deactivatedAt, within(1, ChronoUnit.MICROS))
+    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
+      alertCodeRepository.findByCode(alertCode.code)!!.deactivatedAt,
+      within(1, ChronoUnit.MICROS),
+    )
   }
 
-  private fun createAlertCodeRequest(
-    alertType: String = ALERT_TYPE_CODE_VULNERABILITY,
-    alertCode: String = ALERT_CODE_VICTIM,
-  ) =
-    CreateAlertCodeRequest(alertCode, "description", alertType)
-
-  private fun createAlertCode(alertCode: String = "ABC"): AlertCode {
-    val request = createAlertCodeRequest(alertCode = alertCode)
-    return webTestClient.post()
-      .uri("/alert-codes")
-      .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
-      .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertCode::class.java)
-      .returnResult().responseBody!!
-  }
-
-  private fun WebTestClient.deleteAlertCode(
-    alertCode: String,
-  ): AlertCode =
+  private fun WebTestClient.deleteAlertCode(alertCode: String): AlertCode =
     patch()
       .uri("/alert-codes/$alertCode/deactivate")
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))

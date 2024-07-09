@@ -18,6 +18,9 @@ import org.springframework.test.context.jdbc.SqlMergeMode
 import org.springframework.test.web.reactive.server.WebTestClient
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertBaseAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.HmppsDomainEvent
@@ -28,7 +31,12 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.Postgre
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.ManageUsersExtension
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PrisonerSearchExtension
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.hmpps.sqs.HmppsQueue
@@ -50,6 +58,15 @@ abstract class IntegrationTestBase {
 
   @Autowired
   lateinit var objectMapper: ObjectMapper
+
+  @Autowired
+  lateinit var alertRepository: AlertRepository
+
+  @Autowired
+  lateinit var alertCodeRepository: AlertCodeRepository
+
+  @Autowired
+  lateinit var alertTypeRepository: AlertTypeRepository
 
   @SpyBean
   lateinit var hmppsQueueService: HmppsQueueService
@@ -131,4 +148,29 @@ abstract class IntegrationTestBase {
       localStackContainer?.also { setLocalStackProperties(it, registry) }
     }
   }
+
+  fun givenPrisonerExists(prisonNumber: String) {
+    prisonerSearch.stubGetPrisoner(prisonNumber)
+  }
+
+  fun givenPrisonersExist(vararg prisonNumbers: String) {
+    prisonerSearch.stubGetPrisoners(prisonNumbers.toList())
+  }
+
+  fun givenExistingAlertType(code: String): AlertType = requireNotNull(alertTypeRepository.findByCode(code))
+  fun givenExistingAlertCode(code: String): AlertCode = requireNotNull(alertCodeRepository.findByCode(code))
+
+  fun givenNewAlertType(alertType: AlertType): AlertType = alertTypeRepository.save(alertType)
+
+  fun givenNewAlertCode(alertCode: AlertCode) = alertCodeRepository.save(alertCode)
+
+  fun givenAnAlert(alert: Alert): Alert = alertRepository.save(
+    alert.create(
+      createdBy = TEST_USER,
+      createdByDisplayName = TEST_USER_NAME,
+      source = Source.DPS,
+      activeCaseLoadId = null,
+      publishEvent = false,
+    ),
+  )
 }
