@@ -28,6 +28,10 @@ generic-service:
     AWS_REGION: "eu-west-2"
     HMPPS_SQS_USE_WEB_TOKEN: "true"
 
+    # Sentry specific env vars
+    SENTRY_TRACES_SAMPLE_RATE: '0.05'
+    SENTRY_IGNORED_EXCEPTIONS_FOR_TYPE: "org.apache.catalina.connector.ClientAbortException"
+
   # Pre-existing kubernetes secrets to load as environment variables in the deployment.
   # namespace_secrets:
   #   [name of kubernetes secret]:
@@ -40,6 +44,7 @@ generic-service:
       MANAGE_USERS_CLIENT_SECRET: "MANAGE_USERS_CLIENT_SECRET"
       PRISONER_SEARCH_CLIENT_ID: "PRISONER_SEARCH_CLIENT_ID"
       PRISONER_SEARCH_CLIENT_SECRET: "PRISONER_SEARCH_CLIENT_SECRET"
+      SENTRY_DSN: SENTRY_DSN
     rds-postgresql-instance-output:
       DB_SERVER: "rds_instance_address"
       DB_NAME: "database_name"
