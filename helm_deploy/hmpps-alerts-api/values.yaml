@@ -57,3 +57,6 @@ generic-prometheus-alerts:
   targetApplication: hmpps-alerts-api
   ingressAlertsEnabled: true
   applicationAlertsEnabled: true
+
+data_analytics:
+  extract: false
