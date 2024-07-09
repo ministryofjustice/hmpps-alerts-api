@@ -46,7 +46,7 @@ class RetrieveAuditEventsIntTest : IntegrationTestBase() {
   fun `403 forbidden - alerts writer`() {
     webTestClient.get()
       .uri("/alerts/$uuid/audit-events")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .exchange()
       .expectStatus().isForbidden
   }
@@ -55,7 +55,7 @@ class RetrieveAuditEventsIntTest : IntegrationTestBase() {
   fun `404 alert not found`() {
     val response = webTestClient.get()
       .uri("/alerts/$uuid/audit-events")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .exchange()
       .expectStatus().isNotFound
       .expectBody(ErrorResponse::class.java)
@@ -81,7 +81,7 @@ class RetrieveAuditEventsIntTest : IntegrationTestBase() {
 
     val response = webTestClient.get()
       .uri("/alerts/${alert.alertUuid}/audit-events")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .exchange()
       .expectStatus().isOk
       .expectBodyList(AuditEvent::class.java)

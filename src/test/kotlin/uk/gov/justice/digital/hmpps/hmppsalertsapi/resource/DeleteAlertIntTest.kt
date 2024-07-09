@@ -62,7 +62,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   fun `403 forbidden - alerts reader`() {
     webTestClient.delete()
       .uri("/alerts/$uuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
@@ -72,7 +72,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   fun `400 bad request - invalid source`() {
     val response = webTestClient.delete()
       .uri("/alerts/$uuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers { it.set(SOURCE, "INVALID") }
       .exchange()
       .expectStatus().isBadRequest
@@ -92,7 +92,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   fun `400 bad request - username not supplied`() {
     val response = webTestClient.delete()
       .uri("/alerts/$uuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
@@ -113,7 +113,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   fun `400 bad request - username not found`() {
     val response = webTestClient.delete()
       .uri("/alerts/$uuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
       .exchange()
       .expectStatus().isBadRequest
@@ -133,7 +133,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   fun `404 alert not found`() {
     val response = webTestClient.delete()
       .uri("/alerts/$uuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isNotFound
@@ -203,7 +203,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
     webTestClient.delete()
       .uri("/alerts/${alert.alertUuid}")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(source = NOMIS, username = NOMIS_SYS_USER))
       .exchange()
       .expectStatus().isNoContent
@@ -227,7 +227,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
     webTestClient.delete()
       .uri("/alerts/${alert.alertUuid}")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .header(SOURCE, NOMIS.name)
       .exchange()
       .expectStatus().isNoContent
@@ -319,7 +319,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   private fun WebTestClient.deleteAlert(alertUuid: UUID, source: Source = DPS) =
     delete()
       .uri("/alerts/$alertUuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(source = source))
       .exchange()
       .expectStatus().isNoContent

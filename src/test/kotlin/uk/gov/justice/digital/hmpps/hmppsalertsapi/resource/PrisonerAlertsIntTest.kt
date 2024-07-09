@@ -45,7 +45,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
   fun `403 forbidden - alerts writer`() {
     webTestClient.get()
       .uri("/prisoners/$PRISON_NUMBER/alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .exchange()
       .expectStatus().isForbidden
   }
@@ -433,7 +433,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
           }
           .build()
       }
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .exchange()
       .expectStatus().isOk
       .expectHeader().contentType(MediaType.APPLICATION_JSON)

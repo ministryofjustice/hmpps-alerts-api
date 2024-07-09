@@ -56,7 +56,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
   }
 
   @ParameterizedTest(name = "{0} allowed")
-  @ValueSource(strings = [ROLE_ALERTS_ADMIN, ROLE_NOMIS_ALERTS])
+  @ValueSource(strings = [ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI, ROLE_NOMIS_ALERTS])
   fun `specified roles are allowed to call the endpoint`(role: String) {
     val alert = resyncAlert()
     webTestClient.resyncResponseSpec(role, listOf(alert)).expectStatus().isCreated

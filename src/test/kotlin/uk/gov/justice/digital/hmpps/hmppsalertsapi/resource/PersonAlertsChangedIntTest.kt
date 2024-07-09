@@ -185,7 +185,7 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     prisonNumber: String = PRISON_NUMBER,
   ) = post().uri("/prisoners/$prisonNumber/alerts")
     .bodyValue(request)
-    .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
     .headers(setAlertRequestContext(source = source))
     .exchange()
     .expectStatus().isCreated
@@ -197,7 +197,7 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     source: Source = DPS,
     request: UpdateAlert,
   ) = put().uri("/alerts/$alertUuid")
-    .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
     .headers(setAlertRequestContext(source = source))
     .bodyValue(request)
     .exchange()
@@ -209,7 +209,7 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     alertUuid: UUID,
     source: Source = DPS,
   ) = delete().uri("/alerts/$alertUuid")
-    .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
     .headers(setAlertRequestContext(source = source))
     .exchange()
     .expectStatus().isNoContent
@@ -227,7 +227,7 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
   private fun WebTestClient.bulkCreateAlert(request: BulkCreateAlerts) =
     post().uri("/bulk-alerts")
       .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext(source = DPS))
       .exchange()
       .expectStatus().isCreated

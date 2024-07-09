@@ -79,7 +79,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     webTestClient.post()
       .uri("/bulk-alerts")
       .bodyValue(bulkAlertRequest(PRISON_NUMBER))
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
@@ -89,7 +89,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   fun `400 bad request - no body`() {
     val response = webTestClient.post()
       .uri("/bulk-alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isBadRequest
@@ -227,7 +227,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   fun `405 method not allowed`() {
     val response = webTestClient.patch()
       .uri("/bulk-alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.METHOD_NOT_ALLOWED)
@@ -248,7 +248,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/bulk-alerts")
       .bodyValue(bulkAlertRequest(PRISON_NUMBER))
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext(username = USER_THROW_EXCEPTION))
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
@@ -269,7 +269,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/bulk-alerts")
       .bodyValue(bulkAlertRequest(PRISON_NUMBER_THROW_EXCEPTION))
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
@@ -620,7 +620,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     post()
       .uri("/bulk-alerts")
       .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext(source = DPS))
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)

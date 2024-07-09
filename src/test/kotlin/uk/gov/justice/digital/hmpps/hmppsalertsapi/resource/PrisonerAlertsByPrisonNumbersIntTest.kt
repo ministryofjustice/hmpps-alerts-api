@@ -35,7 +35,7 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
   fun `403 forbidden - alerts writer`() {
     webTestClient.get()
       .uri("/prisoners/alerts?prisonNumbers=A1234AA")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .exchange()
       .expectStatus().isForbidden
   }
@@ -44,7 +44,7 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
   fun `400 bad request - no prison numbers`() {
     val response = webTestClient.get()
       .uri("/prisoners/alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
@@ -106,7 +106,7 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
           .queryParam("prisonNumbers", prisonNumbers)
           .build()
       }
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .exchange()
       .expectStatus().isOk
       .expectBody(object : ParameterizedTypeReference<Map<String, List<Alert>>>() {})

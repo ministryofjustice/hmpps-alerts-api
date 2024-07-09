@@ -46,7 +46,7 @@ class ReactivateAlertCodeIntTest : IntegrationTestBase() {
   fun `403 forbidden - alerts reader`() {
     webTestClient.patch()
       .uri("/alert-codes/VI/reactivate")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
@@ -56,7 +56,7 @@ class ReactivateAlertCodeIntTest : IntegrationTestBase() {
   fun `400 bad request - username not supplied`() {
     val response = webTestClient.patch()
       .uri("/alert-codes/VI/reactivate")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
@@ -77,7 +77,7 @@ class ReactivateAlertCodeIntTest : IntegrationTestBase() {
   fun `400 bad request - username not found`() {
     val response = webTestClient.patch()
       .uri("/alert-codes/VI/reactivate")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
       .exchange()
       .expectStatus().isBadRequest
@@ -97,7 +97,7 @@ class ReactivateAlertCodeIntTest : IntegrationTestBase() {
   fun `404 alert type not found`() {
     val response = webTestClient.patch()
       .uri("/alert-codes/ALK/reactivate")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isNotFound
@@ -167,7 +167,7 @@ class ReactivateAlertCodeIntTest : IntegrationTestBase() {
   ): AlertCode =
     patch()
       .uri("/alert-codes/$alertCode/reactivate")
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
+      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = true))
       .exchange()
       .expectStatus().isOk
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
