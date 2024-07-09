@@ -7,7 +7,6 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
@@ -31,10 +30,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertCodeVictimSummary
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -43,12 +40,6 @@ import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert as AlertEntity
 
 class UpdateAlertIntTest : IntegrationTestBase() {
-
-  @Autowired
-  lateinit var alertRepository: AlertRepository
-
-  @Autowired
-  lateinit var alertCodeRepository: AlertCodeRepository
 
   var uuid: UUID? = null
 
@@ -205,7 +196,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
         Alert(
           alert.alertUuid,
           alert.prisonNumber,
-          alertCodeVictimSummary(),
+          alertCodeSummary(),
           description,
           authorisedBy,
           activeFrom!!,
@@ -230,7 +221,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
         assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
       }
 
-      assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+      assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
         AlertEntity(
           alertId = alertEntity.alertId,
           alertUuid = alertEntity.alertUuid,
@@ -286,7 +277,7 @@ Comment '$appendComment' was added""",
         Alert(
           alert.alertUuid,
           alert.prisonNumber,
-          alertCodeVictimSummary(),
+          alertCodeSummary(),
           description,
           authorisedBy,
           activeFrom!!,
@@ -305,7 +296,7 @@ Comment '$appendComment' was added""",
         ),
       )
 
-      assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+      assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
         AlertEntity(
           alertId = alertEntity.alertId,
           alertUuid = alertEntity.alertUuid,
@@ -354,7 +345,7 @@ Comment '$appendComment' was added""",
         Alert(
           alert.alertUuid,
           alert.prisonNumber,
-          alertCodeVictimSummary(),
+          alertCodeSummary(),
           description,
           authorisedBy,
           activeFrom!!,
@@ -379,7 +370,7 @@ Comment '$appendComment' was added""",
         assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
       }
 
-      assertThat(alertEntity).usingRecursiveAssertion().ignoringFields("auditEvents").isEqualTo(
+      assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
         AlertEntity(
           alertId = alertEntity.alertId,
           alertUuid = alertEntity.alertUuid,
@@ -424,29 +415,27 @@ Comment '$appendComment' was added""",
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val lastModifiedAuditEvent = alertEntity.lastModifiedAuditEvent()!!
 
-    with(request) {
-      with(updatedAlert.comments.single()) {
-        assertThat(comment).isEqualTo(appendComment)
-        assertThat(createdAt).isEqualTo(lastModifiedAuditEvent.actionedAt.withNano(0))
-        assertThat(createdBy).isEqualTo(TEST_USER)
-        assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
-      }
-      assertThat(alertEntity.lastModifiedAt).isEqualTo(lastModifiedAuditEvent.actionedAt)
-      with(alertEntity.comments().single()) {
-        assertThat(comment).isEqualTo(appendComment)
-        assertThat(createdAt).isEqualTo(lastModifiedAuditEvent.actionedAt)
-        assertThat(createdBy).isEqualTo(TEST_USER)
-        assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
-      }
-      with(lastModifiedAuditEvent) {
-        assertThat(action).isEqualTo(AuditEventAction.UPDATED)
-        assertThat(description).isEqualTo("Comment '$appendComment' was added")
-        assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
-        assertThat(actionedBy).isEqualTo(TEST_USER)
-        assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
-        assertThat(source).isEqualTo(DPS)
-        assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
-      }
+    with(updatedAlert.comments.single()) {
+      assertThat(comment).isEqualTo(request.appendComment)
+      assertThat(createdAt).isEqualTo(lastModifiedAuditEvent.actionedAt.withNano(0))
+      assertThat(createdBy).isEqualTo(TEST_USER)
+      assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
+    }
+    assertThat(alertEntity.lastModifiedAt).isEqualTo(lastModifiedAuditEvent.actionedAt)
+    with(alertEntity.comments().single()) {
+      assertThat(comment).isEqualTo(request.appendComment)
+      assertThat(createdAt).isEqualTo(lastModifiedAuditEvent.actionedAt)
+      assertThat(createdBy).isEqualTo(TEST_USER)
+      assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
+    }
+    with(lastModifiedAuditEvent) {
+      assertThat(action).isEqualTo(AuditEventAction.UPDATED)
+      assertThat(description).isEqualTo("Comment '${request.appendComment}' was added")
+      assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+      assertThat(actionedBy).isEqualTo(TEST_USER)
+      assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+      assertThat(source).isEqualTo(DPS)
+      assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
     }
   }
 
@@ -530,9 +519,7 @@ Comment '$appendComment' was added""",
       AlertDomainEvent(
         ALERT_UPDATED.eventType,
         AlertAdditionalInformation(
-          "http://localhost:8080/alerts/${alert.alertUuid}",
           alert.alertUuid,
-          alert.prisonNumber,
           alert.alertCode.code,
           DPS,
         ),
@@ -570,9 +557,7 @@ Comment '$appendComment' was added""",
       AlertDomainEvent(
         ALERT_UPDATED.eventType,
         AlertAdditionalInformation(
-          "http://localhost:8080/alerts/${alert.alertUuid}",
           alert.alertUuid,
-          alert.prisonNumber,
           alert.alertCode.code,
           NOMIS,
         ),

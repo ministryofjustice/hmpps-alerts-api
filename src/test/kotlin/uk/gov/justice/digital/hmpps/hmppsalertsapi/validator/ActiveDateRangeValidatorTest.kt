@@ -5,8 +5,8 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import java.time.LocalDate
 
-class CreateAlertDateValidatorTest {
-  private val underTest: CreateAlertDateValidator = CreateAlertDateValidator()
+class ActiveDateRangeValidatorTest {
+  private val underTest: ActiveDateRangeValidator = ActiveDateRangeValidator()
 
   @Test
   fun `same dates returns true`() {

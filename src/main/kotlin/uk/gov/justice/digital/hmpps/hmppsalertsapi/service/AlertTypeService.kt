@@ -28,7 +28,7 @@ class AlertTypeService(
       val entity = it.toEntity(context)
       with(entity) {
         val toSave = create()
-        alertTypeRepository.saveAndFlush(toSave).toAlertTypeModel(false)
+        alertTypeRepository.save(toSave).toAlertTypeModel(false)
       }
     }
 
@@ -46,7 +46,7 @@ class AlertTypeService(
         deactivatedAt = alertRequestContext.requestAt
         deactivatedBy = alertRequestContext.username
         deactivate()
-        alertTypeRepository.saveAndFlush(this).toAlertTypeModel(true)
+        alertTypeRepository.save(this).toAlertTypeModel(true)
       }
     }
 
@@ -60,7 +60,7 @@ class AlertTypeService(
           deactivatedBy = null
           reactivate(alertRequestContext.requestAt)
         }
-        alertTypeRepository.saveAndFlush(this).toAlertTypeModel(false)
+        alertTypeRepository.save(this).toAlertTypeModel(false)
       }
     }
 
@@ -79,7 +79,7 @@ class AlertTypeService(
           modifiedAt = alertRequestContext.requestAt
           update()
         }
-        alertTypeRepository.saveAndFlush(this).toAlertTypeModel(false)
+        alertTypeRepository.save(this).toAlertTypeModel(false)
       }
     }
 

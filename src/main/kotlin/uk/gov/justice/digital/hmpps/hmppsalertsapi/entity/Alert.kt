@@ -34,7 +34,7 @@ import java.util.UUID
   attributeNodes = [NamedAttributeNode("alertCode", subgraph = "alertType")],
   subgraphs = [NamedSubgraph(name = "alertType", attributeNodes = [NamedAttributeNode("alertType")])],
 )
-data class Alert(
+class Alert(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val alertId: Long = 0,

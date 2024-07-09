@@ -26,9 +26,7 @@ class DomainEventPublisher(
       .build()
 
     runCatching {
-      domainEventsTopic.snsClient.publish(request)
-        .get()
-        .also { log.debug("Published {} with response {}", domainEvent, it) }
+      domainEventsTopic.snsClient.publish(request).get()
     }.onFailure {
       log.error("Failed to publish '$domainEvent'", it)
     }

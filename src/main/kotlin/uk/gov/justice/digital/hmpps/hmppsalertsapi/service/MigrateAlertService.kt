@@ -24,7 +24,6 @@ class MigrateAlertService(
     request.logActiveToBeforeActiveFrom(prisonNumber)
 
     alertRepository.deleteAll(alertRepository.findByPrisonNumber(prisonNumber))
-    alertRepository.flush()
 
     return request.map {
       it to it.toAlertEntity(prisonNumber, alertCodes[it.alertCode]!!)
@@ -48,9 +47,9 @@ class MigrateAlertService(
     }
 
   private fun List<MigrateAlert>.checkForNotFoundAlertCodes(alertCodes: Map<String, AlertCode>) =
-    map { it.alertCode }.distinct().filterNot { alertCodes.containsKey(it) }.sorted().run {
-      if (this.isNotEmpty()) {
-        throw IllegalArgumentException("Alert code(s) '${this.joinToString("', '")}' not found")
+    with(map { it.alertCode }.distinct().filterNot { alertCodes.containsKey(it) }.sorted()) {
+      require(isEmpty()) {
+        joinToString(prefix = "Alert code(s) '", separator = "', '", postfix = "' not found")
       }
     }
 

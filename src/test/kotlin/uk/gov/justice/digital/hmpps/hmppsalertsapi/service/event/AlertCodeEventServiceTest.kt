@@ -27,7 +27,7 @@ class AlertCodeEventServiceTest {
   @Test
   fun `handle alert event - publish enabled`() {
     val eventProperties = EventProperties(true, baseUrl)
-    val alertCodeEventService = AlertCodeEventService(eventProperties, telemetryClient, domainEventPublisher)
+    val alertCodeEventService = AlertReferenceDataEventService(eventProperties, telemetryClient, domainEventPublisher)
     val alertEvent = AlertCodeCreatedEvent(
       ALERT_CODE_VICTIM,
       LocalDateTime.now(),
@@ -41,7 +41,6 @@ class AlertCodeEventServiceTest {
       AlertDomainEvent(
         eventType = ALERT_CODE_CREATED.eventType,
         additionalInformation = ReferenceDataAdditionalInformation(
-          url = "$baseUrl/alert-codes/${ALERT_CODE_VICTIM}",
           alertCode = alertEvent.alertCode,
           source = DPS,
         ),
@@ -55,7 +54,7 @@ class AlertCodeEventServiceTest {
   @Test
   fun `handle alert event - publish disabled`() {
     val eventProperties = EventProperties(false, baseUrl)
-    val alertCodeEventService = AlertCodeEventService(eventProperties, telemetryClient, domainEventPublisher)
+    val alertCodeEventService = AlertReferenceDataEventService(eventProperties, telemetryClient, domainEventPublisher)
     val alertEvent = AlertCodeCreatedEvent(
       ALERT_CODE_VICTIM,
       LocalDateTime.now(),

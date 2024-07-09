@@ -32,7 +32,7 @@ class PersonAlertsChangedEventService(
       )
       telemetryClient.trackEvent(event.type.eventType, mapOf("prisonNumber" to event.prisonNumber), null)
     } else {
-      log.info("${event.type} publishing is disabled")
+      log.trace("{} publishing is disabled", event.type)
     }
   }
 

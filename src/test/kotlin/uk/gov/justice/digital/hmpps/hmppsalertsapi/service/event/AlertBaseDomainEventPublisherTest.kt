@@ -17,7 +17,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalI
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.HmppsTopic
@@ -31,7 +30,6 @@ class AlertBaseDomainEventPublisherTest {
   private val objectMapper = jacksonMapperBuilder().addModule(JavaTimeModule()).build()
 
   private val domainEventsTopicArn = "arn:aws:sns:eu-west-2:000000000000:${UUID.randomUUID()}"
-  private val baseUrl = "http://localhost:8080"
 
   @Test
   fun `throws IllegalStateException when topic not found`() {
@@ -52,9 +50,7 @@ class AlertBaseDomainEventPublisherTest {
     val domainEvent = AlertDomainEvent(
       eventType = ALERT_CREATED.eventType,
       additionalInformation = AlertAdditionalInformation(
-        url = "$baseUrl/alerts/$alertUuid",
         alertUuid = alertUuid,
-        prisonNumber = PRISON_NUMBER,
         alertCode = ALERT_CODE_VICTIM,
         source = NOMIS,
       ),

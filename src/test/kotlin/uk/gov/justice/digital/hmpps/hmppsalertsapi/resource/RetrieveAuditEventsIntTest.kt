@@ -2,20 +2,16 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -76,7 +72,13 @@ class RetrieveAuditEventsIntTest : IntegrationTestBase() {
 
   @Test
   fun `retrieve audit events`() {
-    val alert = createAlert()
+    val prisonNumber = "A1234DT"
+    givenPrisonerExists(prisonNumber)
+    val alert = givenAnAlert(alert(prisonNumber))
+
+    val alertRetrieved = alertRepository.findByAlertUuid(alert.alertUuid)
+    assertNotNull(alertRetrieved)
+
     val response = webTestClient.get()
       .uri("/alerts/${alert.alertUuid}/audit-events")
       .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
@@ -94,29 +96,5 @@ class RetrieveAuditEventsIntTest : IntegrationTestBase() {
       assertThat(actionedBy).isEqualTo(TEST_USER)
       assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
     }
-  }
-
-  private fun createAlertRequest(
-    alertCode: String = ALERT_CODE_VICTIM,
-  ) =
-    CreateAlert(
-      alertCode = alertCode,
-      description = "Alert description",
-      authorisedBy = "A. Authorizer",
-      activeFrom = LocalDate.now().minusDays(3),
-      activeTo = null,
-    )
-
-  private fun createAlert(prisonNumber: String = PRISON_NUMBER): Alert {
-    val request = createAlertRequest()
-    return webTestClient.post()
-      .uri("prisoners/$prisonNumber/alerts")
-      .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_WRITER), isUserToken = true))
-      .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(Alert::class.java)
-      .returnResult().responseBody!!
   }
 }

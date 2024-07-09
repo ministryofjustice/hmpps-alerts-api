@@ -1,19 +1,21 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request
 
+import com.fasterxml.jackson.annotation.JsonAlias
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.UpdatedByDisplayNameRequired
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.UpdatedByRequired
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.LastModifiedByDisplayNameRequired
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.LastModifiedByRequired
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.Modifiable
 import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Schema(
   description = "The request body for migrating an alert from NOMIS to DPS",
 )
-@UpdatedByRequired("Updated by is required when updated at is supplied")
-@UpdatedByDisplayNameRequired("Updated by display name is required when updated at is supplied")
+@LastModifiedByRequired("Updated by is required when updated at is supplied")
+@LastModifiedByDisplayNameRequired("Updated by display name is required when updated at is supplied")
 data class MigrateAlert(
   @Schema(
     description = "The internal NOMIS id for the offender booking. " +
@@ -109,19 +111,22 @@ data class MigrateAlert(
     description = "The date and time the alert was updated. Only provide if the alert has been updated since creation.",
     example = "2022-07-15'H'23:03:01.123456",
   )
-  val updatedAt: LocalDateTime?,
+  @JsonAlias("updatedAt")
+  override val lastModifiedAt: LocalDateTime?,
 
   @Schema(
     description = "The user id of the person who updated the alert. Required if updated at has been supplied.",
     example = "AB11DZ",
   )
   @field:Size(min = 1, max = 32, message = "Updated by must be <= 32 characters")
-  val updatedBy: String?,
+  @JsonAlias("updatedBy")
+  override val lastModifiedBy: String?,
 
   @Schema(
     description = "The displayable name of the person who updated the alert. Required if updated at has been supplied.",
     example = "Up Dated",
   )
   @field:Size(min = 1, max = 255, message = "Updated by display name must be <= 255 characters")
-  val updatedByDisplayName: String?,
-)
+  @JsonAlias("updatedByDisplayName")
+  override val lastModifiedByDisplayName: String?,
+) : Modifiable

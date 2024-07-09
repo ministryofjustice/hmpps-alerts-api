@@ -7,7 +7,6 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -21,15 +20,12 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.alertTypeVulnerability
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AT_VULNERABILITY
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 class CreateAlertCodeIntTest : IntegrationTestBase() {
-  @Autowired
-  lateinit var alertCodeRepository: AlertCodeRepository
 
   @BeforeEach
   fun setup() {
@@ -292,7 +288,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `validation - code too long`() {
-    val request = CreateAlertCodeRequest("1234567890123", "desc", alertTypeVulnerability().code)
+    val request = CreateAlertCodeRequest("1234567890123", "desc", AT_VULNERABILITY.code)
     val response = webTestClient.createAlertCodeResponseSpec(request = request)
       .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
       .expectBody(ErrorResponse::class.java)
@@ -352,7 +348,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - description too long`() {
     val request =
-      CreateAlertCodeRequest("AB", "descdescdescdescdescdescdescdescdescdescd", alertTypeVulnerability().code)
+      CreateAlertCodeRequest("AB", "descdescdescdescdescdescdescdescdescdescd", AT_VULNERABILITY.code)
     val response = webTestClient.createAlertCodeResponseSpec(request = request)
       .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
       .expectBody(ErrorResponse::class.java)
@@ -367,7 +363,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `validation - empty code`() {
-    val request = CreateAlertCodeRequest("", "desc", alertTypeVulnerability().code)
+    val request = CreateAlertCodeRequest("", "desc", AT_VULNERABILITY.code)
     val response = webTestClient.createAlertCodeResponseSpec(request = request)
       .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
       .expectBody(ErrorResponse::class.java)
@@ -382,7 +378,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `validation - empty description`() {
-    val request = CreateAlertCodeRequest("AB", "", alertTypeVulnerability().code)
+    val request = CreateAlertCodeRequest("AB", "", AT_VULNERABILITY.code)
     val response = webTestClient.createAlertCodeResponseSpec(request = request)
       .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
       .expectBody(ErrorResponse::class.java)
@@ -408,7 +404,6 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         DomainEventType.ALERT_CODE_CREATED.eventType,
         ReferenceDataAdditionalInformation(
-          "http://localhost:8080/alert-codes/${request.code}",
           request.code,
           Source.DPS,
         ),
@@ -424,11 +419,9 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun createAlertCodeRequest() = CreateAlertCodeRequest("CO", "Description", alertTypeVulnerability().code)
+  private fun createAlertCodeRequest() = CreateAlertCodeRequest("CO", "Description", AT_VULNERABILITY.code)
 
-  private fun WebTestClient.createAlertCodeResponseSpec(
-    request: CreateAlertCodeRequest,
-  ) =
+  private fun WebTestClient.createAlertCodeResponseSpec(request: CreateAlertCodeRequest) =
     post()
       .uri("/alert-codes")
       .bodyValue(request)
@@ -436,9 +429,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
-  private fun WebTestClient.createAlertCode(
-    request: CreateAlertCodeRequest,
-  ) =
+  private fun WebTestClient.createAlertCode(request: CreateAlertCodeRequest) =
     createAlertCodeResponseSpec(request)
       .expectStatus().isCreated
       .expectBody(AlertCode::class.java)

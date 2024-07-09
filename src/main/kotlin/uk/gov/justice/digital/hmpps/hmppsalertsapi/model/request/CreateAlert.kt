@@ -3,13 +3,14 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request
 import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Size
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.DateComparison
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.ActiveDateRange
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.validator.ActiveDateRangeValid
 import java.time.LocalDate
 
 @Schema(
   description = "The request body for creating a new alert for a person",
 )
-@DateComparison("Active from must be before active to")
+@ActiveDateRangeValid
 data class CreateAlert(
   @Schema(
     description = "The alert code for the alert. A person can only have one alert using each code active at any one time. " +
@@ -44,7 +45,7 @@ data class CreateAlert(
     example = "2021-09-27",
   )
   @JsonFormat(pattern = "yyyy-MM-dd")
-  val activeFrom: LocalDate?,
+  override val activeFrom: LocalDate?,
 
   @Schema(
     description = "The date the alert should be active until. " +
@@ -53,5 +54,5 @@ data class CreateAlert(
     example = "2022-07-15",
   )
   @JsonFormat(pattern = "yyyy-MM-dd")
-  val activeTo: LocalDate?,
-)
+  override val activeTo: LocalDate?,
+) : ActiveDateRange

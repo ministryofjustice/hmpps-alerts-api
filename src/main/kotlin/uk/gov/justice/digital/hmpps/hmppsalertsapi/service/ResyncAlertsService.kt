@@ -127,7 +127,7 @@ class ResyncAlertsService(
   }
 
   private fun List<ResyncAlert>.logDuplicateActiveAlerts(prisonNumber: String) {
-    this.filter { it.isActive() }.groupBy { it.alertCode }.filter { it.value.size > 1 }.run {
+    with(filter { it.isActive() }.groupBy { it.alertCode }.filter { it.value.size > 1 }) {
       if (any()) {
         log.warn(
           "Person with prison number '$prisonNumber' has ${this.size} duplicate active alert(s) for code(s) ${

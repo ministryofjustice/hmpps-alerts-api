@@ -6,7 +6,6 @@ import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
@@ -17,16 +16,12 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertType
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.temporal.ChronoUnit
 
 class UpdateAlertTypeIntTest : IntegrationTestBase() {
-
-  @Autowired
-  lateinit var alertTypeRepository: AlertTypeRepository
 
   @Test
   fun `401 unauthorised`() {
@@ -123,7 +118,7 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - empty description`() {
-    val alertTypeCode = createAlertType().code
+    val alertTypeCode = "EMPTY"
     val response = webTestClient.patch()
       .uri("/alert-types/$alertTypeCode")
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
@@ -144,7 +139,7 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - description too long`() {
-    val alertTypeCode = createAlertType().code
+    val alertTypeCode = "TLDR"
     val response = webTestClient.patch()
       .uri("/alert-types/$alertTypeCode")
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
@@ -165,55 +160,38 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `should update alert type description`() {
-    val alertType = createAlertType()
+    val alertType = givenNewAlertType(alertType("NDV"))
     val response = webTestClient.updateAlertTypeDescription(alertType.code, "New Description Value")
     assertThat(response.description).isEqualTo("New Description Value")
   }
 
   @Test
   fun `should publish alert types updated event with NOMIS source`() {
-    val alertType = createAlertType()
+    val alertType = givenNewAlertType(alertType("NDE"))
     webTestClient.updateAlertTypeDescription(alertType.code, "New Description Value")
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
-    val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
-
-    assertThat(createAlertEvent.eventType).isEqualTo(DomainEventType.ALERT_TYPE_CREATED.eventType)
-    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(updateAlertEvent.additionalInformation.identifier())
-    assertThat(updateAlertEvent).usingRecursiveComparison().isEqualTo(
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
+    val updateAlertTypeEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
+    assertThat(updateAlertTypeEvent).usingRecursiveComparison().isEqualTo(
       AlertDomainEvent(
         DomainEventType.ALERT_TYPE_UPDATED.eventType,
         ReferenceDataAdditionalInformation(
-          "http://localhost:8080/alert-types/${alertType.code}",
           alertType.code,
           Source.DPS,
         ),
         1,
         DomainEventType.ALERT_TYPE_UPDATED.description,
-        updateAlertEvent.occurredAt,
+        updateAlertTypeEvent.occurredAt,
         "http://localhost:8080/alert-types/${alertType.code}",
       ),
     )
-    assertThat(updateAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(alertTypeRepository.findByCode(alertType.code)!!.modifiedAt, within(1, ChronoUnit.MICROS))
+    assertThat(updateAlertTypeEvent.occurredAt.toLocalDateTime()).isCloseTo(
+      alertTypeRepository.findByCode(alertType.code)!!.modifiedAt,
+      within(1, ChronoUnit.MICROS),
+    )
   }
 
-  private fun createAlertType(): AlertType {
-    return webTestClient.post()
-      .uri("/alert-types")
-      .bodyValue(CreateAlertTypeRequest("ABC", "description"))
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
-      .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertType::class.java)
-      .returnResult().responseBody!!
-  }
-
-  private fun WebTestClient.updateAlertTypeDescription(
-    alertCode: String,
-    description: String,
-  ): AlertType =
+  private fun WebTestClient.updateAlertTypeDescription(alertCode: String, description: String): AlertType =
     patch()
       .uri("/alert-types/$alertCode")
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))

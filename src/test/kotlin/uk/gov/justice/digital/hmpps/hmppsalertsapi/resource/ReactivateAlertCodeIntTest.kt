@@ -6,7 +6,6 @@ import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
@@ -17,17 +16,13 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_VULNERABILITY
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 class ReactivateAlertCodeIntTest : IntegrationTestBase() {
-  @Autowired
-  lateinit var alertCodeRepository: AlertCodeRepository
 
   @Test
   fun `401 unauthorised`() {
@@ -120,7 +115,8 @@ class ReactivateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `should mark alert type as active`() {
-    val alertCode = createAlertCode()
+    val alertType = givenExistingAlertType(ALERT_TYPE_CODE_VULNERABILITY)
+    val alertCode = givenNewAlertCode(alertCode("ACT", type = alertType))
     alertCodeRepository.findByCode(alertCode.code)!!.apply {
       deactivatedAt = LocalDateTime.of(2010, 3, 7, 16, 27, 58)
       deactivatedBy = "MODIFIED_BY"
@@ -138,55 +134,32 @@ class ReactivateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `should publish alert types reactivated event with NOMIS source`() {
-    val alertType = createAlertCode()
-    alertCodeRepository.findByCode(alertType.code)!!.apply {
+    val alertType = givenExistingAlertType(ALERT_TYPE_CODE_VULNERABILITY)
+    val alertCode = givenNewAlertCode(alertCode("REA", type = alertType))
+    alertCodeRepository.findByCode(alertCode.code)!!.apply {
       deactivatedAt = LocalDateTime.of(2010, 3, 7, 16, 27, 58)
       deactivatedBy = "MODIFIED_BY"
       alertCodeRepository.save(this)
     }
 
-    webTestClient.reactivateAlertCode(alertType.code)
+    webTestClient.reactivateAlertCode(alertCode.code)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
     val reactivateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<ReferenceDataAdditionalInformation>()
-
-    assertThat(createAlertEvent.eventType).isEqualTo(DomainEventType.ALERT_CODE_CREATED.eventType)
-    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(reactivateAlertEvent.additionalInformation.identifier())
     assertThat(reactivateAlertEvent).usingRecursiveComparison().isEqualTo(
       AlertDomainEvent(
         DomainEventType.ALERT_CODE_REACTIVATED.eventType,
         ReferenceDataAdditionalInformation(
-          "http://localhost:8080/alert-codes/${alertType.code}",
-          alertType.code,
+          alertCode.code,
           Source.DPS,
         ),
         1,
         DomainEventType.ALERT_CODE_REACTIVATED.description,
         reactivateAlertEvent.occurredAt,
-        "http://localhost:8080/alert-codes/${alertType.code}",
+        "http://localhost:8080/alert-codes/${alertCode.code}",
       ),
     )
     assertThat(reactivateAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
-  }
-
-  private fun createAlertCodeRequest(
-    alertType: String = ALERT_TYPE_CODE_VULNERABILITY,
-    alertCode: String = ALERT_CODE_VICTIM,
-  ) =
-    CreateAlertCodeRequest(alertCode, "description", alertType)
-
-  private fun createAlertCode(): AlertCode {
-    val request = createAlertCodeRequest(alertCode = "ABC")
-    return webTestClient.post()
-      .uri("/alert-codes")
-      .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
-      .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertCode::class.java)
-      .returnResult().responseBody!!
   }
 
   private fun WebTestClient.reactivateAlertCode(
