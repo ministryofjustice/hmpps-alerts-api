@@ -42,7 +42,7 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
   fun `403 forbidden - alerts writer`() {
     webTestClient.get()
       .uri("/alerts/$uuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .exchange()
       .expectStatus().isForbidden
   }
@@ -51,7 +51,7 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
   fun `404 alert not found`() {
     val response = webTestClient.get()
       .uri("/alerts/$uuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .exchange()
       .expectStatus().isNotFound
       .expectBody(ErrorResponse::class.java)
@@ -74,7 +74,7 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
 
     val response = webTestClient.get()
       .uri("/alerts/${alert.alertUuid}")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .exchange()
       .expectStatus().isOk
       .expectBody(Alert::class.java)

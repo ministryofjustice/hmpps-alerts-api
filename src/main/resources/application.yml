@@ -101,7 +101,7 @@ management:
         time-to-live: 2000ms
 
 hmpps.sqs:
-  queueAdminRole: ROLE_ALERTS_ADMIN
+  queueAdminRole: ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI
 
 events:
   publish: true

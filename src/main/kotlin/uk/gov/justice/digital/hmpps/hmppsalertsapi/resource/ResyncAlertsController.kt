@@ -52,7 +52,7 @@ class ResyncAlertsController(private val resyncAlertsService: ResyncAlertsServic
   )
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_NOMIS_ALERTS')")
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI', '$ROLE_NOMIS_ALERTS')")
   fun resyncPrisonerAlerts(
     @PathVariable
     @Parameter(

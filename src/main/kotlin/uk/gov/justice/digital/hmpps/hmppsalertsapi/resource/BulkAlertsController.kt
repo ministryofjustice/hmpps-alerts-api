@@ -56,7 +56,7 @@ class BulkAlertsController(
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN')")
+  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @UsernameHeader
   @SourceHeader
   fun bulkCreateAlerts(

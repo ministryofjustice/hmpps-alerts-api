@@ -59,7 +59,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     webTestClient.post()
       .uri("/alert-codes")
       .bodyValue(createAlertCodeRequest())
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
@@ -69,7 +69,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   fun `400 bad request - invalid source`() {
     val response = webTestClient.post()
       .uri("/alert-codes")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers { it.set(SOURCE, "INVALID") }
       .exchange()
       .expectStatus().isBadRequest
@@ -91,7 +91,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   fun `400 bad request - username not supplied`() {
     val response = webTestClient.post()
       .uri("/alert-codes")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
@@ -113,7 +113,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/alert-codes")
       .bodyValue(createAlertCodeRequest())
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
       .exchange()
       .expectStatus().isBadRequest
@@ -135,7 +135,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   fun `400 bad request - no body`() {
     val response = webTestClient.post()
       .uri("/alert-codes")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isBadRequest
@@ -157,7 +157,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   fun `405 method not allowed`() {
     val response = webTestClient.patch()
       .uri("/alert-codes")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.METHOD_NOT_ALLOWED)
       .expectBody(ErrorResponse::class.java)
@@ -178,7 +178,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/alert-codes")
       .bodyValue(createAlertCodeRequest())
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(username = USER_THROW_EXCEPTION))
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
@@ -202,7 +202,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     val alert = webTestClient.post()
       .uri("/alert-codes")
       .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
+      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = true))
       .exchange()
       .expectStatus().isCreated
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -222,7 +222,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     val alert = webTestClient.post()
       .uri("/alert-codes")
       .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = false))
+      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = false))
       .exchange()
       .expectStatus().isCreated
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -242,7 +242,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     val alert = webTestClient.post()
       .uri("/alert-codes")
       .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isCreated
@@ -425,7 +425,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     post()
       .uri("/alert-codes")
       .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
 

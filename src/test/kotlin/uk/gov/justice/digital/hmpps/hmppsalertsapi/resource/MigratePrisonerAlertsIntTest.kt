@@ -59,7 +59,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     webTestClient.post()
       .uri("/migrate/$PRISON_NUMBER/alerts")
       .bodyValue(emptyList<MigrateAlert>())
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .exchange()
       .expectStatus().isForbidden
   }
@@ -68,7 +68,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   fun `400 bad request - no body`() {
     val response = webTestClient.post()
       .uri("/migrate/$PRISON_NUMBER/alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
@@ -239,7 +239,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   fun `405 method not allowed`() {
     val response = webTestClient.patch()
       .uri("/migrate/$PRISON_NUMBER/alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .exchange()
       .expectStatus().isEqualTo(HttpStatus.METHOD_NOT_ALLOWED)
       .expectBody(ErrorResponse::class.java)
@@ -255,7 +255,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   }
 
   @ParameterizedTest(name = "{0} allowed")
-  @ValueSource(strings = [ROLE_ALERTS_ADMIN, ROLE_NOMIS_ALERTS])
+  @ValueSource(strings = [ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI, ROLE_NOMIS_ALERTS])
   fun `201 migrated - allowed role`(role: String) {
     webTestClient.migrateResponseSpec(role, emptyList())
       .expectStatus().isCreated
@@ -498,7 +498,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
           activeTo = null,
         ),
       )
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
       .exchange()
       .expectBody(AlertModel::class.java)
@@ -507,7 +507,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   private fun WebTestClient.addComment(alertUuid: UUID) =
     put()
       .uri("/alerts/$alertUuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
       .bodyValue(UpdateAlert(appendComment = "Additional comment"))
       .exchange()

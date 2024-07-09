@@ -30,7 +30,7 @@ class RetrieveAlertCodeIntTest : IntegrationTestBase() {
   fun `403 forbidden - alerts writer`() {
     webTestClient.get()
       .uri("/alert-codes")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .exchange()
       .expectStatus().isForbidden
   }
@@ -65,7 +65,7 @@ class RetrieveAlertCodeIntTest : IntegrationTestBase() {
           .queryParamIfPresent("includeInactive", Optional.ofNullable(includeInactive))
           .build()
       }
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .exchange()
       .expectStatus().isOk
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -81,7 +81,7 @@ class RetrieveAlertCodeIntTest : IntegrationTestBase() {
           .path("/alert-codes/$alertCode")
           .build()
       }
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .exchange()
       .expectStatus().isOk
       .expectHeader().contentType(MediaType.APPLICATION_JSON)

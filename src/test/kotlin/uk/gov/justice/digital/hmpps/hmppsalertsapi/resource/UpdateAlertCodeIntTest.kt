@@ -48,7 +48,7 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
   fun `403 forbidden - alerts reader`() {
     webTestClient.patch()
       .uri("/alert-codes/VI")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .headers(setAlertRequestContext())
       .bodyValue(UpdateAlertCodeRequest("description"))
       .exchange()
@@ -59,7 +59,7 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
   fun `400 bad request - username not supplied`() {
     val response = webTestClient.patch()
       .uri("/alert-codes/VI")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .exchange()
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
@@ -80,7 +80,7 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
   fun `400 bad request - username not found`() {
     val response = webTestClient.patch()
       .uri("/alert-codes/VI")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
       .bodyValue(UpdateAlertCodeRequest("description"))
       .exchange()
@@ -101,7 +101,7 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
   fun `404 alert code not found`() {
     val response = webTestClient.patch()
       .uri("/alert-codes/ALK")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_ADMIN)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext())
       .bodyValue(UpdateAlertCodeRequest("description"))
       .exchange()
@@ -123,7 +123,7 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
     val alertCode = "EMPTY"
     val response = webTestClient.patch()
       .uri("/alert-codes/$alertCode")
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
+      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = true))
       .bodyValue(UpdateAlertCodeRequest(""))
       .exchange()
       .expectStatus().isBadRequest
@@ -145,7 +145,7 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
 
     val response = webTestClient.patch()
       .uri("/alert-codes/$alertCode")
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
+      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = true))
       .bodyValue(UpdateAlertTypeRequest("descdescdescdescdescdescdescdescdescdescd"))
       .exchange()
       .expectStatus().isBadRequest
@@ -200,7 +200,7 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
   private fun WebTestClient.updateAlertCodeDescription(alertCode: String, description: String): AlertCode =
     patch()
       .uri("/alert-codes/$alertCode")
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_ALERTS_ADMIN), isUserToken = true))
+      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = true))
       .bodyValue(UpdateAlertCodeRequest(description))
       .exchange()
       .expectStatus().isOk

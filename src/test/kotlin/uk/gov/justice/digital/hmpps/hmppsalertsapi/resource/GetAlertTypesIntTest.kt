@@ -30,7 +30,7 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
   fun `403 forbidden - alerts writer`() {
     webTestClient.get()
       .uri("/alert-types")
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_WRITER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .exchange()
       .expectStatus().isForbidden
   }
@@ -63,7 +63,7 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
           .queryParamIfPresent("includeInactive", Optional.ofNullable(includeInactive))
           .build()
       }
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .exchange()
       .expectStatus().isOk
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -73,7 +73,7 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
   private fun WebTestClient.getAlertType(alertTypeCode: String) =
     get()
       .uri { builder -> builder.path("/alert-types/$alertTypeCode").build() }
-      .headers(setAuthorisation(roles = listOf(ROLE_ALERTS_READER)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .exchange()
       .expectStatus().isOk
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
