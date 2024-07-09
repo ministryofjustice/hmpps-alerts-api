@@ -45,6 +45,7 @@ generic-service:
       PRISONER_SEARCH_CLIENT_ID: "PRISONER_SEARCH_CLIENT_ID"
       PRISONER_SEARCH_CLIENT_SECRET: "PRISONER_SEARCH_CLIENT_SECRET"
       SENTRY_DSN: SENTRY_DSN
+      SENTRY_AUTH_TOKEN: SENTRY_AUTH_TOKEN
     rds-postgresql-instance-output:
       DB_SERVER: "rds_instance_address"
       DB_NAME: "database_name"
