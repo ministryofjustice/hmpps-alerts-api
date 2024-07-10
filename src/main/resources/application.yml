@@ -68,6 +68,9 @@ spring:
 
   threads.virtual.enabled: true
 
+sentry:
+  exception-resolver-order: -2147483647
+
 server:
   port: 8080
   servlet:
