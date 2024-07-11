@@ -22,6 +22,6 @@ generic-prometheus-alerts:
   alertSeverity: hmpps-alerts-api-non-prod # sent to Slack channel #move-and-improve-alerts-non-prod
   businessHoursOnly: true
 
-data_analytics:
-  extract: false
-  schedule: "0 21 * * 1-5"
+generic-data-analytics-extractor:
+  enabled: false
+  cronJobSchedule: "0 21 * * 1-5"

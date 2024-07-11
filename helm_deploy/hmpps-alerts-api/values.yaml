@@ -64,5 +64,8 @@ generic-prometheus-alerts:
   ingressAlertsEnabled: true
   applicationAlertsEnabled: true
 
-data_analytics:
-  extract: false
+generic-data-analytics-extractor:
+  serviceAccountName: hmpps-alerts-to-ap-s3
+  databaseSecretName: rds-postgresql-instance-output
+  destinationS3SecretName: analytical-platform-reporting-s3-bucket
+  enabled: false
