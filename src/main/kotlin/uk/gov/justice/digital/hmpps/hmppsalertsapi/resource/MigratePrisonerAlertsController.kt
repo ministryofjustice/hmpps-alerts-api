@@ -56,7 +56,7 @@ class MigratePrisonerAlertsController(
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI', '$ROLE_NOMIS_ALERTS')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI', '$ROLE_NOMIS_ALERTS')")
   fun createAlert(
     @PathVariable
     @Parameter(

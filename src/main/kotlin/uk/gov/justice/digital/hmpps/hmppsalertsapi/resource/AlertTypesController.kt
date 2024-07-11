@@ -33,7 +33,7 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 class AlertTypesController(
   private val alertTypeService: AlertTypeService,
 ) {
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_PRISONER_ALERTS__RO', '$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @GetMapping
   @Operation(
     summary = "Get all alert types",
@@ -67,7 +67,7 @@ class AlertTypesController(
     includeInactive: Boolean = false,
   ): Collection<AlertType> = alertTypeService.getAlertTypes(includeInactive)
 
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_PRISONER_ALERTS__RO', '$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @GetMapping("/{alertTypeCode}")
   @Operation(
     summary = "Get an alert type",
@@ -100,7 +100,7 @@ class AlertTypesController(
   fun retrieveAlertType(@PathVariable alertTypeCode: String): AlertType = alertTypeService.getAlertType(alertTypeCode)
 
   @ResponseStatus(CREATED)
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PostMapping
   @Operation(
     summary = "Create an alert type",
@@ -137,7 +137,7 @@ class AlertTypesController(
   ): AlertType = alertTypeService.createAlertType(createAlertTypeRequest, httpRequest.alertRequestContext())
 
   @ResponseStatus(HttpStatus.OK)
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PatchMapping("/{alertType}/deactivate")
   @Operation(
     summary = "Deactivate an alert type",
@@ -174,7 +174,7 @@ class AlertTypesController(
   ) = alertTypeService.deactivateAlertType(alertType, httpRequest.alertRequestContext())
 
   @ResponseStatus(HttpStatus.OK)
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PatchMapping("/{alertType}/reactivate")
   @Operation(
     summary = "Reactivate an alert type",
@@ -211,7 +211,7 @@ class AlertTypesController(
   ) = alertTypeService.reactivateAlertType(alertType, httpRequest.alertRequestContext())
 
   @ResponseStatus(HttpStatus.OK)
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PatchMapping("/{alertType}")
   @Operation(
     summary = "Update alert type",

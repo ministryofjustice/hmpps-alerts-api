@@ -33,7 +33,7 @@ class AlertCodesController(
 ) {
 
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PostMapping
   @Operation(
     summary = "Create an alert code",
@@ -75,7 +75,7 @@ class AlertCodesController(
   ): AlertCode = alertCodeService.createAlertCode(createAlertCodeRequest, httpRequest.alertRequestContext())
 
   @ResponseStatus(HttpStatus.OK)
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PatchMapping("/{alertCode}/deactivate")
   @Operation(
     summary = "Deactivate an alert code",
@@ -112,7 +112,7 @@ class AlertCodesController(
   ) = alertCodeService.deactivateAlertCode(alertCode, httpRequest.alertRequestContext())
 
   @ResponseStatus(HttpStatus.OK)
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PatchMapping("/{alertCode}/reactivate")
   @Operation(
     summary = "Reactivate an alert code",
@@ -148,7 +148,7 @@ class AlertCodesController(
     httpRequest: HttpServletRequest,
   ) = alertCodeService.reactivateAlertCode(alertCode, httpRequest.alertRequestContext())
 
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_PRISONER_ALERTS__RO', '$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @GetMapping
   @Operation(
     summary = "Retrieve all alert codes",
@@ -179,7 +179,7 @@ class AlertCodesController(
     includeInactive: Boolean = false,
   ) = alertCodeService.retrieveAlertCodes(includeInactive)
 
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_READER', '$ROLE_PRISONER_ALERTS__RO', '$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @GetMapping("/{alertCode}")
   @Operation(
     summary = "Retrieve an alert code",
@@ -214,7 +214,7 @@ class AlertCodesController(
   ) = alertCodeService.retrieveAlertCode(alertCode)
 
   @ResponseStatus(HttpStatus.OK)
-  @PreAuthorize("hasAnyRole('$ROLE_ALERTS_ADMIN', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PatchMapping("/{alertCode}")
   @Operation(
     summary = "Update alert code",
