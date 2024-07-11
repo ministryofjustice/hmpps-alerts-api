@@ -9,12 +9,13 @@
 
 ## Architectural Decision Records
 
-For detailed insights into the architectural decisions made during the development of the Alerts UI, refer to our ADRs:
-- [ADR001: Associating Alerts at the Person Level](architectural_design_record/001-person-level-association.md)
-- [ADR002: Adopting a Two-Way Sync for Alerts](architectural_design_record/002-two-way-sync.md)
+For detailed insights into the architectural decisions made during the development of the Prisoner Alerts UI, refer to our ADRs:
+- [ADR001: Associating Prisoner Alerts at the Person Level](architectural_design_record/001-person-level-association.md)
+- [ADR002: Adopting a Two-Way Sync for Prisoner Alerts](architectural_design_record/002-two-way-sync.md)
 - [ADR003: Prisoner and Booking Merge Events](architectural_design_record/003-prisoner-merge.md)
 - [ADR004: Prisoner and booking changes in NOMIS triggers a prisoner alerts resync](architectural_design_record/004-prisoner-alerts-resync.md)
-- [ADR005: Alerts data flattening implemented as a NOMIS data fix](architectural_design_record/005-alerts-flattening-data-fix.md)
+- [ADR005: Prisoner alerts data flattening implemented as a NOMIS data fix](architectural_design_record/005-alerts-flattening-data-fix.md)
+- [ADR006: Prisoner alerts data extraction for Analytics Platform](architectural_design_record/006-analytics-platform.md)
 
 ## HMPPS Project Setup instructions
 
