@@ -42,15 +42,6 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `403 forbidden - alerts writer`() {
-    webTestClient.get()
-      .uri("/prisoners/$PRISON_NUMBER/alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange()
-      .expectStatus().isForbidden
-  }
-
-  @Test
   fun `empty response if no alerts found for prison number`() {
     val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER)
     assertThat(response.content).isEmpty()

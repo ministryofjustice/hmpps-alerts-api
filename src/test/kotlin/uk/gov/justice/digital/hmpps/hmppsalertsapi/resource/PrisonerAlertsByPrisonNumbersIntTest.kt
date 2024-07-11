@@ -32,15 +32,6 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `403 forbidden - alerts writer`() {
-    webTestClient.get()
-      .uri("/prisoners/alerts?prisonNumbers=A1234AA")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange()
-      .expectStatus().isForbidden
-  }
-
-  @Test
   fun `400 bad request - no prison numbers`() {
     val response = webTestClient.get()
       .uri("/prisoners/alerts")
