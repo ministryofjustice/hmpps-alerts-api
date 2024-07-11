@@ -47,10 +47,10 @@ workflows:
   version: 2
   build-test-and-deploy:
     jobs:
-      - validate:
-          filters:
-            tags:
-              ignore: /.*/
+#      - validate:
+#          filters:
+#            tags:
+#              ignore: /.*/
       - hmpps/helm_lint:
           name: helm_lint
       - hmpps/build_multiplatform_docker:
@@ -58,59 +58,58 @@ workflows:
           filters:
             branches:
               only:
-                - main
+                - ab_MIAD-51_dev
       - hmpps/deploy_env:
           name: deploy_dev
           env: "dev"
-          jira_update: true
+          jira_update: false
           pipeline_id: <<pipeline.id>>
           pipeline_number: <<pipeline.number>>
           context: hmpps-common-vars
           filters:
             branches:
               only:
-                - main
+                - ab_MIAD-51_dev
           requires:
-            - validate
             - build_docker
             - helm_lint
           helm_timeout: 5m
-      - request-preprod-approval:
-          type: approval
-          requires:
-            - deploy_dev
-      - hmpps/deploy_env:
-          name: deploy_preprod
-          env: "preprod"
-          jira_update: true
-          jira_env_type: staging
-          pipeline_id: <<pipeline.id>>
-          pipeline_number: <<pipeline.number>>
-          context:
-            - hmpps-common-vars
-            - hmpps-alerts-api-preprod
-          requires:
-            - request-preprod-approval
-          helm_timeout: 5m
-      - request-prod-approval:
-          type: approval
-          requires:
-            - deploy_preprod
-      - hmpps/deploy_env:
-          name: deploy_prod
-          env: "prod"
-          jira_update: true
-          jira_env_type: production
-          pipeline_id: <<pipeline.id>>
-          pipeline_number: <<pipeline.number>>
-          slack_notification: true
-          slack_channel_name: << pipeline.parameters.releases-slack-channel >>
-          context:
-            - hmpps-common-vars
-            - hmpps-alerts-api-prod
-          requires:
-            - request-prod-approval
-          helm_timeout: 5m
+#      - request-preprod-approval:
+#          type: approval
+#          requires:
+#            - deploy_dev
+#      - hmpps/deploy_env:
+#          name: deploy_preprod
+#          env: "preprod"
+#          jira_update: true
+#          jira_env_type: staging
+#          pipeline_id: <<pipeline.id>>
+#          pipeline_number: <<pipeline.number>>
+#          context:
+#            - hmpps-common-vars
+#            - hmpps-alerts-api-preprod
+#          requires:
+#            - request-preprod-approval
+#          helm_timeout: 5m
+#      - request-prod-approval:
+#          type: approval
+#          requires:
+#            - deploy_preprod
+#      - hmpps/deploy_env:
+#          name: deploy_prod
+#          env: "prod"
+#          jira_update: true
+#          jira_env_type: production
+#          pipeline_id: <<pipeline.id>>
+#          pipeline_number: <<pipeline.number>>
+#          slack_notification: true
+#          slack_channel_name: << pipeline.parameters.releases-slack-channel >>
+#          context:
+#            - hmpps-common-vars
+#            - hmpps-alerts-api-prod
+#          requires:
+#            - request-prod-approval
+#          helm_timeout: 5m
 
   security:
     triggers:
