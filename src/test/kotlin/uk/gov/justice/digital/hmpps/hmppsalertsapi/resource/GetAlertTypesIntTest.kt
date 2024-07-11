@@ -27,15 +27,6 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `403 forbidden - alerts writer`() {
-    webTestClient.get()
-      .uri("/alert-types")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange()
-      .expectStatus().isForbidden
-  }
-
-  @Test
   fun `get alert types excludes inactive types and codes by default`() {
     val alertTypes = webTestClient.getAlertTypes(null)
     assertThat(alertTypes.all { it.isActive }).isTrue()
