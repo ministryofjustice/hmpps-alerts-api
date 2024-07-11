@@ -4,7 +4,7 @@ kind: CronJob
 metadata:
   name: data-extractor-analytics
 spec:
-  schedule: "0 1 * * 1-5"
+  schedule: {{ .Values.data_analytics.schedule }}
   jobTemplate:
     spec:
       template:
@@ -16,11 +16,13 @@ spec:
               imagePullPolicy: Always
               args: ["extract_table_names.py && extract_pg_jsonl_snapshot.py && transfer_local_to_s3.sh"]
               env:
+                - name: PGPORT
+                  value: "5432"
                 - name: PGHOST
                   valueFrom:
                     secretKeyRef:
                       name: rds-postgresql-instance-output
-                      key: rds_instance_endpoint
+                      key: rds_instance_address
                 - name: PGDATABASE
                   valueFrom:
                     secretKeyRef:

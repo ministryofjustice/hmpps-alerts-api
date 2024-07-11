@@ -25,3 +25,4 @@ generic-prometheus-alerts:
 
 data_analytics:
   extract: true
+  schedule: "0 21 * * 1-5"
