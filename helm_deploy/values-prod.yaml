@@ -34,6 +34,6 @@ generic-prometheus-alerts:
   applicationAlertsEnabled: true
   ingressAlertsEnabled: true
 
-data_analytics:
-  extract: true
-  schedule: "0 1 * * 1-5"
+generic-data-analytics-extractor:
+  enabled: true
+  cronJobSchedule: "0 1 * * 1-5"
