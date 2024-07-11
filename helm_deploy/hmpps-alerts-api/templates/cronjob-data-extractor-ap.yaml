@@ -4,7 +4,7 @@ kind: CronJob
 metadata:
   name: data-extractor-analytics
 spec:
-  schedule: "0 21 * * 1-5"
+  schedule: {{ .Values.data_analytics.schedule }}
   jobTemplate:
     spec:
       template:
