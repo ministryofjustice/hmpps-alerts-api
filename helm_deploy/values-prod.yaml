@@ -33,3 +33,7 @@ generic-prometheus-alerts:
   alertSeverity: hmpps-alerts-api-prod # sent to Slack channel #move-and-improve-alerts
   applicationAlertsEnabled: true
   ingressAlertsEnabled: true
+
+data_analytics:
+  extract: true
+  schedule: "0 1 * * 1-5"
