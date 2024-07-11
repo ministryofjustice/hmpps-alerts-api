@@ -57,7 +57,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   fun retrievePrisonerAlerts(
     @PathVariable
     @Parameter(
@@ -140,7 +140,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
       ),
     ],
   )
-  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   fun retrievePrisonerAlerts(
     @RequestParam
     @Parameter(

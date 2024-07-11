@@ -27,15 +27,6 @@ class RetrieveAlertCodeIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `403 forbidden - alerts writer`() {
-    webTestClient.get()
-      .uri("/alert-codes")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange()
-      .expectStatus().isForbidden
-  }
-
-  @Test
   fun `get alert codes excludes inactive codes by default`() {
     val alertCodes = webTestClient.getAlertCodes(null)
     assertThat(alertCodes.all { it.isActive }).isTrue()

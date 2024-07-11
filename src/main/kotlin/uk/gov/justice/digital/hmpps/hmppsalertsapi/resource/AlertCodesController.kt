@@ -148,7 +148,7 @@ class AlertCodesController(
     httpRequest: HttpServletRequest,
   ) = alertCodeService.reactivateAlertCode(alertCode, httpRequest.alertRequestContext())
 
-  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @GetMapping
   @Operation(
     summary = "Retrieve all alert codes",
@@ -179,7 +179,7 @@ class AlertCodesController(
     includeInactive: Boolean = false,
   ) = alertCodeService.retrieveAlertCodes(includeInactive)
 
-  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @GetMapping("/{alertCode}")
   @Operation(
     summary = "Retrieve an alert code",

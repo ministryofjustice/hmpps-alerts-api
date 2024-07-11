@@ -39,15 +39,6 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `403 forbidden - alerts writer`() {
-    webTestClient.get()
-      .uri("/alerts/$uuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange()
-      .expectStatus().isForbidden
-  }
-
-  @Test
   fun `404 alert not found`() {
     val response = webTestClient.get()
       .uri("/alerts/$uuid")
