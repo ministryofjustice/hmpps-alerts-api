@@ -1,5 +1,7 @@
 # ADR006: Extracting prisoner alert data and sending to the Analytics Platform
 
+## Status: Accepted by David Winchurch (Technical Architect)
+
 ## Summary of Data Extraction
 
 The purpose of Data Extraction is to allow applications/services to share data to the Analytical Platform, so analysts can analyse application data easily, without having to access the application database.
