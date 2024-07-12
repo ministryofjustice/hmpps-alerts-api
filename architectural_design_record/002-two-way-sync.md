@@ -1,4 +1,4 @@
-# ADR002: Adopting a Two-Way Sync for Alerts
+# ADR002: Adopting a Two-Way Sync for Prisoner Alerts
 
 ## Status
 
@@ -20,9 +20,9 @@ We propose adopting a two-way sync between DPS and NOMIS during service roll out
 
 In collaboration with SYScon, we will:
 
-- Develop a migration strategy including the flattening decision covered in [ADR001: Associating Alerts at the Person Level](architectural_design_record/001-person-level-association.md)
-- Support alerts created and updated via the new service by syncing the changes back into NOMIS
-- Support alerts created and updated via NOMIS by syncing the changes from NOMIS to the new service
+- Develop a migration strategy including the flattening decision covered in [ADR001: Associating Prisoner Alerts at the Person Level](architectural_design_record/001-person-level-association.md)
+- Support prisoner alerts created and updated via the new service by syncing the changes back into NOMIS
+- Support prisoner alerts created and updated via NOMIS by syncing the changes from NOMIS to the new service
 - Document and plan all work needed to move to a one-way sync for example the end goal for prisoner merge events in [ADR003: Prisoner and Booking Merge Events](architectural_design_record/003-prisoner-merge.md)
 
 ## Consequences
@@ -31,8 +31,8 @@ In collaboration with SYScon, we will:
   - The DPS functionality can be switched to use the new API independently of switching the NOMIS screens off
   - Both sets of switches can be toggled on and off at any time without service disruption
 - Two-way sync supports decoupling the data migration from the roll-out itself
-  - The full alerts dataset can be migrated and kept in sync prior to toggling any of the feature switches
+  - The full prisoner alerts dataset can be migrated and kept in sync prior to toggling any of the feature switches
   - This synced dataset can be checked for accuracy over a number of weeks to gain confidence that sync is working as intended
-- Full prison estate roll-out following a smaller private beta becomes significantly more simple as the alerts data has already been migrated into the new service and kept in sync since
+- Full prison estate roll-out following a smaller private beta becomes significantly more simple as the prisoner alerts data has already been migrated into the new service and kept in sync since
 
-Following full prison estate roll out, a plan will be put in place to move to a one way sync. This will include a proposal covering the NOMIS process that copies alerts from previous bookings, prisoner and booking merge events and any NOMIS process that generate alerts.
+Following full prison estate roll out, a plan will be put in place to move to a one way sync. This will include a proposal covering the NOMIS process that copies prisoner alerts from previous bookings, prisoner and booking merge events and any NOMIS process that generate prisoner alerts.

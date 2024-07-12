@@ -31,31 +31,36 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
   fun customOpenAPI(): OpenAPI? = OpenAPI()
     .info(
       Info()
-        .title("Alerts API")
+        .title("Prisoner Alerts API")
         .version(version)
         .description(
-          "API for retrieving and managing alerts relating to a person.\n\n" +
-            "## Authentication\n\n" +
-            "This API uses OAuth2 with JWTs. " +
-            "You will need to pass the JWT in the `Authorization` header using the `Bearer` scheme.\n\n" +
-            "## Authorisation\n\n" +
-            "The API uses roles to control access to the endpoints. " +
-            "The roles required for each endpoint are documented in the endpoint descriptions.\n\n" +
-            "## Identifying the user\n\n" +
-            "The majority of the endpoints in this API require the user to be identified via their username. " +
-            "This is to correctly populate the change history of alerts e.g. who created or updated an alert and for auditing purposes. " +
-            "The username is required when the service is called directly by a user or when another service is acting on behalf of a user. " +
-            "The following methods for supplying the username are supported to cater for these scenarios:\n\n" +
-            "1. **Token claim** - The username can be passed in via a `user_name` or `username` claim in the JWT.\n" +
-            "2. **Username header** - The username can be passed in via a `Username` header in the request.\n\n" +
-            "The username is taken in priority order from the `user_name` or `username` claim in the JWT if present, followed by the `Username` header if no claim is found.\n\n" +
-            "### 4XX response codes related to username:\n\n" +
-            "- A 400 Bad Request response will be returned if the username cannot be found via any of the above methods.\n" +
-            "- A 400 Bad Request response will be returned if the username cannot be found in the user management service.\n" +
-            "- A 403 Forbidden response will also be returned if the user identified by the username does not have " +
-            "access to the caseload associated with the person.",
-        )
-        .contact(
+          """
+            |API for retrieving and managing prisoner alerts relating to a person.
+            |
+            |## Authentication
+            |
+            |This API uses OAuth2 with JWTs. You will need to pass the JWT in the `Authorization` header using the `Bearer` scheme.
+            |
+            |## Authorisation
+            |
+            |The API uses roles to control access to the endpoints. The roles required for each endpoint are documented in the endpoint descriptions.
+            |
+            |## Identifying the user
+            |
+            |The majority of the endpoints in this API require the user to be identified via their username. This is to correctly populate the change history of alerts e.g. who created or updated an alert and for auditing purposes. The username is required when the service is called directly by a user or when another service is acting on behalf of a user. The following methods for supplying the username are supported to cater for these scenarios:
+            |
+            |1. **Token claim** - The username can be passed in via a `user_name` or `username` claim in the JWT.
+            |2. **Username header** - The username can be passed in via a `Username` header in the request.
+            |The username is taken in priority order from the `user_name` or `username` claim in the JWT if present, followed by the `Username` header if no claim is found.
+            |
+            |### 4XX response codes related to username:
+            |
+            |- A 400 Bad Request response will be returned if the username cannot be found via any of the above methods.
+            |- A 400 Bad Request response will be returned if the username cannot be found in the user management service.
+            |- A 403 Forbidden response will also be returned if the user identified by the username does not have access to the caseload associated with the person.
+            |
+          """.trimMargin(),
+        ).contact(
           Contact()
             .name("HMPPS Digital Studio")
             .email("feedback@digital.justice.gov.uk"),
