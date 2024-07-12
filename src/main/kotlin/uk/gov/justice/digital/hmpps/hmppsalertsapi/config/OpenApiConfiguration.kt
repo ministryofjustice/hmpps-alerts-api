@@ -58,7 +58,8 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
             |- A 400 Bad Request response will be returned if the username cannot be found via any of the above methods.
             |- A 400 Bad Request response will be returned if the username cannot be found in the user management service.
             |- A 403 Forbidden response will also be returned if the user identified by the username does not have access to the caseload associated with the person.
-            |""".trimMargin(),
+            |
+          """.trimMargin(),
         ).contact(
           Contact()
             .name("HMPPS Digital Studio")
