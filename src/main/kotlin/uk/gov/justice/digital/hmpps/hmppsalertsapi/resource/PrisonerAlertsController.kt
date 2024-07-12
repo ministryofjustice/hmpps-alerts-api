@@ -184,7 +184,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
   )
   @PostMapping("/{prisonNumber}/alerts")
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI', '$ROLE_NOMIS_ALERTS')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @UsernameHeader
   @SourceHeader
   fun createPrisonerAlert(
