@@ -7,6 +7,9 @@ generic-service:
   ingress:
     host: alerts-api-preprod.hmpps.service.justice.gov.uk
 
+  scheduledDowntime:
+    enabled: true
+
   env:
     SENTRY_ENVIRONMENT: preprod
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
