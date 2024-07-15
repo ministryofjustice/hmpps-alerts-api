@@ -42,7 +42,7 @@ class ValidationIntTest : IntegrationTestBase() {
   fun `Validate active from is equal to active to should pass on creation`() {
     val response = webTestClient.post()
       .uri("prisoners/$PRISON_NUMBER/alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
@@ -67,7 +67,7 @@ class ValidationIntTest : IntegrationTestBase() {
   fun `Validate active from is equal to active to should pass on update`() {
     val response = webTestClient.post()
       .uri("prisoners/$PRISON_NUMBER/alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
@@ -86,7 +86,7 @@ class ValidationIntTest : IntegrationTestBase() {
 
     val updateResponse = webTestClient.put()
       .uri("/alerts/${response.alertUuid}")
-      .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
