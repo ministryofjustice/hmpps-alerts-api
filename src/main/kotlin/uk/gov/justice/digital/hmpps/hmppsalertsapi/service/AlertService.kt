@@ -41,8 +41,10 @@ class AlertService(
   fun createAlert(prisonNumber: String, request: CreateAlert, context: AlertRequestContext) =
     request.let {
       // Perform database checks first prior to checks that require API calls
-      val alertCode = it.getAlertCode()
-      if (context.source != Source.NOMIS) {
+      val notNomis = context.source != Source.NOMIS
+      val alertCode = it.getAlertCode(notNomis)
+      if (notNomis) {
+        check(request.dateRangeIsValid()) { "Active from must be before active to" }
         checkForExistingActiveAlert(prisonNumber, request.alertCode)
       }
 
@@ -62,11 +64,13 @@ class AlertService(
       ).toAlertModel()
     }
 
-  private fun CreateAlert.getAlertCode() =
+  private fun CreateAlert.dateRangeIsValid() = !(activeFrom?.isAfter(activeTo ?: activeFrom) ?: false)
+
+  private fun CreateAlert.getAlertCode(activeOnly: Boolean = true) =
     verifyExists(alertCodeRepository.findByCode(alertCode)) {
       InvalidInputException("Alert code", alertCode)
     }.also {
-      require(it.isActive()) { "Alert code is inactive" }
+      if (activeOnly) require(it.isActive()) { "Alert code is inactive" }
     }
 
   private fun checkForExistingActiveAlert(prisonNumber: String, alertCode: String) =

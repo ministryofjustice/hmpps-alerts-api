@@ -193,7 +193,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `400 bad request - alert code is inactive`() {
+  fun `400 bad request - source dps - alert code is inactive`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
 
     val response = webTestClient.createAlertResponseSpec(request = request)
@@ -208,6 +208,14 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(developerMessage).isEqualTo("Alert code is inactive")
       assertThat(moreInfo).isNull()
     }
+  }
+
+  @Test
+  fun `201 created - source nomis - alert code is inactive`() {
+    val request = createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
+
+    webTestClient.createAlertResponseSpec(request = request, source = NOMIS)
+      .expectStatus().isCreated
   }
 
   @Test

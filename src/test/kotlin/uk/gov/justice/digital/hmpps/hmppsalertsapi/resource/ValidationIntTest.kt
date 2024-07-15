@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
@@ -16,15 +17,15 @@ import java.util.UUID
 class ValidationIntTest : IntegrationTestBase() {
 
   @Test
-  fun `Validate active to before active from`() {
+  fun `Validate active to before active from when source is DPS`() {
     val response = webTestClient.post()
       .uri("prisoners/$PRISON_NUMBER/alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
-      .headers(setAlertRequestContext())
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
+      .headers(setAlertRequestContext(source = Source.DPS))
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
-          alertCode = "A",
+          alertCode = ALERT_CODE_VICTIM,
           description = "description",
           authorisedBy = "A. Authorised",
           activeFrom = LocalDate.now(),
@@ -36,6 +37,26 @@ class ValidationIntTest : IntegrationTestBase() {
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody!!
     assertThat(response.developerMessage).contains("Active from must be before active to")
+  }
+
+  @Test
+  fun `201 created when active to before active from when source is NOMIS`() {
+    val response = webTestClient.post()
+      .uri("prisoners/$PRISON_NUMBER/alerts")
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
+      .headers(setAlertRequestContext(source = Source.NOMIS))
+      .accept(MediaType.APPLICATION_JSON)
+      .bodyValue(
+        CreateAlert(
+          alertCode = ALERT_CODE_VICTIM,
+          description = "description",
+          authorisedBy = "A. Authorised",
+          activeFrom = LocalDate.now(),
+          activeTo = LocalDate.now().minusDays(1),
+        ),
+      )
+      .exchange()
+      .expectStatus().isCreated
   }
 
   @Test
