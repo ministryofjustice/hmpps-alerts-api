@@ -48,18 +48,18 @@ class AlertService(
         checkForExistingActiveAlert(prisonNumber, request.alertCode)
       }
 
-      // Uses API call
-      validatePrisonNumber(prisonNumber)
+      val prisoner = requireNotNull(prisonerSearchClient.getPrisoner(prisonNumber)) { "Prison number not found" }
 
       alertRepository.save(
         it.toAlertEntity(
-          prisonNumber = prisonNumber,
+          prisonNumber = prisoner.prisonerNumber,
           alertCode = alertCode,
           createdAt = context.requestAt,
           createdBy = context.username,
           createdByDisplayName = context.userDisplayName,
           source = context.source,
           activeCaseLoadId = context.activeCaseLoadId,
+          prisonCode = prisoner.prisonId,
         ),
       ).toAlertModel()
     }
@@ -76,9 +76,6 @@ class AlertService(
   private fun checkForExistingActiveAlert(prisonNumber: String, alertCode: String) =
     alertRepository.findByPrisonNumberAndAlertCodeCode(prisonNumber, alertCode)
       .any { it.isActive() } && throw AlreadyExistsException("Alert", alertCode)
-
-  private fun validatePrisonNumber(prisonNumber: String) =
-    require(prisonerSearchClient.getPrisoner(prisonNumber) != null) { "Prison number not found" }
 
   fun retrieveAlert(alertUuid: UUID): AlertModel =
     alertRepository.findByAlertUuid(alertUuid)?.toAlertModel()

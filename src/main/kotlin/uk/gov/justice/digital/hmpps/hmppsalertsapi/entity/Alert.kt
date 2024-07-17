@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity
 
 import jakarta.persistence.CascadeType
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
@@ -56,6 +57,9 @@ class Alert(
   var activeTo: LocalDate?,
 
   val createdAt: LocalDateTime,
+
+  @Column(length = 6)
+  val prisonCodeWhenCreated: String? = null,
 ) : AbstractAggregateRoot<Alert>() {
   var lastModifiedAt: LocalDateTime? = null
 

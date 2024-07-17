@@ -31,6 +31,7 @@ fun CreateAlert.toAlertEntity(
   createdByDisplayName: String,
   source: Source,
   activeCaseLoadId: String?,
+  prisonCode: String?,
 ) =
   Alert(
     alertUuid = UUID.randomUUID(),
@@ -41,6 +42,7 @@ fun CreateAlert.toAlertEntity(
     activeFrom = this.activeFrom ?: LocalDate.now(),
     activeTo = this.activeTo,
     createdAt = createdAt,
+    prisonCodeWhenCreated = prisonCode,
   ).create(
     createdAt = createdAt,
     createdBy = createdBy,

@@ -36,7 +36,7 @@ class PrisonerSearchServer : WireMockServer(8112) {
     )
   }
 
-  fun stubGetPrisoner(prisonNumber: String = PRISON_NUMBER): StubMapping =
+  fun stubGetPrisoner(prisonNumber: String = PRISON_NUMBER, prisonCode: String = PRISON_CODE_LEEDS): StubMapping =
     stubFor(
       get("/prisoner/$prisonNumber")
         .willReturn(
@@ -51,6 +51,7 @@ class PrisonerSearchServer : WireMockServer(8112) {
                   "Middle",
                   "Last",
                   LocalDate.of(1988, 4, 3),
+                  prisonCode,
                 ),
               ),
             )
@@ -78,6 +79,7 @@ class PrisonerSearchServer : WireMockServer(8112) {
                     "Middle",
                     "Last$index",
                     LocalDate.of(1988, 4, 3).plusDays(index.toLong()),
+                    PRISON_CODE_LEEDS,
                   )
                 },
               ),
