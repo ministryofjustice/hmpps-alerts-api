@@ -79,7 +79,7 @@ class PrisonerSearchServer : WireMockServer(8112) {
                     "Middle",
                     "Last$index",
                     LocalDate.of(1988, 4, 3).plusDays(index.toLong()),
-                    "MDI",
+                    PRISON_CODE_LEEDS,
                   )
                 },
               ),

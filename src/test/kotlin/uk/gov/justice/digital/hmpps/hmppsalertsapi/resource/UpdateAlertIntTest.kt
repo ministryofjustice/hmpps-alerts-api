@@ -566,28 +566,6 @@ Comment '$appendComment' was added""",
     ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
   }
 
-//  private fun createAlertRequest(
-//    alertCode: String = ALERT_CODE_VICTIM,
-//  ) =
-//    CreateAlert(
-//      alertCode = alertCode,
-//      description = "Alert description",
-//      authorisedBy = "A. Authorizer",
-//      activeFrom = LocalDate.now().minusDays(3),
-//      activeTo = null,
-//    )
-//
-//  private fun createAlert(prisonNumber: String = PRISON_NUMBER) =
-//    webTestClient.post()
-//      .uri("prisoners/$prisonNumber/alerts")
-//      .bodyValue(createAlertRequest())
-//      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__RW), isUserToken = true))
-//      .exchange()
-//      .expectStatus().isCreated
-//      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-//      .expectBody(Alert::class.java)
-//      .returnResult().responseBody!!
-
   private fun updateAlertRequest(
     comment: String = "Another update alert",
     activeTo: LocalDate? = LocalDate.now().plusMonths(10),
