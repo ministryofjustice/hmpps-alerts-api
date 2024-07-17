@@ -7,13 +7,11 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.PersonReference
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.PERSON_ALERTS_CHANGED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
@@ -23,15 +21,13 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER_DISPLAY_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.summary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -184,7 +180,8 @@ class UpdateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `alert updated via DPS`() {
-    val alert = createAlert()
+    val prisonNumber = givenPrisonerExists("U2345VD")
+    val alert = givenAnAlert(alert(prisonNumber))
     val request = updateAlertRequest()
     val updatedAlert = webTestClient.updateAlert(alert.alertUuid, source = DPS, request = request)
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
@@ -196,14 +193,14 @@ class UpdateAlertIntTest : IntegrationTestBase() {
         Alert(
           alert.alertUuid,
           alert.prisonNumber,
-          alertCodeSummary(),
+          alertCode.summary(),
           description,
           authorisedBy,
           activeFrom!!,
           activeTo,
           true,
           updatedAlert.comments,
-          alert.createdAt,
+          alert.createdAt.truncatedTo(ChronoUnit.SECONDS),
           TEST_USER,
           TEST_USER_NAME,
           lastModifiedAuditEvent.actionedAt.withNano(0),
@@ -265,7 +262,8 @@ Comment '$appendComment' was added""",
 
   @Test
   fun `alert updated without changing activeTo via DPS`() {
-    val alert = createAlert()
+    val prisonNumber = givenPrisonerExists("U8111NA")
+    val alert = givenAnAlert(alert(prisonNumber))
     val request = updateAlertRequest(activeTo = alert.activeTo)
     val updatedAlert = webTestClient.updateAlert(alert.alertUuid, source = DPS, request = request)
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
@@ -277,14 +275,14 @@ Comment '$appendComment' was added""",
         Alert(
           alert.alertUuid,
           alert.prisonNumber,
-          alertCodeSummary(),
+          alertCode.summary(),
           description,
           authorisedBy,
           activeFrom!!,
           activeTo,
           true,
           updatedAlert.comments,
-          alert.createdAt,
+          alert.createdAt.truncatedTo(ChronoUnit.SECONDS),
           TEST_USER,
           TEST_USER_NAME,
           lastModifiedAuditEvent.actionedAt.withNano(0),
@@ -333,7 +331,8 @@ Comment '$appendComment' was added""",
 
   @Test
   fun `alert updated via NOMIS`() {
-    val alert = createAlert()
+    val prisonNumber = givenPrisonerExists("U5462VN")
+    val alert = givenAnAlert(alert(prisonNumber))
     val request = updateAlertRequest()
     val updatedAlert = webTestClient.updateAlert(alert.alertUuid, source = NOMIS, request = request)
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
@@ -345,14 +344,14 @@ Comment '$appendComment' was added""",
         Alert(
           alert.alertUuid,
           alert.prisonNumber,
-          alertCodeSummary(),
+          alertCode.summary(),
           description,
           authorisedBy,
           activeFrom!!,
           activeTo,
           true,
           updatedAlert.comments,
-          alert.createdAt,
+          alert.createdAt.truncatedTo(ChronoUnit.SECONDS),
           TEST_USER,
           TEST_USER_NAME,
           lastModifiedAuditEvent.actionedAt.withNano(0),
@@ -409,7 +408,9 @@ Comment '$appendComment' was added""",
 
   @Test
   fun `add comment to alert`() {
-    val alert = createAlert()
+    val prisonNumber = givenPrisonerExists("U1234AC")
+    val alert = givenAnAlert(alert(prisonNumber))
+
     val request = UpdateAlert(appendComment = "Additional comment")
     val updatedAlert = webTestClient.updateAlert(alert.alertUuid, request = request)
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
@@ -441,7 +442,8 @@ Comment '$appendComment' was added""",
 
   @Test
   fun `should populate updated by display name using Username header when source is NOMIS`() {
-    val alert = createAlert()
+    val prisonNumber = givenPrisonerExists("U1234HU")
+    val alert = givenAnAlert(alert(prisonNumber))
 
     val updatedAlert = webTestClient.put()
       .uri("/alerts/${alert.alertUuid}")
@@ -470,7 +472,8 @@ Comment '$appendComment' was added""",
 
   @Test
   fun `should populate updated by username and display name as 'NOMIS' when source is NOMIS and no username is supplied`() {
-    val alert = createAlert()
+    val prisonNumber = givenPrisonerExists("N1234NU")
+    val alert = givenAnAlert(alert(prisonNumber))
 
     val updatedAlert = webTestClient.put()
       .uri("/alerts/${alert.alertUuid}")
@@ -499,22 +502,17 @@ Comment '$appendComment' was added""",
 
   @Test
   fun `should publish alert updated event with DPS source`() {
-    val alert = createAlert()
+    val prisonNumber = givenPrisonerExists("U1234DN")
+    val alert = givenAnAlert(alert(prisonNumber))
 
     webTestClient.updateAlert(alert.alertUuid, DPS, updateAlertRequest())
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
     with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
       assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
 
-    assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
-    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(updateAlertEvent.additionalInformation.identifier())
     assertThat(updateAlertEvent).isEqualTo(
       AlertDomainEvent(
         ALERT_UPDATED.eventType,
@@ -527,7 +525,7 @@ Comment '$appendComment' was added""",
         ALERT_UPDATED.description,
         updateAlertEvent.occurredAt,
         "http://localhost:8080/alerts/${alert.alertUuid}",
-        PersonReference.withPrisonNumber(PRISON_NUMBER),
+        PersonReference.withPrisonNumber(prisonNumber),
       ),
     )
     assertThat(
@@ -537,22 +535,17 @@ Comment '$appendComment' was added""",
 
   @Test
   fun `should publish alert updated event with NOMIS source`() {
-    val alert = createAlert()
+    val prisonNumber = givenPrisonerExists("U1234SN")
+    val alert = givenAnAlert(alert(prisonNumber))
 
     webTestClient.updateAlert(alert.alertUuid, NOMIS, updateAlertRequest())
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
-    val createAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
     with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
       assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
     }
 
-    assertThat(createAlertEvent.eventType).isEqualTo(ALERT_CREATED.eventType)
-    assertThat(createAlertEvent.additionalInformation.identifier()).isEqualTo(updateAlertEvent.additionalInformation.identifier())
     assertThat(updateAlertEvent).isEqualTo(
       AlertDomainEvent(
         ALERT_UPDATED.eventType,
@@ -565,7 +558,7 @@ Comment '$appendComment' was added""",
         ALERT_UPDATED.description,
         updateAlertEvent.occurredAt,
         "http://localhost:8080/alerts/${alert.alertUuid}",
-        PersonReference.withPrisonNumber(PRISON_NUMBER),
+        PersonReference.withPrisonNumber(prisonNumber),
       ),
     )
     assertThat(
@@ -573,27 +566,27 @@ Comment '$appendComment' was added""",
     ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
   }
 
-  private fun createAlertRequest(
-    alertCode: String = ALERT_CODE_VICTIM,
-  ) =
-    CreateAlert(
-      alertCode = alertCode,
-      description = "Alert description",
-      authorisedBy = "A. Authorizer",
-      activeFrom = LocalDate.now().minusDays(3),
-      activeTo = null,
-    )
-
-  private fun createAlert(prisonNumber: String = PRISON_NUMBER) =
-    webTestClient.post()
-      .uri("prisoners/$prisonNumber/alerts")
-      .bodyValue(createAlertRequest())
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__RW), isUserToken = true))
-      .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(Alert::class.java)
-      .returnResult().responseBody!!
+//  private fun createAlertRequest(
+//    alertCode: String = ALERT_CODE_VICTIM,
+//  ) =
+//    CreateAlert(
+//      alertCode = alertCode,
+//      description = "Alert description",
+//      authorisedBy = "A. Authorizer",
+//      activeFrom = LocalDate.now().minusDays(3),
+//      activeTo = null,
+//    )
+//
+//  private fun createAlert(prisonNumber: String = PRISON_NUMBER) =
+//    webTestClient.post()
+//      .uri("prisoners/$prisonNumber/alerts")
+//      .bodyValue(createAlertRequest())
+//      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__RW), isUserToken = true))
+//      .exchange()
+//      .expectStatus().isCreated
+//      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+//      .expectBody(Alert::class.java)
+//      .returnResult().responseBody!!
 
   private fun updateAlertRequest(
     comment: String = "Another update alert",

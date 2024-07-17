@@ -76,7 +76,7 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
         Alert(
           alert.alertUuid,
           prisonNumber,
-          alertCodeSummary(),
+          alertCodeSummary(alertCode.alertType, alertCode),
           description,
           authorisedBy,
           activeFrom,

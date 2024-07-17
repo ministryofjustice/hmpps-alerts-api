@@ -16,6 +16,8 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 object RequestGenerator {
+  fun AlertCode.summary() = AlertCodeSummary(alertType.code, alertType.description, code, description)
+
   fun alertCodeSummary(alertType: AlertType = AT_VULNERABILITY, alertCode: AlertCode = AC_VICTIM) =
     AlertCodeSummary(alertType.code, alertType.description, alertCode.code, alertCode.description)
 

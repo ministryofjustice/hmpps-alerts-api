@@ -452,6 +452,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
           activeFrom = request.activeFrom!!,
           activeTo = request.activeTo,
           createdAt = alertEntity.createdAt,
+          prisonCodeWhenCreated = PRISON_CODE_LEEDS,
         ),
       )
     with(alertEntity.auditEvents().single()) {
@@ -488,6 +489,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
           activeFrom = request.activeFrom!!,
           activeTo = request.activeTo,
           createdAt = alertEntity.createdAt,
+          prisonCodeWhenCreated = PRISON_CODE_LEEDS,
         ),
       )
     with(alertEntity.auditEvents().single()) {

@@ -149,8 +149,9 @@ abstract class IntegrationTestBase {
     }
   }
 
-  fun givenPrisonerExists(prisonNumber: String) {
+  fun givenPrisonerExists(prisonNumber: String): String {
     prisonerSearch.stubGetPrisoner(prisonNumber)
+    return prisonNumber
   }
 
   fun givenPrisonersExist(vararg prisonNumbers: String) {

@@ -14,7 +14,6 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.DownstreamServiceException
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NULL_RESPONSE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_THROW_EXCEPTION
@@ -33,21 +32,24 @@ class PrisonerSearchClientTest {
 
   @Test
   fun `getPrisoner - success`() {
-    server.stubGetPrisoner()
+    val prisonNumber = "C1234TS"
+    val prisonCode = "SWI"
+    server.stubGetPrisoner(prisonNumber, prisonCode)
 
-    val result = client.getPrisoner(PRISON_NUMBER)
+    val result = client.getPrisoner(prisonNumber)
 
     assertThat(result!!).isEqualTo(
       PrisonerDto(
-        prisonerNumber = PRISON_NUMBER,
+        prisonerNumber = prisonNumber,
         bookingId = 1234,
         "First",
         "Middle",
         "Last",
         LocalDate.of(1988, 4, 3),
+        prisonId = prisonCode,
       ),
     )
-    server.verify(exactly(1), getRequestedFor(urlEqualTo("/prisoner/$PRISON_NUMBER")))
+    server.verify(exactly(1), getRequestedFor(urlEqualTo("/prisoner/$prisonNumber")))
   }
 
   @Test
@@ -110,7 +112,8 @@ class PrisonerSearchClientTest {
   fun `getPrisoners - downstream service exception`() {
     server.stubGetPrisonersException()
 
-    val exception = assertThrows<DownstreamServiceException> { client.getPrisoners(listOf(PRISON_NUMBER_THROW_EXCEPTION)) }
+    val exception =
+      assertThrows<DownstreamServiceException> { client.getPrisoners(listOf(PRISON_NUMBER_THROW_EXCEPTION)) }
     assertThat(exception.message).isEqualTo("Get prisoner request failed")
     with(exception.cause) {
       assertThat(this).isInstanceOf(WebClientResponseException::class.java)

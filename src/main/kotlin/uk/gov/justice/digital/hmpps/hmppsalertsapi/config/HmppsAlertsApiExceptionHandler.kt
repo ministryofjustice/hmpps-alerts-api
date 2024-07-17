@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.config
 
 import jakarta.validation.ValidationException
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_GATEWAY
 import org.springframework.http.HttpStatus.BAD_REQUEST
@@ -30,7 +29,7 @@ class HmppsAlertsApiExceptionHandler {
   @ExceptionHandler(AlreadyExistsException::class)
   fun handleAlreadyExistsException(e: AlreadyExistsException): ResponseEntity<ErrorResponse> =
     ResponseEntity
-      .status(409)
+      .status(HttpStatus.CONFLICT)
       .body(
         ErrorResponse(
           status = HttpStatus.CONFLICT.value(),
@@ -116,9 +115,7 @@ class HmppsAlertsApiExceptionHandler {
         userMessage = "Validation failure: ${e.message}",
         developerMessage = e.devMessage(),
       ),
-    ).also {
-      log.info("${e::class.simpleName}: {}", e.devMessage())
-    }
+    )
 
   private fun RuntimeException.devMessage(): String = when (this) {
     is InvalidInputException -> "Details => $name:$value"
@@ -134,7 +131,7 @@ class HmppsAlertsApiExceptionHandler {
         userMessage = "Validation failure: ${e.message}",
         developerMessage = e.devMessage(),
       ),
-    ).also { log.info(e.devMessage()) }
+    )
 
   @ExceptionHandler(HandlerMethodValidationException::class)
   fun handleHandlerMethodValidationException(e: HandlerMethodValidationException): ResponseEntity<ErrorResponse> =
@@ -157,7 +154,7 @@ class HmppsAlertsApiExceptionHandler {
             userMessage = message,
             developerMessage = "400 BAD_REQUEST $message",
           ),
-        ).also { res -> log.info(res.body?.developerMessage) }
+        )
     }
 
   @ExceptionHandler(NoResourceFoundException::class)
@@ -216,10 +213,6 @@ class HmppsAlertsApiExceptionHandler {
         developerMessage = e.message,
       ),
     )
-
-  private companion object {
-    private val log = LoggerFactory.getLogger(this::class.java)
-  }
 }
 
 class DownstreamServiceException(message: String, cause: Throwable) : Exception(message, cause)
