@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.util.UUID
@@ -41,7 +42,7 @@ class ValidationIntTest : IntegrationTestBase() {
 
   @Test
   fun `201 created when active to before active from when source is NOMIS`() {
-    val response = webTestClient.post()
+    webTestClient.post()
       .uri("prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(source = Source.NOMIS))
@@ -86,27 +87,11 @@ class ValidationIntTest : IntegrationTestBase() {
 
   @Test
   fun `Validate active from is equal to active to should pass on update`() {
-    val response = webTestClient.post()
-      .uri("prisoners/$PRISON_NUMBER/alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .headers(setAlertRequestContext())
-      .accept(MediaType.APPLICATION_JSON)
-      .bodyValue(
-        CreateAlert(
-          alertCode = ALERT_CODE_VICTIM,
-          description = "description",
-          authorisedBy = "A. Authorised",
-          activeFrom = LocalDate.now(),
-          activeTo = LocalDate.now(),
-        ),
-      )
-      .exchange()
-      .expectStatus().isCreated
-      .expectBody(Alert::class.java)
-      .returnResult().responseBody!!
+    val prisonNumber = givenPrisonerExists("V1234TF")
+    val alert = givenAnAlert(EntityGenerator.alert(prisonNumber))
 
     val updateResponse = webTestClient.put()
-      .uri("/alerts/${response.alertUuid}")
+      .uri("/alerts/${alert.alertUuid}")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)

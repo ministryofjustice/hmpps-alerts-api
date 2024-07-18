@@ -2,8 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBodyList
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import java.util.Optional
@@ -55,19 +55,11 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
           .build()
       }
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-      .exchange()
-      .expectStatus().isOk
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBodyList(AlertType::class.java)
-      .returnResult().responseBody!!
+      .exchange().expectStatus().isOk.expectBodyList<AlertType>().returnResult().responseBody!!
 
   private fun WebTestClient.getAlertType(alertTypeCode: String) =
     get()
       .uri { builder -> builder.path("/alert-types/$alertTypeCode").build() }
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-      .exchange()
-      .expectStatus().isOk
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertType::class.java)
-      .returnResult().responseBody!!
+      .exchange().successResponse<AlertType>()
 }

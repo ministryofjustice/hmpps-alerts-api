@@ -11,8 +11,10 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBodyList
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.ResyncAuditRepository
@@ -25,7 +27,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.ResyncAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_POOR_COPER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
-import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -59,7 +61,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
   @ValueSource(strings = [ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI, ROLE_NOMIS_ALERTS])
   fun `specified roles are allowed to call the endpoint`(role: String) {
     val alert = resyncAlert()
-    webTestClient.resyncResponseSpec(role, listOf(alert)).expectStatus().isCreated
+    webTestClient.resyncResponseSpec(PRISON_NUMBER, listOf(alert), role).expectStatus().isCreated
   }
 
   @Test
@@ -71,12 +73,9 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
       resyncAlert(alertCode = "NOT_FOUND_1"),
     )
 
-    val response = webTestClient.resyncResponseSpec(request = request)
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+    val response = webTestClient.resyncResponseSpec(PRISON_NUMBER, request).errorResponse(BAD_REQUEST)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Alert code(s) NOT_FOUND_1, NOT_FOUND_2 not found")
@@ -87,13 +86,14 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `resync of updated alert should create audit event`() {
+    val prisonNumber = "R1234AE"
     val request = resyncAlert(
       lastModifiedAt = LocalDateTime.now().minusDays(1),
       lastModifiedBy = "AG1221GG",
       lastModifiedByDisplayName = "Up Dated",
     )
 
-    val migratedAlert = webTestClient.resyncAlerts(request = listOf(request)).single()
+    val migratedAlert = webTestClient.resyncAlerts(prisonNumber, listOf(request)).single()
 
     val alert = alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!
 
@@ -114,7 +114,10 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
   @Test
   fun `resync alert with inactive alert code`() {
     val resyncedAlert =
-      webTestClient.resyncAlerts(request = listOf(resyncAlert(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)))
+      webTestClient.resyncAlerts(
+        "R1234IA",
+        listOf(resyncAlert(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)),
+      )
         .single()
 
     with(alertRepository.findByAlertUuid(resyncedAlert.alertUuid)!!.alertCode) {
@@ -126,6 +129,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
   @Test
   fun `resync alert with active to before active from`() {
     val migratedAlert = webTestClient.resyncAlerts(
+      "R1234FT",
       request = listOf(
         resyncAlert(
           activeFrom = LocalDate.now(),
@@ -142,20 +146,11 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `Successful resync results in 201 created response and sending of domain events`() {
-    val existingAlert = Alert(
-      alertUuid = UUID.randomUUID(),
-      alertCode = alertCodeRepository.findByCode(ALERT_CODE_VICTIM)!!,
-      prisonNumber = PRISON_NUMBER,
-      description = "Existing alert - to be deleted",
-      authorisedBy = "J Smith",
-      activeFrom = LocalDate.now().minusDays(60),
-      activeTo = LocalDate.now().plusDays(5),
-      createdAt = LocalDateTime.now().minusDays(60),
-    ).also { it.lastModifiedAt = null }
-    alertRepository.save(existingAlert)
+    val prisonNumber = "R1234DE"
+    val existingAlert = givenAnAlert(alert(prisonNumber))
 
     val alert = resyncAlert()
-    val response = webTestClient.resyncAlerts(request = listOf(alert)).single()
+    val response = webTestClient.resyncAlerts(prisonNumber, listOf(alert)).single()
 
     assertThat(response.offenderBookId).isEqualTo(alert.offenderBookId)
     assertThat(response.alertSeq).isEqualTo(alert.alertSeq)
@@ -172,7 +167,8 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `Successful resync copies audit history when matching existing alert`() {
-    val originalAlert = alertWithAuditHistory()
+    val prisonNumber = "R1234EA"
+    val originalAlert = alertWithAuditHistory(prisonNumber)
     val originalAudit = originalAlert.auditEvents()
     assertThat(originalAudit.size).isEqualTo(2)
 
@@ -181,7 +177,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
       activeFrom = originalAlert.activeFrom,
       activeTo = originalAlert.activeTo,
     )
-    val response = webTestClient.resyncAlerts(request = listOf(alert)).single()
+    val response = webTestClient.resyncAlerts(prisonNumber, listOf(alert)).single()
 
     assertThat(response.offenderBookId).isEqualTo(alert.offenderBookId)
     assertThat(response.alertSeq).isEqualTo(alert.alertSeq)
@@ -217,7 +213,8 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `Successful resync creates a resync audit record`() {
-    val originalAlert = alertWithAuditHistory()
+    val prisonNumber = "R1234AR"
+    val originalAlert = alertWithAuditHistory(prisonNumber)
     val alert1 = resyncAlert(
       alertCode = originalAlert.alertCode.code,
       activeFrom = originalAlert.activeFrom,
@@ -228,9 +225,9 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
       alertCode = ALERT_CODE_POOR_COPER,
     )
 
-    val response = webTestClient.resyncAlerts(request = listOf(alert1, alert2))
+    val response = webTestClient.resyncAlerts(prisonNumber, listOf(alert1, alert2))
 
-    val resyncAudit = resyncAuditRepository.findByPrisonNumber(PRISON_NUMBER).single()
+    val resyncAudit = resyncAuditRepository.findByPrisonNumber(prisonNumber).single()
     assertThat(objectMapper.treeToValue<List<ResyncAlert>>(resyncAudit.request)).isEqualTo(listOf(alert1, alert2))
     assertThat(resyncAudit.alertsCreated).containsAll(response.map { it.alertUuid })
     assertThat(resyncAudit.alertsDeleted).contains(originalAlert.alertUuid)
@@ -238,19 +235,10 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `Passing empty list to resync removes alerts and sends domain events`() {
-    val existingAlert = Alert(
-      alertUuid = UUID.randomUUID(),
-      alertCode = alertCodeRepository.findByCode(ALERT_CODE_VICTIM)!!,
-      prisonNumber = PRISON_NUMBER,
-      description = "Existing alert - to be deleted",
-      authorisedBy = "J Smith",
-      activeFrom = LocalDate.now().minusDays(60),
-      activeTo = LocalDate.now().plusDays(5),
-      createdAt = LocalDateTime.now().minusDays(60),
-    ).also { it.lastModifiedAt = null }
-    alertRepository.save(existingAlert)
+    val prisonNumber = "R1234DA"
+    val existingAlert = givenAnAlert(alert(prisonNumber))
 
-    webTestClient.resyncAlerts(request = emptyList())
+    webTestClient.resyncAlerts(prisonNumber, emptyList())
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts(2)
@@ -260,11 +248,11 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     assertThat(deletedAlert).isNull()
   }
 
-  private fun alertWithAuditHistory() = alertRepository.save(
+  private fun alertWithAuditHistory(prisonNumber: String) = alertRepository.save(
     Alert(
       alertUuid = UUID.randomUUID(),
       alertCode = alertCodeRepository.findByCode(ALERT_CODE_VICTIM)!!,
-      prisonNumber = PRISON_NUMBER,
+      prisonNumber = prisonNumber,
       description = "Existing alert - to be deleted",
       authorisedBy = "J Smith",
       activeFrom = LocalDate.now().minusDays(60),
@@ -299,12 +287,9 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     expectedUserMessage: String,
     displayName: String,
   ) {
-    val response = webTestClient.resyncResponseSpec(request = listOf(request))
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+    val response = webTestClient.resyncResponseSpec(PRISON_NUMBER, listOf(request)).errorResponse(BAD_REQUEST)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: $expectedUserMessage")
@@ -423,20 +408,22 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun WebTestClient.resyncResponseSpec(role: String = ROLE_NOMIS_ALERTS, request: Collection<ResyncAlert>) =
-    post()
-      .uri("/resync/$PRISON_NUMBER/alerts")
-      .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(role)))
-      .exchange()
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+  private fun WebTestClient.resyncResponseSpec(
+    prisonNumber: String,
+    request: Collection<ResyncAlert>,
+    role: String = ROLE_NOMIS_ALERTS,
+  ) = post()
+    .uri("/resync/$prisonNumber/alerts")
+    .bodyValue(request)
+    .headers(setAuthorisation(roles = listOf(role)))
+    .exchange()
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
   fun WebTestClient.resyncAlerts(
-    role: String = ROLE_NOMIS_ALERTS,
+    prisonNumber: String,
     request: Collection<ResyncAlert>,
+    role: String = ROLE_NOMIS_ALERTS,
   ): MutableList<ResyncedAlert> =
-    resyncResponseSpec(role, request)
-      .expectStatus().isCreated
-      .expectBodyList(ResyncedAlert::class.java)
-      .returnResult().responseBody!!
+    resyncResponseSpec(prisonNumber, request, role).expectStatus().isCreated
+      .expectBodyList<ResyncedAlert>().returnResult().responseBody!!
 }

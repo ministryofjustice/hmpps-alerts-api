@@ -218,19 +218,20 @@ class UpdateAlertIntTest : IntegrationTestBase() {
         assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
       }
 
-      assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
-        AlertEntity(
-          alertId = alertEntity.alertId,
-          alertUuid = alertEntity.alertUuid,
-          alertCode = alertCode,
-          prisonNumber = alertEntity.prisonNumber,
-          description = description,
-          authorisedBy = authorisedBy,
-          activeFrom = activeFrom!!,
-          activeTo = activeTo,
-          createdAt = alertEntity.createdAt,
-        ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
-      )
+      assertThat(alertEntity).usingRecursiveComparison()
+        .ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
+          AlertEntity(
+            alertId = alertEntity.alertId,
+            alertUuid = alertEntity.alertUuid,
+            alertCode = alertCode,
+            prisonNumber = alertEntity.prisonNumber,
+            description = description,
+            authorisedBy = authorisedBy,
+            activeFrom = activeFrom!!,
+            activeTo = activeTo,
+            createdAt = alertEntity.createdAt,
+          ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
+        )
       with(lastModifiedAuditEvent) {
         assertThat(action).isEqualTo(AuditEventAction.UPDATED)
         assertThat(description).isEqualTo(
@@ -294,19 +295,20 @@ Comment '$appendComment' was added""",
         ),
       )
 
-      assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
-        AlertEntity(
-          alertId = alertEntity.alertId,
-          alertUuid = alertEntity.alertUuid,
-          alertCode = alertCode,
-          prisonNumber = alertEntity.prisonNumber,
-          description = description,
-          authorisedBy = authorisedBy,
-          activeFrom = activeFrom!!,
-          activeTo = activeTo,
-          createdAt = alertEntity.createdAt,
-        ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
-      )
+      assertThat(alertEntity).usingRecursiveComparison()
+        .ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
+          AlertEntity(
+            alertId = alertEntity.alertId,
+            alertUuid = alertEntity.alertUuid,
+            alertCode = alertCode,
+            prisonNumber = alertEntity.prisonNumber,
+            description = description,
+            authorisedBy = authorisedBy,
+            activeFrom = activeFrom!!,
+            activeTo = activeTo,
+            createdAt = alertEntity.createdAt,
+          ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
+        )
       with(lastModifiedAuditEvent) {
         assertThat(action).isEqualTo(AuditEventAction.UPDATED)
         assertThat(description).isEqualTo(
@@ -369,19 +371,20 @@ Comment '$appendComment' was added""",
         assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
       }
 
-      assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
-        AlertEntity(
-          alertId = alertEntity.alertId,
-          alertUuid = alertEntity.alertUuid,
-          alertCode = alertCode,
-          prisonNumber = alertEntity.prisonNumber,
-          description = description,
-          authorisedBy = authorisedBy,
-          activeFrom = activeFrom!!,
-          activeTo = activeTo,
-          createdAt = alertEntity.createdAt,
-        ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
-      )
+      assertThat(alertEntity).usingRecursiveComparison()
+        .ignoringFields("auditEvents", "alertCode.alertType", "comments").isEqualTo(
+          AlertEntity(
+            alertId = alertEntity.alertId,
+            alertUuid = alertEntity.alertUuid,
+            alertCode = alertCode,
+            prisonNumber = alertEntity.prisonNumber,
+            description = description,
+            authorisedBy = authorisedBy,
+            activeFrom = activeFrom!!,
+            activeTo = activeTo,
+            createdAt = alertEntity.createdAt,
+          ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
+        )
       with(lastModifiedAuditEvent) {
         assertThat(action).isEqualTo(AuditEventAction.UPDATED)
         assertThat(description).isEqualTo(
@@ -569,27 +572,25 @@ Comment '$appendComment' was added""",
   private fun updateAlertRequest(
     comment: String = "Another update alert",
     activeTo: LocalDate? = LocalDate.now().plusMonths(10),
-  ) =
-    UpdateAlert(
-      description = "another new description",
-      authorisedBy = "C Cauthorizer",
-      activeFrom = LocalDate.now().minusMonths(2),
-      activeTo = activeTo,
-      appendComment = comment,
-    )
+  ) = UpdateAlert(
+    description = "another new description",
+    authorisedBy = "C Cauthorizer",
+    activeFrom = LocalDate.now().minusMonths(2),
+    activeTo = activeTo,
+    appendComment = comment,
+  )
 
   private fun WebTestClient.updateAlert(
     alertUuid: UUID,
     source: Source = DPS,
     request: UpdateAlert,
-  ) =
-    put()
-      .uri("/alerts/$alertUuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .headers(setAlertRequestContext(source = source))
-      .bodyValue(request)
-      .exchange()
-      .expectStatus().isOk
-      .expectBody(Alert::class.java)
-      .returnResult().responseBody!!
+  ) = put()
+    .uri("/alerts/$alertUuid")
+    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
+    .headers(setAlertRequestContext(source = source))
+    .bodyValue(request)
+    .exchange()
+    .expectStatus().isOk
+    .expectBody(Alert::class.java)
+    .returnResult().responseBody!!
 }

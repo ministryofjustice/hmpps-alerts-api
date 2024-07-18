@@ -2,8 +2,8 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBodyList
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import java.util.Optional
@@ -46,36 +46,22 @@ class RetrieveAlertCodeIntTest : IntegrationTestBase() {
     assertThat(alertCodes.code).isEqualTo("VI")
   }
 
-  private fun WebTestClient.getAlertCodes(
-    includeInactive: Boolean?,
-  ) =
-    get()
-      .uri { builder ->
-        builder
-          .path("/alert-codes")
-          .queryParamIfPresent("includeInactive", Optional.ofNullable(includeInactive))
-          .build()
-      }
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
-      .exchange()
-      .expectStatus().isOk
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBodyList(AlertCode::class.java)
-      .returnResult().responseBody!!
+  private fun WebTestClient.getAlertCodes(includeInactive: Boolean?) = get()
+    .uri { builder ->
+      builder
+        .path("/alert-codes")
+        .queryParamIfPresent("includeInactive", Optional.ofNullable(includeInactive))
+        .build()
+    }
+    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
+    .exchange().expectStatus().isOk.expectBodyList<AlertCode>().returnResult().responseBody!!
 
-  private fun WebTestClient.getAlertCode(
-    alertCode: String,
-  ) =
-    get()
-      .uri { builder ->
-        builder
-          .path("/alert-codes/$alertCode")
-          .build()
-      }
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
-      .exchange()
-      .expectStatus().isOk
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertCode::class.java)
-      .returnResult().responseBody!!
+  private fun WebTestClient.getAlertCode(alertCode: String) = get()
+    .uri { builder ->
+      builder
+        .path("/alert-codes/$alertCode")
+        .build()
+    }
+    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
+    .exchange().successResponse<AlertCode>()
 }

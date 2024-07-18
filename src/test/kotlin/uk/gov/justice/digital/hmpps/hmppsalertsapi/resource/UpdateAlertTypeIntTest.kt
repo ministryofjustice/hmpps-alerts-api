@@ -6,7 +6,8 @@ import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
-import org.springframework.http.MediaType
+import org.springframework.http.HttpStatus.BAD_REQUEST
+import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.ReferenceDataAdditionalInformation
@@ -18,7 +19,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertType
-import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.temporal.ChronoUnit
 
 class UpdateAlertTypeIntTest : IntegrationTestBase() {
@@ -58,12 +58,9 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
     val response = webTestClient.patch()
       .uri("/alert-types/VI")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(BAD_REQUEST)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage)
@@ -81,12 +78,9 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
       .bodyValue(UpdateAlertTypeRequest("description"))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(BAD_REQUEST)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: User details for supplied username not found")
@@ -102,12 +96,9 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext())
       .bodyValue(UpdateAlertTypeRequest("description"))
-      .exchange()
-      .expectStatus().isNotFound
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(NOT_FOUND)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(404)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Not found: Alert type not found")
@@ -121,14 +112,17 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
     val alertTypeCode = "EMPTY"
     val response = webTestClient.patch()
       .uri("/alert-types/$alertTypeCode")
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = true))
+      .headers(
+        setAuthorisation(
+          user = TEST_USER,
+          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+          isUserToken = true,
+        ),
+      )
       .bodyValue(UpdateAlertTypeRequest(""))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(BAD_REQUEST)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).contains("Description must be between 1 & 40 characters")
@@ -142,14 +136,17 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
     val alertTypeCode = "TLDR"
     val response = webTestClient.patch()
       .uri("/alert-types/$alertTypeCode")
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = true))
+      .headers(
+        setAuthorisation(
+          user = TEST_USER,
+          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+          isUserToken = true,
+        ),
+      )
       .bodyValue(UpdateAlertTypeRequest("descdescdescdescdescdescdescdescdescdescd"))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(BAD_REQUEST)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).contains("Description must be between 1 & 40 characters")
@@ -194,11 +191,13 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
   private fun WebTestClient.updateAlertTypeDescription(alertCode: String, description: String): AlertType =
     patch()
       .uri("/alert-types/$alertCode")
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = true))
+      .headers(
+        setAuthorisation(
+          user = TEST_USER,
+          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+          isUserToken = true,
+        ),
+      )
       .bodyValue(UpdateAlertTypeRequest(description))
-      .exchange()
-      .expectStatus().isOk
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertType::class.java)
-      .returnResult().responseBody!!
+      .exchange().successResponse()
 }

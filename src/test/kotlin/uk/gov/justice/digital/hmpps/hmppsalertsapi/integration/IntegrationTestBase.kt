@@ -10,12 +10,15 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.context.jdbc.SqlMergeMode
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBody
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
@@ -39,6 +42,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
+import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
@@ -148,6 +152,17 @@ abstract class IntegrationTestBase {
       localStackContainer?.also { setLocalStackProperties(it, registry) }
     }
   }
+
+  fun WebTestClient.ResponseSpec.errorResponse(httpStatus: HttpStatus) =
+    expectStatus().isEqualTo(httpStatus)
+      .expectBody<ErrorResponse>()
+      .returnResult().responseBody!!
+
+  final inline fun <reified T> WebTestClient.ResponseSpec.successResponse(httpStatus: HttpStatus = HttpStatus.OK): T =
+    expectStatus().isEqualTo(httpStatus)
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectBody(T::class.java)
+      .returnResult().responseBody!!
 
   fun givenPrisonerExists(prisonNumber: String): String {
     prisonerSearch.stubGetPrisoner(prisonNumber)

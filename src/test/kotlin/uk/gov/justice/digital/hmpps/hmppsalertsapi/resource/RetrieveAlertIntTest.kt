@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus.NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
@@ -10,7 +11,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
-import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.util.UUID
 
 class RetrieveAlertIntTest : IntegrationTestBase() {
@@ -43,12 +43,9 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
     val response = webTestClient.get()
       .uri("/alerts/$uuid")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-      .exchange()
-      .expectStatus().isNotFound
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(NOT_FOUND)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(404)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Not found: Alert not found")
@@ -66,10 +63,7 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
     val response = webTestClient.get()
       .uri("/alerts/${alert.alertUuid}")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-      .exchange()
-      .expectStatus().isOk
-      .expectBody(Alert::class.java)
-      .returnResult().responseBody
+      .exchange().successResponse<Alert>()
 
     with(alert) {
       assertThat(response).usingRecursiveComparison().ignoringFields("createdAt").isEqualTo(
