@@ -15,6 +15,7 @@ import org.mockito.kotlin.timeout
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -91,8 +92,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       .uri("/bulk-alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext())
-      .exchange()
-      .errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -131,7 +131,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     expectedUserMessage: String,
     displayName: String,
   ) {
-    val response = webTestClient.bulkCreateAlertResponseSpec(request = request).errorResponse()
+    val response = webTestClient.bulkCreateAlertResponseSpec(request = request).errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -146,7 +146,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   fun `400 bad request - multiple property errors`() {
     val request = bulkAlertRequest(alertCode = "")
 
-    val response = webTestClient.bulkCreateAlertResponseSpec(request = request).errorResponse()
+    val response = webTestClient.bulkCreateAlertResponseSpec(request = request).errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -165,7 +165,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   fun `400 bad request - alert codes not found`() {
     val request = bulkAlertRequest(PRISON_NUMBER, alertCode = "NOT_FOUND")
 
-    val response = webTestClient.bulkCreateAlertResponseSpec(request = request).errorResponse()
+    val response = webTestClient.bulkCreateAlertResponseSpec(request = request).errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -180,7 +180,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   fun `400 bad request - alert code is inactive`() {
     val request = bulkAlertRequest(PRISON_NUMBER, alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
 
-    val response = webTestClient.bulkCreateAlertResponseSpec(request = request).errorResponse()
+    val response = webTestClient.bulkCreateAlertResponseSpec(request = request).errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -195,7 +195,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   fun `400 bad request - prisoner not found`() {
     val request = bulkAlertRequest(PRISON_NUMBER_NOT_FOUND)
 
-    val response = webTestClient.bulkCreateAlertResponseSpec(request = request).errorResponse()
+    val response = webTestClient.bulkCreateAlertResponseSpec(request = request).errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)

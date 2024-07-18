@@ -8,6 +8,7 @@ import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
@@ -69,7 +70,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
       .uri("/alert-types")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers { it.set(SOURCE, "INVALID") }
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -85,7 +86,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/alert-types")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -103,7 +104,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
       .bodyValue(createAlertTypeRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -120,7 +121,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
       .uri("/alert-types")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -251,7 +252,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - code too long`() {
     val request = CreateAlertTypeRequest("1234567890123", "desc")
-    val response = webTestClient.createAlertTypeResponseSpec(request).errorResponse()
+    val response = webTestClient.createAlertTypeResponseSpec(request).errorResponse(BAD_REQUEST)
     with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
@@ -262,7 +263,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - description too long`() {
     val request = CreateAlertTypeRequest("AB", "descdescdescdescdescdescdescdescdescdescd")
-    val response = webTestClient.createAlertTypeResponseSpec(request).errorResponse()
+    val response = webTestClient.createAlertTypeResponseSpec(request).errorResponse(BAD_REQUEST)
     with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Description must be between 1 & 40 characters")
@@ -273,7 +274,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - empty code`() {
     val request = CreateAlertTypeRequest("", "desc")
-    val response = webTestClient.createAlertTypeResponseSpec(request).errorResponse()
+    val response = webTestClient.createAlertTypeResponseSpec(request).errorResponse(BAD_REQUEST)
     with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
@@ -284,7 +285,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - empty description`() {
     val request = CreateAlertTypeRequest("AB", "")
-    val response = webTestClient.createAlertTypeResponseSpec(request).errorResponse()
+    val response = webTestClient.createAlertTypeResponseSpec(request).errorResponse(BAD_REQUEST)
     with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Description must be between 1 & 40 characters")

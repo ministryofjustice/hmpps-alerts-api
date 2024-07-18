@@ -55,7 +55,7 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
           .build()
       }
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-      .exchange().expectStatus().isOk.expectBodyList<AlertType>().returnResult().responseBody
+      .exchange().expectStatus().isOk.expectBodyList<AlertType>().returnResult().responseBody!!
 
   private fun WebTestClient.getAlertType(alertTypeCode: String) =
     get()

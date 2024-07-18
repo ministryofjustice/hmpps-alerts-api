@@ -6,6 +6,7 @@ import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
@@ -59,7 +60,7 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
     val response = webTestClient.patch()
       .uri("/alert-codes/VI")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -79,7 +80,7 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
       .bodyValue(UpdateAlertCodeRequest("description"))
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -121,7 +122,7 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
         ),
       )
       .bodyValue(UpdateAlertCodeRequest(""))
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -146,7 +147,7 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
         ),
       )
       .bodyValue(UpdateAlertTypeRequest("descdescdescdescdescdescdescdescdescdescd"))
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)

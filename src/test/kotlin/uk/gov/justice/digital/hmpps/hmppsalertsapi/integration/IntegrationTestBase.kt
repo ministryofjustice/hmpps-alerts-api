@@ -153,12 +153,12 @@ abstract class IntegrationTestBase {
     }
   }
 
-  fun WebTestClient.ResponseSpec.errorResponse(httpStatus: HttpStatus = HttpStatus.BAD_REQUEST) =
+  fun WebTestClient.ResponseSpec.errorResponse(httpStatus: HttpStatus) =
     expectStatus().isEqualTo(httpStatus)
       .expectBody<ErrorResponse>()
       .returnResult().responseBody!!
 
-  final inline fun <reified T> WebTestClient.ResponseSpec.successResponse(httpStatus: HttpStatus = HttpStatus.OK) =
+  final inline fun <reified T> WebTestClient.ResponseSpec.successResponse(httpStatus: HttpStatus = HttpStatus.OK): T =
     expectStatus().isEqualTo(httpStatus)
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
       .expectBody(T::class.java)

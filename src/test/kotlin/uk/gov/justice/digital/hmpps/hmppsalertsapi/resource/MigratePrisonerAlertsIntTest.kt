@@ -9,6 +9,7 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.any
 import org.mockito.kotlin.timeout
 import org.mockito.kotlin.verify
+import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -65,7 +66,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/migrate/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -160,7 +161,8 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   @ParameterizedTest(name = "{2}")
   @MethodSource("badRequestParameters")
   fun `400 bad request - property validation`(request: MigrateAlert, expectedUserMessage: String, displayName: String) {
-    val response = webTestClient.migrateResponseSpec(PRISON_NUMBER, request = listOf(request)).errorResponse()
+    val response =
+      webTestClient.migrateResponseSpec(PRISON_NUMBER, request = listOf(request)).errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -180,7 +182,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       migrateAlert(alertCode = "NOT_FOUND_2"),
     )
 
-    val response = webTestClient.migrateResponseSpec(PRISON_NUMBER, request = request).errorResponse()
+    val response = webTestClient.migrateResponseSpec(PRISON_NUMBER, request = request).errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -200,7 +202,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       migrateAlert(lastModifiedAt = LocalDateTime.now(), lastModifiedByDisplayName = "Up Dated"),
     )
 
-    val response = webTestClient.migrateResponseSpec(PRISON_NUMBER, request = request).errorResponse()
+    val response = webTestClient.migrateResponseSpec(PRISON_NUMBER, request = request).errorResponse(BAD_REQUEST)
 
     val validationMessage = """
           |Validation failures: 

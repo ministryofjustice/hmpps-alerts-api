@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBodyList
@@ -72,7 +73,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
       resyncAlert(alertCode = "NOT_FOUND_1"),
     )
 
-    val response = webTestClient.resyncResponseSpec(PRISON_NUMBER, request).errorResponse()
+    val response = webTestClient.resyncResponseSpec(PRISON_NUMBER, request).errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -286,7 +287,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     expectedUserMessage: String,
     displayName: String,
   ) {
-    val response = webTestClient.resyncResponseSpec(PRISON_NUMBER, listOf(request)).errorResponse()
+    val response = webTestClient.resyncResponseSpec(PRISON_NUMBER, listOf(request)).errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)

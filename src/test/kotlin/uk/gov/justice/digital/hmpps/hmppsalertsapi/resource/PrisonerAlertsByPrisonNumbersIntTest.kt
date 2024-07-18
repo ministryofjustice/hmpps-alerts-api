@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.core.ParameterizedTypeReference
+import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.test.context.jdbc.Sql
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
@@ -35,7 +36,7 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
     val response = webTestClient.get()
       .uri("/prisoners/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)

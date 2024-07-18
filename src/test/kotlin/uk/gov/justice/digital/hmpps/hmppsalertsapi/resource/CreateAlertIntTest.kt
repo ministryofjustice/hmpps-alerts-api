@@ -83,7 +83,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .uri("/prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers { it.set(SOURCE, "INVALID") }
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -99,7 +99,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -117,7 +117,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .bodyValue(createAlertRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -134,7 +134,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .uri("/prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -150,7 +150,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val request = createAlertRequest()
 
     val response = webTestClient.createAlertResponseSpec(prisonNumber = PRISON_NUMBER_NOT_FOUND, request = request)
-      .errorResponse()
+      .errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -165,7 +165,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `400 bad request - alert code not found`() {
     val request = createAlertRequest(alertCode = "NOT_FOUND")
 
-    val response = webTestClient.createAlertResponseSpec(request = request).errorResponse()
+    val response = webTestClient.createAlertResponseSpec(request = request).errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -180,7 +180,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `400 bad request - source dps - alert code is inactive`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
 
-    val response = webTestClient.createAlertResponseSpec(request = request).errorResponse()
+    val response = webTestClient.createAlertResponseSpec(request = request).errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)

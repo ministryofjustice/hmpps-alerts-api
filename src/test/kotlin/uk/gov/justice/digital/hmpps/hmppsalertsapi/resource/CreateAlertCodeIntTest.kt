@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_GATEWAY
+import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED
 import org.springframework.http.HttpStatus.NOT_FOUND
@@ -75,7 +76,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .uri("/alert-codes")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers { it.set(SOURCE, "INVALID") }
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -93,7 +94,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/alert-codes")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -113,7 +114,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .bodyValue(createAlertCodeRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -132,7 +133,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .uri("/alert-codes")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
-      .exchange().errorResponse()
+      .exchange().errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -269,7 +270,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - code too long`() {
     val request = CreateAlertCodeRequest("1234567890123", "desc", AT_VULNERABILITY.code)
-    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse()
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse(BAD_REQUEST)
     with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
@@ -292,7 +293,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - no parent type`() {
     val request = CreateAlertCodeRequest("AA", "desc", "")
-    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse()
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse(BAD_REQUEST)
     with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
@@ -304,7 +305,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - parent type too long`() {
     val request = CreateAlertCodeRequest("AA", "desc", "ABCDEFGHJKLMN")
-    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse()
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse(BAD_REQUEST)
     with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
@@ -317,7 +318,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   fun `validation - description too long`() {
     val request =
       CreateAlertCodeRequest("AB", "descdescdescdescdescdescdescdescdescdescd", AT_VULNERABILITY.code)
-    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse()
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse(BAD_REQUEST)
     with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Description must be between 1 & 40 characters")
@@ -329,7 +330,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - empty code`() {
     val request = CreateAlertCodeRequest("", "desc", AT_VULNERABILITY.code)
-    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse()
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse(BAD_REQUEST)
     with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
@@ -341,7 +342,7 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - empty description`() {
     val request = CreateAlertCodeRequest("AB", "", AT_VULNERABILITY.code)
-    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse()
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse(BAD_REQUEST)
     with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Description must be between 1 & 40 characters")
