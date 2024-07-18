@@ -5,6 +5,7 @@ import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus.CREATED
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
@@ -18,7 +19,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.ResyncedAlert
@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.ResyncAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -35,7 +36,9 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
 
   @Test
   fun `create alert publishes a person alerts changed event`() {
+    val prisonNumber = givenPrisonerExists("C1234PA")
     webTestClient.createAlert(
+      prisonNumber = prisonNumber,
       request = CreateAlert(
         alertCode = ALERT_CODE_VICTIM,
         description = "Alert description",
@@ -49,12 +52,14 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
     }
-    verifyPersonAlertsChanged(PRISON_NUMBER)
+    verifyPersonAlertsChanged(prisonNumber)
   }
 
   @Test
   fun `update alert publishes a person alerts changed event`() {
-    val alert = createAlert()
+    val prisonNumber = givenPrisonerExists("U1234PA")
+    val alert = givenAnAlert(alert(prisonNumber))
+
     webTestClient.updateAlert(
       alertUuid = alert.alertUuid,
       request = UpdateAlert(
@@ -66,17 +71,18 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
       ),
     )
 
-    // Two of these messages are from the create
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
     }
-    verifyPersonAlertsChanged(PRISON_NUMBER)
+    verifyPersonAlertsChanged(prisonNumber)
   }
 
   @Test
   fun `update alert does not publish if no changes`() {
-    val alert = createAlert()
+    val prisonNumber = givenPrisonerExists("U1234NP")
+    val alert = givenAnAlert(alert(prisonNumber))
+
     webTestClient.updateAlert(
       alertUuid = alert.alertUuid,
       request = UpdateAlert(
@@ -88,26 +94,27 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
       ),
     )
 
-    // These two messages are from the create
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
+    assertThat(hmppsEventsQueue.countAllMessagesOnQueue()).isEqualTo(0)
   }
 
   @Test
   fun `delete alert publishes a person alerts changed event`() {
-    val alert = createAlert()
+    val prisonNumber = givenPrisonerExists("D1234PA")
+    val alert = givenAnAlert(alert(prisonNumber))
     webTestClient.deleteAlert(alertUuid = alert.alertUuid)
 
-    // Two of these messages are from the create
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 4 }
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_DELETED.eventType)
     }
-    verifyPersonAlertsChanged(PRISON_NUMBER)
+    verifyPersonAlertsChanged(prisonNumber)
   }
 
   @Test
   fun `resync of alerts publishes a person alerts changed event`() {
+    val prisonNumber = "R1234PA"
     webTestClient.resyncAlert(
+      prisonNumber,
       request = listOf(
         ResyncAlert(
           offenderBookId = 12345,
@@ -131,16 +138,16 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
     }
-    verifyPersonAlertsChanged(PRISON_NUMBER)
+    verifyPersonAlertsChanged(prisonNumber)
   }
 
   @Test
   fun `bulk alert publishes a person alerts changed event for each prisoner number`() {
-    val prisonerNumbers = listOf("A1234BC", "B2345CD", "C3456DE")
-    prisonerSearch.stubGetPrisoners(prisonerNumbers)
+    val prisonerNumbers = arrayOf("A1234BC", "B2345CD", "C3456DE")
+    givenPrisonersExist(*prisonerNumbers)
 
     val request = BulkCreateAlerts(
-      prisonNumbers = prisonerNumbers,
+      prisonNumbers = prisonerNumbers.toList(),
       alertCode = ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL,
       mode = ADD_MISSING,
       cleanupMode = KEEP_ALL,
@@ -161,24 +168,6 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     }
   }
 
-  private fun createAlert(): Alert {
-    val alert = webTestClient.createAlert(
-      request = CreateAlert(
-        alertCode = ALERT_CODE_VICTIM,
-        description = "Alert description",
-        authorisedBy = "C Smith",
-        activeFrom = LocalDate.now().minusDays(5),
-        activeTo = null,
-      ),
-    )
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
-      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
-    }
-    verifyPersonAlertsChanged(PRISON_NUMBER)
-    return alert
-  }
-
   private fun WebTestClient.createAlert(
     source: Source = DPS,
     request: CreateAlert,
@@ -187,10 +176,7 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     .bodyValue(request)
     .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
     .headers(setAlertRequestContext(source = source))
-    .exchange()
-    .expectStatus().isCreated
-    .expectBody(Alert::class.java)
-    .returnResult().responseBody!!
+    .exchange().successResponse<Alert>(CREATED)
 
   private fun WebTestClient.updateAlert(
     alertUuid: UUID,
@@ -200,10 +186,7 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
     .headers(setAlertRequestContext(source = source))
     .bodyValue(request)
-    .exchange()
-    .expectStatus().isOk
-    .expectBody(Alert::class.java)
-    .returnResult().responseBody!!
+    .exchange().successResponse<Alert>()
 
   private fun WebTestClient.deleteAlert(
     alertUuid: UUID,
@@ -215,22 +198,16 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     .expectStatus().isNoContent
     .expectBody().isEmpty
 
-  private fun WebTestClient.resyncAlert(request: Collection<ResyncAlert>) =
-    post().uri("/resync/$PRISON_NUMBER/alerts")
+  private fun WebTestClient.resyncAlert(prisonNumber: String, request: Collection<ResyncAlert>) =
+    post().uri("/resync/$prisonNumber/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
-      .exchange()
-      .expectStatus().isCreated
-      .expectBodyList(ResyncedAlert::class.java)
-      .returnResult().responseBody!!
+      .exchange().successResponse<List<ResyncedAlert>>(CREATED)
 
   private fun WebTestClient.bulkCreateAlert(request: BulkCreateAlerts) =
     post().uri("/bulk-alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext(source = DPS))
-      .exchange()
-      .expectStatus().isCreated
-      .expectBody(BulkAlert::class.java)
-      .returnResult().responseBody!!
+      .exchange().successResponse<BulkAlert>(CREATED)
 }

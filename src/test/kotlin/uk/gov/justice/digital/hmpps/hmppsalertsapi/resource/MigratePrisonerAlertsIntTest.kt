@@ -7,32 +7,28 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.kotlin.any
-import org.mockito.kotlin.never
+import org.mockito.kotlin.timeout
 import org.mockito.kotlin.verify
-import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.expectBodyList
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.MigratedAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.MigrateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_ADULT_AT_RISK
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_ISOLATED_PRISONER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_POOR_COPER
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.LanguageFormatUtils
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.migrateAlert
-import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.UUID
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
@@ -69,12 +65,9 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/migrate/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Couldn't read request body")
@@ -167,12 +160,9 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   @ParameterizedTest(name = "{2}")
   @MethodSource("badRequestParameters")
   fun `400 bad request - property validation`(request: MigrateAlert, expectedUserMessage: String, displayName: String) {
-    val response = webTestClient.migrateResponseSpec(request = listOf(request))
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+    val response = webTestClient.migrateResponseSpec(PRISON_NUMBER, request = listOf(request)).errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: $expectedUserMessage")
@@ -190,12 +180,9 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       migrateAlert(alertCode = "NOT_FOUND_2"),
     )
 
-    val response = webTestClient.migrateResponseSpec(request = request)
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+    val response = webTestClient.migrateResponseSpec(PRISON_NUMBER, request = request).errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Alert code(s) 'NOT_FOUND_1', 'NOT_FOUND_2' not found")
@@ -213,10 +200,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       migrateAlert(lastModifiedAt = LocalDateTime.now(), lastModifiedByDisplayName = "Up Dated"),
     )
 
-    val response = webTestClient.migrateResponseSpec(request = request)
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+    val response = webTestClient.migrateResponseSpec(PRISON_NUMBER, request = request).errorResponse()
 
     val validationMessage = """
           |Validation failures: 
@@ -226,7 +210,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
           |Updated by is required when updated at is supplied
           |
     """.trimMargin()
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo(validationMessage)
@@ -240,12 +224,9 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     val response = webTestClient.patch()
       .uri("/migrate/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange()
-      .expectStatus().isEqualTo(HttpStatus.METHOD_NOT_ALLOWED)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(METHOD_NOT_ALLOWED)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(405)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Method not allowed failure: Request method 'PATCH' is not supported")
@@ -257,8 +238,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   @ParameterizedTest(name = "{0} allowed")
   @ValueSource(strings = [ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI, ROLE_NOMIS_ALERTS])
   fun `201 migrated - allowed role`(role: String) {
-    webTestClient.migrateResponseSpec(role, emptyList())
-      .expectStatus().isCreated
+    webTestClient.migrateResponseSpec(PRISON_NUMBER, role, emptyList()).expectStatus().isCreated
   }
 
   @Test
@@ -268,6 +248,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
     val alertSeq = 4
 
     val migratedAlert = webTestClient.migratePrisonerAlerts(
+      "M1224SM",
       request = listOf(
         migrateAlert(
           offenderBookId = offenderBookId,
@@ -289,20 +270,22 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `should migrate new alert`() {
+    val prisonNumber = "M1234NA"
     val request = migrateAlert()
 
-    val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(request)).single()
+    val migratedAlert = webTestClient.migratePrisonerAlerts(prisonNumber, request = listOf(request)).single()
 
     val alert = alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
-    assertThat(alert).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments", "createdAt")
+    assertThat(alert).usingRecursiveComparison()
+      .ignoringFields("auditEvents", "alertCode.alertType", "comments", "createdAt")
       .isEqualTo(
         Alert(
           alertId = 1,
           alertUuid = alert.alertUuid,
           alertCode = alertCode,
-          prisonNumber = PRISON_NUMBER,
+          prisonNumber = prisonNumber,
           description = request.description,
           authorisedBy = request.authorisedBy,
           activeFrom = request.activeFrom,
@@ -324,13 +307,14 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `should migrate updated alert`() {
+    val prisonNumber = "M1234UA"
     val request = migrateAlert(
       lastModifiedAt = LocalDateTime.now().minusDays(1).withNano(0),
       lastModifiedBy = "AG1221GG",
       lastModifiedByDisplayName = "Up Dated",
     )
 
-    val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(request)).single()
+    val migratedAlert = webTestClient.migratePrisonerAlerts(prisonNumber, request = listOf(request)).single()
 
     val alert = alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!
 
@@ -346,9 +330,12 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `migrate alert with inactive alert code`() {
+    val prisonNumber = "M1234IC"
     val migratedAlert =
-      webTestClient.migratePrisonerAlerts(request = listOf(migrateAlert(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)))
-        .single()
+      webTestClient.migratePrisonerAlerts(
+        prisonNumber,
+        request = listOf(migrateAlert(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)),
+      ).single()
 
     with(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!.alertCode) {
       assertThat(code).isEqualTo(ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
@@ -359,6 +346,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
   @Test
   fun `migrate alert with active to before active from`() {
     val migratedAlert = webTestClient.migratePrisonerAlerts(
+      "M1234FT",
       request = listOf(
         migrateAlert(
           activeFrom = LocalDate.now(),
@@ -375,6 +363,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `migrate alert accepts and retains timestamp nanos`() {
+    val prisonNumber = "M1234RT"
     val createdAt = LocalDateTime.parse("2024-01-09T16:23:41.860648")
     val updatedAt = LocalDateTime.parse("2024-01-30T12:57:06.21759")
     val request = migrateAlert(
@@ -384,7 +373,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       lastModifiedByDisplayName = "Up Dated",
     )
 
-    val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(request)).single()
+    val migratedAlert = webTestClient.migratePrisonerAlerts(prisonNumber, request = listOf(request)).single()
 
     val alert = alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!
 
@@ -397,13 +386,14 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `should not publish alert created event`() {
-    webTestClient.migratePrisonerAlerts(request = listOf(migrateAlert()))
-    Thread.sleep(1000)
-    verify(hmppsQueueService, never()).findByTopicId(any())
+    val prisonNumber = "M1234AC"
+    webTestClient.migratePrisonerAlerts(prisonNumber, request = listOf(migrateAlert()))
+    verify(hmppsQueueService, timeout(1000).times(0)).findByTopicId(any())
   }
 
   @Test
   fun `accepts two active alerts with the same alert code`() {
+    val prisonNumber = "A1234DA"
     val request = listOf(
       migrateAlert(
         offenderBookId = 12345,
@@ -423,7 +413,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       ),
     )
 
-    val response = webTestClient.migratePrisonerAlerts(request = request)
+    val response = webTestClient.migratePrisonerAlerts(prisonNumber, request = request)
 
     with(response) {
       assertThat(this).hasSize(2)
@@ -440,6 +430,7 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `migration is idempotent`() {
+    val prisonNumber = "M1234ID"
     val migrateExistingAlert = migrateAlert(
       offenderBookId = 12345,
       bookingSeq = 1,
@@ -453,9 +444,11 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
       alertCode = ALERT_CODE_POOR_COPER,
     )
 
-    val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(migrateExistingAlert)).single()
+    val migratedAlert =
+      webTestClient.migratePrisonerAlerts(prisonNumber, request = listOf(migrateExistingAlert)).single()
 
-    val response = webTestClient.migratePrisonerAlerts(request = listOf(migrateExistingAlert, migrateNewAlert))
+    val response =
+      webTestClient.migratePrisonerAlerts(prisonNumber, request = listOf(migrateExistingAlert, migrateNewAlert))
 
     assertThat(response).hasSize(2)
     assertThat(response.associateBy { it.alertUuid }.containsKey(migratedAlert.alertUuid)).isFalse()
@@ -463,54 +456,34 @@ class MigratePrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `deletes existing prisoner alerts`() {
-    var alert = webTestClient.createAlert()
-    alert = webTestClient.addComment(alert.alertUuid)
+    val prisonNumber = "M1234DT"
+    val alert = givenAnAlert(EntityGenerator.alert(prisonNumber))
+    alert.addComment("Some comment", createdBy = "ATEST", createdByDisplayName = "A Test")
+    alertRepository.save(alert)
 
-    val migratedAlert = webTestClient.migratePrisonerAlerts(request = listOf(migrateAlert())).single()
+    val migratedAlert = webTestClient.migratePrisonerAlerts(prisonNumber, request = listOf(migrateAlert())).single()
 
     assertThat(alertRepository.findByAlertUuid(alert.alertUuid)).isNull()
     assertThat(alert.alertUuid).isNotEqualTo(migratedAlert.alertUuid)
   }
 
-  private fun WebTestClient.migrateResponseSpec(role: String = ROLE_NOMIS_ALERTS, request: Collection<MigrateAlert>) =
-    post()
-      .uri("/migrate/$PRISON_NUMBER/alerts")
-      .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(role)))
-      .exchange()
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+  private fun WebTestClient.migrateResponseSpec(
+    prisonNumber: String,
+    role: String = ROLE_NOMIS_ALERTS,
+    request: Collection<MigrateAlert>,
+  ) = post()
+    .uri("/migrate/$prisonNumber/alerts")
+    .bodyValue(request)
+    .headers(setAuthorisation(roles = listOf(role)))
+    .exchange()
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
-  private fun WebTestClient.migratePrisonerAlerts(role: String = ROLE_NOMIS_ALERTS, request: Collection<MigrateAlert>) =
-    migrateResponseSpec(role, request)
-      .expectStatus().isCreated
-      .expectBodyList(MigratedAlert::class.java)
-      .returnResult().responseBody!!
-
-  private fun WebTestClient.createAlert(prisonNumber: String = PRISON_NUMBER) =
-    post()
-      .uri("prisoners/$prisonNumber/alerts")
-      .bodyValue(
-        CreateAlert(
-          alertCode = ALERT_CODE_VICTIM,
-          description = "Alert description",
-          authorisedBy = "A. Authorizer",
-          activeFrom = LocalDate.now().minusDays(3),
-          activeTo = null,
-        ),
-      )
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .headers(setAlertRequestContext())
-      .exchange()
-      .expectBody(AlertModel::class.java)
-      .returnResult().responseBody!!
-
-  private fun WebTestClient.addComment(alertUuid: UUID) =
-    put()
-      .uri("/alerts/$alertUuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .headers(setAlertRequestContext())
-      .bodyValue(UpdateAlert(appendComment = "Additional comment"))
-      .exchange()
-      .expectBody(AlertModel::class.java)
-      .returnResult().responseBody!!
+  private fun WebTestClient.migratePrisonerAlerts(
+    prisonNumber: String,
+    role: String = ROLE_NOMIS_ALERTS,
+    request: Collection<MigrateAlert>,
+  ) = migrateResponseSpec(prisonNumber, role, request)
+    .expectStatus().isCreated
+    .expectBodyList<MigratedAlert>()
+    .returnResult().responseBody!!
 }

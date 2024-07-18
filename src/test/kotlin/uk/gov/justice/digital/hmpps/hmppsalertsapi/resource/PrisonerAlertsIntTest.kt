@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.onOrAfter
@@ -425,11 +424,7 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
           .build()
       }
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-      .exchange()
-      .expectStatus().isOk
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertsPage::class.java)
-      .returnResult().responseBody!!
+      .exchange().successResponse<AlertsPage>()
 
   data class AlertsPage(
     val totalElements: Int,

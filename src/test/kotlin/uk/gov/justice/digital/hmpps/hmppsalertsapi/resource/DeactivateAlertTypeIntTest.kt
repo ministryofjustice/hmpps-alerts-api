@@ -7,6 +7,7 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
@@ -18,7 +19,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertType
-import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -65,12 +65,9 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
     val response = webTestClient.patch()
       .uri("/alert-types/VI/deactivate")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage)
@@ -87,12 +84,9 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
       .uri("/alert-types/VI/deactivate")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: User details for supplied username not found")
@@ -107,12 +101,9 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
       .uri("/alert-types/ALK/deactivate")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext())
-      .exchange()
-      .expectStatus().isNotFound
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(NOT_FOUND)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(404)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Not found: Alert type not found")
@@ -123,7 +114,7 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `should mark alert type as deactivated`() {
-    val alertCode = createAlertType(alertType("ABC"))
+    val alertCode = givenNewAlertType(alertType("ABC"))
     val response = webTestClient.deleteAlertType(alertCode = alertCode.code)
     with(response) {
       assertThat(isActive).isFalse()
@@ -135,7 +126,7 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
 
   @Test
   fun `should publish alert types deactivated event with NOMIS source`() {
-    val alertType = createAlertType(alertType("DEF"))
+    val alertType = givenNewAlertType(alertType("DEF"))
     webTestClient.deleteAlertType(alertType.code)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 1 }
@@ -160,13 +151,16 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun createAlertType(alertType: uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType) =
-    alertTypeRepository.save(alertType)
-
   private fun WebTestClient.deleteAlertType(alertCode: String): AlertType =
     patch()
       .uri("/alert-types/$alertCode/deactivate")
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = true))
+      .headers(
+        setAuthorisation(
+          user = TEST_USER,
+          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+          isUserToken = true,
+        ),
+      )
       .exchange()
       .expectStatus().isOk
       .expectHeader().contentType(MediaType.APPLICATION_JSON)

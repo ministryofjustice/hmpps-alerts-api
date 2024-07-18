@@ -7,6 +7,8 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatus.BAD_REQUEST
+import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -38,7 +40,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COV
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_SOCIAL_CARE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
-import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -82,12 +83,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .uri("/prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers { it.set(SOURCE, "INVALID") }
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: No enum constant uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.INVALID")
@@ -101,12 +99,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Could not find non empty username from user_name or username token claims or Username header")
@@ -122,12 +117,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .bodyValue(createAlertRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: User details for supplied username not found")
@@ -142,12 +134,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .uri("/prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Couldn't read request body")
@@ -161,11 +150,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val request = createAlertRequest()
 
     val response = webTestClient.createAlertResponseSpec(prisonNumber = PRISON_NUMBER_NOT_FOUND, request = request)
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Prison number not found")
@@ -178,12 +165,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `400 bad request - alert code not found`() {
     val request = createAlertRequest(alertCode = "NOT_FOUND")
 
-    val response = webTestClient.createAlertResponseSpec(request = request)
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+    val response = webTestClient.createAlertResponseSpec(request = request).errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Alert code is invalid")
@@ -196,12 +180,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `400 bad request - source dps - alert code is inactive`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
 
-    val response = webTestClient.createAlertResponseSpec(request = request)
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+    val response = webTestClient.createAlertResponseSpec(request = request).errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Alert code is inactive")
@@ -223,12 +204,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val response = webTestClient.patch()
       .uri("prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange()
-      .expectStatus().isEqualTo(HttpStatus.METHOD_NOT_ALLOWED)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(HttpStatus.METHOD_NOT_ALLOWED)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(405)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Method not allowed failure: Request method 'PATCH' is not supported")
@@ -244,12 +222,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .bodyValue(createAlertRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(username = USER_THROW_EXCEPTION))
-      .exchange()
-      .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(HttpStatus.BAD_GATEWAY)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(502)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Downstream service exception: Get user details request failed")
@@ -265,12 +240,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .bodyValue(createAlertRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
-      .exchange()
-      .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(HttpStatus.BAD_GATEWAY)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(502)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Downstream service exception: Get prisoner request failed")
@@ -287,11 +259,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .uri("prisoners/$PRISON_NUMBER/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__RW), isUserToken = true))
-      .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertModel::class.java)
-      .returnResult().responseBody!!
+      .exchange().successResponse<AlertModel>(HttpStatus.CREATED)
 
     with(alert) {
       assertThat(createdBy).isEqualTo(TEST_USER)
@@ -307,11 +275,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .uri("prisoners/$PRISON_NUMBER/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__RW), isUserToken = false))
-      .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertModel::class.java)
-      .returnResult().responseBody!!
+      .exchange().successResponse<AlertModel>(HttpStatus.CREATED)
 
     with(alert) {
       assertThat(createdBy).isEqualTo(TEST_USER)
@@ -328,11 +292,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
-      .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertModel::class.java)
-      .returnResult().responseBody!!
+      .exchange().successResponse<AlertModel>(HttpStatus.CREATED)
 
     with(alert) {
       assertThat(createdBy).isEqualTo(TEST_USER)
@@ -349,11 +309,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(source = NOMIS, username = NOMIS_SYS_USER))
-      .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertModel::class.java)
-      .returnResult().responseBody!!
+      .exchange().successResponse<AlertModel>(HttpStatus.CREATED)
 
     with(alert) {
       assertThat(createdBy).isEqualTo(NOMIS_SYS_USER)
@@ -379,11 +335,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .header(SOURCE, NOMIS.name)
-      .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertModel::class.java)
-      .returnResult().responseBody!!
+      .exchange().successResponse<AlertModel>(HttpStatus.CREATED)
 
     with(alert) {
       assertThat(createdBy).isEqualTo("NOMIS")
@@ -402,14 +354,15 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should return populated alert model`() {
+    val prisonNumber = givenPrisonerExists("C1234AA")
     val request = createAlertRequest()
 
-    val alert = webTestClient.createAlert(request = request)
+    val alert = webTestClient.createAlert(prisonNumber, request)
 
     assertThat(alert).isEqualTo(
       AlertModel(
         alert.alertUuid,
-        PRISON_NUMBER,
+        prisonNumber,
         alertCodeSummary(),
         request.description,
         request.authorisedBy,
@@ -433,9 +386,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should create new alert via DPS`() {
+    val prisonNumber = givenPrisonerExists("C1234VP")
     val request = createAlertRequest()
 
-    val alert = webTestClient.createAlert(source = DPS, request = request)
+    val alert = webTestClient.createAlert(prisonNumber, request)
 
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
@@ -446,7 +400,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
           alertId = 1,
           alertUuid = alert.alertUuid,
           alertCode = alertCode,
-          prisonNumber = PRISON_NUMBER,
+          prisonNumber = prisonNumber,
           description = request.description,
           authorisedBy = request.authorisedBy,
           activeFrom = request.activeFrom!!,
@@ -470,9 +424,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should create new alert via NOMIS`() {
+    val prisonNumber = givenPrisonerExists("C1234VN")
     val request = createAlertRequest()
 
-    val alert = webTestClient.createAlert(source = NOMIS, request = request)
+    val alert = webTestClient.createAlert(prisonNumber, request, NOMIS)
 
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
@@ -483,7 +438,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
           alertId = 1,
           alertUuid = alert.alertUuid,
           alertCode = alertCode,
-          prisonNumber = PRISON_NUMBER,
+          prisonNumber = prisonNumber,
           description = request.description,
           authorisedBy = request.authorisedBy,
           activeFrom = request.activeFrom!!,
@@ -507,9 +462,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should publish alert created event with DPS source`() {
+    val prisonNumber = givenPrisonerExists("C1234PD")
     val request = createAlertRequest()
 
-    val alert = webTestClient.createAlert(source = DPS, request = request)
+    val alert = webTestClient.createAlert(prisonNumber, request)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
@@ -529,7 +485,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         ALERT_CREATED.description,
         event.occurredAt,
         "http://localhost:8080/alerts/${alert.alertUuid}",
-        PersonReference.withPrisonNumber(PRISON_NUMBER),
+        PersonReference.withPrisonNumber(prisonNumber),
       ),
     )
     assertThat(
@@ -539,9 +495,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should publish alert created event with NOMIS source`() {
+    val prisonNumber = givenPrisonerExists("C1234PN")
     val request = createAlertRequest()
 
-    val alert = webTestClient.createAlert(source = NOMIS, request = request)
+    val alert = webTestClient.createAlert(prisonNumber, request, NOMIS)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val event = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
@@ -561,7 +518,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         ALERT_CREATED.description,
         event.occurredAt,
         "http://localhost:8080/alerts/${alert.alertUuid}",
-        PersonReference.withPrisonNumber(PRISON_NUMBER),
+        PersonReference.withPrisonNumber(prisonNumber),
       ),
     )
     assertThat(
@@ -571,14 +528,15 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should return updated alert list after alert creation instead of returning cached list`() {
-    webTestClient.createAlert(source = DPS, request = createAlertRequest(alertCode = ALERT_CODE_VICTIM))
-    with(getActivePrisonerAlerts()) {
+    val prisonNumber = givenPrisonerExists("C1234MA")
+    webTestClient.createAlert(prisonNumber, createAlertRequest(alertCode = ALERT_CODE_VICTIM))
+    with(getActivePrisonerAlerts(prisonNumber)) {
       assertThat(size).isEqualTo(1)
       assertThat(map { it.alertCode.code }).containsOnly(ALERT_CODE_VICTIM)
     }
 
-    webTestClient.createAlert(source = DPS, request = createAlertRequest(alertCode = ALERT_CODE_SOCIAL_CARE))
-    with(getActivePrisonerAlerts()) {
+    webTestClient.createAlert(prisonNumber, createAlertRequest(alertCode = ALERT_CODE_SOCIAL_CARE))
+    with(getActivePrisonerAlerts(prisonNumber)) {
       assertThat(size).isEqualTo(2)
       assertThat(map { it.alertCode.code }).containsOnly(ALERT_CODE_VICTIM, ALERT_CODE_SOCIAL_CARE)
     }
@@ -589,12 +547,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `409 conflict - source dps - active alert with code already exists for prison number - alert active from today with no active to date`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_HIDDEN_DISABILITY)
 
-    val response = webTestClient.createAlertResponseSpec(request = request)
-      .expectStatus().isEqualTo(HttpStatus.CONFLICT)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+    val response = webTestClient.createAlertResponseSpec(PRISON_NUMBER, request).errorResponse(CONFLICT)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(409)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Duplicate failure: Alert already exists")
@@ -608,7 +563,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `201 created - source nomis - active alert with code already exists for prison number - alert active from today with no active to date`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_HIDDEN_DISABILITY)
 
-    val alert = webTestClient.createAlert(NOMIS, request)
+    val alert = webTestClient.createAlert(PRISON_NUMBER, request, NOMIS)
 
     assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
   }
@@ -618,12 +573,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `400 bad request - active alert with code already exists for prison number - alert active from today with no active to date - alert code inactive`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
 
-    val response = webTestClient.createAlertResponseSpec(request = request)
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+    val response = webTestClient.createAlertResponseSpec(request = request).errorResponse(BAD_REQUEST)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Alert code is inactive")
@@ -637,12 +589,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `409 conflict - source dps - active alert with code already exists for prison number - alert active from tomorrow with no active to date`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_SOCIAL_CARE)
 
-    val response = webTestClient.createAlertResponseSpec(request = request)
-      .expectStatus().isEqualTo(HttpStatus.CONFLICT)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+    val response = webTestClient.createAlertResponseSpec(PRISON_NUMBER, request).errorResponse(CONFLICT)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(409)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Duplicate failure: Alert already exists")
@@ -656,7 +605,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `201 created - source nomis - active alert with code already exists for prison number - alert active from tomorrow with no active to date`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_SOCIAL_CARE)
 
-    val alert = webTestClient.createAlert(NOMIS, request)
+    val alert = webTestClient.createAlert(PRISON_NUMBER, request, NOMIS)
 
     assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
   }
@@ -666,7 +615,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   fun `201 created - alert with code already exists for inactive alert`() {
     val request = createAlertRequest(alertCode = ALERT_CODE_VICTIM)
 
-    val alert = webTestClient.createAlert(request = request)
+    val alert = webTestClient.createAlert(PRISON_NUMBER, request)
 
     assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
   }
@@ -680,9 +629,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
   )
 
   private fun WebTestClient.createAlertResponseSpec(
-    source: Source = DPS,
-    request: CreateAlert,
     prisonNumber: String = PRISON_NUMBER,
+    request: CreateAlert,
+    source: Source = DPS,
   ) = post()
     .uri("/prisoners/$prisonNumber/alerts")
     .bodyValue(request)
@@ -692,18 +641,16 @@ class CreateAlertIntTest : IntegrationTestBase() {
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
   fun WebTestClient.createAlert(
-    source: Source = DPS,
+    prisonNumber: String,
     request: CreateAlert,
-  ) = createAlertResponseSpec(source, request)
-    .expectStatus().isCreated
-    .expectBody(AlertModel::class.java)
-    .returnResult().responseBody!!
+    source: Source = DPS,
+  ) = createAlertResponseSpec(prisonNumber, request, source).successResponse<AlertModel>(HttpStatus.CREATED)
 
-  private fun getActivePrisonerAlerts() =
+  private fun getActivePrisonerAlerts(prisonNumber: String) =
     webTestClient.get()
       .uri { builder ->
         builder
-          .path("/prisoners/$PRISON_NUMBER/alerts")
+          .path("/prisoners/$prisonNumber/alerts")
           .queryParam("isActive", true)
           .build()
       }

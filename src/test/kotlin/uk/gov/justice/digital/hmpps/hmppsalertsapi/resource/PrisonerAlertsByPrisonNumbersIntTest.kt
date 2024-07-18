@@ -7,7 +7,6 @@ import org.springframework.test.context.jdbc.Sql
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
-import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.util.UUID
 
 class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
@@ -36,12 +35,9 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
     val response = webTestClient.get()
       .uri("/prisoners/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Required request parameter 'prisonNumbers' for method parameter type Collection is not present")

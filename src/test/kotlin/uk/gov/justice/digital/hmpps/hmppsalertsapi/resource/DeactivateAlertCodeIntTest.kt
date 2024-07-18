@@ -7,7 +7,7 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.http.MediaType
+import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.ReferenceDataAdditionalInformation
@@ -19,7 +19,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_VULNERABILITY
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
-import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -66,12 +65,9 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
     val response = webTestClient.patch()
       .uri("/alert-codes/VI/deactivate")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage)
@@ -88,12 +84,9 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
       .uri("/alert-codes/VI/deactivate")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: User details for supplied username not found")
@@ -108,12 +101,9 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
       .uri("/alert-codes/ALK/deactivate")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext())
-      .exchange()
-      .expectStatus().isNotFound
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(NOT_FOUND)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(404)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Not found: Alert code not found")
@@ -168,9 +158,5 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
     patch()
       .uri("/alert-codes/$alertCode/deactivate")
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = true))
-      .exchange()
-      .expectStatus().isOk
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertCode::class.java)
-      .returnResult().responseBody!!
+      .exchange().successResponse()
 }

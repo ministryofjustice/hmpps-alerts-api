@@ -8,6 +8,10 @@ import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatus.BAD_GATEWAY
+import org.springframework.http.HttpStatus.CONFLICT
+import org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED
+import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
@@ -21,7 +25,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THR
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AT_VULNERABILITY
-import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -71,12 +75,9 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .uri("/alert-codes")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers { it.set(SOURCE, "INVALID") }
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage)
@@ -92,12 +93,9 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("/alert-codes")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage)
@@ -115,12 +113,9 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .bodyValue(createAlertCodeRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(username = USER_NOT_FOUND))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage)
@@ -137,12 +132,9 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .uri("/alert-codes")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse()
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage)
@@ -158,12 +150,9 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     val response = webTestClient.patch()
       .uri("/alert-codes")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange()
-      .expectStatus().isEqualTo(HttpStatus.METHOD_NOT_ALLOWED)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(METHOD_NOT_ALLOWED)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(405)
       assertThat(errorCode).isNull()
       assertThat(userMessage)
@@ -180,16 +169,12 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .bodyValue(createAlertCodeRequest())
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(username = USER_THROW_EXCEPTION))
-      .exchange()
-      .expectStatus().isEqualTo(HttpStatus.BAD_GATEWAY)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+      .exchange().errorResponse(BAD_GATEWAY)
 
-    with(response!!) {
+    with(response) {
       assertThat(status).isEqualTo(502)
       assertThat(errorCode).isNull()
-      assertThat(userMessage)
-        .isEqualTo("Downstream service exception: Get user details request failed")
+      assertThat(userMessage).isEqualTo("Downstream service exception: Get user details request failed")
       assertThat(developerMessage).isEqualTo("Get user details request failed")
       assertThat(moreInfo).isNull()
     }
@@ -202,16 +187,18 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     val alert = webTestClient.post()
       .uri("/alert-codes")
       .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = true))
+      .headers(
+        setAuthorisation(
+          user = TEST_USER,
+          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+          isUserToken = true,
+        ),
+      )
       .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertCode::class.java)
-      .returnResult().responseBody!!
+      .successResponse<AlertCode>(HttpStatus.CREATED)
 
     with(alert) {
-      assertThat(createdBy)
-        .isEqualTo(TEST_USER)
+      assertThat(createdBy).isEqualTo(TEST_USER)
     }
   }
 
@@ -222,16 +209,18 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     val alert = webTestClient.post()
       .uri("/alert-codes")
       .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = false))
+      .headers(
+        setAuthorisation(
+          user = TEST_USER,
+          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+          isUserToken = false,
+        ),
+      )
       .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertCode::class.java)
-      .returnResult().responseBody!!
+      .successResponse<AlertCode>(HttpStatus.CREATED)
 
     with(alert) {
-      assertThat(createdBy)
-        .isEqualTo(TEST_USER)
+      assertThat(createdBy).isEqualTo(TEST_USER)
     }
   }
 
@@ -245,14 +234,10 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
       .headers(setAlertRequestContext())
       .exchange()
-      .expectStatus().isCreated
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(AlertCode::class.java)
-      .returnResult().responseBody!!
+      .successResponse<AlertCode>(HttpStatus.CREATED)
 
     with(alert) {
-      assertThat(createdBy)
-        .isEqualTo(TEST_USER)
+      assertThat(createdBy).isEqualTo(TEST_USER)
     }
   }
 
@@ -268,20 +253,15 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
 
   @Test
   fun `409 conflict - alert code exists`() {
-    val request = createAlertCodeRequest()
-    webTestClient.createAlertCode(request)
-    val response = webTestClient.createAlertCodeResponseSpec(request = request)
-      .expectStatus().isEqualTo(HttpStatus.CONFLICT)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
+    val alertCode = givenNewAlertCode(alertCode("EXIST"))
+    val request = createAlertCodeRequest(alertCode.code)
 
-    with(response!!) {
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse(CONFLICT)
+    with(response) {
       assertThat(status).isEqualTo(409)
       assertThat(errorCode).isNull()
-      assertThat(userMessage)
-        .isEqualTo("Duplicate failure: Alert code already exists")
-      assertThat(developerMessage)
-        .isEqualTo("Alert code already exists with identifier ${request.code}")
+      assertThat(userMessage).isEqualTo("Duplicate failure: Alert code already exists")
+      assertThat(developerMessage).isEqualTo("Alert code already exists with identifier ${request.code}")
       assertThat(moreInfo).isNull()
     }
   }
@@ -289,11 +269,8 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - code too long`() {
     val request = CreateAlertCodeRequest("1234567890123", "desc", AT_VULNERABILITY.code)
-    val response = webTestClient.createAlertCodeResponseSpec(request = request)
-      .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-    with(response!!) {
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse()
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
       assertThat(developerMessage)
@@ -304,11 +281,8 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - parent type not found`() {
     val request = CreateAlertCodeRequest("AA", "desc", "ABCDE")
-    val response = webTestClient.createAlertCodeResponseSpec(request = request)
-      .expectStatus().isEqualTo(HttpStatus.NOT_FOUND)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-    with(response!!) {
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse(NOT_FOUND)
+    with(response) {
       assertThat(status).isEqualTo(404)
       assertThat(userMessage).isEqualTo("Not found: Alert type not found")
       assertThat(developerMessage).isEqualTo("Alert type not found with identifier ABCDE")
@@ -318,11 +292,8 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - no parent type`() {
     val request = CreateAlertCodeRequest("AA", "desc", "")
-    val response = webTestClient.createAlertCodeResponseSpec(request = request)
-      .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-    with(response!!) {
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse()
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
       assertThat(developerMessage)
@@ -333,11 +304,8 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - parent type too long`() {
     val request = CreateAlertCodeRequest("AA", "desc", "ABCDEFGHJKLMN")
-    val response = webTestClient.createAlertCodeResponseSpec(request = request)
-      .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-    with(response!!) {
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse()
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
       assertThat(developerMessage)
@@ -349,11 +317,8 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   fun `validation - description too long`() {
     val request =
       CreateAlertCodeRequest("AB", "descdescdescdescdescdescdescdescdescdescd", AT_VULNERABILITY.code)
-    val response = webTestClient.createAlertCodeResponseSpec(request = request)
-      .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-    with(response!!) {
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse()
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Description must be between 1 & 40 characters")
       assertThat(developerMessage)
@@ -364,11 +329,8 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - empty code`() {
     val request = CreateAlertCodeRequest("", "desc", AT_VULNERABILITY.code)
-    val response = webTestClient.createAlertCodeResponseSpec(request = request)
-      .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-    with(response!!) {
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse()
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Code must be between 1 & 12 characters")
       assertThat(developerMessage)
@@ -379,11 +341,8 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   @Test
   fun `validation - empty description`() {
     val request = CreateAlertCodeRequest("AB", "", AT_VULNERABILITY.code)
-    val response = webTestClient.createAlertCodeResponseSpec(request = request)
-      .expectStatus().isEqualTo(HttpStatus.BAD_REQUEST)
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-    with(response!!) {
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse()
+    with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("Validation failure(s): Description must be between 1 & 40 characters")
       assertThat(developerMessage)
@@ -419,13 +378,19 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun createAlertCodeRequest() = CreateAlertCodeRequest("CO", "Description", AT_VULNERABILITY.code)
+  private fun createAlertCodeRequest(code: String = "CO", description: String = "Description") =
+    CreateAlertCodeRequest(code, description, AT_VULNERABILITY.code)
 
   private fun WebTestClient.createAlertCodeResponseSpec(request: CreateAlertCodeRequest) =
     post()
       .uri("/alert-codes")
       .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
+      .headers(
+        setAuthorisation(
+          user = TEST_USER,
+          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+        ),
+      )
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
