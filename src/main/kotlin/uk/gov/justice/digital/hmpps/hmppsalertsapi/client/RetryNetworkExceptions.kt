@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.client
 
+import io.netty.handler.timeout.TimeoutException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import reactor.util.retry.Retry
@@ -10,7 +11,7 @@ fun <T> Mono<T>.retryNetworkExceptions(): Mono<T> =
   retryWhen(
     Retry.backoff(3, Duration.ofMillis(250))
       .filter {
-        it is IOException || (it is WebClientResponseException && it.statusCode.is5xxServerError)
+        it is IOException || it is TimeoutException || (it is WebClientResponseException && it.statusCode.is5xxServerError)
       }.onRetryExhaustedThrow { _, signal ->
         signal.failure()
       },
