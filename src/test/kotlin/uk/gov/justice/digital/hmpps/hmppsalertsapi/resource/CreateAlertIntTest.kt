@@ -95,22 +95,6 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `400 bad request - username not supplied`() {
-    val response = webTestClient.post()
-      .uri("/prisoners/$PRISON_NUMBER/alerts")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange().errorResponse(BAD_REQUEST)
-
-    with(response) {
-      assertThat(status).isEqualTo(400)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(developerMessage).isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(moreInfo).isNull()
-    }
-  }
-
-  @Test
   fun `400 bad request - username not found`() {
     val response = webTestClient.post()
       .uri("/prisoners/$PRISON_NUMBER/alerts")
@@ -252,22 +236,6 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `should populate created by using user_name claim`() {
-    val request = createAlertRequest()
-
-    val alert = webTestClient.post()
-      .uri("prisoners/$PRISON_NUMBER/alerts")
-      .bodyValue(request)
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__RW), isUserToken = true))
-      .exchange().successResponse<AlertModel>(HttpStatus.CREATED)
-
-    with(alert) {
-      assertThat(createdBy).isEqualTo(TEST_USER)
-      assertThat(createdByDisplayName).isEqualTo(TEST_USER_NAME)
-    }
-  }
-
-  @Test
   fun `should populate created by using username claim`() {
     val request = createAlertRequest()
 
@@ -338,15 +306,15 @@ class CreateAlertIntTest : IntegrationTestBase() {
       .exchange().successResponse<AlertModel>(HttpStatus.CREATED)
 
     with(alert) {
-      assertThat(createdBy).isEqualTo("NOMIS")
-      assertThat(createdByDisplayName).isEqualTo("Nomis")
+      assertThat(createdBy).isEqualTo(NOMIS_SYS_USER)
+      assertThat(createdByDisplayName).isEqualTo(NOMIS_SYS_USER_DISPLAY_NAME)
     }
 
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
 
     with(alertEntity.auditEvents()[0]) {
-      assertThat(actionedBy).isEqualTo("NOMIS")
-      assertThat(actionedByDisplayName).isEqualTo("Nomis")
+      assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
+      assertThat(actionedByDisplayName).isEqualTo(NOMIS_SYS_USER_DISPLAY_NAME)
       assertThat(source).isEqualTo(NOMIS)
       assertThat(activeCaseLoadId).isNull()
     }

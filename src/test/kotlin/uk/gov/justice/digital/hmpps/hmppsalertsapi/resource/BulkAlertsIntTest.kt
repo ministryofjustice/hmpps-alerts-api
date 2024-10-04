@@ -20,6 +20,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.manageusers.ManageUsersClientTest.Companion.server
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.alertCodeDescriptionMap
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
@@ -226,6 +227,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `502 bad gateway - get user details request failed`() {
+    server.stubGetUserDetails()
     val response = webTestClient.post()
       .uri("/bulk-alerts")
       .bodyValue(bulkAlertRequest(PRISON_NUMBER))

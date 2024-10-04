@@ -90,24 +90,6 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `400 bad request - username not supplied`() {
-    val response = webTestClient.post()
-      .uri("/alert-codes")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange().errorResponse(BAD_REQUEST)
-
-    with(response) {
-      assertThat(status).isEqualTo(400)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage)
-        .isEqualTo("Validation failure: Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(developerMessage)
-        .isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(moreInfo).isNull()
-    }
-  }
-
-  @Test
   fun `400 bad request - username not found`() {
     val response = webTestClient.post()
       .uri("/alert-codes")
@@ -178,50 +160,6 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
       assertThat(userMessage).isEqualTo("Downstream service exception: Get user details request failed")
       assertThat(developerMessage).isEqualTo("Get user details request failed")
       assertThat(moreInfo).isNull()
-    }
-  }
-
-  @Test
-  fun `should populate created by using user_name claim`() {
-    val request = createAlertCodeRequest()
-
-    val alert = webTestClient.post()
-      .uri("/alert-codes")
-      .bodyValue(request)
-      .headers(
-        setAuthorisation(
-          user = TEST_USER,
-          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
-          isUserToken = true,
-        ),
-      )
-      .exchange()
-      .successResponse<AlertCode>(HttpStatus.CREATED)
-
-    with(alert) {
-      assertThat(createdBy).isEqualTo(TEST_USER)
-    }
-  }
-
-  @Test
-  fun `should populate created by using username claim`() {
-    val request = createAlertCodeRequest()
-
-    val alert = webTestClient.post()
-      .uri("/alert-codes")
-      .bodyValue(request)
-      .headers(
-        setAuthorisation(
-          user = TEST_USER,
-          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
-          isUserToken = false,
-        ),
-      )
-      .exchange()
-      .successResponse<AlertCode>(HttpStatus.CREATED)
-
-    with(alert) {
-      assertThat(createdBy).isEqualTo(TEST_USER)
     }
   }
 

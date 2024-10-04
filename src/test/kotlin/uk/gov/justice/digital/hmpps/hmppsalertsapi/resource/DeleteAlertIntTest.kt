@@ -87,24 +87,6 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `400 bad request - username not supplied`() {
-    val response = webTestClient.delete()
-      .uri("/alerts/$uuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange().errorResponse(BAD_REQUEST)
-
-    with(response) {
-      assertThat(status).isEqualTo(400)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage)
-        .isEqualTo("Validation failure: Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(developerMessage)
-        .isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(moreInfo).isNull()
-    }
-  }
-
-  @Test
   fun `400 bad request - username not found`() {
     val response = webTestClient.delete()
       .uri("/alerts/$uuid")
@@ -193,7 +175,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
     webTestClient.delete()
       .uri("/alerts/${alert.alertUuid}")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .headers(setAlertRequestContext(source = NOMIS, username = NOMIS_SYS_USER))
+      .headers(setAlertRequestContext(source = NOMIS, username = null))
       .exchange()
       .expectStatus().isNoContent
       .expectBody().isEmpty
@@ -216,7 +198,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
 
     webTestClient.delete()
       .uri("/alerts/${alert.alertUuid}")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW), isUserToken = false))
       .header(SOURCE, NOMIS.name)
       .exchange()
       .expectStatus().isNoContent
@@ -225,8 +207,8 @@ class DeleteAlertIntTest : IntegrationTestBase() {
     val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
 
     with(alertEntity.auditEvents()[0]) {
-      assertThat(actionedBy).isEqualTo("NOMIS")
-      assertThat(actionedByDisplayName).isEqualTo("Nomis")
+      assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
+      assertThat(actionedByDisplayName).isEqualTo(NOMIS_SYS_USER_DISPLAY_NAME)
       assertThat(source).isEqualTo(NOMIS)
       assertThat(activeCaseLoadId).isNull()
     }

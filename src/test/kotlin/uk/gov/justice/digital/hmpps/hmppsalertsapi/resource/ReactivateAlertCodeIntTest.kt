@@ -53,24 +53,6 @@ class ReactivateAlertCodeIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `400 bad request - username not supplied`() {
-    val response = webTestClient.patch()
-      .uri("/alert-codes/VI/reactivate")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
-      .exchange().errorResponse(BAD_REQUEST)
-
-    with(response) {
-      assertThat(status).isEqualTo(400)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage)
-        .isEqualTo("Validation failure: Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(developerMessage)
-        .isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(moreInfo).isNull()
-    }
-  }
-
-  @Test
   fun `400 bad request - username not found`() {
     val response = webTestClient.patch()
       .uri("/alert-codes/VI/reactivate")

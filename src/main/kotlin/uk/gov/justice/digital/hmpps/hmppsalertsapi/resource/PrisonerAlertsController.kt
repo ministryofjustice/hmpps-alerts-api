@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
-import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Page
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
@@ -197,14 +195,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
     prisonNumber: String,
     @Valid
     @RequestBody
-    @Parameter(
-      description = "The alert data to use to create an alert in the service",
-      required = true,
-    )
+    @Parameter(description = "The alert data to use to create an alert in the service", required = true)
     request: CreateAlert,
-    httpRequest: HttpServletRequest,
-  ): Alert = alertService.createAlert(prisonNumber, request, httpRequest.alertRequestContext())
-
-  private fun HttpServletRequest.alertRequestContext() =
-    getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
+  ): Alert = alertService.createAlert(prisonNumber, request)
 }
