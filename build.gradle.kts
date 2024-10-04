@@ -25,7 +25,7 @@ dependencies {
   implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.8.2")
 
   // AWS
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:4.4.3")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.0.1")
 
   // OpenAPI
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0")
