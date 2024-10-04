@@ -41,7 +41,7 @@ class AlertRequestContextInterceptor(
   override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
     if (arrayOf("POST", "PUT", "PATCH", "DELETE").contains(request.method)) {
       val source = request.getSource()
-      val username = request.getHeader(USERNAME) ?: if (source == NOMIS) null else getUsername()
+      val username = request.getUsername(source)
       val userDetails = getUserDetails(username, source)
       request.setAttribute(
         AlertRequestContext::class.simpleName,
@@ -63,8 +63,8 @@ class AlertRequestContextInterceptor(
     SecurityContextHolder.getContext().authentication as AuthAwareAuthenticationToken?
       ?: throw AccessDeniedException("User is not authenticated")
 
-  private fun getUsername(): String =
-    authentication().name.trim().also {
+  private fun HttpServletRequest.getUsername(source: Source): String? =
+    (getHeader(USERNAME) ?: if (source == NOMIS) null else authentication().name)?.trim()?.also {
       if (it.length > 64) throw ValidationException("Username by must be <= 64 characters")
     }
 

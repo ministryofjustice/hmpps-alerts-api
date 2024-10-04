@@ -179,7 +179,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody!!
-    assertThat(response.developerMessage).contains("User details for supplied username not found")
+    assertThat(response.developerMessage).contains("Username by must be <= 64 characters")
   }
 
   @Test
