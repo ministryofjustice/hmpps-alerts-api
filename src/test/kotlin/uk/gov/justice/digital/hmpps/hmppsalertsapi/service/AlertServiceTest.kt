@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
@@ -10,8 +12,11 @@ import org.mockito.Mock
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.springframework.web.context.request.RequestAttributes
+import org.springframework.web.context.request.RequestContextHolder
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
@@ -37,6 +42,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_VICTIM
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @ExtendWith(MockitoExtension::class)
@@ -62,17 +68,11 @@ class AlertServiceTest {
   @InjectMocks
   lateinit var underTest: AlertService
 
-  private val context = AlertRequestContext(
-    username = TEST_USER,
-    userDisplayName = TEST_USER_NAME,
-    activeCaseLoadId = PRISON_CODE_LEEDS,
-  )
-
   @Test
   fun `Alert code not found`() {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(null)
     val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"), context)
+      underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"))
     }
     assertThat(error.message).isEqualTo("Alert code is invalid")
   }
@@ -82,7 +82,7 @@ class AlertServiceTest {
     whenever(mockAlertCode.isActive()).thenReturn(false)
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(mockAlertCode)
     val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"), context)
+      underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"))
     }
     assertThat(error.message).isEqualTo("Alert code is inactive")
   }
@@ -93,7 +93,7 @@ class AlertServiceTest {
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now(), activeTo = null)))
     val error = assertThrows<AlreadyExistsException> {
-      underTest.createAlert(PRISON_NUMBER, createAlertRequest(), context)
+      underTest.createAlert(PRISON_NUMBER, createAlertRequest())
     }
     assertThat(error.message).isEqualTo("Alert already exists")
   }
@@ -104,7 +104,7 @@ class AlertServiceTest {
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().plusDays(1), activeTo = null)))
     val error = assertThrows<AlreadyExistsException> {
-      underTest.createAlert(PRISON_NUMBER, createAlertRequest(), context)
+      underTest.createAlert(PRISON_NUMBER, createAlertRequest())
     }
     assertThat(error.message).isEqualTo("Alert already exists")
   }
@@ -116,7 +116,7 @@ class AlertServiceTest {
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().minusDays(1), activeTo = LocalDate.now())))
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
-    underTest.createAlert(PRISON_NUMBER, createAlertRequest(), context)
+    underTest.createAlert(PRISON_NUMBER, createAlertRequest())
     verify(alertRepository).save(any<Alert>())
   }
 
@@ -126,9 +126,9 @@ class AlertServiceTest {
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
     val request = createAlertRequest()
-    val result = underTest.createAlert(PRISON_NUMBER, request, context)
+    val result = underTest.createAlert(PRISON_NUMBER, request)
     with(result) {
-      assertThat(createdAt).isEqualTo(context.requestAt)
+      assertThat(createdAt).isCloseTo(context.requestAt, within(2, ChronoUnit.SECONDS))
       assertThat(createdBy).isEqualTo(context.username)
       assertThat(createdByDisplayName).isEqualTo(context.userDisplayName)
     }
@@ -355,4 +355,21 @@ Comment '${updateRequest.appendComment}' was added""",
         activeCaseLoadId = PRISON_CODE_MOORLANDS,
       )
     }
+
+  companion object {
+    private val requestAttributes: RequestAttributes = mock()
+    private val context = AlertRequestContext(
+      username = TEST_USER,
+      userDisplayName = TEST_USER_NAME,
+      activeCaseLoadId = PRISON_CODE_LEEDS,
+    )
+
+    @JvmStatic
+    @BeforeAll
+    fun setup() {
+      RequestContextHolder.setRequestAttributes(requestAttributes)
+      whenever(requestAttributes.getAttribute(AlertRequestContext::class.simpleName!!, 0))
+        .thenReturn(context)
+    }
+  }
 }

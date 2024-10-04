@@ -106,7 +106,7 @@ class HmppsAlertsApiExceptionHandler {
       ),
     )
 
-  @ExceptionHandler(IllegalArgumentException::class, IllegalStateException::class)
+  @ExceptionHandler(IllegalArgumentException::class, IllegalStateException::class, ValidationException::class)
   fun handleIllegalArgumentOrStateException(e: RuntimeException): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(BAD_REQUEST)
     .body(
@@ -121,17 +121,6 @@ class HmppsAlertsApiExceptionHandler {
     is InvalidInputException -> "Details => $name:$value"
     else -> message ?: "${this::class.simpleName}: ${cause?.message ?: ""}"
   }
-
-  @ExceptionHandler(ValidationException::class)
-  fun handleValidationException(e: ValidationException): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(BAD_REQUEST)
-    .body(
-      ErrorResponse(
-        status = BAD_REQUEST,
-        userMessage = "Validation failure: ${e.message}",
-        developerMessage = e.devMessage(),
-      ),
-    )
 
   @ExceptionHandler(HandlerMethodValidationException::class)
   fun handleHandlerMethodValidationException(e: HandlerMethodValidationException): ResponseEntity<ErrorResponse> =
@@ -193,7 +182,7 @@ class HmppsAlertsApiExceptionHandler {
       )
 
   @ExceptionHandler(DownstreamServiceException::class)
-  fun handleException(e: DownstreamServiceException): ResponseEntity<ErrorResponse> = ResponseEntity
+  fun handleDownstreamException(e: DownstreamServiceException): ResponseEntity<ErrorResponse> = ResponseEntity
     .status(BAD_GATEWAY)
     .body(
       ErrorResponse(
@@ -204,15 +193,16 @@ class HmppsAlertsApiExceptionHandler {
     )
 
   @ExceptionHandler(Exception::class)
-  fun handleException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
-    .status(INTERNAL_SERVER_ERROR)
-    .body(
-      ErrorResponse(
-        status = INTERNAL_SERVER_ERROR,
-        userMessage = "Unexpected error: ${e.message}",
-        developerMessage = e.message,
-      ),
-    )
+  fun handleException(e: Exception): ResponseEntity<ErrorResponse> =
+    ResponseEntity
+      .status(INTERNAL_SERVER_ERROR)
+      .body(
+        ErrorResponse(
+          status = INTERNAL_SERVER_ERROR,
+          userMessage = "Unexpected error: ${e.message}",
+          developerMessage = e.message,
+        ),
+      )
 }
 
 class DownstreamServiceException(message: String, cause: Throwable) : Exception(message, cause)

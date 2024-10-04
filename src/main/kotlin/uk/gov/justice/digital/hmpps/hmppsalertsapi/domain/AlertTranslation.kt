@@ -1,14 +1,13 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.domain
 
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Comment
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent as AuditEventModel
@@ -24,32 +23,27 @@ val alertCodeDescriptionMap = mapOf(
 )
 
 fun CreateAlert.toAlertEntity(
+  context: AlertRequestContext,
   prisonNumber: String,
   alertCode: AlertCode,
-  createdAt: LocalDateTime = LocalDateTime.now(),
-  createdBy: String,
-  createdByDisplayName: String,
-  source: Source,
-  activeCaseLoadId: String?,
   prisonCode: String?,
-) =
-  Alert(
-    alertUuid = UUID.randomUUID(),
-    alertCode = alertCode,
-    prisonNumber = prisonNumber,
-    description = alertCodeDescriptionMap[this.alertCode] ?: this.description,
-    authorisedBy = this.authorisedBy,
-    activeFrom = this.activeFrom ?: LocalDate.now(),
-    activeTo = this.activeTo,
-    createdAt = createdAt,
-    prisonCodeWhenCreated = prisonCode,
-  ).create(
-    createdAt = createdAt,
-    createdBy = createdBy,
-    createdByDisplayName = createdByDisplayName,
-    source = source,
-    activeCaseLoadId = activeCaseLoadId,
-  )
+) = Alert(
+  alertUuid = UUID.randomUUID(),
+  alertCode = alertCode,
+  prisonNumber = prisonNumber,
+  description = alertCodeDescriptionMap[this.alertCode] ?: this.description,
+  authorisedBy = this.authorisedBy,
+  activeFrom = this.activeFrom ?: LocalDate.now(),
+  activeTo = this.activeTo,
+  createdAt = context.requestAt,
+  prisonCodeWhenCreated = prisonCode,
+).create(
+  createdAt = context.requestAt,
+  createdBy = context.username,
+  createdByDisplayName = context.userDisplayName,
+  source = context.source,
+  activeCaseLoadId = context.activeCaseLoadId,
+)
 
 fun Alert.toAlertModel(comments: Collection<Comment>? = null, auditEvents: Collection<AuditEvent>? = null): AlertModel {
   val events = auditEvents ?: auditEvents()

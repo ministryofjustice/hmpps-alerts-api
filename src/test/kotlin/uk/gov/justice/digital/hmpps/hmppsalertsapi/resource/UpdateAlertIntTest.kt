@@ -95,27 +95,6 @@ class UpdateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `400 bad request - username not supplied`() {
-    val response = webTestClient.put()
-      .uri("/alerts/$uuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody
-
-    with(response!!) {
-      assertThat(status).isEqualTo(400)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage)
-        .isEqualTo("Validation failure: Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(developerMessage)
-        .isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(moreInfo).isNull()
-    }
-  }
-
-  @Test
   fun `400 bad request - username not found`() {
     val response = webTestClient.put()
       .uri("/alerts/$uuid")
@@ -451,7 +430,7 @@ Comment '$appendComment' was added""",
     val updatedAlert = webTestClient.put()
       .uri("/alerts/${alert.alertUuid}")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .headers(setAlertRequestContext(source = NOMIS, username = NOMIS_SYS_USER))
+      .headers(setAlertRequestContext(source = NOMIS, username = null))
       .bodyValue(updateAlertRequest())
       .exchange()
       .expectStatus().isOk
@@ -489,15 +468,15 @@ Comment '$appendComment' was added""",
       .returnResult().responseBody!!
 
     with(updatedAlert) {
-      assertThat(lastModifiedBy).isEqualTo("NOMIS")
-      assertThat(lastModifiedByDisplayName).isEqualTo("Nomis")
+      assertThat(lastModifiedBy).isEqualTo(NOMIS_SYS_USER)
+      assertThat(lastModifiedByDisplayName).isEqualTo(NOMIS_SYS_USER_DISPLAY_NAME)
     }
 
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
 
     with(alertEntity.auditEvents()[0]) {
-      assertThat(actionedBy).isEqualTo("NOMIS")
-      assertThat(actionedByDisplayName).isEqualTo("Nomis")
+      assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
+      assertThat(actionedByDisplayName).isEqualTo(NOMIS_SYS_USER_DISPLAY_NAME)
       assertThat(source).isEqualTo(NOMIS)
       assertThat(activeCaseLoadId).isNull()
     }

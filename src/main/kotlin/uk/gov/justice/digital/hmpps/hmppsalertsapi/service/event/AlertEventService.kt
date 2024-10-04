@@ -1,8 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service.event
 
 import com.microsoft.applicationinsights.TelemetryClient
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
@@ -17,16 +15,6 @@ class AlertEventService(
 ) {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   fun handleAlertEvent(event: AlertEvent) {
-    if (eventProperties.publish) {
-      val de = event.toDomainEvent(eventProperties.baseUrl)
-      domainEventPublisher.publish(de)
-      telemetryClient.trackEvent(de.eventType, mapOf("prisonNumber" to event.prisonNumber), null)
-    } else {
-      log.trace("{} publishing is disabled", event.type.eventType)
-    }
-  }
-
-  private companion object {
-    private val log: Logger = LoggerFactory.getLogger(this::class.java)
+    domainEventPublisher.publish(event.toDomainEvent(eventProperties.baseUrl))
   }
 }

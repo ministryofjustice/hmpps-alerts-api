@@ -3,10 +3,8 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.service.event
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.EventProperties
@@ -26,7 +24,7 @@ class AlertCodeEventServiceTest {
 
   @Test
   fun `handle alert event - publish enabled`() {
-    val eventProperties = EventProperties(true, baseUrl)
+    val eventProperties = EventProperties(baseUrl)
     val alertCodeEventService = AlertReferenceDataEventService(eventProperties, telemetryClient, domainEventPublisher)
     val alertEvent = AlertCodeCreatedEvent(
       ALERT_CODE_VICTIM,
@@ -49,19 +47,5 @@ class AlertCodeEventServiceTest {
         detailUrl = "$baseUrl/alert-codes/${ALERT_CODE_VICTIM}",
       ),
     )
-  }
-
-  @Test
-  fun `handle alert event - publish disabled`() {
-    val eventProperties = EventProperties(false, baseUrl)
-    val alertCodeEventService = AlertReferenceDataEventService(eventProperties, telemetryClient, domainEventPublisher)
-    val alertEvent = AlertCodeCreatedEvent(
-      ALERT_CODE_VICTIM,
-      LocalDateTime.now(),
-    )
-
-    alertCodeEventService.handleAlertEvent(alertEvent)
-
-    verify(domainEventPublisher, never()).publish(any<AlertDomainEvent<ReferenceDataAdditionalInformation>>())
   }
 }

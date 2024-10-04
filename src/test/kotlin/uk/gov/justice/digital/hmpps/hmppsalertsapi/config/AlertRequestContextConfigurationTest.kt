@@ -20,11 +20,12 @@ import org.springframework.security.core.context.SecurityContextHolder
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER_DISPLAY_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_MOORLANDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND_DISPLAY_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
@@ -49,7 +50,7 @@ class AlertRequestContextConfigurationTest {
 
   @Test
   fun `uses now for request at`() {
-    setSecurityContext(mapOf("user_name" to TEST_USER))
+    setSecurityContext(mapOf("subject" to TEST_USER))
 
     interceptor.preHandle(req, res, "null")
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
@@ -66,7 +67,7 @@ class AlertRequestContextConfigurationTest {
 
   @Test
   fun `uses DPS as default value for source`() {
-    setSecurityContext(mapOf("user_name" to TEST_USER))
+    setSecurityContext(mapOf("subject" to TEST_USER))
 
     interceptor.preHandle(req, res, "null")
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
@@ -78,7 +79,7 @@ class AlertRequestContextConfigurationTest {
   @MethodSource("sourceParameters")
   fun `parses source header as value for source`(sourceValue: String, expectedSource: Source) {
     req.addHeader(SOURCE, sourceValue)
-    setSecurityContext(mapOf("user_name" to TEST_USER))
+    setSecurityContext(mapOf("subject" to TEST_USER))
 
     interceptor.preHandle(req, res, "null")
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
@@ -102,234 +103,9 @@ class AlertRequestContextConfigurationTest {
   }
 
   @Test
-  fun `throws ValidationException when username is not supplied`() {
+  fun `accepts 64 character username from Username header`() {
     setSecurityContext(emptyMap())
-    val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-  }
-
-  @Test
-  fun `throws ValidationException when username from user_name claim is empty string`() {
-    setSecurityContext(mapOf("user_name" to ""))
-    val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-  }
-
-  @Test
-  fun `throws ValidationException when trimmed username from user_name claim is empty string`() {
-    setSecurityContext(mapOf("user_name" to "   "))
-    val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-  }
-
-  @Test
-  fun `throws ValidationException when username from user_name claim is greater than 32 characters`() {
-    setSecurityContext(mapOf("user_name" to "a".repeat(33)))
-    val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("Created by must be <= 32 characters")
-  }
-
-  @Test
-  fun `accepts 32 character username from user_name claim`() {
-    val username = "a".repeat(32)
-    setSecurityContext(mapOf("user_name" to username))
-    whenever(userService.getUserDetails(username)).thenReturn(userDetailsDto(username))
-
-    interceptor.preHandle(req, res, "null")
-    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
-
-    assertThat(context.username).isEqualTo(username)
-    assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
-  }
-
-  @Test
-  fun `throws ValidationException when source is DPS and username from user_name claim is not found`() {
-    req.addHeader(SOURCE, DPS.name)
-    setSecurityContext(mapOf("user_name" to USER_NOT_FOUND))
-    val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("User details for supplied username not found")
-  }
-
-  @Test
-  fun `uses username from user_name claim as display name when source is NOMIS and username is not found`() {
-    req.addHeader(SOURCE, NOMIS.name)
-    setSecurityContext(mapOf("user_name" to USER_NOT_FOUND))
-
-    interceptor.preHandle(req, res, "null")
-    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
-
-    assertThat(context.username).isEqualTo(USER_NOT_FOUND)
-    assertThat(context.userDisplayName).isEqualTo(USER_NOT_FOUND_DISPLAY_NAME)
-  }
-
-  @Test
-  fun `does not set active case load id when source is NOMIS and username from user_name claim is not found`() {
-    req.addHeader(SOURCE, NOMIS.name)
-    setSecurityContext(mapOf("user_name" to USER_NOT_FOUND))
-
-    interceptor.preHandle(req, res, "null")
-    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
-
-    assertThat(context.activeCaseLoadId).isNull()
-  }
-
-  @Test
-  fun `takes username from user_name claim`() {
-    setSecurityContext(mapOf("user_name" to TEST_USER))
-
-    interceptor.preHandle(req, res, "null")
-    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
-
-    assertThat(context.username).isEqualTo(TEST_USER)
-    assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
-  }
-
-  @Test
-  fun `trims username from user_name claim`() {
-    setSecurityContext(mapOf("user_name" to " $TEST_USER  "))
-
-    interceptor.preHandle(req, res, "null")
-    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
-
-    assertThat(context.username).isEqualTo(TEST_USER)
-    assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
-  }
-
-  @Test
-  fun `takes active case load id from user associated with user_name claim`() {
-    setSecurityContext(mapOf("user_name" to TEST_USER))
-
-    interceptor.preHandle(req, res, "null")
-    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
-
-    assertThat(context.activeCaseLoadId).isEqualTo(PRISON_CODE_MOORLANDS)
-  }
-
-  @Test
-  fun `throws ValidationException when username from username claim is empty string`() {
-    setSecurityContext(mapOf("username" to ""))
-    val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-  }
-
-  @Test
-  fun `throws ValidationException when trimmed username from username claim is empty string`() {
-    setSecurityContext(mapOf("username" to "   "))
-    val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-  }
-
-  @Test
-  fun `throws ValidationException when username from username claim is greater than 32 characters`() {
-    setSecurityContext(mapOf("username" to "a".repeat(33)))
-    val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("Created by must be <= 32 characters")
-  }
-
-  @Test
-  fun `accepts 32 character username from username claim`() {
-    val username = "a".repeat(32)
-    setSecurityContext(mapOf("username" to username))
-    whenever(userService.getUserDetails(username)).thenReturn(userDetailsDto(username))
-
-    interceptor.preHandle(req, res, "null")
-    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
-
-    assertThat(context.username).isEqualTo(username)
-    assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
-  }
-
-  @Test
-  fun `throws ValidationException when source is DPS and username from username claim is not found`() {
-    req.addHeader(SOURCE, DPS.name)
-    setSecurityContext(mapOf("username" to USER_NOT_FOUND))
-    val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("User details for supplied username not found")
-  }
-
-  @Test
-  fun `uses username from username claim as display name when source is NOMIS and username is not found`() {
-    req.addHeader(SOURCE, NOMIS.name)
-    setSecurityContext(mapOf("username" to USER_NOT_FOUND))
-
-    interceptor.preHandle(req, res, "null")
-    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
-
-    assertThat(context.username).isEqualTo(USER_NOT_FOUND)
-    assertThat(context.userDisplayName).isEqualTo(USER_NOT_FOUND_DISPLAY_NAME)
-  }
-
-  @Test
-  fun `does not set active case load id when source is NOMIS and username from username claim is not found`() {
-    req.addHeader(SOURCE, NOMIS.name)
-    setSecurityContext(mapOf("username" to USER_NOT_FOUND))
-
-    interceptor.preHandle(req, res, "null")
-    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
-
-    assertThat(context.activeCaseLoadId).isNull()
-  }
-
-  @Test
-  fun `takes username from username claim`() {
-    setSecurityContext(mapOf("username" to TEST_USER))
-
-    interceptor.preHandle(req, res, "null")
-    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
-
-    assertThat(context.username).isEqualTo(TEST_USER)
-    assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
-  }
-
-  @Test
-  fun `trims username from username claim`() {
-    setSecurityContext(mapOf("username" to " $TEST_USER  "))
-
-    interceptor.preHandle(req, res, "null")
-    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
-
-    assertThat(context.username).isEqualTo(TEST_USER)
-    assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
-  }
-
-  @Test
-  fun `takes active case load id from user associated with username claim`() {
-    setSecurityContext(mapOf("username" to TEST_USER))
-
-    interceptor.preHandle(req, res, "null")
-    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
-
-    assertThat(context.activeCaseLoadId).isEqualTo(PRISON_CODE_MOORLANDS)
-  }
-
-  @Test
-  fun `throws ValidationException when username from Username header is empty string`() {
-    setSecurityContext(emptyMap())
-    req.addHeader(USERNAME, "")
-    val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-  }
-
-  @Test
-  fun `throws ValidationException when trimmed username from Username header is empty string`() {
-    setSecurityContext(emptyMap())
-    req.addHeader(USERNAME, "   ")
-    val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-  }
-
-  @Test
-  fun `throws ValidationException when username from Username header is greater than 32 characters`() {
-    setSecurityContext(emptyMap())
-    req.addHeader(USERNAME, "a".repeat(33))
-    val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
-    assertThat(exception.message).isEqualTo("Created by must be <= 32 characters")
-  }
-
-  @Test
-  fun `accepts 32 character username from Username header`() {
-    setSecurityContext(emptyMap())
-    val username = "a".repeat(32)
+    val username = "a".repeat(64)
     req.addHeader(USERNAME, username)
     whenever(userService.getUserDetails(username)).thenReturn(userDetailsDto(username))
 
@@ -358,8 +134,8 @@ class AlertRequestContextConfigurationTest {
     interceptor.preHandle(req, res, "null")
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
 
-    assertThat(context.username).isEqualTo(USER_NOT_FOUND)
-    assertThat(context.userDisplayName).isEqualTo(USER_NOT_FOUND_DISPLAY_NAME)
+    assertThat(context.username).isEqualTo(NOMIS_SYS_USER)
+    assertThat(context.userDisplayName).isEqualTo(NOMIS_SYS_USER_DISPLAY_NAME)
   }
 
   @Test
@@ -387,18 +163,6 @@ class AlertRequestContextConfigurationTest {
   }
 
   @Test
-  fun `trims username from Username header`() {
-    setSecurityContext(emptyMap())
-    req.addHeader(USERNAME, " $TEST_USER  ")
-
-    interceptor.preHandle(req, res, "null")
-    val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
-
-    assertThat(context.username).isEqualTo(TEST_USER)
-    assertThat(context.userDisplayName).isEqualTo(TEST_USER_NAME)
-  }
-
-  @Test
   fun `takes active case load id from user associated with Username header`() {
     setSecurityContext(emptyMap())
     req.addHeader(USERNAME, TEST_USER)
@@ -412,7 +176,7 @@ class AlertRequestContextConfigurationTest {
   @ParameterizedTest
   @ValueSource(strings = ["POST", "PUT", "DELETE"])
   fun `modifying request methods populates context`(method: String) {
-    setSecurityContext(mapOf("user_name" to TEST_USER))
+    setSecurityContext(mapOf("subject" to TEST_USER))
     req.method = method
 
     val result = interceptor.preHandle(req, res, "null")
@@ -442,8 +206,8 @@ class AlertRequestContextConfigurationTest {
     interceptor.preHandle(req, res, "null")
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
 
-    assertThat(context.username).isEqualTo("NOMIS")
-    assertThat(context.userDisplayName).isEqualTo("Nomis")
+    assertThat(context.username).isEqualTo(NOMIS_SYS_USER)
+    assertThat(context.userDisplayName).isEqualTo(NOMIS_SYS_USER_DISPLAY_NAME)
   }
 
   @Test
@@ -458,8 +222,8 @@ class AlertRequestContextConfigurationTest {
   }
 
   private fun setSecurityContext(claims: Map<String, Any>) =
-    mock<AuthAwareAuthenticationToken> { on { tokenAttributes } doReturn claims }.also {
-        token ->
+    mock<AuthAwareAuthenticationToken> { on { tokenAttributes } doReturn claims }.also { token ->
       SecurityContextHolder.setContext(mock { on { authentication } doReturn token })
+      claims["subject"]?.also { whenever(token.name) doReturn (it as String) }
     }
 }

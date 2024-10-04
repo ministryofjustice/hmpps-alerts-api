@@ -82,22 +82,6 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `400 bad request - username not supplied`() {
-    val response = webTestClient.post()
-      .uri("/alert-types")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange().errorResponse(BAD_REQUEST)
-
-    with(response) {
-      assertThat(status).isEqualTo(400)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(developerMessage).isEqualTo("Could not find non empty username from user_name or username token claims or Username header")
-      assertThat(moreInfo).isNull()
-    }
-  }
-
-  @Test
   fun `400 bad request - username not found`() {
     val response = webTestClient.post()
       .uri("/alert-types")
@@ -163,27 +147,6 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
       assertThat(userMessage).isEqualTo("Downstream service exception: Get user details request failed")
       assertThat(developerMessage).isEqualTo("Get user details request failed")
       assertThat(moreInfo).isNull()
-    }
-  }
-
-  @Test
-  fun `should populate created by using user_name claim`() {
-    val request = createAlertTypeRequest()
-
-    val alert = webTestClient.post()
-      .uri("/alert-types")
-      .bodyValue(request)
-      .headers(
-        setAuthorisation(
-          user = TEST_USER,
-          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
-          isUserToken = true,
-        ),
-      )
-      .exchange().successResponse<AlertType>(HttpStatus.CREATED)
-
-    with(alert) {
-      assertThat(createdBy).isEqualTo(TEST_USER)
     }
   }
 
