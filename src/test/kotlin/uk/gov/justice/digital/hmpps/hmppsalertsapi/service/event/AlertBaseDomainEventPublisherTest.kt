@@ -42,7 +42,6 @@ class AlertBaseDomainEventPublisherTest {
     whenever(domainEvent.eventType).thenReturn("some.event.type")
     whenever(domainEventsSnsClient.publish(any<PublishRequest>())).thenThrow(RuntimeException("Failed to publish"))
 
-    assertThrows<RuntimeException> { domainEventPublisher.publish(domainEvent) }
     val ex = assertThrows<RuntimeException> { domainEventPublisher.publish(domainEvent) }
     assertThat(ex.message).isEqualTo("Failed to publish")
   }
