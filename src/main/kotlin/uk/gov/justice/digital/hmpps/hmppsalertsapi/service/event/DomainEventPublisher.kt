@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.service.event
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
-import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.DomainEvent
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.publish
@@ -17,13 +16,6 @@ class DomainEventPublisher(
   }
 
   fun publish(domainEvent: DomainEvent) {
-    domainEventsTopic.publish(
-      domainEvent.eventType,
-      objectMapper.writeValueAsString(domainEvent),
-      domainEvent.attributes(),
-    )
+    domainEventsTopic.publish(domainEvent.eventType, objectMapper.writeValueAsString(domainEvent))
   }
-
-  private fun DomainEvent.attributes() =
-    mapOf("eventType" to MessageAttributeValue.builder().dataType("String").stringValue(eventType).build())
 }
