@@ -39,9 +39,11 @@ class AlertBaseDomainEventPublisherTest {
     whenever(domainEventsTopic.arn).thenReturn(domainEventsTopicArn)
     val domainEventPublisher = DomainEventPublisher(hmppsQueueService, objectMapper)
     val domainEvent = mock<AlertDomainEvent<AlertAdditionalInformation>>()
-    whenever(domainEvent.eventType).thenReturn("some.domain.event")
+    whenever(domainEvent.eventType).thenReturn("some.event.type")
     whenever(domainEventsSnsClient.publish(any<PublishRequest>())).thenThrow(RuntimeException("Failed to publish"))
 
     assertThrows<RuntimeException> { domainEventPublisher.publish(domainEvent) }
+    val ex = assertThrows<RuntimeException> { domainEventPublisher.publish(domainEvent) }
+    assertThat(ex.message).isEqualTo("Failed to publish")
   }
 }

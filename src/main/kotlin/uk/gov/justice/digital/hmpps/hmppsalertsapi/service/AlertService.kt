@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlreadyExistsExcep
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidInputException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.verifyExists
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
@@ -38,31 +39,19 @@ class AlertService(
   private val prisonerSearchClient: PrisonerSearchClient,
 ) {
   @PublishPersonAlertsChanged
-  fun createAlert(prisonNumber: String, request: CreateAlert, context: AlertRequestContext) =
-    request.let {
-      // Perform database checks first prior to checks that require API calls
-      val notNomis = context.source != Source.NOMIS
-      val alertCode = it.getAlertCode(notNomis)
-      if (notNomis) {
-        check(request.dateRangeIsValid()) { "Active from must be before active to" }
-        checkForExistingActiveAlert(prisonNumber, request.alertCode)
-      }
-
-      val prisoner = requireNotNull(prisonerSearchClient.getPrisoner(prisonNumber)) { "Prison number not found" }
-
-      alertRepository.save(
-        it.toAlertEntity(
-          prisonNumber = prisoner.prisonerNumber,
-          alertCode = alertCode,
-          createdAt = context.requestAt,
-          createdBy = context.username,
-          createdByDisplayName = context.userDisplayName,
-          source = context.source,
-          activeCaseLoadId = context.activeCaseLoadId,
-          prisonCode = prisoner.prisonId,
-        ),
-      ).toAlertModel()
+  fun createAlert(prisonNumber: String, request: CreateAlert): Alert {
+    val context = AlertRequestContext.get()
+    val notNomis = context.source != Source.NOMIS
+    val alertCode = request.getAlertCode(notNomis)
+    if (notNomis) {
+      check(request.dateRangeIsValid()) { "Active from must be before active to" }
+      checkForExistingActiveAlert(prisonNumber, request.alertCode)
     }
+    val prisoner = requireNotNull(prisonerSearchClient.getPrisoner(prisonNumber)) { "Prison number not found" }
+
+    return alertRepository.save(request.toAlertEntity(context, prisoner.prisonerNumber, alertCode, prisoner.prisonId))
+      .toAlertModel()
+  }
 
   private fun CreateAlert.dateRangeIsValid() = !(activeFrom?.isAfter(activeTo ?: activeFrom) ?: false)
 

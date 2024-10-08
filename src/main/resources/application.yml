@@ -107,7 +107,6 @@ hmpps.sqs:
   queueAdminRole: ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI
 
 events:
-  publish: true
   base-url: http://localhost:8080
 
 logging:

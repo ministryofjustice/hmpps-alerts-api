@@ -164,7 +164,7 @@ class ValidationIntTest : IntegrationTestBase() {
     val response = webTestClient.post()
       .uri("prisoners/$PRISON_NUMBER/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
-      .headers(setAlertRequestContext(username = "C. ReatedC. ReatedC. ReatedC. Rea"))
+      .headers(setAlertRequestContext(username = "n".repeat(65)))
       .accept(MediaType.APPLICATION_JSON)
       .bodyValue(
         CreateAlert(
@@ -179,7 +179,7 @@ class ValidationIntTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody!!
-    assertThat(response.developerMessage).contains("Created by must be <= 32 characters")
+    assertThat(response.developerMessage).contains("Username by must be <= 64 characters")
   }
 
   @Test

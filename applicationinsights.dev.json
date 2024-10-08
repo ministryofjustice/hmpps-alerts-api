@@ -21,11 +21,33 @@
         "attributes": [
           {
             "key": "http.url",
-            "value": "https?://[^/]+/health.*",
+            "value": "https?://[^/]+/health/?.*",
             "matchType": "regexp"
           }
         ],
-        "percentage": 10
+        "percentage": 0
+      },
+      {
+        "telemetryType": "request",
+        "attributes": [
+          {
+            "key": "http.url",
+            "value": "https?://[^/]+/info/?.*",
+            "matchType": "regexp"
+          }
+        ],
+        "percentage": 0
+      },
+      {
+        "telemetryType": "dependency",
+        "attributes": [
+          {
+            "key": "db.operation",
+            "value": "SELECT",
+            "matchType": "strict"
+          }
+        ],
+        "percentage": 0
       }
     ]
   }

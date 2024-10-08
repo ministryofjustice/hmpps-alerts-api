@@ -1,32 +1,35 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch
 
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.core.ParameterizedTypeReference
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.bodyToFlux
+import org.springframework.web.reactive.function.client.bodyToMono
+import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerNumbersDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.retryNetworkExceptions
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.DownstreamServiceException
 
-inline fun <reified T> typeReference() = object : ParameterizedTypeReference<T>() {}
-
 @Component
 class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val webClient: WebClient) {
   fun getPrisoner(prisonerId: String): PrisonerDto? {
     return try {
-      webClient
-        .get()
+      webClient.get()
         .uri("/prisoner/{prisonerId}", prisonerId)
-        .retrieve()
-        .bodyToMono(PrisonerDto::class.java)
+        .exchangeToMono { res ->
+          when (res.statusCode()) {
+            HttpStatus.NOT_FOUND -> Mono.empty()
+            HttpStatus.OK -> res.bodyToMono<PrisonerDto>()
+            else -> res.createError()
+          }
+        }
         .retryNetworkExceptions()
         .block()
-    } catch (e: WebClientResponseException.NotFound) {
-      null
-    } catch (e: Exception) {
-      throw DownstreamServiceException("Get prisoner request failed", e)
+    } catch (ex: WebClientResponseException) {
+      throw DownstreamServiceException("Get prisoner request failed", ex)
     }
   }
 
@@ -42,7 +45,8 @@ class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val web
           .uri("/prisoner-search/prisoner-numbers")
           .bodyValue(PrisonerNumbersDto(it))
           .retrieve()
-          .bodyToMono(typeReference<List<PrisonerDto>>())
+          .bodyToFlux<PrisonerDto>()
+          .collectList()
           .retryNetworkExceptions()
           .block() ?: emptyList()
       }
