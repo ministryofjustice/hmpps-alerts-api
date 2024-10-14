@@ -72,7 +72,7 @@ class AlertServiceTest {
   fun `Alert code not found`() {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(null)
     val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"))
+      underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"), false)
     }
     assertThat(error.message).isEqualTo("Alert code is invalid")
   }
@@ -82,7 +82,7 @@ class AlertServiceTest {
     whenever(mockAlertCode.isActive()).thenReturn(false)
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(mockAlertCode)
     val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"))
+      underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"), false)
     }
     assertThat(error.message).isEqualTo("Alert code is inactive")
   }
@@ -93,7 +93,7 @@ class AlertServiceTest {
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now(), activeTo = null)))
     val error = assertThrows<AlreadyExistsException> {
-      underTest.createAlert(PRISON_NUMBER, createAlertRequest())
+      underTest.createAlert(PRISON_NUMBER, createAlertRequest(), false)
     }
     assertThat(error.message).isEqualTo("Alert already exists")
   }
@@ -104,7 +104,7 @@ class AlertServiceTest {
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().plusDays(1), activeTo = null)))
     val error = assertThrows<AlreadyExistsException> {
-      underTest.createAlert(PRISON_NUMBER, createAlertRequest())
+      underTest.createAlert(PRISON_NUMBER, createAlertRequest(), false)
     }
     assertThat(error.message).isEqualTo("Alert already exists")
   }
@@ -116,7 +116,7 @@ class AlertServiceTest {
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().minusDays(1), activeTo = LocalDate.now())))
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
-    underTest.createAlert(PRISON_NUMBER, createAlertRequest())
+    underTest.createAlert(PRISON_NUMBER, createAlertRequest(), false)
     verify(alertRepository).save(any<Alert>())
   }
 
@@ -126,7 +126,7 @@ class AlertServiceTest {
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
     val request = createAlertRequest()
-    val result = underTest.createAlert(PRISON_NUMBER, request)
+    val result = underTest.createAlert(PRISON_NUMBER, request, false)
     with(result) {
       assertThat(createdAt).isCloseTo(context.requestAt, within(2, ChronoUnit.SECONDS))
       assertThat(createdBy).isEqualTo(context.username)

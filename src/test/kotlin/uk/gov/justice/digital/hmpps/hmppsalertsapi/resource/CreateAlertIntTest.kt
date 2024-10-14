@@ -184,6 +184,19 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `201 created - source dps - Admin UI role - alert code is inactive`() {
+    val request = createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
+
+    webTestClient.post().uri("/prisoners/$PRISON_NUMBER/alerts")
+      .bodyValue(request)
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
+      .headers(setAlertRequestContext(source = DPS))
+      .exchange()
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectStatus().isCreated
+  }
+
+  @Test
   fun `405 method not allowed`() {
     val response = webTestClient.patch()
       .uri("prisoners/$PRISON_NUMBER/alerts")
