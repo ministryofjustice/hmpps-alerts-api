@@ -200,9 +200,9 @@ class PrisonerAlertsController(val alertService: AlertService) {
     @Parameter(description = "The alert data to use to create an alert in the service", required = true)
     request: CreateAlert,
   ): Alert {
-    val isAdmin = SecurityContextHolder.getContext().authentication.authorities?.any { a: GrantedAuthority? ->
+    val allowInactiveCode = SecurityContextHolder.getContext().authentication.authorities?.any { a: GrantedAuthority? ->
       a!!.authority == ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI
     } == true
-    return alertService.createAlert(prisonNumber, request, isAdmin)
+    return alertService.createAlert(prisonNumber, request, allowInactiveCode)
   }
 }
