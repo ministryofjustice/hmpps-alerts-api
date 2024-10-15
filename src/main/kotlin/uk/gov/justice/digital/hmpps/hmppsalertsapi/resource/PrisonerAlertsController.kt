@@ -15,6 +15,8 @@ import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -197,5 +199,10 @@ class PrisonerAlertsController(val alertService: AlertService) {
     @RequestBody
     @Parameter(description = "The alert data to use to create an alert in the service", required = true)
     request: CreateAlert,
-  ): Alert = alertService.createAlert(prisonNumber, request)
+  ): Alert {
+    val allowInactiveCode = SecurityContextHolder.getContext().authentication.authorities?.any { a: GrantedAuthority? ->
+      a!!.authority == ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI
+    } == true
+    return alertService.createAlert(prisonNumber, request, allowInactiveCode)
+  }
 }

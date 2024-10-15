@@ -39,10 +39,10 @@ class AlertService(
   private val prisonerSearchClient: PrisonerSearchClient,
 ) {
   @PublishPersonAlertsChanged
-  fun createAlert(prisonNumber: String, request: CreateAlert): Alert {
+  fun createAlert(prisonNumber: String, request: CreateAlert, allowInactiveCode: Boolean): Alert {
     val context = AlertRequestContext.get()
     val notNomis = context.source != Source.NOMIS
-    val alertCode = request.getAlertCode(notNomis)
+    val alertCode = request.getAlertCode(notNomis && !allowInactiveCode)
     if (notNomis) {
       check(request.dateRangeIsValid()) { "Active from must be before active to" }
       checkForExistingActiveAlert(prisonNumber, request.alertCode)
