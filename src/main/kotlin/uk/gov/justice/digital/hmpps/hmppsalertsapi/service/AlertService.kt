@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -37,6 +38,7 @@ class AlertService(
   private val commentRepository: CommentRepository,
   private val auditEventRepository: AuditEventRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
+  private val telemetryClient: TelemetryClient,
 ) {
   @PublishPersonAlertsChanged
   fun createAlert(prisonNumber: String, request: CreateAlert, allowInactiveCode: Boolean): Alert {
@@ -50,7 +52,19 @@ class AlertService(
     val prisoner = requireNotNull(prisonerSearchClient.getPrisoner(prisonNumber)) { "Prison number not found" }
 
     return alertRepository.save(request.toAlertEntity(context, prisoner.prisonerNumber, alertCode, prisoner.prisonId))
-      .toAlertModel()
+      .toAlertModel().apply {
+        if (allowInactiveCode && !alertCode.isActive()) {
+          telemetryClient.trackEvent(
+            "INACTIVE_CODE_ALERT_CREATION",
+            mapOf(
+              "username" to context.username,
+              "alertCode" to alertCode.code,
+              "alertUuid" to alertUuid.toString(),
+            ),
+            mapOf(),
+          )
+        }
+      }
   }
 
   private fun CreateAlert.dateRangeIsValid() = !(activeFrom?.isAfter(activeTo ?: activeFrom) ?: false)

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.BeforeAll
@@ -40,6 +41,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AuditEventReposito
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.CommentRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -64,6 +66,9 @@ class AlertServiceTest {
 
   @Mock
   lateinit var prisonerSearchClient: PrisonerSearchClient
+
+  @Mock
+  lateinit var telemetryClient: TelemetryClient
 
   @InjectMocks
   lateinit var underTest: AlertService
@@ -132,6 +137,32 @@ class AlertServiceTest {
       assertThat(createdBy).isEqualTo(context.username)
       assertThat(createdByDisplayName).isEqualTo(context.userDisplayName)
     }
+  }
+
+  @Test
+  fun `track appinsights event when an alert with inactive code is created from Alerts UI`() {
+    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(
+      alertCode(
+        code = ALERT_CODE_VICTIM,
+        description = "Victim",
+        deactivatedAt = LocalDateTime.of(1999, 12, 31, 0, 0, 0),
+      ),
+    )
+    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
+    whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
+    val request = createAlertRequest()
+
+    val result = underTest.createAlert(PRISON_NUMBER, request, true)
+
+    verify(telemetryClient).trackEvent(
+      "INACTIVE_CODE_ALERT_CREATION",
+      mapOf(
+        "username" to TEST_USER,
+        "alertCode" to ALERT_CODE_VICTIM,
+        "alertUuid" to result.alertUuid.toString(),
+      ),
+      mapOf(),
+    )
   }
 
   @Test
