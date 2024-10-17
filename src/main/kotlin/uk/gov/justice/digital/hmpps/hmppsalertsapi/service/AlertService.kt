@@ -54,11 +54,15 @@ class AlertService(
     return alertRepository.save(request.toAlertEntity(context, prisoner.prisonerNumber, alertCode, prisoner.prisonId))
       .toAlertModel().apply {
         if (allowInactiveCode && !alertCode.isActive()) {
-          telemetryClient.trackEvent("INACTIVE_CODE_ALERT_CREATION", mapOf(
-            "username" to context.username,
-            "alertCode" to alertCode.code,
-            "alertUuid" to alertUuid.toString(),
-          ), mapOf())
+          telemetryClient.trackEvent(
+            "INACTIVE_CODE_ALERT_CREATION",
+            mapOf(
+              "username" to context.username,
+              "alertCode" to alertCode.code,
+              "alertUuid" to alertUuid.toString(),
+            ),
+            mapOf(),
+          )
         }
       }
   }
