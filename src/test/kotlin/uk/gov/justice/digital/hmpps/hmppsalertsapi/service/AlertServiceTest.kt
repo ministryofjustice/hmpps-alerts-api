@@ -142,11 +142,11 @@ class AlertServiceTest {
   @Test
   fun `track appinsights event when an alert with inactive code is created from Alerts UI`() {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(
-        alertCode(
-            code = ALERT_CODE_VICTIM,
-            description = "Victim",
-            deactivatedAt = LocalDateTime.of(1999, 12, 31, 0, 0, 0),
-        ),
+      alertCode(
+        code = ALERT_CODE_VICTIM,
+        description = "Victim",
+        deactivatedAt = LocalDateTime.of(1999, 12, 31, 0, 0, 0),
+      ),
     )
     whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
@@ -155,13 +155,13 @@ class AlertServiceTest {
     val result = underTest.createAlert(PRISON_NUMBER, request, true)
 
     verify(telemetryClient).trackEvent(
-        "INACTIVE_CODE_ALERT_CREATION",
-        mapOf(
-            "username" to TEST_USER,
-            "alertCode" to ALERT_CODE_VICTIM,
-            "alertUuid" to result.alertUuid.toString(),
-        ),
-        mapOf(),
+      "INACTIVE_CODE_ALERT_CREATION",
+      mapOf(
+        "username" to TEST_USER,
+        "alertCode" to ALERT_CODE_VICTIM,
+        "alertUuid" to result.alertUuid.toString(),
+      ),
+      mapOf(),
     )
   }
 
