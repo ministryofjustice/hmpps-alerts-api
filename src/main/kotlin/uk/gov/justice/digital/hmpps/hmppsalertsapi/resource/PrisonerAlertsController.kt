@@ -198,7 +198,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
     @Parameter(description = "The alert data to use to create an alert in the service", required = true)
     request: CreateAlert,
     @Parameter(
-      description = "Allows the creation of an alert using an inactive code. Intended only for use by the Alerts UI when the user has the ‘Manage Alerts in Bulk for Prison Estate’ role. Defaults to false"
+      description = "Allows the creation of an alert using an inactive code. Intended only for use by the Alerts UI when the user has the ‘Manage Alerts in Bulk for Prison Estate’ role. Defaults to false",
     )
     allowInactiveCode: Boolean = false,
   ): Alert {
