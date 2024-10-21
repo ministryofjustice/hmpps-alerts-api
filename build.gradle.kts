@@ -31,7 +31,7 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0")
 
   // Test dependencies
-  testImplementation("org.junit.jupiter:junit-jupiter:5.11.2")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
   testImplementation("org.wiremock:wiremock-standalone:3.9.1")
   testImplementation("org.testcontainers:postgresql:1.20.2")
