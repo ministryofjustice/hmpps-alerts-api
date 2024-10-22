@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/github/ministryofjustice/hmpps-alerts-api/branch/main/graph/badge.svg)](https://codecov.io/github/ministryofjustice/hmpps-alerts-api)
 [![Docker Repository on Quay](https://quay.io/repository/hmpps/hmpps-alerts-api/status "Docker Repository on Quay")](https://quay.io/repository/hmpps/hmpps-alerts-api)
 [![API docs](https://img.shields.io/badge/API_docs_-view-85EA2D.svg?logo=swagger)](https://alerts-api-dev.hmpps.service.justice.gov.uk/swagger-ui/index.html)
-[![Event docs](https://img.shields.io/badge/Event_docs-view-85EA2D.svg)](https://studio.asyncapi.com/?url=https://raw.githubusercontent.com/ministryofjustice/hmpps-alerts-api/main/async-api.yml)
+[![Event docs](https://img.shields.io/badge/Event_docs-view-85EA2D.svg)](https://studio.asyncapi.com/?readOnly&url=https://raw.githubusercontent.com/ministryofjustice/hmpps-alerts-api/main/async-api.yml)
 
 
 ## Architectural Decision Records
