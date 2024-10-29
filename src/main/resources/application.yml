@@ -117,3 +117,6 @@ logging:
           web:
             config:
               SpringDataJacksonConfiguration: off # disable warning log on "Serializing PageImpl instances as-is"
+
+springdoc:
+  paths-to-exclude: "/queue-admin/**"
