@@ -101,7 +101,6 @@ class ValidationIntTest : IntegrationTestBase() {
           authorisedBy = "A. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = LocalDate.now(),
-          appendComment = null,
         ),
       )
       .exchange()
@@ -195,7 +194,6 @@ class ValidationIntTest : IntegrationTestBase() {
           authorisedBy = "A. Authorised",
           activeFrom = LocalDate.now(),
           activeTo = null,
-          appendComment = null,
         ),
       )
       .exchange()
@@ -218,7 +216,6 @@ class ValidationIntTest : IntegrationTestBase() {
           authorisedBy = "A. AuthorisedA. AuthorisedA. AuthorisedA.",
           activeFrom = LocalDate.now(),
           activeTo = null,
-          appendComment = null,
         ),
       )
       .exchange()
@@ -226,28 +223,5 @@ class ValidationIntTest : IntegrationTestBase() {
       .expectBody(ErrorResponse::class.java)
       .returnResult().responseBody!!
     assertThat(response.developerMessage).contains("Authorised by must be <= 40 characters")
-  }
-
-  @Test
-  fun `Update validate append comment too long`() {
-    val response = webTestClient.put()
-      .uri("/alerts/${UUID.randomUUID()}")
-      .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
-      .headers(setAlertRequestContext())
-      .accept(MediaType.APPLICATION_JSON)
-      .bodyValue(
-        UpdateAlert(
-          description = "description",
-          authorisedBy = "A. Authorised",
-          activeFrom = LocalDate.now(),
-          activeTo = null,
-          appendComment = "a".repeat(1001),
-        ),
-      )
-      .exchange()
-      .expectStatus().isBadRequest
-      .expectBody(ErrorResponse::class.java)
-      .returnResult().responseBody!!
-    assertThat(response.developerMessage).contains("Append comment must be <= 1000 characters")
   }
 }

@@ -38,7 +38,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AuditEventRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.CommentRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
@@ -54,9 +53,6 @@ class AlertServiceTest {
 
   @Mock
   lateinit var alertRepository: AlertRepository
-
-  @Mock
-  lateinit var commentRepository: CommentRepository
 
   @Mock
   lateinit var auditEventRepository: AuditEventRepository
@@ -168,7 +164,7 @@ class AlertServiceTest {
   @Test
   fun `no audit event if nothing has changed`() {
     val uuid = UUID.randomUUID()
-    val updateRequest = updateAlertRequestNoChange(comment = "")
+    val updateRequest = updateAlertRequestNoChange()
     val alert = alert(updateAlert = updateRequest, uuid = uuid)
     whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
     val alertCaptor = argumentCaptor<Alert>()
@@ -183,7 +179,7 @@ class AlertServiceTest {
   @Test
   fun `null activeFrom will not update value`() {
     val uuid = UUID.randomUUID()
-    val updateRequest = updateAlertRequestNoChange(comment = "", activeFrom = null)
+    val updateRequest = updateAlertRequestNoChange(activeFrom = null)
     val alert = alert(uuid = uuid)
     whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
     val alertCaptor = argumentCaptor<Alert>()
@@ -212,8 +208,6 @@ class AlertServiceTest {
     assertThat(savedAlert.activeTo).isEqualTo(updateRequest.activeTo)
     assertThat(savedAlert.description).isEqualTo(updateRequest.description)
     assertThat(savedAlert.authorisedBy).isEqualTo(updateRequest.authorisedBy)
-    assertThat(savedAlert.comments()).hasSize(1)
-    assertThat(savedAlert.comments()[0].comment).isEqualTo("Another update alert")
     assertThat(savedAlert.auditEvents()).hasSize(2)
     with(savedAlert.auditEvents()[0]) {
       assertThat(action).isEqualTo(AuditEventAction.UPDATED)
@@ -221,8 +215,7 @@ class AlertServiceTest {
         """Updated alert description from '${unchangedAlert.description}' to '${savedAlert.description}'
 Updated authorised by from '${unchangedAlert.authorisedBy}' to '${savedAlert.authorisedBy}'
 Updated active from from '${unchangedAlert.activeFrom}' to '${savedAlert.activeFrom}'
-Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'
-Comment '${updateRequest.appendComment}' was added""",
+Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'""",
       )
       assertThat(actionedAt).isEqualTo(context.requestAt)
       assertThat(actionedBy).isEqualTo(context.username)
@@ -305,24 +298,20 @@ Comment '${updateRequest.appendComment}' was added""",
     )
 
   private fun updateAlertRequestNoChange(
-    comment: String = "Update alert",
     activeFrom: LocalDate? = LocalDate.now().minusDays(2),
-  ) =
-    UpdateAlert(
-      description = "new description",
-      authorisedBy = "B Bauthorizer",
-      activeFrom = activeFrom,
-      activeTo = LocalDate.now().plusDays(10),
-      appendComment = comment,
-    )
+  ) = UpdateAlert(
+    description = "new description",
+    authorisedBy = "B Bauthorizer",
+    activeFrom = activeFrom,
+    activeTo = LocalDate.now().plusDays(10),
+  )
 
-  private fun updateAlertRequestChange(comment: String = "Another update alert") =
+  private fun updateAlertRequestChange() =
     UpdateAlert(
       description = "another new description",
       authorisedBy = "C Cauthorizer",
       activeFrom = LocalDate.now().minusMonths(2),
       activeTo = LocalDate.now().plusMonths(10),
-      appendComment = comment,
     )
 
   private fun alert(uuid: UUID = UUID.randomUUID(), updateAlert: UpdateAlert = updateAlertRequestNoChange()) =

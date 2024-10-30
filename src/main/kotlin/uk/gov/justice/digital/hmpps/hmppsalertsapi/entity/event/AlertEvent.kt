@@ -63,7 +63,6 @@ data class AlertUpdatedEvent(
   val authorisedByUpdated: Boolean,
   val activeFromUpdated: Boolean,
   val activeToUpdated: Boolean,
-  val commentAppended: Boolean,
 ) : AlertEvent {
   override val type: DomainEventType = ALERT_UPDATED
 }

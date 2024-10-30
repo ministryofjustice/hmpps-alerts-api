@@ -51,37 +51,6 @@ class AlertTest {
   }
 
   @Test
-  fun `add comment`() {
-    val createdAt = LocalDateTime.now().minusDays(3)
-    var comment: Comment
-    val entity = alertEntity().apply {
-      comment = addComment("Comment", createdAt, "COMMENT_BY", "COMMENT_BY_DISPLAY_NAME")
-    }
-
-    assertThat(entity.comments().single()).usingRecursiveComparison().isEqualTo(
-      Comment(
-        commentUuid = comment.commentUuid,
-        alert = entity,
-        comment = "Comment",
-        createdAt = createdAt,
-        createdBy = "COMMENT_BY",
-        createdByDisplayName = "COMMENT_BY_DISPLAY_NAME",
-      ),
-    )
-  }
-
-  @Test
-  fun `comments are ordered newest to oldest`() {
-    val entity = alertEntity().apply {
-      addComment("Comment 2", LocalDateTime.now().minusDays(2), "COMMENT_BY_2", "COMMENT_BY_DISPLAY_NAME_2")
-      addComment("Comment 3", LocalDateTime.now().minusDays(1), "COMMENT_BY_3", "COMMENT_BY_DISPLAY_NAME_3")
-      addComment("Comment 1", LocalDateTime.now().minusDays(3), "COMMENT_BY_1", "COMMENT_BY_DISPLAY_NAME_1")
-    }
-
-    assertThat(entity.comments()).isSortedAccordingTo(compareByDescending { it.createdBy })
-  }
-
-  @Test
   fun `add audit event`() {
     val actionedAt = LocalDateTime.now().minusDays(2)
     val entity = alertEntity().apply {
@@ -330,7 +299,6 @@ class AlertTest {
     val updatedAuthorisedBy = "Updated authorised by"
     val updatedActiveFrom = entity.activeFrom.plusDays(1)
     val updatedActiveTo = entity.activeTo!!.plusDays(1)
-    val updatedAppendComment = "Appended comment"
     val updatedAt = LocalDateTime.now()
     val updatedBy = "UPDATED_BY"
     val updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME"
@@ -342,7 +310,6 @@ class AlertTest {
     sb.appendLine("Updated authorised by from '${entity.authorisedBy}' to '$updatedAuthorisedBy'")
     sb.appendLine("Updated active from from '${entity.activeFrom}' to '$updatedActiveFrom'")
     sb.appendLine("Updated active to from '${entity.activeTo}' to '$updatedActiveTo'")
-    sb.appendLine("Comment '$updatedAppendComment' was added")
     val expectedDescription = sb.toString().trimEnd()
 
     entity.update(
@@ -350,7 +317,6 @@ class AlertTest {
       authorisedBy = updatedAuthorisedBy,
       activeFrom = updatedActiveFrom,
       activeTo = updatedActiveTo,
-      appendComment = updatedAppendComment,
       updatedAt = updatedAt,
       updatedBy = updatedBy,
       updatedByDisplayName = updatedByDisplayName,
@@ -373,7 +339,6 @@ class AlertTest {
         authorisedByUpdated = true,
         activeFromUpdated = true,
         activeToUpdated = true,
-        commentAppended = true,
       ),
     )
   }
@@ -392,7 +357,6 @@ class AlertTest {
       authorisedBy = "Updated authorised by",
       activeFrom = entity.activeFrom.plusDays(1),
       activeTo = entity.activeTo!!.plusDays(1),
-      appendComment = "Appended comment",
       updatedAt = updatedAt,
       updatedBy = updatedBy,
       updatedByDisplayName = updatedByDisplayName,
@@ -412,7 +376,6 @@ class AlertTest {
         authorisedByUpdated = true,
         activeFromUpdated = true,
         activeToUpdated = true,
-        commentAppended = true,
       ),
     )
   }
@@ -426,7 +389,6 @@ class AlertTest {
       authorisedBy = entity.authorisedBy,
       activeFrom = entity.activeFrom,
       activeTo = entity.activeTo,
-      appendComment = null,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = DPS,
@@ -447,7 +409,6 @@ class AlertTest {
       authorisedBy = entity.authorisedBy,
       activeFrom = entity.activeFrom,
       activeTo = entity.activeTo,
-      appendComment = null,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = NOMIS,
@@ -469,7 +430,6 @@ class AlertTest {
       authorisedBy = null,
       activeFrom = entity.activeFrom,
       activeTo = entity.activeTo,
-      appendComment = null,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = DPS,
@@ -491,7 +451,6 @@ class AlertTest {
       authorisedBy = entity.authorisedBy,
       activeFrom = null,
       activeTo = entity.activeTo,
-      appendComment = null,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
       source = NOMIS,
@@ -499,69 +458,6 @@ class AlertTest {
     )
 
     assertThat(entity.activeFrom).isNotNull()
-    assertThat(entity.lastModifiedAt).isNull()
-    assertThat(entity.auditEvents().none { it.action == UPDATED }).isTrue
-    assertThat(entity.publishedDomainEvents()).isEmpty()
-  }
-
-  @Test
-  fun `update alert ignores null append comment`() {
-    val entity = alertEntity()
-
-    entity.update(
-      description = entity.description,
-      authorisedBy = entity.authorisedBy,
-      activeFrom = entity.activeFrom,
-      activeTo = entity.activeTo,
-      appendComment = null,
-      updatedBy = "UPDATED_BY",
-      updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
-      source = DPS,
-      activeCaseLoadId = PRISON_CODE_MOORLANDS,
-    )
-
-    assertThat(entity.lastModifiedAt).isNull()
-    assertThat(entity.auditEvents().none { it.action == UPDATED }).isTrue
-    assertThat(entity.publishedDomainEvents()).isEmpty()
-  }
-
-  @Test
-  fun `update alert ignores empty append comment`() {
-    val entity = alertEntity()
-
-    entity.update(
-      description = entity.description,
-      authorisedBy = entity.authorisedBy,
-      activeFrom = entity.activeFrom,
-      activeTo = entity.activeTo,
-      appendComment = "",
-      updatedBy = "UPDATED_BY",
-      updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
-      source = NOMIS,
-      activeCaseLoadId = PRISON_CODE_MOORLANDS,
-    )
-
-    assertThat(entity.lastModifiedAt).isNull()
-    assertThat(entity.auditEvents().none { it.action == UPDATED }).isTrue
-    assertThat(entity.publishedDomainEvents()).isEmpty()
-  }
-
-  @Test
-  fun `update alert ignores whitespace append comment`() {
-    val entity = alertEntity()
-
-    entity.update(
-      description = entity.description,
-      authorisedBy = entity.authorisedBy,
-      activeFrom = entity.activeFrom,
-      activeTo = entity.activeTo,
-      appendComment = "     ",
-      updatedBy = "UPDATED_BY",
-      updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
-      source = DPS,
-      activeCaseLoadId = PRISON_CODE_MOORLANDS,
-    )
-
     assertThat(entity.lastModifiedAt).isNull()
     assertThat(entity.auditEvents().none { it.action == UPDATED }).isTrue
     assertThat(entity.publishedDomainEvents()).isEmpty()
@@ -580,7 +476,7 @@ class AlertTest {
       authorisedBy = entity.authorisedBy,
       activeFrom = entity.activeFrom,
       activeTo = entity.activeTo,
-      appendComment = null,
+
       updatedAt = updatedAt,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
@@ -595,7 +491,6 @@ class AlertTest {
       assertThat(authorisedByUpdated).isFalse
       assertThat(activeFromUpdated).isFalse
       assertThat(activeToUpdated).isFalse
-      assertThat(commentAppended).isFalse
     }
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
       assertThat(source).isEqualTo(source)
@@ -603,7 +498,6 @@ class AlertTest {
       assertThat(authorisedByUpdated).isFalse
       assertThat(activeFromUpdated).isFalse
       assertThat(activeToUpdated).isFalse
-      assertThat(commentAppended).isFalse
     }
   }
 
@@ -620,7 +514,7 @@ class AlertTest {
       authorisedBy = updatedAuthorisedBy,
       activeFrom = entity.activeFrom,
       activeTo = entity.activeTo,
-      appendComment = null,
+
       updatedAt = updatedAt,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
@@ -635,7 +529,6 @@ class AlertTest {
       assertThat(authorisedByUpdated).isTrue
       assertThat(activeFromUpdated).isFalse
       assertThat(activeToUpdated).isFalse
-      assertThat(commentAppended).isFalse
     }
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
       assertThat(source).isEqualTo(source)
@@ -643,7 +536,6 @@ class AlertTest {
       assertThat(authorisedByUpdated).isTrue
       assertThat(activeFromUpdated).isFalse
       assertThat(activeToUpdated).isFalse
-      assertThat(commentAppended).isFalse
     }
   }
 
@@ -660,7 +552,7 @@ class AlertTest {
       authorisedBy = entity.authorisedBy,
       activeFrom = updatedActiveFrom,
       activeTo = entity.activeTo,
-      appendComment = null,
+
       updatedAt = updatedAt,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
@@ -675,7 +567,6 @@ class AlertTest {
       assertThat(authorisedByUpdated).isFalse
       assertThat(activeFromUpdated).isTrue
       assertThat(activeToUpdated).isFalse
-      assertThat(commentAppended).isFalse
     }
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
       assertThat(source).isEqualTo(source)
@@ -683,7 +574,6 @@ class AlertTest {
       assertThat(authorisedByUpdated).isFalse
       assertThat(activeFromUpdated).isTrue
       assertThat(activeToUpdated).isFalse
-      assertThat(commentAppended).isFalse
     }
   }
 
@@ -700,7 +590,7 @@ class AlertTest {
       authorisedBy = entity.authorisedBy,
       activeFrom = entity.activeFrom,
       activeTo = updatedActiveTo,
-      appendComment = null,
+
       updatedAt = updatedAt,
       updatedBy = "UPDATED_BY",
       updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
@@ -715,7 +605,6 @@ class AlertTest {
       assertThat(authorisedByUpdated).isFalse
       assertThat(activeFromUpdated).isFalse
       assertThat(activeToUpdated).isTrue
-      assertThat(commentAppended).isFalse
     }
     with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
       assertThat(source).isEqualTo(source)
@@ -723,79 +612,7 @@ class AlertTest {
       assertThat(authorisedByUpdated).isFalse
       assertThat(activeFromUpdated).isFalse
       assertThat(activeToUpdated).isTrue
-      assertThat(commentAppended).isFalse
     }
-  }
-
-  @Test
-  fun `update alert append comment only`() {
-    val entity = alertEntity()
-    val updatedAppendComment = "Appended comment"
-    val updatedAt = LocalDateTime.now()
-    val updatedBy = "UPDATED_BY"
-    val updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME"
-    val source = NOMIS
-    val expectedDescription = "Comment '$updatedAppendComment' was added"
-
-    entity.update(
-      description = entity.description,
-      authorisedBy = entity.authorisedBy,
-      activeFrom = entity.activeFrom,
-      activeTo = entity.activeTo,
-      appendComment = updatedAppendComment,
-      updatedAt = updatedAt,
-      updatedBy = updatedBy,
-      updatedByDisplayName = updatedByDisplayName,
-      source = source,
-      activeCaseLoadId = PRISON_CODE_LEEDS,
-    )
-
-    assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
-    with(entity.comments().single()) {
-      assertThat(comment).isEqualTo(updatedAppendComment)
-      assertThat(createdAt).isEqualTo(updatedAt)
-      assertThat(createdBy).isEqualTo(updatedBy)
-      assertThat(createdByDisplayName).isEqualTo(updatedByDisplayName)
-    }
-    with(entity.auditEvents().single { it.action == UPDATED }) {
-      assertThat(description).isEqualTo(expectedDescription)
-      assertThat(descriptionUpdated).isFalse
-      assertThat(authorisedByUpdated).isFalse
-      assertThat(activeFromUpdated).isFalse
-      assertThat(activeToUpdated).isFalse
-      assertThat(commentAppended).isTrue
-    }
-    with(entity.publishedDomainEvents().single() as AlertUpdatedEvent) {
-      assertThat(source).isEqualTo(source)
-      assertThat(descriptionUpdated).isFalse
-      assertThat(authorisedByUpdated).isFalse
-      assertThat(activeFromUpdated).isFalse
-      assertThat(activeToUpdated).isFalse
-      assertThat(commentAppended).isTrue
-    }
-  }
-
-  @Test
-  fun `update alert append comment trims comment`() {
-    val entity = alertEntity()
-    val updatedAppendComment = " Appended comment  "
-    val source = DPS
-    val expectedDescription = "Comment '${updatedAppendComment.trim()}' was added"
-
-    entity.update(
-      description = entity.description,
-      authorisedBy = entity.authorisedBy,
-      activeFrom = entity.activeFrom,
-      activeTo = entity.activeTo,
-      appendComment = updatedAppendComment,
-      updatedBy = "UPDATED_BY",
-      updatedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
-      source = source,
-      activeCaseLoadId = PRISON_CODE_MOORLANDS,
-    )
-
-    assertThat(entity.comments().single().comment).isEqualTo(updatedAppendComment.trim())
-    assertThat(entity.auditEvents().single { it.action == UPDATED }.description).isEqualTo(expectedDescription)
   }
 
   @Test
@@ -849,25 +666,24 @@ class AlertTest {
     createdBy: String = "CREATED_BY",
     createdByDisplayName: String = "CREATED_BY_DISPLAY_NAME",
     source: Source = DPS,
-  ) =
-    Alert(
-      alertUuid = UUID.randomUUID(),
-      alertCode = AC_VICTIM,
-      prisonNumber = PRISON_NUMBER,
-      description = "Alert description",
-      authorisedBy = "A. Authorizer",
-      activeFrom = LocalDate.now().minusDays(3),
-      activeTo = LocalDate.now().plusDays(3),
-      createdAt = createdAt,
-    ).apply {
-      auditEvent(
-        action = CREATED,
-        description = "Alert created",
-        actionedAt = createdAt,
-        actionedBy = createdBy,
-        actionedByDisplayName = createdByDisplayName,
-        source = source,
-        activeCaseLoadId = PRISON_CODE_MOORLANDS,
-      )
-    }
+  ) = Alert(
+    alertUuid = UUID.randomUUID(),
+    alertCode = AC_VICTIM,
+    prisonNumber = PRISON_NUMBER,
+    description = "Alert description",
+    authorisedBy = "A. Authorizer",
+    activeFrom = LocalDate.now().minusDays(3),
+    activeTo = LocalDate.now().plusDays(3),
+    createdAt = createdAt,
+  ).apply {
+    auditEvent(
+      action = CREATED,
+      description = "Alert created",
+      actionedAt = createdAt,
+      actionedBy = createdBy,
+      actionedByDisplayName = createdByDisplayName,
+      source = source,
+      activeCaseLoadId = PRISON_CODE_MOORLANDS,
+    )
+  }
 }

@@ -45,12 +45,4 @@ data class UpdateAlert(
   )
   @JsonFormat(pattern = "yyyy-MM-dd")
   val activeTo: LocalDate? = null,
-
-  @Schema(
-    description = "An additional comment to append to comments thread associated with the alert. Will be ignored if null or empty. " +
-      "It is a free text field limited to 1000 characters.",
-    example = "Additional user comment on the alert comment thread",
-  )
-  @field:Size(max = 1000, message = "Append comment must be <= 1000 characters")
-  val appendComment: String? = null,
 )

@@ -1,5 +1,4 @@
 erDiagram
-    alert one to zero or more comment : "threaded comments (not currently used)"
     alert one to one or more audit_event : "detailed change history"
     alert many to one alert_code : "categorised by"
     alert_code one to one or more alert_type : "grouped by"
@@ -18,16 +17,6 @@ erDiagram
         timestamp deleted_at
     }
 
-    comment {
-        bigserial comment_id PK "not null"
-        uuid comment_uuid "not null"
-        bigserial alert_id FK "not null"
-        text comment "not null"
-        timestamp created_at "not null"
-        varchar created_by "not null"
-        varchar created_by_display_name "not null"
-    }
-
     audit_event {
         bigserial audit_event_id PK "not null"
         bigserial alert_id FK "not null"
@@ -42,7 +31,6 @@ erDiagram
         boolean authorised_by_updated
         boolean active_from_updated
         boolean active_to_updated
-        boolean comment_appended
     }
 
     alert_code {

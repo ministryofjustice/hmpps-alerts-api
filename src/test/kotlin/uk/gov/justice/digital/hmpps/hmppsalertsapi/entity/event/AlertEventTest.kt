@@ -52,7 +52,6 @@ class AlertEventTest {
       authorisedByUpdated = true,
       activeFromUpdated = true,
       activeToUpdated = true,
-      commentAppended = true,
     )
 
     val domainEvent = alertEvent.toDomainEvent(baseUrl)

@@ -274,7 +274,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     val alert = alertRepository.findByAlertUuid(createdAlert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
-    assertThat(alert).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments")
+    assertThat(alert).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType")
       .isEqualTo(
         Alert(
           alertId = 1,

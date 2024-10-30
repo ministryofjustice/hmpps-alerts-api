@@ -76,7 +76,6 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
           activeFrom,
           activeTo,
           true,
-          emptyList(),
           alert.createdAt,
           TEST_USER,
           TEST_USER_NAME,
