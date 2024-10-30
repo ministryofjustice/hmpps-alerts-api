@@ -25,7 +25,7 @@ class AlertReferenceDataEventServiceTest {
   @Test
   fun `handle alert event - publish enabled`() {
     val eventProperties = EventProperties(baseUrl)
-    val alertReferenceDataEventService = AlertReferenceDataEventService(eventProperties, telemetryClient, domainEventPublisher)
+    val alertReferenceDataEventService = AlertReferenceDataEventService(eventProperties, domainEventPublisher)
     val alertEvent = AlertTypeCreatedEvent(
       ALERT_CODE_VICTIM,
       LocalDateTime.now(),
