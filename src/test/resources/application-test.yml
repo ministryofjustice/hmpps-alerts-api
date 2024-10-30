@@ -24,15 +24,9 @@ api:
       manage-users: http://localhost:8111
       prisoner-search: http://localhost:8112
 
-manage-users:
-  client:
-    id: alerts-api
-    secret: clientsecret
-
-prisoner-search:
-  client:
-    id: alerts-api
-    secret: clientsecret
+client:
+  id: client_id
+  secret: client_secret
 
 hmpps.sqs:
   provider: localstack

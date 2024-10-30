@@ -1,11 +1,18 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.config
 
+import io.netty.channel.ChannelOption.CONNECT_TIMEOUT_MILLIS
+import io.netty.channel.ChannelOption.SO_KEEPALIVE
+import io.netty.channel.epoll.EpollChannelOption
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
+import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction
 import org.springframework.web.reactive.function.client.WebClient
-import uk.gov.justice.hmpps.kotlin.auth.authorisedWebClient
+import org.springframework.web.reactive.function.client.WebClient.Builder
+import reactor.netty.http.client.HttpClient
+import reactor.netty.http.client.HttpClient.create
 import uk.gov.justice.hmpps.kotlin.auth.healthWebClient
 import java.time.Duration
 
@@ -18,22 +25,45 @@ class WebClientConfiguration(
   @Value("\${api.timeout:2s}") val timeout: Duration,
 ) {
   @Bean
-  fun hmppsAuthHealthWebClient(builder: WebClient.Builder): WebClient =
+  fun hmppsAuthHealthWebClient(builder: Builder): WebClient =
     builder.healthWebClient(hmppsAuthBaseUri, healthTimeout)
 
   @Bean
-  fun manageUsersHealthWebClient(builder: WebClient.Builder): WebClient =
+  fun manageUsersHealthWebClient(builder: Builder): WebClient =
     builder.healthWebClient(manageUsersBaseUri, healthTimeout)
 
   @Bean
-  fun manageUsersWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder) =
-    builder.authorisedWebClient(authorizedClientManager, "manage-users-api", manageUsersBaseUri, timeout)
+  fun manageUsersWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) =
+    getOAuthWebClient(authorizedClientManager, builder, manageUsersBaseUri)
 
   @Bean
-  fun prisonerSearchHealthWebClient(builder: WebClient.Builder): WebClient =
+  fun prisonerSearchHealthWebClient(builder: Builder): WebClient =
     builder.healthWebClient(prisonerSearchBaseUri, healthTimeout)
 
   @Bean
-  fun prisonerSearchWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: WebClient.Builder) =
-    builder.authorisedWebClient(authorizedClientManager, "prisoner-search-api", prisonerSearchBaseUri, timeout)
+  fun prisonerSearchWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) =
+    getOAuthWebClient(authorizedClientManager, builder, prisonerSearchBaseUri)
+
+  private fun getOAuthWebClient(
+    authorizedClientManager: OAuth2AuthorizedClientManager,
+    builder: Builder,
+    rootUri: String,
+  ): WebClient {
+    val oauth2Client = ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager)
+    oauth2Client.setDefaultClientRegistrationId("default")
+    return builder.baseUrl(rootUri)
+      .clientConnector(clientConnector())
+      .apply(oauth2Client.oauth2Configuration())
+      .build()
+  }
+
+  private fun clientConnector(consumer: ((HttpClient) -> Unit)? = null): ReactorClientHttpConnector {
+    val client = create().responseTimeout(timeout)
+      .option(CONNECT_TIMEOUT_MILLIS, 1000)
+      .option(SO_KEEPALIVE, true)
+      // this will show a warning on apple (arm) architecture but will work on linux x86 container
+      .option(EpollChannelOption.TCP_KEEPINTVL, 60)
+    consumer?.also { it.invoke(client) }
+    return ReactorClientHttpConnector(client)
+  }
 }

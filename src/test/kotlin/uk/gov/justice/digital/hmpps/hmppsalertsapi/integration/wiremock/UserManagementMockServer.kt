@@ -17,7 +17,6 @@ import java.util.UUID
 internal const val TEST_USER = "TEST_USER"
 internal const val TEST_USER_NAME = "Test User"
 internal const val USER_NOT_FOUND = "USER_NOT_FOUND"
-internal const val USER_NOT_FOUND_DISPLAY_NAME = "User Not Found"
 internal const val USER_THROW_EXCEPTION = "USER_THROW_EXCEPTION"
 internal const val NOMIS_SYS_USER = "SYS"
 internal const val NOMIS_SYS_USER_DISPLAY_NAME = "Sys"
@@ -40,7 +39,7 @@ class ManageUsersServer : WireMockServer(8111) {
 
   fun stubGetUserDetails(username: String = TEST_USER, name: String = TEST_USER_NAME): StubMapping =
     stubFor(
-      get("/users/$username")
+      get("/users/$username").authorised()
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
@@ -62,7 +61,7 @@ class ManageUsersServer : WireMockServer(8111) {
     )
 
   fun stubGetUserDetailsException(username: String = USER_THROW_EXCEPTION): StubMapping =
-    stubFor(get("/users/$username").willReturn(aResponse().withStatus(500)))
+    stubFor(get("/users/$username").authorised().willReturn(aResponse().withStatus(500)))
 }
 
 class ManageUsersExtension : BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
