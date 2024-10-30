@@ -38,7 +38,7 @@ class PrisonerSearchServer : WireMockServer(8112) {
 
   fun stubGetPrisoner(prisonNumber: String = PRISON_NUMBER, prisonCode: String = PRISON_CODE_LEEDS): StubMapping =
     stubFor(
-      get("/prisoner/$prisonNumber").authorised()
+      get("/prisoner/$prisonNumber")
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
@@ -60,11 +60,11 @@ class PrisonerSearchServer : WireMockServer(8112) {
     )
 
   fun stubGetPrisonerException(prisonNumber: String = PRISON_NUMBER_THROW_EXCEPTION): StubMapping =
-    stubFor(get("/prisoner/$prisonNumber").authorised().willReturn(aResponse().withStatus(500)))
+    stubFor(get("/prisoner/$prisonNumber").willReturn(aResponse().withStatus(500)))
 
   fun stubGetPrisoners(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER)): StubMapping =
     stubFor(
-      post("/prisoner-search/prisoner-numbers").authorised()
+      post("/prisoner-search/prisoner-numbers")
         .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
         .willReturn(
           aResponse()
@@ -90,7 +90,7 @@ class PrisonerSearchServer : WireMockServer(8112) {
 
   fun stubGetPrisonersNotFound(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER_NOT_FOUND)): StubMapping =
     stubFor(
-      post("/prisoner-search/prisoner-numbers").authorised()
+      post("/prisoner-search/prisoner-numbers")
         .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
         .willReturn(
           aResponse()
@@ -102,7 +102,7 @@ class PrisonerSearchServer : WireMockServer(8112) {
 
   fun stubGetPrisonersNullResponse(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER_NULL_RESPONSE)): StubMapping =
     stubFor(
-      post("/prisoner-search/prisoner-numbers").authorised()
+      post("/prisoner-search/prisoner-numbers")
         .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
         .willReturn(
           aResponse()
@@ -114,7 +114,7 @@ class PrisonerSearchServer : WireMockServer(8112) {
 
   fun stubGetPrisonersException(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER_THROW_EXCEPTION)): StubMapping =
     stubFor(
-      post("/prisoner-search/prisoner-numbers").authorised()
+      post("/prisoner-search/prisoner-numbers")
         .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
         .willReturn(aResponse().withStatus(500)),
     )

@@ -39,7 +39,7 @@ class ManageUsersServer : WireMockServer(8111) {
 
   fun stubGetUserDetails(username: String = TEST_USER, name: String = TEST_USER_NAME): StubMapping =
     stubFor(
-      get("/users/$username").authorised()
+      get("/users/$username")
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
@@ -61,7 +61,7 @@ class ManageUsersServer : WireMockServer(8111) {
     )
 
   fun stubGetUserDetailsException(username: String = USER_THROW_EXCEPTION): StubMapping =
-    stubFor(get("/users/$username").authorised().willReturn(aResponse().withStatus(500)))
+    stubFor(get("/users/$username").willReturn(aResponse().withStatus(500)))
 }
 
 class ManageUsersExtension : BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
