@@ -67,7 +67,6 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
         authorisedBy = "U dated",
         activeFrom = LocalDate.now().minusDays(2),
         activeTo = LocalDate.now().plusDays(30),
-        appendComment = null,
       ),
     )
 
@@ -90,7 +89,6 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
         authorisedBy = alert.authorisedBy,
         activeFrom = alert.activeFrom,
         activeTo = alert.activeTo,
-        appendComment = null,
       ),
     )
 

@@ -34,11 +34,6 @@ class AlertType(
   @OneToMany(mappedBy = "alertType")
   val alertCodes: MutableList<AlertCode> = mutableListOf()
 
-  fun addAlertCode(alertCode: AlertCode): AlertCode {
-    alertCodes.add(alertCode)
-    return alertCode
-  }
-
   fun isActive() = deactivatedAt?.isBefore(LocalDateTime.now()) != true
 
   fun create(): AlertType = this.also {

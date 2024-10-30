@@ -96,7 +96,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
     activeFromEnd: LocalDate?,
     @RequestParam
     @Parameter(
-      description = "Filter alerts that contain the search text in their description, authorised by or comments. The search is case insensitive and will match any part of the description, authorised by or comment text",
+      description = "Filter alerts that contain the search text in their description or authorised by. The search is case insensitive and will match any part of the description or authorised by text",
       example = "Search text",
     )
     search: String?,

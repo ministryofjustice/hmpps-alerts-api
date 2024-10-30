@@ -70,33 +70,6 @@ class Alert(
     fetch = FetchType.EAGER,
     cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE],
   )
-  private val comments: MutableList<Comment> = mutableListOf()
-
-  fun comments() = comments.toList().sortedByDescending { it.createdAt }
-
-  fun addComment(
-    comment: String,
-    createdAt: LocalDateTime = LocalDateTime.now(),
-    createdBy: String,
-    createdByDisplayName: String,
-  ): Comment {
-    val commentEntity = Comment(
-      commentUuid = UUID.randomUUID(),
-      alert = this,
-      comment = comment,
-      createdAt = createdAt,
-      createdBy = createdBy,
-      createdByDisplayName = createdByDisplayName,
-    )
-    comments.add(commentEntity)
-    return commentEntity
-  }
-
-  @OneToMany(
-    mappedBy = "alert",
-    fetch = FetchType.EAGER,
-    cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE],
-  )
   @OrderBy("actioned_at DESC")
   private val auditEvents: MutableList<AuditEvent> = mutableListOf()
 
@@ -114,7 +87,6 @@ class Alert(
     authorisedByUpdated: Boolean? = null,
     activeFromUpdated: Boolean? = null,
     activeToUpdated: Boolean? = null,
-    commentAppended: Boolean? = null,
   ): AuditEvent {
     val auditEvent = AuditEvent(
       alert = this,
@@ -129,7 +101,6 @@ class Alert(
       authorisedByUpdated = authorisedByUpdated,
       activeFromUpdated = activeFromUpdated,
       activeToUpdated = activeToUpdated,
-      commentAppended = commentAppended,
     )
     auditEvents.add(auditEvent)
     return auditEvent
@@ -206,7 +177,6 @@ class Alert(
           it.authorisedByUpdated,
           it.activeFromUpdated,
           it.activeToUpdated,
-          it.commentAppended,
         )
       }
     }
@@ -230,7 +200,6 @@ class Alert(
     authorisedBy: String?,
     activeFrom: LocalDate?,
     activeTo: LocalDate?,
-    appendComment: String?,
     updatedAt: LocalDateTime = LocalDateTime.now(),
     updatedBy: String,
     updatedByDisplayName: String,
@@ -241,8 +210,6 @@ class Alert(
     val authorisedByUpdated = authorisedBy != null && this.authorisedBy != authorisedBy
     val activeFromUpdated = activeFrom != null && this.activeFrom != activeFrom
     val activeToUpdated = this.activeTo != activeTo
-    val trimmedAppendComment = appendComment?.trim()
-    val commentAppended = !trimmedAppendComment.isNullOrEmpty()
     var updated = false
 
     val sb = StringBuilder()
@@ -266,16 +233,6 @@ class Alert(
       this.activeTo = activeTo
       updated = true
     }
-    if (commentAppended) {
-      sb.appendLine("Comment '$trimmedAppendComment' was added")
-      addComment(
-        comment = trimmedAppendComment!!,
-        createdAt = updatedAt,
-        createdBy = updatedBy,
-        createdByDisplayName = updatedByDisplayName,
-      )
-      updated = true
-    }
 
     if (updated) {
       lastModifiedAt = updatedAt
@@ -291,7 +248,6 @@ class Alert(
         authorisedByUpdated = authorisedByUpdated,
         activeFromUpdated = activeFromUpdated,
         activeToUpdated = activeToUpdated,
-        commentAppended = commentAppended,
       )
       registerEvent(
         AlertUpdatedEvent(
@@ -305,7 +261,6 @@ class Alert(
           authorisedByUpdated = authorisedByUpdated,
           activeFromUpdated = activeFromUpdated,
           activeToUpdated = activeToUpdated,
-          commentAppended = commentAppended,
         ),
       )
       PersonAlertsChanged.registerChange(prisonNumber)

@@ -29,7 +29,7 @@ class AlertEventServiceTest {
   @Test
   fun `handle alert event - publish enabled`() {
     val eventProperties = EventProperties(baseUrl)
-    val alertEventService = AlertEventService(eventProperties, telemetryClient, domainEventPublisher)
+    val alertEventService = AlertEventService(eventProperties, domainEventPublisher)
     val alertEvent = AlertCreatedEvent(
       UUID.randomUUID(),
       PRISON_NUMBER,

@@ -4,14 +4,12 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Comment
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import java.time.LocalDate
 import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent as AuditEventModel
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Comment as CommentModel
 
 const val ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL = "DOCGM"
 
@@ -45,9 +43,8 @@ fun CreateAlert.toAlertEntity(
   activeCaseLoadId = context.activeCaseLoadId,
 )
 
-fun Alert.toAlertModel(comments: Collection<Comment>? = null, auditEvents: Collection<AuditEvent>? = null): AlertModel {
+fun Alert.toAlertModel(auditEvents: Collection<AuditEvent>? = null): AlertModel {
   val events = auditEvents ?: auditEvents()
-
   val createdAuditEvent = events.single { it.action == AuditEventAction.CREATED }
   val lastModifiedAuditEvent = events.firstOrNull { it.action == AuditEventAction.UPDATED }
   val lastActiveToSetAuditEvent = events.takeIf { activeTo != null }
@@ -62,7 +59,6 @@ fun Alert.toAlertModel(comments: Collection<Comment>? = null, auditEvents: Colle
     activeFrom = activeFrom,
     activeTo = activeTo,
     isActive = isActive(),
-    comments = (comments ?: comments()).map { it.toAlertCommentModel() },
     createdAt = createdAuditEvent.actionedAt,
     createdBy = createdAuditEvent.actionedBy,
     createdByDisplayName = createdAuditEvent.actionedByDisplayName,
@@ -74,15 +70,6 @@ fun Alert.toAlertModel(comments: Collection<Comment>? = null, auditEvents: Colle
     activeToLastSetByDisplayName = lastActiveToSetAuditEvent?.actionedByDisplayName,
   )
 }
-
-fun Comment.toAlertCommentModel() =
-  CommentModel(
-    commentUuid = commentUuid,
-    comment = comment,
-    createdAt = createdAt,
-    createdBy = createdBy,
-    createdByDisplayName = createdByDisplayName,
-  )
 
 fun AuditEvent.toAuditEventModel() =
   AuditEventModel(

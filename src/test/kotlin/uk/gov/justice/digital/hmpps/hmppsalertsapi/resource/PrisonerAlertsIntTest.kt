@@ -264,21 +264,6 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
-  fun `retrieve all alerts for prison number with 'EarCh cOMMen' in the authorised by`() {
-    val search = "EarCh cOMMen"
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, search = search)
-    with(response.content) {
-      assertThat(this).hasSize(2)
-      assertAllForPrisonNumber(PRISON_NUMBER)
-      assertCommentContainsCaseInsensitive(search)
-      assertContainsActiveAndInactive()
-      assertDoesNotContainDeletedAlert()
-      assertOrderedByActiveFromDesc()
-    }
-  }
-
-  @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `sort all alerts for prison number by active from in ascending order`() {
     val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("activeFrom,asc"))
     response.content.assertOrderedByActiveFromAsc()
@@ -340,9 +325,6 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
 
   private fun Collection<Alert>.assertAuthorisedByContainsCaseInsensitive(search: String) =
     assertThat(all { it.authorisedBy!!.contains(search, ignoreCase = true) }).isTrue
-
-  private fun Collection<Alert>.assertCommentContainsCaseInsensitive(search: String) =
-    assertThat(all { alert -> alert.comments.any { it.comment.contains(search, ignoreCase = true) } }).isTrue
 
   private fun Collection<Alert>.assertActiveFromOnOrAfter(activeFrom: LocalDate) =
     assertThat(all { it.activeFrom.onOrAfter(activeFrom) }).isTrue

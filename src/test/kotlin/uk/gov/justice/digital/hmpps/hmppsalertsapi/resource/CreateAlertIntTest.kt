@@ -350,7 +350,6 @@ class CreateAlertIntTest : IntegrationTestBase() {
         request.activeFrom!!,
         request.activeTo,
         true,
-        emptyList(),
         alert.createdAt,
         TEST_USER,
         TEST_USER_NAME,
@@ -375,7 +374,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
-    assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments")
+    assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType")
       .isEqualTo(
         Alert(
           alertId = 1,
@@ -413,7 +412,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
-    assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "comments")
+    assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType")
       .isEqualTo(
         Alert(
           alertId = 1,

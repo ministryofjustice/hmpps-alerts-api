@@ -271,7 +271,6 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
         authorisedBy = null,
         activeFrom = null,
         activeTo = null,
-        appendComment = null,
         updatedBy = "A Jones",
         updatedByDisplayName = "Andrew Jones",
         source = Source.DPS,

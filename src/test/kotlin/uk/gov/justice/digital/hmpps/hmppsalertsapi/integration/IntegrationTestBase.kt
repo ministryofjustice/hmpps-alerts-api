@@ -178,7 +178,7 @@ abstract class IntegrationTestBase {
 
   fun givenNewAlertType(alertType: AlertType): AlertType = alertTypeRepository.save(alertType)
 
-  fun givenNewAlertCode(alertCode: AlertCode) = alertCodeRepository.save(alertCode)
+  fun givenNewAlertCode(alertCode: AlertCode): AlertCode = alertCodeRepository.save(alertCode)
 
   fun givenAnAlert(alert: Alert): Alert = alertRepository.save(
     alert.create(

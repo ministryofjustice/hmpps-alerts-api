@@ -71,12 +71,6 @@ data class Alert(
   val isActive: Boolean,
 
   @Schema(
-    description = "The comments thread associated with the alert. " +
-      "The comments are ordered by the date and time they were created, with the most recent comment first.",
-  )
-  val comments: Collection<Comment>,
-
-  @Schema(
     description = "The date and time the alert was created",
     example = "2021-09-27T14:19:25",
   )
