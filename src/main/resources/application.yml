@@ -21,16 +21,10 @@ spring:
 
       client:
         registration:
-          manage-users-api:
+          default:
             provider: hmpps-auth
-            client-id: ${manage-users.client.id}
-            client-secret: ${manage-users.client.secret}
-            authorization-grant-type: client_credentials
-            scope: read
-          prisoner-search-api:
-            provider: hmpps-auth
-            client-id: ${prisoner-search.client.id}
-            client-secret: ${prisoner-search.client.secret}
+            client-id: ${client.id}
+            client-secret: ${client.secret}
             authorization-grant-type: client_credentials
             scope: read
         provider:
