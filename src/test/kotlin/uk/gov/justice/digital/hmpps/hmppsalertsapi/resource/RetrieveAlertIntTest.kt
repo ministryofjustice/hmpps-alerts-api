@@ -58,17 +58,17 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
   fun `retrieve alert`() {
     val prisonNumber = "G1234AT"
     val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
-    val alert = givenAnAlert(alert(prisonNumber, alertCode))
+    val alert = givenAlert(alert(prisonNumber, alertCode))
 
     val response = webTestClient.get()
-      .uri("/alerts/${alert.alertUuid}")
+      .uri("/alerts/${alert.id}")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .exchange().successResponse<Alert>()
 
     with(alert) {
       assertThat(response).usingRecursiveComparison().ignoringFields("createdAt").isEqualTo(
         Alert(
-          alert.alertUuid,
+          alert.id,
           prisonNumber,
           alertCodeSummary(alertCode.alertType, alertCode),
           description,

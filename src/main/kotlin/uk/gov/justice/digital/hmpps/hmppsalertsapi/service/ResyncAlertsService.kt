@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.ResyncAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import java.time.LocalDateTime
-import java.util.UUID
 
 const val REQUESTED_BY_SYS = "SYS"
 
@@ -85,8 +84,8 @@ class ResyncAlertsService(
         requestedByDisplayName = REQUESTED_BY_SYS,
         source = Source.NOMIS,
         completedAt = LocalDateTime.now(),
-        alertsDeleted = deleted.map { it.alertUuid },
-        alertsCreated = created.map { it.alertUuid },
+        alertsDeleted = deleted.map { it.id },
+        alertsCreated = created.map { it.id },
       ),
     )
   }
@@ -94,7 +93,6 @@ class ResyncAlertsService(
   private fun ResyncAlertMerge.alertFor(prisonNumber: String, alertCodes: Map<String, AlertCode>): ResyncAlertMerge {
     with(resync) {
       val alert = Alert(
-        alertUuid = UUID.randomUUID(),
         alertCode = alertCodes[alertCode]!!,
         prisonNumber = prisonNumber,
         description = description,
@@ -102,6 +100,7 @@ class ResyncAlertsService(
         activeFrom = activeFrom,
         activeTo = activeTo,
         createdAt = createdAt,
+        prisonCodeWhenCreated = null,
       )
       alert.let {
         it.lastModifiedAt = lastModifiedAt
@@ -118,7 +117,7 @@ class ResyncAlertsService(
     }
   }
 
-  private fun ResyncAlertMerge.resynced() = ResyncedAlert(resync.offenderBookId, resync.alertSeq, alert!!.alertUuid)
+  private fun ResyncAlertMerge.resynced() = ResyncedAlert(resync.offenderBookId, resync.alertSeq, alert!!.id)
 
   private fun List<ResyncAlert>.logActiveToBeforeActiveFrom(prisonNumber: String) {
     this.filter { it.activeTo?.isBefore(it.activeFrom) == true }.forEach {

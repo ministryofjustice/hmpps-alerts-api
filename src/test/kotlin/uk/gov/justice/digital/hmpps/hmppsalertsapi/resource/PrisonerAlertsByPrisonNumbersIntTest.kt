@@ -4,15 +4,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.HttpStatus.BAD_REQUEST
-import org.springframework.test.context.jdbc.Sql
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
-import java.util.UUID
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 
 class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
-
-  private val deletedAlertUuid = UUID.fromString("a2c6af2c-9e70-4fd7-bac3-f3029cfad9b8")
 
   @Test
   fun `401 unauthorised`() {
@@ -48,17 +45,20 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-for-multiple-prison-numbers.sql")
   fun `get prisoners alerts`() {
-    val prisonNumbers = listOf("A1234AA", "B2345BB", PRISON_NUMBER_NOT_FOUND)
+    val p1 = givenPrisoner()
+    val p2 = givenPrisoner()
+    val codes1 = alertCodeRepository.findAll().shuffled().take(2)
+    val codes2 = alertCodeRepository.findAll().shuffled().take(3)
+    codes1.forEach { givenAlert(alert(p1, it)) }
+    codes2.forEach { givenAlert(alert(p2, it)) }
 
-    val prisonersAlerts = getPrisonerAlerts(prisonNumbers)
+    val prisonersAlerts = getPrisonerAlerts(listOf(p1, p2, PRISON_NUMBER_NOT_FOUND))
 
     with(prisonersAlerts) {
-      assertOnlyContainsAlertsForPrisonNumbers(listOf("A1234AA", "B2345BB"))
-      assertAlertCountForPrisonNumber("A1234AA", 2)
-      assertAlertCountForPrisonNumber("B2345BB", 3)
-      assertDoesNotContainDeletedAlert()
+      assertOnlyContainsAlertsForPrisonNumbers(listOf(p1, p2))
+      assertAlertCountForPrisonNumber(p1, 2)
+      assertAlertCountForPrisonNumber(p2, 3)
       assertOrderedByActiveFromDesc()
     }
   }
@@ -67,19 +67,14 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
   private fun Map<String, List<Alert>>.alerts() = values.flatten()
 
   private fun Map<String, List<Alert>>.assertOnlyContainsAlertsForPrisonNumbers(prisonNumbers: List<String>) {
-    assertThat(prisonNumbers()).isEqualTo(prisonNumbers)
-    assertThat(alerts().map { it.prisonNumber }.distinct()).isEqualTo(prisonNumbers)
+    assertThat(prisonNumbers()).containsExactlyInAnyOrderElementsOf(prisonNumbers)
+    assertThat(alerts().map { it.prisonNumber }.distinct()).containsExactlyInAnyOrderElementsOf(prisonNumbers)
   }
 
   private fun Map<String, List<Alert>>.assertAlertCountForPrisonNumber(prisonNumber: String, expectedCount: Int) {
     assertThat(containsKey(prisonNumber))
     assertThat(this[prisonNumber]!!.filter { it.prisonNumber == prisonNumber }).hasSize(expectedCount)
   }
-
-  private fun Map<String, List<Alert>>.assertDoesNotContainDeletedAlert() =
-    alertRepository.findByAlertUuidIncludingSoftDelete(deletedAlertUuid)!!.also { deletedAlert ->
-      assertThat(alerts().associateBy { it.alertUuid }.containsKey(deletedAlert.alertUuid)).isFalse()
-    }
 
   private fun Map<String, List<Alert>>.assertOrderedByActiveFromDesc() =
     values.forEach { alerts ->

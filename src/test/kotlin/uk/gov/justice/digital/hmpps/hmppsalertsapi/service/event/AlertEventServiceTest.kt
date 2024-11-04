@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service.event
 
-import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.argumentCaptor
@@ -21,7 +20,6 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 class AlertEventServiceTest {
-  private val telemetryClient = mock<TelemetryClient>()
   private val domainEventPublisher = mock<DomainEventPublisher>()
 
   private val baseUrl = "http://localhost:8080"

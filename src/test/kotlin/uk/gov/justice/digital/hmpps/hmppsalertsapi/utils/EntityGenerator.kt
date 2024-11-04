@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.utils
 
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
@@ -52,11 +53,12 @@ object EntityGenerator {
     prisonNumber: String,
     alertCode: AlertCode = AC_VICTIM,
     description: String = "A description of the prisoner alert",
-    authorisedBy: String = "A Person",
+    authorisedBy: String? = "A Person",
     activeFrom: LocalDate = LocalDate.now().minusDays(1),
     activeTo: LocalDate? = null,
     createdAt: LocalDateTime = LocalDateTime.now(),
-    alertUuid: UUID = UUID.randomUUID(),
-    alertId: Long = IdGenerator.newId(),
-  ) = Alert(alertId, alertUuid, alertCode, prisonNumber, description, authorisedBy, activeFrom, activeTo, createdAt)
+    deletedAt: LocalDateTime? = null,
+    alertUuid: UUID = newUuid(),
+  ) = Alert(alertCode, prisonNumber, description, authorisedBy, activeFrom, activeTo, createdAt, null, alertUuid)
+    .apply { set(::deletedAt, deletedAt) }
 }

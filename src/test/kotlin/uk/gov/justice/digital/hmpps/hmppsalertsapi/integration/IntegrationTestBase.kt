@@ -15,8 +15,6 @@ import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import org.springframework.test.context.jdbc.Sql
-import org.springframework.test.context.jdbc.SqlMergeMode
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
@@ -42,14 +40,13 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
 import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
 
-@SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
-@Sql("classpath:test_data/reset-database.sql")
 @ExtendWith(HmppsAuthApiExtension::class, ManageUsersExtension::class, PrisonerSearchExtension::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
@@ -108,18 +105,22 @@ abstract class IntegrationTestBase {
   internal fun HmppsQueue.countAllMessagesOnQueue() =
     sqsClient.countAllMessagesOnQueue(queueUrl).get()
 
+  internal fun HmppsQueue.receiveAllMessages(): List<HmppsDomainEvent> {
+    val count = countAllMessagesOnQueue()
+    return (1..count).map { hmppsDomainEventOnQueue() }
+  }
+
   internal fun HmppsQueue.receiveMessageOnQueue() =
     sqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build()).get().messages().single()
 
   internal final fun HmppsQueue.receiveMessageTypeCounts(
     messageCount: Int = 1,
-  ) =
-    sqsClient.receiveMessage(
-      ReceiveMessageRequest.builder().maxNumberOfMessages(messageCount).queueUrl(queueUrl).build(),
-    ).get().messages()
-      .map { objectMapper.readValue<MsgBody>(it.body()) }
-      .map { objectMapper.readValue<EventType>(it.message) }
-      .groupingBy { it.eventType }.eachCount()
+  ) = sqsClient.receiveMessage(
+    ReceiveMessageRequest.builder().maxNumberOfMessages(messageCount).queueUrl(queueUrl).build(),
+  ).get().messages()
+    .map { objectMapper.readValue<MsgBody>(it.body()) }
+    .map { objectMapper.readValue<EventType>(it.message) }
+    .groupingBy { it.eventType }.eachCount()
 
   data class EventType(val eventType: String)
 
@@ -164,6 +165,12 @@ abstract class IntegrationTestBase {
       .expectBody(T::class.java)
       .returnResult().responseBody!!
 
+  fun givenPrisoner(): String {
+    val prisonNumber = prisonNumber()
+    prisonerSearch.stubGetPrisoner(prisonNumber)
+    return prisonNumber
+  }
+
   fun givenPrisonerExists(prisonNumber: String): String {
     prisonerSearch.stubGetPrisoner(prisonNumber)
     return prisonNumber
@@ -176,11 +183,14 @@ abstract class IntegrationTestBase {
   fun givenExistingAlertType(code: String): AlertType = requireNotNull(alertTypeRepository.findByCode(code))
   fun givenExistingAlertCode(code: String): AlertCode = requireNotNull(alertCodeRepository.findByCode(code))
 
+  fun givenAlertCode(code: String? = null, active: Boolean = true): AlertCode =
+    alertCodeRepository.findAll().first { it.isActive() == active && (code.isNullOrBlank() || it.code == code) }
+
   fun givenNewAlertType(alertType: AlertType): AlertType = alertTypeRepository.save(alertType)
 
   fun givenNewAlertCode(alertCode: AlertCode): AlertCode = alertCodeRepository.save(alertCode)
 
-  fun givenAnAlert(alert: Alert): Alert = alertRepository.save(
+  fun givenAlert(alert: Alert): Alert = alertRepository.save(
     alert.create(
       createdBy = TEST_USER,
       createdByDisplayName = TEST_USER_NAME,

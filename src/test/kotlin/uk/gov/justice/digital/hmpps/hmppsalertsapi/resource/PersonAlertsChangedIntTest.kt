@@ -58,10 +58,10 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
   @Test
   fun `update alert publishes a person alerts changed event`() {
     val prisonNumber = givenPrisonerExists("U1234PA")
-    val alert = givenAnAlert(alert(prisonNumber))
+    val alert = givenAlert(alert(prisonNumber))
 
     webTestClient.updateAlert(
-      alertUuid = alert.alertUuid,
+      alertUuid = alert.id,
       request = UpdateAlert(
         description = "Updated description",
         authorisedBy = "U dated",
@@ -80,10 +80,10 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
   @Test
   fun `update alert does not publish if no changes`() {
     val prisonNumber = givenPrisonerExists("U1234NP")
-    val alert = givenAnAlert(alert(prisonNumber))
+    val alert = givenAlert(alert(prisonNumber))
 
     webTestClient.updateAlert(
-      alertUuid = alert.alertUuid,
+      alertUuid = alert.id,
       request = UpdateAlert(
         description = alert.description,
         authorisedBy = alert.authorisedBy,
@@ -98,8 +98,8 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
   @Test
   fun `delete alert publishes a person alerts changed event`() {
     val prisonNumber = givenPrisonerExists("D1234PA")
-    val alert = givenAnAlert(alert(prisonNumber))
-    webTestClient.deleteAlert(alertUuid = alert.alertUuid)
+    val alert = givenAlert(alert(prisonNumber))
+    webTestClient.deleteAlert(alertUuid = alert.id)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {

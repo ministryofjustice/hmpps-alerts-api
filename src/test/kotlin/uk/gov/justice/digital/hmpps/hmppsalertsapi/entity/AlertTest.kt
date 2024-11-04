@@ -17,7 +17,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_N
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_VICTIM
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.UUID
 
 class AlertTest {
   @Test
@@ -226,7 +225,6 @@ class AlertTest {
     val activeCaseLoadId = PRISON_CODE_LEEDS
 
     val entity = Alert(
-      alertUuid = UUID.randomUUID(),
       alertCode = AC_VICTIM,
       prisonNumber = PRISON_NUMBER,
       description = "Alert description",
@@ -234,6 +232,7 @@ class AlertTest {
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
       createdAt = createdAt,
+      prisonCodeWhenCreated = null,
     ).create(
       createdAt = createdAt,
       createdBy = createdBy,
@@ -264,7 +263,6 @@ class AlertTest {
     val source = DPS
 
     val entity = Alert(
-      alertUuid = UUID.randomUUID(),
       alertCode = AC_VICTIM,
       prisonNumber = PRISON_NUMBER,
       description = "Alert description",
@@ -272,6 +270,7 @@ class AlertTest {
       activeFrom = LocalDate.now().minusDays(3),
       activeTo = LocalDate.now().plusDays(3),
       createdAt = createdAt,
+      prisonCodeWhenCreated = null,
     ).create(
       createdAt = createdAt,
       createdBy = createdBy,
@@ -282,7 +281,7 @@ class AlertTest {
 
     assertThat(entity.publishedDomainEvents().single()).isEqualTo(
       AlertCreatedEvent(
-        alertUuid = entity.alertUuid,
+        alertUuid = entity.id,
         prisonNumber = entity.prisonNumber,
         alertCode = entity.alertCode.code,
         occurredAt = createdAt,
@@ -366,7 +365,7 @@ class AlertTest {
 
     assertThat(entity.publishedDomainEvents().single()).isEqualTo(
       AlertUpdatedEvent(
-        alertUuid = entity.alertUuid,
+        alertUuid = entity.id,
         prisonNumber = entity.prisonNumber,
         alertCode = entity.alertCode.code,
         occurredAt = updatedAt,
@@ -625,7 +624,7 @@ class AlertTest {
     entity.delete(deletedAt, "DELETED_BY", "DELETED_BY_DISPLAY_NAME", source, activeCaseLoadId)
 
     assertThat(entity.lastModifiedAt).isEqualTo(deletedAt)
-    assertThat(entity.deletedAt()).isEqualTo(deletedAt)
+    assertThat(entity.deletedAt).isEqualTo(deletedAt)
     assertThat(entity.auditEvents().single { it.action == DELETED }).usingRecursiveComparison().isEqualTo(
       AuditEvent(
         alert = entity,
@@ -651,7 +650,7 @@ class AlertTest {
 
     assertThat(entity.publishedDomainEvents().single()).isEqualTo(
       AlertDeletedEvent(
-        alertUuid = entity.alertUuid,
+        alertUuid = entity.id,
         prisonNumber = entity.prisonNumber,
         alertCode = entity.alertCode.code,
         occurredAt = deletedAt,
@@ -667,7 +666,6 @@ class AlertTest {
     createdByDisplayName: String = "CREATED_BY_DISPLAY_NAME",
     source: Source = DPS,
   ) = Alert(
-    alertUuid = UUID.randomUUID(),
     alertCode = AC_VICTIM,
     prisonNumber = PRISON_NUMBER,
     description = "Alert description",
@@ -675,6 +673,7 @@ class AlertTest {
     activeFrom = LocalDate.now().minusDays(3),
     activeTo = LocalDate.now().plusDays(3),
     createdAt = createdAt,
+    prisonCodeWhenCreated = null,
   ).apply {
     auditEvent(
       action = CREATED,
