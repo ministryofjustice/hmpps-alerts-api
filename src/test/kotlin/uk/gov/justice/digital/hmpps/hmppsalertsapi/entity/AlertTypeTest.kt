@@ -26,7 +26,6 @@ class AlertTypeTest {
 
   private fun alertType() =
     AlertType(
-      1,
       "A",
       "Alert type A",
       1,

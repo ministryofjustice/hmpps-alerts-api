@@ -37,7 +37,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.PrisonerAlertsIntTest.AlertsPage
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
 import java.time.LocalDate.now
@@ -238,9 +237,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `should populate created by using username claim`() {
     val request = createAlertRequest()
+    val prisonNumber = givenPrisoner()
 
     val alert = webTestClient.post()
-      .uri("prisoners/$PRISON_NUMBER/alerts")
+      .uri("prisoners/$prisonNumber/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__RW), isUserToken = false))
       .exchange().successResponse<AlertModel>(HttpStatus.CREATED)
@@ -272,9 +272,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `should populate created by display name using Username header when source is NOMIS`() {
     val request = createAlertRequest()
+    val prisonNumber = givenPrisoner()
 
     val alert = webTestClient.post()
-      .uri("prisoners/$PRISON_NUMBER/alerts")
+      .uri("prisoners/$prisonNumber/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(source = NOMIS, username = NOMIS_SYS_USER))
@@ -298,9 +299,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `should populate created by username and display name as 'NOMIS' when source is NOMIS and no username is supplied`() {
     val request = createAlertRequest()
+    val prisonNumber = givenPrisoner()
 
     val alert = webTestClient.post()
-      .uri("prisoners/$PRISON_NUMBER/alerts")
+      .uri("prisoners/$prisonNumber/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .header(SOURCE, NOMIS.name)
@@ -323,7 +325,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should return populated alert model`() {
-    val prisonNumber = givenPrisonerExists("C1234AA")
+    val prisonNumber = givenPrisoner()
     val request = createAlertRequest()
 
     val alert = webTestClient.createAlert(prisonNumber, request)
@@ -368,7 +370,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should create new alert via DPS`() {
-    val prisonNumber = givenPrisonerExists("C1234VP")
+    val prisonNumber = givenPrisoner()
     val request = createAlertRequest()
 
     val alert = webTestClient.createAlert(prisonNumber, request)
@@ -404,7 +406,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should create new alert via NOMIS`() {
-    val prisonNumber = givenPrisonerExists("C1234VN")
+    val prisonNumber = givenPrisoner()
     val request = createAlertRequest()
 
     val alert = webTestClient.createAlert(prisonNumber, request, NOMIS)
@@ -440,7 +442,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should publish alert created event with DPS source`() {
-    val prisonNumber = givenPrisonerExists("C1234PD")
+    val prisonNumber = givenPrisoner()
     val request = createAlertRequest()
 
     val alert = webTestClient.createAlert(prisonNumber, request)
@@ -473,7 +475,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should publish alert created event with NOMIS source`() {
-    val prisonNumber = givenPrisonerExists("C1234PN")
+    val prisonNumber = givenPrisoner()
     val request = createAlertRequest()
 
     val alert = webTestClient.createAlert(prisonNumber, request, NOMIS)

@@ -17,9 +17,6 @@ import java.time.LocalDateTime
 @Entity
 @Table
 class AlertCode(
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  val alertCodeId: Long = 0,
 
   @ManyToOne
   @JoinColumn(name = "alert_type_id", nullable = false)
@@ -30,6 +27,9 @@ class AlertCode(
   var listSequence: Int,
   val createdAt: LocalDateTime,
   val createdBy: String,
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  val alertCodeId: Long = 0,
 ) : AbstractAggregateRoot<AlertCode>() {
   var modifiedAt: LocalDateTime? = null
   var modifiedBy: String? = null

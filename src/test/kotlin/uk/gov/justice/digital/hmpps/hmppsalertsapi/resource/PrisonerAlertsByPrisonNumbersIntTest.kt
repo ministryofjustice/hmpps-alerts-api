@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus.BAD_REQUEST
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 
 class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
 

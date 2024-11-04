@@ -5,7 +5,6 @@ import org.assertj.core.api.Assertions.within
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.NOT_FOUND
@@ -22,16 +21,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_VULNERA
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
-import java.util.UUID
 
 class DeactivateAlertCodeIntTest : IntegrationTestBase() {
-
-  var uuid: UUID? = null
-
-  @BeforeEach
-  fun setup() {
-    uuid = UUID.randomUUID()
-  }
 
   @Test
   fun `401 unauthorised`() {

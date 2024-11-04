@@ -25,9 +25,7 @@ class AlertCodeTest {
 
   private fun alertCode() =
     AlertCode(
-      1,
       AlertType(
-        1,
         "A",
         "Alert type A",
         1,

@@ -19,6 +19,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
@@ -40,12 +41,17 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.set
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
 import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.util.UUID
 
 @ExtendWith(HmppsAuthApiExtension::class, ManageUsersExtension::class, PrisonerSearchExtension::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -188,7 +194,10 @@ abstract class IntegrationTestBase {
 
   fun givenNewAlertType(alertType: AlertType): AlertType = alertTypeRepository.save(alertType)
 
-  fun givenNewAlertCode(alertCode: AlertCode): AlertCode = alertCodeRepository.save(alertCode)
+  fun givenNewAlertCode(alertCode: AlertCode): AlertCode {
+    val type = alertTypeRepository.findByCode(alertCode.alertType.code)
+    return alertCodeRepository.save(alertCode.apply { set(::alertType, type) })
+  }
 
   fun givenAlert(alert: Alert): Alert = alertRepository.save(
     alert.create(
@@ -199,4 +208,17 @@ abstract class IntegrationTestBase {
       publishEvent = false,
     ),
   )
+
+  fun alert(
+    prisonNumber: String,
+    alertCode: AlertCode = givenExistingAlertCode(AC_VICTIM.code),
+    description: String = "A description of the prisoner alert",
+    authorisedBy: String? = "A Person",
+    activeFrom: LocalDate = LocalDate.now().minusDays(1),
+    activeTo: LocalDate? = null,
+    createdAt: LocalDateTime = LocalDateTime.now(),
+    deletedAt: LocalDateTime? = null,
+    alertUuid: UUID = newUuid(),
+  ) = Alert(alertCode, prisonNumber, description, authorisedBy, activeFrom, activeTo, createdAt, null, alertUuid)
+    .apply { set(::deletedAt, deletedAt) }
 }
