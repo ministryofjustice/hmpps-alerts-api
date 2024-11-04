@@ -7,6 +7,7 @@ import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
@@ -26,7 +27,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.summary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
@@ -160,17 +160,17 @@ class UpdateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `alert updated via DPS`() {
     val prisonNumber = givenPrisonerExists("U2345VD")
-    val alert = givenAnAlert(alert(prisonNumber))
+    val alert = givenAlert(alert(prisonNumber))
     val request = updateAlertRequest()
-    val updatedAlert = webTestClient.updateAlert(alert.alertUuid, source = DPS, request = request)
-    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+    val updatedAlert = webTestClient.updateAlert(alert.id, source = DPS, request = request)
+    val alertEntity = alertRepository.findByIdOrNull(alert.id)!!
     val alertCode = alertCodeRepository.findByCode(alertEntity.alertCode.code)!!
     val lastModifiedAuditEvent = alertEntity.lastModifiedAuditEvent()!!
 
     with(request) {
       assertThat(updatedAlert).isEqualTo(
         Alert(
-          alert.alertUuid,
+          alert.id,
           alert.prisonNumber,
           alertCode.summary(),
           description,
@@ -193,8 +193,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
       assertThat(alertEntity).usingRecursiveComparison()
         .ignoringFields("auditEvents", "alertCode.alertType").isEqualTo(
           AlertEntity(
-            alertId = alertEntity.alertId,
-            alertUuid = alertEntity.alertUuid,
+            id = alertEntity.id,
             alertCode = alertCode,
             prisonNumber = alertEntity.prisonNumber,
             description = description,
@@ -202,6 +201,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
             activeFrom = activeFrom!!,
             activeTo = activeTo,
             createdAt = alertEntity.createdAt,
+            prisonCodeWhenCreated = null,
           ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
         )
       with(lastModifiedAuditEvent) {
@@ -228,17 +228,17 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
   @Test
   fun `alert updated without changing activeTo via DPS`() {
     val prisonNumber = givenPrisonerExists("U8111NA")
-    val alert = givenAnAlert(alert(prisonNumber))
+    val alert = givenAlert(alert(prisonNumber))
     val request = updateAlertRequest(activeTo = alert.activeTo)
-    val updatedAlert = webTestClient.updateAlert(alert.alertUuid, source = DPS, request = request)
-    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+    val updatedAlert = webTestClient.updateAlert(alert.id, source = DPS, request = request)
+    val alertEntity = alertRepository.findByIdOrNull(alert.id)!!
     val alertCode = alertCodeRepository.findByCode(alertEntity.alertCode.code)!!
     val lastModifiedAuditEvent = alertEntity.lastModifiedAuditEvent()!!
 
     with(request) {
       assertThat(updatedAlert).isEqualTo(
         Alert(
-          alert.alertUuid,
+          alert.id,
           alert.prisonNumber,
           alertCode.summary(),
           description,
@@ -261,8 +261,7 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
       assertThat(alertEntity).usingRecursiveComparison()
         .ignoringFields("auditEvents", "alertCode.alertType").isEqualTo(
           AlertEntity(
-            alertId = alertEntity.alertId,
-            alertUuid = alertEntity.alertUuid,
+            id = alertEntity.id,
             alertCode = alertCode,
             prisonNumber = alertEntity.prisonNumber,
             description = description,
@@ -270,6 +269,7 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
             activeFrom = activeFrom!!,
             activeTo = activeTo,
             createdAt = alertEntity.createdAt,
+            prisonCodeWhenCreated = null,
           ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
         )
       with(lastModifiedAuditEvent) {
@@ -295,17 +295,17 @@ Updated active from from '${alert.activeFrom}' to '$activeFrom'""",
   @Test
   fun `alert updated via NOMIS`() {
     val prisonNumber = givenPrisonerExists("U5462VN")
-    val alert = givenAnAlert(alert(prisonNumber))
+    val alert = givenAlert(alert(prisonNumber))
     val request = updateAlertRequest()
-    val updatedAlert = webTestClient.updateAlert(alert.alertUuid, source = NOMIS, request = request)
-    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+    val updatedAlert = webTestClient.updateAlert(alert.id, source = NOMIS, request = request)
+    val alertEntity = alertRepository.findByIdOrNull(alert.id)!!
     val alertCode = alertCodeRepository.findByCode(alertEntity.alertCode.code)!!
     val lastModifiedAuditEvent = alertEntity.lastModifiedAuditEvent()!!
 
     with(request) {
       assertThat(updatedAlert).isEqualTo(
         Alert(
-          alert.alertUuid,
+          alert.id,
           alert.prisonNumber,
           alertCode.summary(),
           description,
@@ -328,8 +328,7 @@ Updated active from from '${alert.activeFrom}' to '$activeFrom'""",
       assertThat(alertEntity).usingRecursiveComparison()
         .ignoringFields("auditEvents", "alertCode.alertType").isEqualTo(
           AlertEntity(
-            alertId = alertEntity.alertId,
-            alertUuid = alertEntity.alertUuid,
+            id = alertEntity.id,
             alertCode = alertCode,
             prisonNumber = alertEntity.prisonNumber,
             description = description,
@@ -337,6 +336,7 @@ Updated active from from '${alert.activeFrom}' to '$activeFrom'""",
             activeFrom = activeFrom!!,
             activeTo = activeTo,
             createdAt = alertEntity.createdAt,
+            prisonCodeWhenCreated = null,
           ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
         )
       with(lastModifiedAuditEvent) {
@@ -359,10 +359,10 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
   @Test
   fun `should populate updated by display name using Username header when source is NOMIS`() {
     val prisonNumber = givenPrisonerExists("U1234HU")
-    val alert = givenAnAlert(alert(prisonNumber))
+    val alert = givenAlert(alert(prisonNumber))
 
     val updatedAlert = webTestClient.put()
-      .uri("/alerts/${alert.alertUuid}")
+      .uri("/alerts/${alert.id}")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(source = NOMIS, username = null))
       .bodyValue(updateAlertRequest())
@@ -376,7 +376,7 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
       assertThat(lastModifiedByDisplayName).isEqualTo(NOMIS_SYS_USER_DISPLAY_NAME)
     }
 
-    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+    val alertEntity = alertRepository.findByIdOrNull(alert.id)!!
 
     with(alertEntity.auditEvents()[0]) {
       assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
@@ -389,10 +389,10 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
   @Test
   fun `should populate updated by username and display name as 'NOMIS' when source is NOMIS and no username is supplied`() {
     val prisonNumber = givenPrisonerExists("N1234NU")
-    val alert = givenAnAlert(alert(prisonNumber))
+    val alert = givenAlert(alert(prisonNumber))
 
     val updatedAlert = webTestClient.put()
-      .uri("/alerts/${alert.alertUuid}")
+      .uri("/alerts/${alert.id}")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .header(SOURCE, NOMIS.name)
       .bodyValue(updateAlertRequest())
@@ -406,7 +406,7 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
       assertThat(lastModifiedByDisplayName).isEqualTo(NOMIS_SYS_USER_DISPLAY_NAME)
     }
 
-    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+    val alertEntity = alertRepository.findByIdOrNull(alert.id)!!
 
     with(alertEntity.auditEvents()[0]) {
       assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
@@ -419,9 +419,9 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
   @Test
   fun `should publish alert updated event with DPS source`() {
     val prisonNumber = givenPrisonerExists("U1234DN")
-    val alert = givenAnAlert(alert(prisonNumber))
+    val alert = givenAlert(alert(prisonNumber))
 
-    webTestClient.updateAlert(alert.alertUuid, DPS, updateAlertRequest())
+    webTestClient.updateAlert(alert.id, DPS, updateAlertRequest())
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
@@ -433,28 +433,28 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
       AlertDomainEvent(
         ALERT_UPDATED.eventType,
         AlertAdditionalInformation(
-          alert.alertUuid,
+          alert.id,
           alert.alertCode.code,
           DPS,
         ),
         1,
         ALERT_UPDATED.description,
         updateAlertEvent.occurredAt,
-        "http://localhost:8080/alerts/${alert.alertUuid}",
+        "http://localhost:8080/alerts/${alert.id}",
         PersonReference.withPrisonNumber(prisonNumber),
       ),
     )
     assertThat(
       updateAlertEvent.occurredAt.toLocalDateTime(),
-    ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
+    ).isCloseTo(alertRepository.findByIdOrNull(alert.id)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
   }
 
   @Test
   fun `should publish alert updated event with NOMIS source`() {
     val prisonNumber = givenPrisonerExists("U1234SN")
-    val alert = givenAnAlert(alert(prisonNumber))
+    val alert = givenAlert(alert(prisonNumber))
 
-    webTestClient.updateAlert(alert.alertUuid, NOMIS, updateAlertRequest())
+    webTestClient.updateAlert(alert.id, NOMIS, updateAlertRequest())
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val updateAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
@@ -466,20 +466,20 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
       AlertDomainEvent(
         ALERT_UPDATED.eventType,
         AlertAdditionalInformation(
-          alert.alertUuid,
+          alert.id,
           alert.alertCode.code,
           NOMIS,
         ),
         1,
         ALERT_UPDATED.description,
         updateAlertEvent.occurredAt,
-        "http://localhost:8080/alerts/${alert.alertUuid}",
+        "http://localhost:8080/alerts/${alert.id}",
         PersonReference.withPrisonNumber(prisonNumber),
       ),
     )
     assertThat(
       updateAlertEvent.occurredAt.toLocalDateTime(),
-    ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
+    ).isCloseTo(alertRepository.findByIdOrNull(alert.id)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
   }
 
   private fun updateAlertRequest(

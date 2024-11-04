@@ -4,8 +4,6 @@ import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
@@ -17,6 +15,7 @@ import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
 import org.hibernate.annotations.SQLRestriction
 import org.springframework.data.domain.AbstractAggregateRoot
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDeletedEvent
@@ -36,12 +35,6 @@ import java.util.UUID
   subgraphs = [NamedSubgraph(name = "alertType", attributeNodes = [NamedAttributeNode("alertType")])],
 )
 class Alert(
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  val alertId: Long = 0,
-
-  val alertUuid: UUID,
-
   @ManyToOne
   @JoinColumn(name = "alert_code_id", nullable = false)
   val alertCode: AlertCode,
@@ -59,17 +52,16 @@ class Alert(
   val createdAt: LocalDateTime,
 
   @Column(length = 6)
-  val prisonCodeWhenCreated: String? = null,
+  val prisonCodeWhenCreated: String?,
+
+  @Id
+  val id: UUID = newUuid(),
 ) : AbstractAggregateRoot<Alert>() {
   var lastModifiedAt: LocalDateTime? = null
 
   fun isActive() = activeTo == null || activeTo!! > LocalDate.now()
 
-  @OneToMany(
-    mappedBy = "alert",
-    fetch = FetchType.EAGER,
-    cascade = [CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE],
-  )
+  @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST, CascadeType.MERGE])
   @OrderBy("actioned_at DESC")
   private val auditEvents: MutableList<AuditEvent> = mutableListOf()
 
@@ -110,9 +102,8 @@ class Alert(
 
   fun lastModifiedAuditEvent() = auditEvents().firstOrNull { it.action == AuditEventAction.UPDATED }
 
-  private var deletedAt: LocalDateTime? = null
-
-  fun deletedAt() = deletedAt
+  var deletedAt: LocalDateTime? = null
+    private set
 
   fun resync(
     createdBy: String,
@@ -183,7 +174,7 @@ class Alert(
     if (publishEvent) {
       registerEvent(
         AlertCreatedEvent(
-          alertUuid = alertUuid,
+          alertUuid = id,
           prisonNumber = prisonNumber,
           alertCode = alertCode.code,
           occurredAt = createdAt,
@@ -251,7 +242,7 @@ class Alert(
       )
       registerEvent(
         AlertUpdatedEvent(
-          alertUuid = alertUuid,
+          alertUuid = id,
           prisonNumber = prisonNumber,
           alertCode = alertCode.code,
           occurredAt = updatedAt,
@@ -290,7 +281,7 @@ class Alert(
       if (publishEvent) {
         registerEvent(
           AlertDeletedEvent(
-            alertUuid = alertUuid,
+            alertUuid = id,
             prisonNumber = prisonNumber,
             alertCode = alertCode.code,
             occurredAt = deletedAt,

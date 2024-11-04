@@ -10,7 +10,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.util.UUID
@@ -62,8 +61,9 @@ class ValidationIntTest : IntegrationTestBase() {
 
   @Test
   fun `Validate active from is equal to active to should pass on creation`() {
+    val prisonNumber = givenPrisoner()
     val response = webTestClient.post()
-      .uri("prisoners/$PRISON_NUMBER/alerts")
+      .uri("prisoners/$prisonNumber/alerts")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)
@@ -87,11 +87,11 @@ class ValidationIntTest : IntegrationTestBase() {
 
   @Test
   fun `Validate active from is equal to active to should pass on update`() {
-    val prisonNumber = givenPrisonerExists("V1234TF")
-    val alert = givenAnAlert(EntityGenerator.alert(prisonNumber))
+    val prisonNumber = givenPrisoner()
+    val alert = givenAlert(alert(prisonNumber))
 
     val updateResponse = webTestClient.put()
-      .uri("/alerts/${alert.alertUuid}")
+      .uri("/alerts/${alert.id}")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
       .accept(MediaType.APPLICATION_JSON)

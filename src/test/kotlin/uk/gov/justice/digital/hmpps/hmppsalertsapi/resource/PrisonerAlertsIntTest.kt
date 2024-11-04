@@ -2,12 +2,13 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.onOrAfter
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.onOrBefore
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_READY_FOR_WORK
@@ -15,13 +16,12 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_SOCIAL_CARE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_MEDICAL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_OTHER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_SOCIAL_CARE
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.Optional
-import java.util.UUID
 
 class PrisonerAlertsIntTest : IntegrationTestBase() {
-
-  private val deletedAlertUuid = UUID.fromString("84856971-0072-40a9-ba5d-e994b0a9754f")
 
   @Test
   fun `401 unauthorised`() {
@@ -42,15 +42,15 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `empty response if no alerts found for prison number`() {
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER)
+    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER_NOT_FOUND)
     assertThat(response.content).isEmpty()
     assertThat(response.empty).isTrue()
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve all alerts for prison number`() {
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER)
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber)
     assertThat(response).isEqualTo(
       AlertsPage(
         totalElements = 5,
@@ -62,24 +62,30 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
         number = 0,
         sort = AlertsPageSort(empty = false, unsorted = false, sorted = true),
         numberOfElements = 5,
-        pageable = AlertsPagePageable(offset = 0, sort = AlertsPageSort(empty = false, unsorted = false, sorted = true), paged = true, unpaged = false, pageNumber = 0, pageSize = 2147483647),
+        pageable = AlertsPagePageable(
+          offset = 0,
+          sort = AlertsPageSort(empty = false, unsorted = false, sorted = true),
+          paged = true,
+          unpaged = false,
+          pageNumber = 0,
+          pageSize = 2147483647,
+        ),
         empty = false,
       ),
     )
     with(response.content) {
       assertThat(this).hasSize(5)
-      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllForPrisonNumber(prisonNumber)
       assertContainsActiveAndInactive()
-      assertDoesNotContainDeletedAlert()
       assertOrderedByActiveFromDesc()
     }
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve pages of all alerts for prison number`() {
-    val firstPage = webTestClient.getPrisonerAlerts(PRISON_NUMBER, page = 0, size = 3)
-    val lastPage = webTestClient.getPrisonerAlerts(PRISON_NUMBER, page = 1, size = 3)
+    val prisonNumber = setUp()
+    val firstPage = webTestClient.getPrisonerAlerts(prisonNumber, page = 0, size = 3)
+    val lastPage = webTestClient.getPrisonerAlerts(prisonNumber, page = 1, size = 3)
     assertThat(firstPage).isEqualTo(
       AlertsPage(
         totalElements = 5,
@@ -91,7 +97,14 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
         number = 0,
         sort = AlertsPageSort(empty = false, unsorted = false, sorted = true),
         numberOfElements = 3,
-        pageable = AlertsPagePageable(offset = 0, sort = AlertsPageSort(empty = false, unsorted = false, sorted = true), paged = true, unpaged = false, pageNumber = 0, pageSize = 3),
+        pageable = AlertsPagePageable(
+          offset = 0,
+          sort = AlertsPageSort(empty = false, unsorted = false, sorted = true),
+          paged = true,
+          unpaged = false,
+          pageNumber = 0,
+          pageSize = 3,
+        ),
         empty = false,
       ),
     )
@@ -110,7 +123,14 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
         number = 1,
         sort = AlertsPageSort(empty = false, unsorted = false, sorted = true),
         numberOfElements = 2,
-        pageable = AlertsPagePageable(offset = 3, sort = AlertsPageSort(empty = false, unsorted = false, sorted = true), paged = true, unpaged = false, pageNumber = 1, pageSize = 3),
+        pageable = AlertsPagePageable(
+          offset = 3,
+          sort = AlertsPageSort(empty = false, unsorted = false, sorted = true),
+          paged = true,
+          unpaged = false,
+          pageNumber = 1,
+          pageSize = 3,
+        ),
         empty = false,
       ),
     )
@@ -121,193 +141,190 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve all active alerts for prison number`() {
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, isActive = true)
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, isActive = true)
     with(response.content) {
       assertThat(this).hasSize(4)
-      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllForPrisonNumber(prisonNumber)
       assertContainsOnlyActive()
-      assertDoesNotContainDeletedAlert()
       assertOrderedByActiveFromDesc()
     }
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve all inactive alerts for prison number`() {
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, isActive = false)
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, isActive = false)
     with(response.content) {
       assertThat(this).hasSize(1)
-      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllForPrisonNumber(prisonNumber)
       assertContainsOnlyInactive()
-      assertDoesNotContainDeletedAlert()
       assertOrderedByActiveFromDesc()
     }
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve all 'M' - 'Medical' type alerts for prison number`() {
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, alertType = ALERT_TYPE_CODE_MEDICAL)
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, alertType = ALERT_TYPE_CODE_MEDICAL)
     with(response.content) {
       assertThat(this).hasSize(2)
-      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllForPrisonNumber(prisonNumber)
       assertAllOfAlertType(ALERT_TYPE_CODE_MEDICAL)
       assertOrderedByActiveFromDesc()
     }
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve all 'A' - 'Social Care' (all active), 'M' - 'Medical' (all inactive) and 'O' - 'Other' (alert deleted) type alerts for prison number`() {
+    val prisonNumber = setUp()
     val response = webTestClient.getPrisonerAlerts(
-      PRISON_NUMBER,
+      prisonNumber,
       alertType = listOf(ALERT_TYPE_SOCIAL_CARE, ALERT_TYPE_CODE_MEDICAL, ALERT_TYPE_CODE_OTHER).joinToString(","),
     )
     with(response.content) {
       assertThat(this).hasSize(4)
-      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllForPrisonNumber(prisonNumber)
       assertAllOfAlertType(ALERT_TYPE_SOCIAL_CARE, ALERT_TYPE_CODE_MEDICAL)
       assertContainsActiveAndInactive()
-      assertDoesNotContainDeletedAlert()
       assertOrderedByActiveFromDesc()
     }
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve all 'ADSC' - 'Adult Social Care' code alerts for prison number`() {
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, alertCode = ALERT_CODE_SOCIAL_CARE)
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, alertCode = ALERT_CODE_SOCIAL_CARE)
     with(response.content) {
       assertThat(this).hasSize(1)
-      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllForPrisonNumber(prisonNumber)
       assertAllOfAlertCode(ALERT_CODE_SOCIAL_CARE)
       assertOrderedByActiveFromDesc()
     }
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve all 'ADSC' - 'Adult Social Care' (active), 'URS' - 'Refusing to shield' (active, inactive code) and 'ORFW' - 'Ready For Work' (alert deleted) code alerts for prison number`() {
+    val prisonNumber = setUp()
     val response = webTestClient.getPrisonerAlerts(
-      PRISON_NUMBER,
-      alertCode = listOf(ALERT_CODE_SOCIAL_CARE, ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD, ALERT_CODE_READY_FOR_WORK).joinToString(","),
+      prisonNumber,
+      alertCode = listOf(
+        ALERT_CODE_SOCIAL_CARE,
+        ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD,
+        ALERT_CODE_READY_FOR_WORK,
+      ).joinToString(","),
     )
     with(response.content) {
       assertThat(this).hasSize(2)
-      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllForPrisonNumber(prisonNumber)
       assertAllOfAlertCode(ALERT_CODE_SOCIAL_CARE, ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
       assertContainsOnlyActive()
-      assertDoesNotContainDeletedAlert()
       assertOrderedByActiveFromDesc()
     }
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve all alerts for prison number active from on or after today`() {
     val activeFromStart = LocalDate.now()
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, activeFromStart = activeFromStart)
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, activeFromStart = activeFromStart)
     with(response.content) {
       assertThat(this).hasSize(3)
-      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllForPrisonNumber(prisonNumber)
       assertActiveFromOnOrAfter(activeFromStart)
       assertContainsOnlyActive()
-      assertDoesNotContainDeletedAlert()
       assertOrderedByActiveFromDesc()
     }
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve all alerts for prison number active from up to or before today`() {
     val activeFromStart = LocalDate.now()
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, activeFromEnd = activeFromStart)
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, activeFromEnd = activeFromStart)
     with(response.content) {
       assertThat(this).hasSize(4)
-      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllForPrisonNumber(prisonNumber)
       assertActiveFromOnOrBefore(activeFromStart)
       assertContainsActiveAndInactive()
-      assertDoesNotContainDeletedAlert()
       assertOrderedByActiveFromDesc()
     }
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve all alerts for prison number with 'OciAL CaRE' in the description`() {
     val search = "OciAL CaRE"
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, search = search)
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, search = search)
     with(response.content) {
       assertThat(this).hasSize(2)
-      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllForPrisonNumber(prisonNumber)
       assertDescriptionContainsCaseInsensitive(search)
       assertOrderedByActiveFromDesc()
     }
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `retrieve all alerts for prison number with 'PproVe' in the authorised by`() {
     val search = "PproVe"
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, search = search)
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, search = search)
     with(response.content) {
       assertThat(this).hasSize(2)
-      assertAllForPrisonNumber(PRISON_NUMBER)
+      assertAllForPrisonNumber(prisonNumber)
       assertAuthorisedByContainsCaseInsensitive(search)
       assertContainsOnlyActive()
-      assertDoesNotContainDeletedAlert()
       assertOrderedByActiveFromDesc()
     }
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `sort all alerts for prison number by active from in ascending order`() {
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("activeFrom,asc"))
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, sort = arrayOf("activeFrom,asc"))
     response.content.assertOrderedByActiveFromAsc()
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `sort all alerts for prison number by active to in ascending order`() {
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("activeTo,asc"))
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, sort = arrayOf("activeTo,asc"))
     response.content.assertOrderedByActiveToAsc()
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `sort all alerts for prison number by active to in descending order`() {
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("activeTo,desc"))
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, sort = arrayOf("activeTo,desc"))
     response.content.assertOrderedByActiveToDesc()
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `sort all alerts for prison number by created at in ascending order`() {
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("createdAt,asc"))
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, sort = arrayOf("createdAt,asc"))
     response.content.assertOrderedByCreatedAtAsc()
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `sort all alerts for prison number by created at in descending order`() {
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("createdAt,desc"))
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, sort = arrayOf("createdAt,desc"))
     response.content.assertOrderedByCreatedAtDesc()
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `sort all alerts for prison number by last modified at in ascending order`() {
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("lastModifiedAt,asc"))
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, sort = arrayOf("lastModifiedAt,asc"))
     response.content.assertOrderedByLastModifiedAtAsc()
   }
 
   @Test
-  @Sql("classpath:test_data/prisoner-alerts-paginate-filter-sort.sql")
   fun `sort all alerts for prison number by last modified at in descending order`() {
-    val response = webTestClient.getPrisonerAlerts(PRISON_NUMBER, sort = arrayOf("lastModifiedAt,desc"))
+    val prisonNumber = setUp()
+    val response = webTestClient.getPrisonerAlerts(prisonNumber, sort = arrayOf("lastModifiedAt,desc"))
     response.content.assertOrderedByLastModifiedAtDesc()
   }
 
@@ -343,12 +360,6 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
 
   private fun Collection<Alert>.assertContainsOnlyInactive() =
     assertThat(none { it.isActive }).isTrue
-
-  private fun Collection<Alert>.assertDoesNotContainDeletedAlert() =
-    alertRepository.findByAlertUuidIncludingSoftDelete(deletedAlertUuid)!!.also { deletedAlert ->
-      assertThat(deletedAlert.prisonNumber == map { it.prisonNumber }.distinct().single()).isTrue
-      assertThat(none { it.alertUuid == deletedAlert.alertUuid }).isTrue
-    }
 
   private fun List<Alert>.assertOrderedByActiveFromAsc() =
     assertThat(this).isSortedAccordingTo(compareBy { it.activeFrom })
@@ -436,4 +447,80 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     val unsorted: Boolean,
     val sorted: Boolean,
   )
+
+  private fun setUp(): String {
+    val prisonNumber = prisonNumber()
+    val alerts = mutableListOf(
+      alert(
+        prisonNumber,
+        alertCode = givenExistingAlertCode("ADSC"),
+        description = "Active alert type 'A' - 'Social Care' code 'ADSC' - 'Adult Social Care' alert for prison number 'A1234AA' active from yesterday with no active to date. Alert code is active. Created yesterday and not modified since",
+        activeFrom = LocalDate.now().minusDays(1),
+        createdAt = LocalDateTime.now().minusDays(1),
+        authorisedBy = "A. Approver",
+      ),
+      alert(
+        prisonNumber,
+        alertCode = givenExistingAlertCode("AS"),
+        description = "Active alert type 'A' - 'Social Care' code 'AS' - 'Social Care' alert for prison number 'A1234AA' active from today with no active to date. Alert code is active. Created two days ago and modified yesterday and today",
+        activeFrom = LocalDate.now(),
+        createdAt = LocalDateTime.now().minusDays(2),
+        authorisedBy = "External Provider",
+      ),
+      alert(
+        prisonNumber,
+        alertCode = givenExistingAlertCode("URS"),
+        description = "Active alert type 'U' - 'COVID unit management' code 'URS' - 'Refusing to shield' alert for prison number 'A1234AA' active from today with no active to date. Alert code is inactive. Created today and modified shortly after",
+        activeFrom = LocalDate.now(),
+        createdAt = LocalDateTime.now().minusHours(1),
+        authorisedBy = null,
+      ),
+      alert(
+        prisonNumber,
+        alertCode = givenExistingAlertCode("MAS"),
+        description = "Inactive alert type 'M' - 'Medical' code 'MAS' - 'Asthmatic' alert for prison number 'A1234AA' active from tomorrow with no active to date. Alert code is active. Created three days ago and not modified since",
+        activeFrom = LocalDate.now().plusDays(1),
+        createdAt = LocalDateTime.now().minusDays(3),
+        authorisedBy = "B. Approver",
+      ),
+      alert(
+        prisonNumber,
+        alertCode = givenExistingAlertCode("MEP"),
+        description = "'Inactive alert type 'M' - 'Medical' code 'MEP' - 'Epileptic' alert for prison number 'A1234AA' active from yesterday to today. Alert code is active. Created four days ago and modified yesterday",
+        activeFrom = LocalDate.now().minusDays(1),
+        activeTo = LocalDate.now(),
+        createdAt = LocalDateTime.now().minusDays(4),
+        authorisedBy = null,
+      ),
+      alert(
+        prisonNumber,
+        alertCode = givenExistingAlertCode("ORFW"),
+        description = "Deleted active alert type 'O' - 'Other' code 'ORFW' - 'Ready For Work' alert for prison number 'A1234AA' which would have been active from today with no active to date. Alert code is active. Created today and not modified since",
+        activeFrom = LocalDate.now(),
+        createdAt = LocalDateTime.now(),
+        deletedAt = LocalDateTime.now(),
+        authorisedBy = "C. Approver",
+      ),
+      alert(
+        prisonNumber(),
+        alertCode = givenExistingAlertCode("ADSC"),
+        description = "Active alert type 'A' - 'Social Care' code 'ADSC' - 'Adult Social Care' alert for prison number 'B2345BB' active from three days ago with active to from two days ago. Alert code is inactive. Created yesterday and not modified since",
+        activeFrom = LocalDate.now().minusDays(3),
+        activeTo = LocalDate.now().minusDays(2),
+        createdAt = LocalDateTime.now().minusDays(3),
+        authorisedBy = null,
+      ),
+    )
+    alertRepository.saveAll(
+      alerts.map {
+        it.create(
+          createdBy = "SYS",
+          createdByDisplayName = "Sys",
+          source = Source.DPS,
+          activeCaseLoadId = null,
+        )
+      },
+    )
+    return prisonNumber
+  }
 }

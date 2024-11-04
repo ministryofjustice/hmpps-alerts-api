@@ -11,7 +11,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -61,10 +60,10 @@ class RetrieveAuditEventsIntTest : IntegrationTestBase() {
   @Test
   fun `retrieve audit events`() {
     val prisonNumber = givenPrisonerExists("A1234DT")
-    val alert = givenAnAlert(alert(prisonNumber))
+    val alert = givenAlert(alert(prisonNumber))
 
     val response = webTestClient.get()
-      .uri("/alerts/${alert.alertUuid}/audit-events")
+      .uri("/alerts/${alert.id}/audit-events")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .exchange().expectStatus().isOk
       .expectBodyList<AuditEvent>().returnResult().responseBody!!

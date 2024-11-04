@@ -27,7 +27,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -124,13 +123,13 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   fun `alert deleted via DPS`() {
     val prisonNumber = "D1234LT"
     val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
-    val alert = givenAnAlert(alert(prisonNumber, alertCode))
+    val alert = givenAlert(alert(prisonNumber, alertCode))
 
-    webTestClient.deleteAlert(alert.alertUuid, source = DPS)
-    val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
+    webTestClient.deleteAlert(alert.id, source = DPS)
+    val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.id)!!
 
     with(alertEntity) {
-      assertThat(deletedAt()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+      assertThat(deletedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
     }
     with(alertEntity.auditEvents()[0]) {
       assertThat(action).isEqualTo(AuditEventAction.DELETED)
@@ -147,13 +146,13 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   fun `alert deleted via NOMIS`() {
     val prisonNumber = "D1235LT"
     val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
-    val alert = givenAnAlert(alert(prisonNumber, alertCode))
+    val alert = givenAlert(alert(prisonNumber, alertCode))
 
-    webTestClient.deleteAlert(alert.alertUuid, source = NOMIS)
-    val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
+    webTestClient.deleteAlert(alert.id, source = NOMIS)
+    val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.id)!!
 
     with(alertEntity) {
-      assertThat(deletedAt()).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+      assertThat(deletedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
     }
     with(alertEntity.auditEvents()[0]) {
       assertThat(action).isEqualTo(AuditEventAction.DELETED)
@@ -170,17 +169,17 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   fun `should populate deleted by display name using Username header when source is NOMIS`() {
     val prisonNumber = "D1236LT"
     val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
-    val alert = givenAnAlert(alert(prisonNumber, alertCode))
+    val alert = givenAlert(alert(prisonNumber, alertCode))
 
     webTestClient.delete()
-      .uri("/alerts/${alert.alertUuid}")
+      .uri("/alerts/${alert.id}")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(source = NOMIS, username = null))
       .exchange()
       .expectStatus().isNoContent
       .expectBody().isEmpty
 
-    val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
+    val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.id)!!
 
     with(alertEntity.auditEvents()[0]) {
       assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
@@ -194,17 +193,17 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   fun `should populate deleted by username and display name as 'NOMIS' when source is NOMIS and no username is supplied`() {
     val prisonNumber = "D1237LT"
     val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
-    val alert = givenAnAlert(alert(prisonNumber, alertCode))
+    val alert = givenAlert(alert(prisonNumber, alertCode))
 
     webTestClient.delete()
-      .uri("/alerts/${alert.alertUuid}")
+      .uri("/alerts/${alert.id}")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW), isUserToken = false))
       .header(SOURCE, NOMIS.name)
       .exchange()
       .expectStatus().isNoContent
       .expectBody().isEmpty
 
-    val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.alertUuid)!!
+    val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.id)!!
 
     with(alertEntity.auditEvents()[0]) {
       assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
@@ -218,9 +217,9 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   fun `should publish alert deleted event with DPS source`() {
     val prisonNumber = "D1238LT"
     val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
-    val alert = givenAnAlert(alert(prisonNumber, alertCode))
+    val alert = givenAlert(alert(prisonNumber, alertCode))
 
-    webTestClient.deleteAlert(alert.alertUuid, DPS)
+    webTestClient.deleteAlert(alert.id, DPS)
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
     with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
@@ -231,21 +230,21 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         ALERT_DELETED.eventType,
         AlertAdditionalInformation(
-          alert.alertUuid,
+          alert.id,
           alert.alertCode.code,
           DPS,
         ),
         1,
         ALERT_DELETED.description,
         deleteAlertEvent.occurredAt,
-        "http://localhost:8080/alerts/${alert.alertUuid}",
+        "http://localhost:8080/alerts/${alert.id}",
         PersonReference.withPrisonNumber(prisonNumber),
       ),
     )
     assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
       alertRepository.findByAlertUuidIncludingSoftDelete(
-        alert.alertUuid,
-      )!!.deletedAt(),
+        alert.id,
+      )!!.deletedAt,
       within(1, ChronoUnit.MICROS),
     )
   }
@@ -254,9 +253,9 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   fun `should publish alert deleted event with NOMIS source`() {
     val prisonNumber = "D1239LT"
     val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
-    val alert = givenAnAlert(alert(prisonNumber, alertCode))
+    val alert = givenAlert(alert(prisonNumber, alertCode))
 
-    webTestClient.deleteAlert(alert.alertUuid, NOMIS)
+    webTestClient.deleteAlert(alert.id, NOMIS)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     val deleteAlertEvent = hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()
@@ -268,21 +267,21 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       AlertDomainEvent(
         ALERT_DELETED.eventType,
         AlertAdditionalInformation(
-          alert.alertUuid,
+          alert.id,
           alert.alertCode.code,
           NOMIS,
         ),
         1,
         ALERT_DELETED.description,
         deleteAlertEvent.occurredAt,
-        "http://localhost:8080/alerts/${alert.alertUuid}",
+        "http://localhost:8080/alerts/${alert.id}",
         PersonReference.withPrisonNumber(prisonNumber),
       ),
     )
     assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
       alertRepository.findByAlertUuidIncludingSoftDelete(
-        alert.alertUuid,
-      )!!.deletedAt(),
+        alert.id,
+      )!!.deletedAt,
       within(1, ChronoUnit.MICROS),
     )
   }

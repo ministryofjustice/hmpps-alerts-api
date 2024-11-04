@@ -11,11 +11,9 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import java.util.UUID
 
 @Repository
-interface AlertRepository : JpaRepository<Alert, Long> {
+interface AlertRepository : JpaRepository<Alert, UUID> {
   @EntityGraph(value = "alert")
   fun findAll(filter: Specification<Alert>, pageable: Pageable): Page<Alert>
-
-  fun findByAlertUuid(alertUuid: UUID): Alert?
 
   @EntityGraph(value = "alert")
   fun findByPrisonNumber(prisonNumber: String): Collection<Alert>
@@ -29,7 +27,7 @@ interface AlertRepository : JpaRepository<Alert, Long> {
   @EntityGraph(value = "alert")
   fun findByPrisonNumberNotInAndAlertCodeCode(prisonNumbers: Collection<String>, alertCode: String): Collection<Alert>
 
-  @Query(value = "SELECT * FROM alert a WHERE a.alert_uuid = :alertUuid", nativeQuery = true)
+  @Query(value = "select * from alert a where a.id = :alertUuid", nativeQuery = true)
   fun findByAlertUuidIncludingSoftDelete(alertUuid: UUID): Alert?
 
   @EntityGraph(value = "alert")

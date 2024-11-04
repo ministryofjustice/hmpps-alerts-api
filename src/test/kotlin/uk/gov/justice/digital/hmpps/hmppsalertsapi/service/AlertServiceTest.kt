@@ -44,6 +44,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCo
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
+import java.util.Optional
 import java.util.UUID
 
 @ExtendWith(MockitoExtension::class)
@@ -166,7 +167,7 @@ class AlertServiceTest {
     val uuid = UUID.randomUUID()
     val updateRequest = updateAlertRequestNoChange()
     val alert = alert(updateAlert = updateRequest, uuid = uuid)
-    whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
+    whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
 
@@ -181,7 +182,7 @@ class AlertServiceTest {
     val uuid = UUID.randomUUID()
     val updateRequest = updateAlertRequestNoChange(activeFrom = null)
     val alert = alert(uuid = uuid)
-    whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
+    whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
 
@@ -198,7 +199,7 @@ class AlertServiceTest {
     val updateRequest = updateAlertRequestChange()
     val alert = alert(uuid = uuid)
     val unchangedAlert = alert(uuid = uuid)
-    whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
+    whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     underTest.updateAlert(uuid, updateRequest, context)
@@ -227,7 +228,7 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
 
   @Test
   fun `alert uuid not found`() {
-    whenever(alertRepository.findByAlertUuid(any())).thenReturn(null)
+    whenever(alertRepository.findById(any())).thenReturn(Optional.empty())
     val alertUuid = UUID.randomUUID()
     val exception = assertThrows<NotFoundException> {
       underTest.retrieveAlert(alertUuid)
@@ -238,14 +239,14 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
   @Test
   fun `returns alert model if found`() {
     val alert = alert()
-    whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
+    whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
     val result = underTest.retrieveAlert(UUID.randomUUID())
     assertThat(result).isEqualTo(alert.toAlertModel())
   }
 
   @Test
   fun `delete alert uuid not found throws exception`() {
-    whenever(alertRepository.findByAlertUuid(any())).thenReturn(null)
+    whenever(alertRepository.findById(any())).thenReturn(Optional.empty())
     val alertUuid = UUID.randomUUID()
     val exception = assertThrows<NotFoundException> {
       underTest.deleteAlert(alertUuid, context)
@@ -257,13 +258,13 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
   fun `delete alert should add audit event`() {
     val uuid = UUID.randomUUID()
     val alert = alert(uuid = uuid)
-    whenever(alertRepository.findByAlertUuid(any())).thenReturn(alert)
+    whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
     val alertCaptor = argumentCaptor<Alert>()
     whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
     underTest.deleteAlert(uuid, context)
 
     val savedAlert = alertCaptor.firstValue
-    assertThat(savedAlert.deletedAt()).isEqualTo(context.requestAt)
+    assertThat(savedAlert.deletedAt).isEqualTo(context.requestAt)
     assertThat(savedAlert.auditEvents()).hasSize(2)
     with(savedAlert.auditEvents()[0]) {
       assertThat(action).isEqualTo(AuditEventAction.DELETED)
@@ -278,7 +279,7 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
 
   @Test
   fun `should throw exception if alert not found when retrieving audit events`() {
-    whenever(alertRepository.findByAlertUuid(any())).thenReturn(null)
+    whenever(alertRepository.findById(any())).thenReturn(Optional.empty())
     val alertUuid = UUID.randomUUID()
     val exception = assertThrows<NotFoundException> {
       underTest.retrieveAuditEventsForAlert(alertUuid)
@@ -317,8 +318,7 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
   private fun alert(uuid: UUID = UUID.randomUUID(), updateAlert: UpdateAlert = updateAlertRequestNoChange()) =
     LocalDateTime.now().minusDays(1).let {
       Alert(
-        alertId = 1,
-        alertUuid = uuid,
+        id = uuid,
         alertCode = AC_VICTIM,
         prisonNumber = PRISON_NUMBER,
         description = "new description",
@@ -326,6 +326,7 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
         activeTo = updateAlert.activeTo,
         activeFrom = updateAlert.activeFrom!!,
         createdAt = it,
+        prisonCodeWhenCreated = null,
       ).apply {
         auditEvent(
           AuditEventAction.CREATED,
@@ -356,7 +357,7 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
     createdAt: LocalDateTime = LocalDateTime.now(),
   ) =
     Alert(
-      alertUuid = UUID.randomUUID(),
+      id = UUID.randomUUID(),
       alertCode = AC_VICTIM,
       prisonNumber = PRISON_NUMBER,
       description = "Alert description",
@@ -364,6 +365,7 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
       activeFrom = activeFrom,
       activeTo = activeTo,
       createdAt = createdAt,
+      prisonCodeWhenCreated = null,
     ).apply {
       auditEvent(
         action = AuditEventAction.CREATED,

@@ -16,15 +16,14 @@ import java.time.LocalDateTime
 @Entity
 @Table
 class AlertType(
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  val alertTypeId: Long = 0,
-
   val code: String,
   var description: String,
   var listSequence: Int,
   val createdAt: LocalDateTime,
   val createdBy: String,
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  val alertTypeId: Long = 0,
 ) : AbstractAggregateRoot<AlertType>() {
   var modifiedAt: LocalDateTime? = null
   var modifiedBy: String? = null

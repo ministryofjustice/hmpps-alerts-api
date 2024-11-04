@@ -21,21 +21,20 @@ fun BulkCreateAlerts.toAlertEntity(
   createdByDisplayName: String,
   source: Source,
   activeCaseLoadId: String?,
-) =
-  Alert(
-    alertUuid = UUID.randomUUID(),
-    alertCode = alertCode,
-    prisonNumber = prisonNumber,
-    description = alertCodeDescriptionMap[this.alertCode],
-    authorisedBy = null,
-    activeFrom = LocalDate.now(),
-    activeTo = null,
-    createdAt = createdAt,
-  ).create(createdAt = createdAt, createdBy = createdBy, createdByDisplayName = createdByDisplayName, source = source, activeCaseLoadId = activeCaseLoadId)
+) = Alert(
+  alertCode = alertCode,
+  prisonNumber = prisonNumber,
+  description = alertCodeDescriptionMap[this.alertCode],
+  authorisedBy = null,
+  activeFrom = LocalDate.now(),
+  activeTo = null,
+  createdAt = createdAt,
+  prisonCodeWhenCreated = null,
+).create(createdAt = createdAt, createdBy = createdBy, createdByDisplayName = createdByDisplayName, source = source, activeCaseLoadId = activeCaseLoadId)
 
 fun Alert.toBulkAlertAlertModel(message: String = "") =
   BulkAlertAlert(
-    alertUuid = alertUuid,
+    alertUuid = id,
     prisonNumber = prisonNumber,
     message = message,
   )

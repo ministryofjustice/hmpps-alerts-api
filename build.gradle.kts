@@ -17,6 +17,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.0.8")
   implementation("io.sentry:sentry-spring-boot-starter-jakarta:7.16.0")
+  implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
 
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-core")

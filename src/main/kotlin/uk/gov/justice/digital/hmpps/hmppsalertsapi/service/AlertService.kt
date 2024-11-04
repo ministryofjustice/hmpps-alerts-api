@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
@@ -79,12 +80,12 @@ class AlertService(
       .any { it.isActive() } && throw AlreadyExistsException("Alert", alertCode)
 
   fun retrieveAlert(alertUuid: UUID): AlertModel =
-    alertRepository.findByAlertUuid(alertUuid)?.toAlertModel()
+    alertRepository.findByIdOrNull(alertUuid)?.toAlertModel()
       ?: throw NotFoundException("Alert", alertUuid.toString())
 
   @PublishPersonAlertsChanged
   fun updateAlert(alertUuid: UUID, request: UpdateAlert, context: AlertRequestContext) =
-    alertRepository.findByAlertUuid(alertUuid)?.let {
+    alertRepository.findByIdOrNull(alertUuid)?.let {
       alertRepository.save(
         it.update(
           description = request.description,
@@ -102,7 +103,7 @@ class AlertService(
 
   @PublishPersonAlertsChanged
   fun deleteAlert(alertUuid: UUID, context: AlertRequestContext) {
-    val alert = alertRepository.findByAlertUuid(alertUuid)
+    val alert = alertRepository.findByIdOrNull(alertUuid)
       ?: throw NotFoundException("Alert", alertUuid.toString())
     with(alert) {
       delete(
@@ -139,23 +140,23 @@ class AlertService(
       ),
       pageable = pageable,
     ).let { alerts ->
-      val alertIds = alerts.content.map { it.alertId }
+      val alertIds = alerts.content.map { it.id }
       val auditEvents =
-        auditEventRepository.findAuditEventsByAlertAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.alertId }
-      alerts.map { it.toAlertModel(auditEvents[it.alertId]) }
+        auditEventRepository.findAuditEventsByAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.id }
+      alerts.map { it.toAlertModel(auditEvents[it.id]) }
     }
 
   fun retrieveAuditEventsForAlert(alertUuid: UUID): Collection<AuditEvent> =
-    alertRepository.findByAlertUuid(alertUuid)?.let { alert ->
+    alertRepository.findByIdOrNull(alertUuid)?.let { alert ->
       alert.auditEvents().map { it.toAuditEventModel() }
     } ?: throw NotFoundException("Alert", alertUuid.toString())
 
   fun retrieveAlertsForPrisonNumbers(prisonNumbers: Collection<String>) =
     alertRepository.findByPrisonNumberInOrderByActiveFromDesc(prisonNumbers).let { alerts ->
-      val alertIds = alerts.map { it.alertId }
+      val alertIds = alerts.map { it.id }
       val auditEvents =
-        auditEventRepository.findAuditEventsByAlertAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.alertId }
-      alerts.map { it.toAlertModel(auditEvents[it.alertId]) }
+        auditEventRepository.findAuditEventsByAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.id }
+      alerts.map { it.toAlertModel(auditEvents[it.id]) }
         .groupBy { it.prisonNumber }
     }
 }

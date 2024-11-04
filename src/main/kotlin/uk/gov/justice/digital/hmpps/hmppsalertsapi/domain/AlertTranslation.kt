@@ -7,7 +7,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import java.time.LocalDate
-import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent as AuditEventModel
 
@@ -26,7 +25,6 @@ fun CreateAlert.toAlertEntity(
   alertCode: AlertCode,
   prisonCode: String?,
 ) = Alert(
-  alertUuid = UUID.randomUUID(),
   alertCode = alertCode,
   prisonNumber = prisonNumber,
   description = alertCodeDescriptionMap[this.alertCode] ?: this.description,
@@ -51,7 +49,7 @@ fun Alert.toAlertModel(auditEvents: Collection<AuditEvent>? = null): AlertModel 
     ?.firstOrNull { it.action == AuditEventAction.UPDATED && it.activeToUpdated == true }
 
   return AlertModel(
-    alertUuid = alertUuid,
+    alertUuid = id,
     alertCode = alertCode.toAlertCodeSummary(),
     prisonNumber = prisonNumber,
     description = description,

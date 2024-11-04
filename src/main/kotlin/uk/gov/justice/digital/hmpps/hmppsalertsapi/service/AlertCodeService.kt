@@ -41,19 +41,16 @@ class AlertCodeService(
   private fun CreateAlertCodeRequest.checkAlertTypeExists() =
     verifyExists(alertTypeRepository.findByCode(parent)) { NotFoundException("Alert type", parent) }
 
-  private fun String.checkAlertCodeExists() =
+  private fun String.checkAlertCodeExists(): uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode =
     verifyExists(alertCodeRepository.findByCode(this)) { NotFoundException("Alert code", this) }
 
   @Transactional
   fun deactivateAlertCode(alertCode: String, alertRequestContext: AlertRequestContext): AlertCode =
-    alertCode.let {
-      it.checkAlertCodeExists()
-      with(alertCodeRepository.findByCode(it)!!) {
-        deactivatedAt = alertRequestContext.requestAt
-        deactivatedBy = alertRequestContext.username
-        deactivate()
-        alertCodeRepository.save(this).toAlertCodeModel()
-      }
+    with(alertCode.checkAlertCodeExists()) {
+      deactivatedAt = alertRequestContext.requestAt
+      deactivatedBy = alertRequestContext.username
+      deactivate()
+      alertCodeRepository.save(this).toAlertCodeModel()
     }
 
   @Transactional

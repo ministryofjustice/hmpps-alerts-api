@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
@@ -27,7 +28,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.ResyncAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_POOR_COPER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -95,7 +95,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
     val migratedAlert = webTestClient.resyncAlerts(prisonNumber, listOf(request)).single()
 
-    val alert = alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!
+    val alert = alertRepository.findByIdOrNull(migratedAlert.alertUuid)!!
 
     with(alert) {
       assertThat(lastModifiedAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(
@@ -120,7 +120,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
       )
         .single()
 
-    with(alertRepository.findByAlertUuid(resyncedAlert.alertUuid)!!.alertCode) {
+    with(alertRepository.findByIdOrNull(resyncedAlert.alertUuid)!!.alertCode) {
       assertThat(code).isEqualTo(ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
       assertThat(isActive()).isFalse()
     }
@@ -138,7 +138,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
       ),
     ).single()
 
-    with(alertRepository.findByAlertUuid(migratedAlert.alertUuid)!!) {
+    with(alertRepository.findByIdOrNull(migratedAlert.alertUuid)!!) {
       assertThat(activeTo).isBefore(activeFrom)
       assertThat(isActive()).isFalse()
     }
@@ -147,7 +147,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
   @Test
   fun `Successful resync results in 201 created response and sending of domain events`() {
     val prisonNumber = "R1234DE"
-    val existingAlert = givenAnAlert(alert(prisonNumber))
+    val existingAlert = givenAlert(alert(prisonNumber))
 
     val alert = resyncAlert()
     val response = webTestClient.resyncAlerts(prisonNumber, listOf(alert)).single()
@@ -161,7 +161,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     assertThat(typeCounts[DomainEventType.ALERT_DELETED.eventType]).isEqualTo(1)
     assertThat(typeCounts[DomainEventType.PERSON_ALERTS_CHANGED.eventType]).isEqualTo(1)
 
-    val deletedAlert = alertRepository.findByAlertUuid(existingAlert.alertUuid)
+    val deletedAlert = alertRepository.findByIdOrNull(existingAlert.id)
     assertThat(deletedAlert).isNull()
   }
 
@@ -190,11 +190,11 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     assertThat(typeCounts[DomainEventType.PERSON_ALERTS_CHANGED.eventType]).isEqualTo(1)
 
     // original alert has been deleted
-    val deletedAlert = alertRepository.findByAlertUuid(originalAlert.alertUuid)
+    val deletedAlert = alertRepository.findByIdOrNull(originalAlert.id)
     assertThat(deletedAlert).isNull()
 
     // new alert created with original audit history
-    val newAlert = checkNotNull(alertRepository.findByAlertUuid(response.alertUuid))
+    val newAlert = checkNotNull(alertRepository.findByIdOrNull(response.alertUuid))
     val newAudit = newAlert.auditEvents()
     assertThat(newAudit.size).isEqualTo(originalAudit.size)
     assertAuditEventsEqual(newAudit[0], originalAudit[0])
@@ -230,13 +230,13 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     val resyncAudit = resyncAuditRepository.findByPrisonNumber(prisonNumber).single()
     assertThat(objectMapper.treeToValue<List<ResyncAlert>>(resyncAudit.request)).isEqualTo(listOf(alert1, alert2))
     assertThat(resyncAudit.alertsCreated).containsAll(response.map { it.alertUuid })
-    assertThat(resyncAudit.alertsDeleted).contains(originalAlert.alertUuid)
+    assertThat(resyncAudit.alertsDeleted).contains(originalAlert.id)
   }
 
   @Test
   fun `Passing empty list to resync removes alerts and sends domain events`() {
     val prisonNumber = "R1234DA"
-    val existingAlert = givenAnAlert(alert(prisonNumber))
+    val existingAlert = givenAlert(alert(prisonNumber))
 
     webTestClient.resyncAlerts(prisonNumber, emptyList())
 
@@ -244,13 +244,13 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts(2)
     assertThat(typeCounts[DomainEventType.PERSON_ALERTS_CHANGED.eventType]).isEqualTo(1)
     assertThat(typeCounts[DomainEventType.ALERT_DELETED.eventType]).isEqualTo(1)
-    val deletedAlert = alertRepository.findByAlertUuid(existingAlert.alertUuid)
+    val deletedAlert = alertRepository.findByIdOrNull(existingAlert.id)
     assertThat(deletedAlert).isNull()
   }
 
   private fun alertWithAuditHistory(prisonNumber: String) = alertRepository.save(
     Alert(
-      alertUuid = UUID.randomUUID(),
+      id = UUID.randomUUID(),
       alertCode = alertCodeRepository.findByCode(ALERT_CODE_VICTIM)!!,
       prisonNumber = prisonNumber,
       description = "Existing alert - to be deleted",
@@ -258,6 +258,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
       activeFrom = LocalDate.now().minusDays(60),
       activeTo = LocalDate.now().plusDays(5),
       createdAt = LocalDateTime.now().minusDays(60),
+      prisonCodeWhenCreated = null,
     ).also {
       it.lastModifiedAt = LocalDateTime.now()
       it.create(

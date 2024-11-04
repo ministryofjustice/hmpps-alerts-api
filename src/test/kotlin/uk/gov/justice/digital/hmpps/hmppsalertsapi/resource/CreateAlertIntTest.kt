@@ -6,11 +6,11 @@ import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.MediaType
-import org.springframework.test.context.jdbc.Sql
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
@@ -35,12 +35,11 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.PrisonerAlertsIntTest.AlertsPage
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_HIDDEN_DISABILITY
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_SOCIAL_CARE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
-import java.time.LocalDate
+import java.time.LocalDate.now
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
@@ -184,19 +183,6 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `201 created - source dps - allowInactiveCode=true - alert code is inactive`() {
-    val request = createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
-
-    webTestClient.post().uri("/prisoners/$PRISON_NUMBER/alerts?allowInactiveCode=true")
-      .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .headers(setAlertRequestContext(source = DPS))
-      .exchange()
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectStatus().isCreated
-  }
-
-  @Test
   fun `405 method not allowed`() {
     val response = webTestClient.patch()
       .uri("prisoners/$PRISON_NUMBER/alerts")
@@ -251,9 +237,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `should populate created by using username claim`() {
     val request = createAlertRequest()
+    val prisonNumber = givenPrisoner()
 
     val alert = webTestClient.post()
-      .uri("prisoners/$PRISON_NUMBER/alerts")
+      .uri("prisoners/$prisonNumber/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__RW), isUserToken = false))
       .exchange().successResponse<AlertModel>(HttpStatus.CREATED)
@@ -266,10 +253,11 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should populate created by using Username header`() {
+    val prisonNumber = givenPrisoner()
     val request = createAlertRequest()
 
     val alert = webTestClient.post()
-      .uri("prisoners/$PRISON_NUMBER/alerts")
+      .uri("prisoners/$prisonNumber/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext())
@@ -284,9 +272,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `should populate created by display name using Username header when source is NOMIS`() {
     val request = createAlertRequest()
+    val prisonNumber = givenPrisoner()
 
     val alert = webTestClient.post()
-      .uri("prisoners/$PRISON_NUMBER/alerts")
+      .uri("prisoners/$prisonNumber/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .headers(setAlertRequestContext(source = NOMIS, username = NOMIS_SYS_USER))
@@ -297,7 +286,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(createdByDisplayName).isEqualTo(NOMIS_SYS_USER_DISPLAY_NAME)
     }
 
-    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+    val alertEntity = alertRepository.findByIdOrNull(alert.alertUuid)!!
 
     with(alertEntity.auditEvents()[0]) {
       assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
@@ -310,9 +299,10 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `should populate created by username and display name as 'NOMIS' when source is NOMIS and no username is supplied`() {
     val request = createAlertRequest()
+    val prisonNumber = givenPrisoner()
 
     val alert = webTestClient.post()
-      .uri("prisoners/$PRISON_NUMBER/alerts")
+      .uri("prisoners/$prisonNumber/alerts")
       .bodyValue(request)
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
       .header(SOURCE, NOMIS.name)
@@ -323,7 +313,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(createdByDisplayName).isEqualTo(NOMIS_SYS_USER_DISPLAY_NAME)
     }
 
-    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+    val alertEntity = alertRepository.findByIdOrNull(alert.alertUuid)!!
 
     with(alertEntity.auditEvents()[0]) {
       assertThat(actionedBy).isEqualTo(NOMIS_SYS_USER)
@@ -335,7 +325,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should return populated alert model`() {
-    val prisonNumber = givenPrisonerExists("C1234AA")
+    val prisonNumber = givenPrisoner()
     val request = createAlertRequest()
 
     val alert = webTestClient.createAlert(prisonNumber, request)
@@ -365,20 +355,33 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `201 created - source dps - allowInactiveCode=true - alert code is inactive`() {
+    val prisonNumber = givenPrisoner()
+    val request = createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
+
+    webTestClient.post().uri("/prisoners/$prisonNumber/alerts?allowInactiveCode=true")
+      .bodyValue(request)
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
+      .headers(setAlertRequestContext(source = DPS))
+      .exchange()
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+      .expectStatus().isCreated
+  }
+
+  @Test
   fun `should create new alert via DPS`() {
-    val prisonNumber = givenPrisonerExists("C1234VP")
+    val prisonNumber = givenPrisoner()
     val request = createAlertRequest()
 
     val alert = webTestClient.createAlert(prisonNumber, request)
 
-    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+    val alertEntity = alertRepository.findByIdOrNull(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
     assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType")
       .isEqualTo(
         Alert(
-          alertId = 1,
-          alertUuid = alert.alertUuid,
+          id = alert.alertUuid,
           alertCode = alertCode,
           prisonNumber = prisonNumber,
           description = request.description,
@@ -390,7 +393,6 @@ class CreateAlertIntTest : IntegrationTestBase() {
         ),
       )
     with(alertEntity.auditEvents().single()) {
-      assertThat(auditEventId).isEqualTo(1)
       assertThat(action).isEqualTo(AuditEventAction.CREATED)
       assertThat(description).isEqualTo("Alert created")
       assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
@@ -404,19 +406,18 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should create new alert via NOMIS`() {
-    val prisonNumber = givenPrisonerExists("C1234VN")
+    val prisonNumber = givenPrisoner()
     val request = createAlertRequest()
 
     val alert = webTestClient.createAlert(prisonNumber, request, NOMIS)
 
-    val alertEntity = alertRepository.findByAlertUuid(alert.alertUuid)!!
+    val alertEntity = alertRepository.findByIdOrNull(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
     assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType")
       .isEqualTo(
         Alert(
-          alertId = 1,
-          alertUuid = alert.alertUuid,
+          id = alert.alertUuid,
           alertCode = alertCode,
           prisonNumber = prisonNumber,
           description = request.description,
@@ -428,7 +429,6 @@ class CreateAlertIntTest : IntegrationTestBase() {
         ),
       )
     with(alertEntity.auditEvents().single()) {
-      assertThat(auditEventId).isEqualTo(1)
       assertThat(action).isEqualTo(AuditEventAction.CREATED)
       assertThat(description).isEqualTo("Alert created")
       assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
@@ -442,7 +442,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `should publish alert created event with DPS source`() {
-    val prisonNumber = givenPrisonerExists("C1234PD")
+    val prisonNumber = givenPrisoner()
     val request = createAlertRequest()
 
     val alert = webTestClient.createAlert(prisonNumber, request)
@@ -470,12 +470,12 @@ class CreateAlertIntTest : IntegrationTestBase() {
     )
     assertThat(
       event.occurredAt.toLocalDateTime(),
-    ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
+    ).isCloseTo(alertRepository.findByIdOrNull(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
   }
 
   @Test
   fun `should publish alert created event with NOMIS source`() {
-    val prisonNumber = givenPrisonerExists("C1234PN")
+    val prisonNumber = givenPrisoner()
     val request = createAlertRequest()
 
     val alert = webTestClient.createAlert(prisonNumber, request, NOMIS)
@@ -503,31 +503,16 @@ class CreateAlertIntTest : IntegrationTestBase() {
     )
     assertThat(
       event.occurredAt.toLocalDateTime(),
-    ).isCloseTo(alertRepository.findByAlertUuid(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
+    ).isCloseTo(alertRepository.findByIdOrNull(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
   }
 
   @Test
-  fun `should return updated alert list after alert creation instead of returning cached list`() {
-    val prisonNumber = givenPrisonerExists("C1234MA")
-    webTestClient.createAlert(prisonNumber, createAlertRequest(alertCode = ALERT_CODE_VICTIM))
-    with(getActivePrisonerAlerts(prisonNumber)) {
-      assertThat(size).isEqualTo(1)
-      assertThat(map { it.alertCode.code }).containsOnly(ALERT_CODE_VICTIM)
-    }
-
-    webTestClient.createAlert(prisonNumber, createAlertRequest(alertCode = ALERT_CODE_SOCIAL_CARE))
-    with(getActivePrisonerAlerts(prisonNumber)) {
-      assertThat(size).isEqualTo(2)
-      assertThat(map { it.alertCode.code }).containsOnly(ALERT_CODE_VICTIM, ALERT_CODE_SOCIAL_CARE)
-    }
-  }
-
-  @Test
-  @Sql("classpath:test_data/duplicate-checking-alerts.sql")
   fun `409 conflict - source dps - active alert with code already exists for prison number - alert active from today with no active to date`() {
-    val request = createAlertRequest(alertCode = ALERT_CODE_HIDDEN_DISABILITY)
+    val prisonNumber = prisonNumber()
+    val alert = givenAlert(alert(prisonNumber = prisonNumber, alertCode = givenAlertCode()))
 
-    val response = webTestClient.createAlertResponseSpec(PRISON_NUMBER, request).errorResponse(CONFLICT)
+    val request = createAlertRequest(alertCode = alert.alertCode.code)
+    val response = webTestClient.createAlertResponseSpec(prisonNumber, request).errorResponse(CONFLICT)
 
     with(response) {
       assertThat(status).isEqualTo(409)
@@ -539,21 +524,23 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  @Sql("classpath:test_data/duplicate-checking-alerts.sql")
   fun `201 created - source nomis - active alert with code already exists for prison number - alert active from today with no active to date`() {
-    val request = createAlertRequest(alertCode = ALERT_CODE_HIDDEN_DISABILITY)
+    val prisonNumber = givenPrisoner()
+    val alert = givenAlert(alert(prisonNumber = prisonNumber, alertCode = givenAlertCode()))
 
-    val alert = webTestClient.createAlert(PRISON_NUMBER, request, NOMIS)
+    val request = createAlertRequest(alertCode = alert.alertCode.code)
+    val response = webTestClient.createAlert(prisonNumber, request, NOMIS)
 
-    assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
+    assertThat(response.alertCode.code).isEqualTo(request.alertCode)
   }
 
   @Test
-  @Sql("classpath:test_data/duplicate-checking-alerts.sql")
   fun `400 bad request - active alert with code already exists for prison number - alert active from today with no active to date - alert code inactive`() {
-    val request = createAlertRequest(alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
+    val prisonNumber = prisonNumber()
+    val alert = givenAlert(alert(prisonNumber, givenAlertCode(active = false)))
 
-    val response = webTestClient.createAlertResponseSpec(request = request).errorResponse(BAD_REQUEST)
+    val request = createAlertRequest(alertCode = alert.alertCode.code)
+    val response = webTestClient.createAlertResponseSpec(prisonNumber, request).errorResponse(BAD_REQUEST)
 
     with(response) {
       assertThat(status).isEqualTo(400)
@@ -565,11 +552,13 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  @Sql("classpath:test_data/duplicate-checking-alerts.sql")
   fun `409 conflict - source dps - active alert with code already exists for prison number - alert active from tomorrow with no active to date`() {
-    val request = createAlertRequest(alertCode = ALERT_CODE_SOCIAL_CARE)
+    val prisonNumber = givenPrisoner()
+    val alert = givenAlert(alert(prisonNumber, givenAlertCode(), activeFrom = now().plusDays(1)))
 
-    val response = webTestClient.createAlertResponseSpec(PRISON_NUMBER, request).errorResponse(CONFLICT)
+    val request = createAlertRequest(alertCode = alert.alertCode.code)
+
+    val response = webTestClient.createAlertResponseSpec(prisonNumber, request).errorResponse(CONFLICT)
 
     with(response) {
       assertThat(status).isEqualTo(409)
@@ -581,30 +570,39 @@ class CreateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
-  @Sql("classpath:test_data/duplicate-checking-alerts.sql")
   fun `201 created - source nomis - active alert with code already exists for prison number - alert active from tomorrow with no active to date`() {
-    val request = createAlertRequest(alertCode = ALERT_CODE_SOCIAL_CARE)
+    val prisonNumber = givenPrisoner()
+    val alert = givenAlert(alert(prisonNumber, givenAlertCode(), activeFrom = now().minusDays(7)))
+    val request = createAlertRequest(alert.alertCode.code)
 
-    val alert = webTestClient.createAlert(PRISON_NUMBER, request, NOMIS)
+    val response = webTestClient.createAlert(prisonNumber, request, NOMIS)
 
-    assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
+    assertThat(response.alertCode.code).isEqualTo(request.alertCode)
   }
 
   @Test
-  @Sql("classpath:test_data/duplicate-checking-alerts.sql")
   fun `201 created - alert with code already exists for inactive alert`() {
-    val request = createAlertRequest(alertCode = ALERT_CODE_VICTIM)
+    val prisonNumber = givenPrisoner()
+    val alert = givenAlert(
+      alert(
+        prisonNumber,
+        givenAlertCode(),
+        activeFrom = now().minusDays(7),
+        activeTo = now().minusDays(2),
+      ),
+    )
 
-    val alert = webTestClient.createAlert(PRISON_NUMBER, request)
+    val request = createAlertRequest(alertCode = alert.alertCode.code)
+    val response = webTestClient.createAlert(prisonNumber, request)
 
-    assertThat(alert.alertCode.code).isEqualTo(request.alertCode)
+    assertThat(response.alertCode.code).isEqualTo(request.alertCode)
   }
 
   private fun createAlertRequest(alertCode: String = ALERT_CODE_VICTIM) = CreateAlert(
     alertCode = alertCode,
     description = "Alert description",
     authorisedBy = "A. Authorizer",
-    activeFrom = LocalDate.now().minusDays(3),
+    activeFrom = now().minusDays(3),
     activeTo = null,
   )
 

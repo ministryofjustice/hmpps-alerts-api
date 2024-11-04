@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
 import java.util.UUID
 
@@ -58,17 +57,17 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
   fun `retrieve alert`() {
     val prisonNumber = "G1234AT"
     val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
-    val alert = givenAnAlert(alert(prisonNumber, alertCode))
+    val alert = givenAlert(alert(prisonNumber, alertCode))
 
     val response = webTestClient.get()
-      .uri("/alerts/${alert.alertUuid}")
+      .uri("/alerts/${alert.id}")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
       .exchange().successResponse<Alert>()
 
     with(alert) {
       assertThat(response).usingRecursiveComparison().ignoringFields("createdAt").isEqualTo(
         Alert(
-          alert.alertUuid,
+          alert.id,
           prisonNumber,
           alertCodeSummary(alertCode.alertType, alertCode),
           description,

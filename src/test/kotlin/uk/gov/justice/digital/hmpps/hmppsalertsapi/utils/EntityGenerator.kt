@@ -1,11 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.utils
 
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.UUID
 
 object EntityGenerator {
   val AT_VULNERABILITY = alertType(ALERT_TYPE_CODE_VULNERABILITY, "Vulnerability")
@@ -21,8 +18,7 @@ object EntityGenerator {
     modifiedBy: String = "MODIFIED_BY",
     deactivatedAt: LocalDateTime? = null,
     deactivatedBy: String? = null,
-    id: Long = IdGenerator.newId(),
-  ) = AlertType(id, code, description, listSequence, createdAt, createdBy).apply {
+  ) = AlertType(code, description, listSequence, createdAt, createdBy).apply {
     this.modifiedAt = modifiedAt
     this.modifiedBy = modifiedBy
     this.deactivatedAt = deactivatedAt
@@ -40,23 +36,10 @@ object EntityGenerator {
     modifiedBy: String = "MODIFIED_BY",
     deactivatedAt: LocalDateTime? = null,
     deactivatedBy: String? = null,
-    id: Long = IdGenerator.newId(),
-  ) = AlertCode(id, type, code, description, listSequence, createdAt, createdBy).apply {
+  ) = AlertCode(type, code, description, listSequence, createdAt, createdBy).apply {
     this.modifiedAt = modifiedAt
     this.modifiedBy = modifiedBy
     this.deactivatedAt = deactivatedAt
     this.deactivatedBy = deactivatedBy
   }
-
-  fun alert(
-    prisonNumber: String,
-    alertCode: AlertCode = AC_VICTIM,
-    description: String = "A description of the prisoner alert",
-    authorisedBy: String = "A Person",
-    activeFrom: LocalDate = LocalDate.now().minusDays(1),
-    activeTo: LocalDate? = null,
-    createdAt: LocalDateTime = LocalDateTime.now(),
-    alertUuid: UUID = UUID.randomUUID(),
-    alertId: Long = IdGenerator.newId(),
-  ) = Alert(alertId, alertUuid, alertCode, prisonNumber, description, authorisedBy, activeFrom, activeTo, createdAt)
 }
