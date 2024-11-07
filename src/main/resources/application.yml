@@ -60,8 +60,6 @@ spring:
       dpr_user: ${DPR_USER}
       dpr_password: ${DPR_PASSWORD}
 
-  threads.virtual.enabled: true
-
 sentry:
   exception-resolver-order: -2147483647
 
