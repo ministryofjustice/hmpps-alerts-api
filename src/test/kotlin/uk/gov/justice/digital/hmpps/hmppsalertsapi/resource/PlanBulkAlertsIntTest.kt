@@ -256,7 +256,7 @@ class PlanBulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `does not store bulk alert`() {
-    val prisonNumber = "B1235LK"
+    val prisonNumber = "A1235LK"
     givenPrisonersExist(prisonNumber)
 
     val request = bulkAlertRequest(prisonNumber)
@@ -267,7 +267,7 @@ class PlanBulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `returns list of new alerts to be created but does not create them`() {
-    val prisonNumber = "B1237LK"
+    val prisonNumber = "A1237LK"
     givenPrisonersExist(prisonNumber)
     val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
     val existingAlert = givenAlert(alert(prisonNumber, alertCode))
@@ -290,7 +290,7 @@ class PlanBulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `returns list of alerts to be updated but do not update them`() {
-    val prisonNumber = "B1238LK"
+    val prisonNumber = "A1238LK"
     givenPrisonersExist(prisonNumber)
     val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
     val existingAlert = givenAlert(alert(prisonNumber, alertCode, activeTo = LocalDate.now().plusDays(1)))
@@ -337,8 +337,8 @@ class PlanBulkAlertsIntTest : IntegrationTestBase() {
       assertThat(this).hasSizeGreaterThanOrEqualTo(2)
       assertThat(map { it.alertUuid }).containsAll(toExpire.map { it.id })
       assertThat(map { it.prisonNumber }).containsAll(prisonNumbersToExpire)
-      onEach {
-        with(alertRepository.findByIdOrNull(it.alertUuid)!!) {
+      toExpire.onEach {
+        with(alertRepository.findByIdOrNull(it.id)!!) {
           assertThat(isActive()).isTrue()
         }
       }
