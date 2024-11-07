@@ -70,6 +70,49 @@ class BulkAlertsController(
     httpRequest: HttpServletRequest,
   ): BulkAlert = bulkAlertService.bulkCreateAlerts(request, httpRequest.alertRequestContext())
 
+  @ResponseStatus(HttpStatus.OK)
+  @PostMapping("/plan")
+  @Operation(
+    summary = "Plan the creation of alerts for multiple people in bulk",
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Alerts creation plan generated successfully",
+        content = [Content(schema = Schema(implementation = BulkAlert::class))],
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Bad request",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @UsernameHeader
+  @SourceHeader
+  fun planBulkCreateAlerts(
+    @Valid
+    @RequestBody
+    @Parameter(
+      description = "The data for bulk creating alerts for multiple people",
+      required = true,
+    )
+    request: BulkCreateAlerts,
+    httpRequest: HttpServletRequest,
+  ): BulkAlert = bulkAlertService.planBulkCreateAlerts(request, httpRequest.alertRequestContext())
+
   private fun HttpServletRequest.alertRequestContext() =
     getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
 }

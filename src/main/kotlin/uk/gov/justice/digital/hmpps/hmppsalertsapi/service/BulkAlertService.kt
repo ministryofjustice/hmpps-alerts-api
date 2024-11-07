@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.interceptor.TransactionAspectSupport
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PublishPersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
@@ -13,8 +14,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertCleanupMode.EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.ADD_MISSING
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.EXPIRE_AND_REPLACE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidInputException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.verifyExists
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertAlert
@@ -51,7 +50,6 @@ class BulkAlertService(
         it.updateRelevantExistingUnexpiredAlertsToBePermanentlyActive(context, existingUnexpiredAlerts, batchSize)
       val alertsExpired = it.expireRelevantExistingUnexpiredAlertsAndAlertsForPrisonNumbersNotInRequest(
         context,
-        existingUnexpiredAlerts,
         batchSize,
       )
       val alertsCreated = it.createAlertsWhereNoActiveAlertFromPreviousActionsExists(
@@ -75,6 +73,11 @@ class BulkAlertService(
       ).toModel(objectMapper)
     }
 
+  fun planBulkCreateAlerts(bulk: BulkCreateAlerts, context: AlertRequestContext, batchSize: Int = 1000) =
+    bulkCreateAlerts(bulk, context, batchSize).apply {
+      TransactionAspectSupport.currentTransactionStatus().setRollbackOnly()
+    }
+
   private fun BulkCreateAlerts.getAlertCode() =
     verifyExists(alertCodeRepository.findByCode(alertCode)) {
       InvalidInputException("Alert code", alertCode)
@@ -96,38 +99,34 @@ class BulkAlertService(
     }
 
   private fun BulkCreateAlerts.getAnyExistingActiveAlertsThatWillNotBeRecreated(existingUnexpiredAlerts: Collection<Alert>) =
-    if (mode == ADD_MISSING) {
-      existingUnexpiredAlerts.filter { it.isActive() && it.activeTo == null }
-        .map { it.toBulkAlertAlertModel() }
-    } else {
-      emptyList()
-    }
+    existingUnexpiredAlerts.filter { it.isActive() && it.activeTo == null }
+      .map { it.toBulkAlertAlertModel() }
 
   private fun BulkCreateAlerts.updateRelevantExistingUnexpiredAlertsToBePermanentlyActive(
     context: AlertRequestContext,
     existingUnexpiredAlerts: Collection<Alert>,
     batchSize: Int,
-  ) = if (mode == ADD_MISSING) existingUnexpiredAlerts.updateToBePermanentlyActive(context, batchSize) else emptyList()
+  ) = existingUnexpiredAlerts.updateToBePermanentlyActive(this, context, batchSize)
 
   private fun BulkCreateAlerts.expireRelevantExistingUnexpiredAlertsAndAlertsForPrisonNumbersNotInRequest(
     context: AlertRequestContext,
-    existingUnexpiredAlerts: Collection<Alert>,
     batchSize: Int,
-  ) = (if (mode == EXPIRE_AND_REPLACE) existingUnexpiredAlerts.expire(context, batchSize) else emptyList())
-    .union(
-      if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) {
-        alertRepository.findByPrisonNumberNotInAndAlertCodeCode(prisonNumbers, alertCode).expire(context, batchSize)
-      } else {
-        emptyList()
-      },
-    )
+  ) = if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) {
+    alertRepository.findByPrisonNumberNotInAndAlertCodeCode(prisonNumbers, alertCode).expire(context, batchSize)
+  } else {
+    emptyList()
+  }
 
-  private fun Collection<Alert>.updateToBePermanentlyActive(context: AlertRequestContext, batchSize: Int) =
+  private fun Collection<Alert>.updateToBePermanentlyActive(
+    bulk: BulkCreateAlerts,
+    context: AlertRequestContext,
+    batchSize: Int,
+  ) =
     chunked(batchSize).flatMap {
       alertRepository.saveAll(
         filter { it.activeTo != null }.map {
           it.update(
-            description = null,
+            description = bulk.description,
             authorisedBy = null,
             activeFrom = it.activeFrom,
             activeTo = null,

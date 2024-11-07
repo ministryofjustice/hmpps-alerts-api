@@ -5,8 +5,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertCleanupMode.KEEP_ALL
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.ADD_MISSING
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCodeSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_VICTIM
@@ -21,7 +19,7 @@ object RequestGenerator {
   fun bulkAlertRequest(
     vararg prisonNumbers: String,
     alertCode: String = ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL,
-    mode: BulkCreateAlertMode = ADD_MISSING,
+    description: String? = null,
     cleanupMode: BulkCreateAlertCleanupMode = KEEP_ALL,
-  ) = BulkCreateAlerts(prisonNumbers.asList(), alertCode, mode, cleanupMode)
+  ) = BulkCreateAlerts(prisonNumbers.asList(), alertCode, description, cleanupMode)
 }
