@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
@@ -31,7 +32,7 @@ import java.time.LocalDate
 
 @RestController
 @RequestMapping("/prisoners", produces = [MediaType.APPLICATION_JSON_VALUE])
-class PrisonerAlertsController(val alertService: AlertService) {
+class PrisonerAlertsController(val alertService: AlertService, private val prisonerSearchClient: PrisonerSearchClient) {
   @ResponseStatus(HttpStatus.OK)
   @GetMapping("/{prisonNumber}/alerts")
   @Operation(
@@ -202,6 +203,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
     )
     allowInactiveCode: Boolean = false,
   ): Alert {
-    return alertService.createAlert(prisonNumber, request, allowInactiveCode)
+    val prisoner = requireNotNull(prisonerSearchClient.getPrisoner(prisonNumber)) { "Prison number not found" }
+    return alertService.createAlert(prisoner, request, allowInactiveCode)
   }
 }

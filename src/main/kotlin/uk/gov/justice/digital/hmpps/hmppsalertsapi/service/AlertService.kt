@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PublishPersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
@@ -27,7 +27,11 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertsFilter
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AuditEventRepository
 import java.time.LocalDate
+import java.time.LocalDateTime.now
+import java.time.format.DateTimeFormatter
 import java.util.UUID
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 @Service
@@ -36,21 +40,34 @@ class AlertService(
   private val alertRepository: AlertRepository,
   private val alertCodeRepository: AlertCodeRepository,
   private val auditEventRepository: AuditEventRepository,
-  private val prisonerSearchClient: PrisonerSearchClient,
   private val telemetryClient: TelemetryClient,
 ) {
   @PublishPersonAlertsChanged
-  fun createAlert(prisonNumber: String, request: CreateAlert, allowInactiveCode: Boolean): Alert {
+  fun createAlert(prisoner: PrisonerDto, request: CreateAlert, allowInactiveCode: Boolean): Alert = measureTimedValue {
+    telemetryClient.trackEvent(
+      "CreatingAlert",
+      mapOf("timestamp" to now().format(DateTimeFormatter.ISO_DATE_TIME)),
+      mapOf(),
+    )
     val context = AlertRequestContext.get()
     val notNomis = context.source != Source.NOMIS
     val alertCode = request.getAlertCode(notNomis && !allowInactiveCode)
-    if (notNomis) {
-      check(request.dateRangeIsValid()) { "Active from must be before active to" }
-      checkForExistingActiveAlert(prisonNumber, request.alertCode)
+    val duration = measureTime {
+      if (notNomis) {
+        check(request.dateRangeIsValid()) { "Active from must be before active to" }
+        checkForExistingActiveAlert(prisoner.prisonerNumber, request.alertCode)
+      }
     }
-    val prisoner = requireNotNull(prisonerSearchClient.getPrisoner(prisonNumber)) { "Prison number not found" }
+    telemetryClient.trackEvent(
+      "ValidationCompleted",
+      mapOf(
+        "duration" to duration.inWholeMilliseconds.toString(),
+        "timestamp" to now().format(DateTimeFormatter.ISO_DATE_TIME),
+      ),
+      mapOf(),
+    )
 
-    return alertRepository.save(request.toAlertEntity(context, prisoner.prisonerNumber, alertCode, prisoner.prisonId))
+    alertRepository.save(request.toAlertEntity(context, prisoner.prisonerNumber, alertCode, prisoner.prisonId))
       .toAlertModel().apply {
         if (allowInactiveCode && !alertCode.isActive()) {
           telemetryClient.trackEvent(
@@ -64,7 +81,16 @@ class AlertService(
           )
         }
       }
-  }
+  }.also {
+    telemetryClient.trackEvent(
+      "AlertCreated",
+      mapOf(
+        "duration" to it.duration.inWholeMilliseconds.toString(),
+        "timestamp" to now().format(DateTimeFormatter.ISO_DATE_TIME),
+      ),
+      mapOf(),
+    )
+  }.value
 
   private fun CreateAlert.dateRangeIsValid() = !(activeFrom?.isAfter(activeTo ?: activeFrom) ?: false)
 
