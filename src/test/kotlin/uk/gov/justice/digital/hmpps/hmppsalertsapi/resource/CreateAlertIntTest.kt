@@ -508,7 +508,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `409 conflict - source dps - active alert with code already exists for prison number - alert active from today with no active to date`() {
-    val prisonNumber = prisonNumber()
+    val prisonNumber = givenPrisoner()
     val alert = givenAlert(alert(prisonNumber = prisonNumber, alertCode = givenAlertCode()))
 
     val request = createAlertRequest(alertCode = alert.alertCode.code)
@@ -536,7 +536,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `400 bad request - active alert with code already exists for prison number - alert active from today with no active to date - alert code inactive`() {
-    val prisonNumber = prisonNumber()
+    val prisonNumber = givenPrisoner()
     val alert = givenAlert(alert(prisonNumber, givenAlertCode(active = false)))
 
     val request = createAlertRequest(alertCode = alert.alertCode.code)

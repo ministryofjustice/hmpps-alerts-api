@@ -41,6 +41,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AuditEventReposito
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -74,7 +75,7 @@ class AlertServiceTest {
   fun `Alert code not found`() {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(null)
     val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"), false)
+      underTest.createAlert(prisoner(), createAlertRequest(alertCode = "A"), false)
     }
     assertThat(error.message).isEqualTo("Alert code is invalid")
   }
@@ -84,7 +85,7 @@ class AlertServiceTest {
     whenever(mockAlertCode.isActive()).thenReturn(false)
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(mockAlertCode)
     val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(PRISON_NUMBER, createAlertRequest(alertCode = "A"), false)
+      underTest.createAlert(prisoner(), createAlertRequest(alertCode = "A"), false)
     }
     assertThat(error.message).isEqualTo("Alert code is inactive")
   }
@@ -95,7 +96,7 @@ class AlertServiceTest {
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now(), activeTo = null)))
     val error = assertThrows<AlreadyExistsException> {
-      underTest.createAlert(PRISON_NUMBER, createAlertRequest(), false)
+      underTest.createAlert(prisoner(), createAlertRequest(), false)
     }
     assertThat(error.message).isEqualTo("Alert already exists")
   }
@@ -106,7 +107,7 @@ class AlertServiceTest {
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().plusDays(1), activeTo = null)))
     val error = assertThrows<AlreadyExistsException> {
-      underTest.createAlert(PRISON_NUMBER, createAlertRequest(), false)
+      underTest.createAlert(prisoner(), createAlertRequest(), false)
     }
     assertThat(error.message).isEqualTo("Alert already exists")
   }
@@ -116,19 +117,17 @@ class AlertServiceTest {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
     whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
       .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().minusDays(1), activeTo = LocalDate.now())))
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
-    underTest.createAlert(PRISON_NUMBER, createAlertRequest(), false)
+    underTest.createAlert(prisoner(), createAlertRequest(), false)
     verify(alertRepository).save(any<Alert>())
   }
 
   @Test
   fun `returns properties from request context`() {
     whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
     val request = createAlertRequest()
-    val result = underTest.createAlert(PRISON_NUMBER, request, false)
+    val result = underTest.createAlert(prisoner(), request, false)
     with(result) {
       assertThat(createdAt).isCloseTo(context.requestAt, within(2, ChronoUnit.SECONDS))
       assertThat(createdBy).isEqualTo(context.username)
@@ -145,11 +144,10 @@ class AlertServiceTest {
         deactivatedAt = LocalDateTime.of(1999, 12, 31, 0, 0, 0),
       ),
     )
-    whenever(prisonerSearchClient.getPrisoner(anyString())).thenReturn(prisoner())
     whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
     val request = createAlertRequest()
 
-    val result = underTest.createAlert(PRISON_NUMBER, request, true)
+    val result = underTest.createAlert(prisoner(), request, true)
 
     verify(telemetryClient).trackEvent(
       "INACTIVE_CODE_ALERT_CREATION",
@@ -289,14 +287,13 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
 
   private fun createAlertRequest(
     alertCode: String = ALERT_CODE_VICTIM,
-  ) =
-    CreateAlert(
-      alertCode = alertCode,
-      description = "Alert description",
-      authorisedBy = "A. Authorizer",
-      activeFrom = LocalDate.now().minusDays(3),
-      activeTo = null,
-    )
+  ) = CreateAlert(
+    alertCode = alertCode,
+    description = "Alert description",
+    authorisedBy = "A. Authorizer",
+    activeFrom = LocalDate.now().minusDays(3),
+    activeTo = null,
+  )
 
   private fun updateAlertRequestNoChange(
     activeFrom: LocalDate? = LocalDate.now().minusDays(2),
@@ -340,43 +337,42 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
       }
     }
 
-  private fun prisoner() =
+  private fun prisoner(prisonNumber: String = IdGenerator.prisonNumber(), prisonCode: String = PRISON_CODE_LEEDS) =
     PrisonerDto(
-      PRISON_NUMBER,
+      prisonNumber,
       123,
       "prisoner",
       "middle",
       "lastName",
       LocalDate.of(1988, 3, 4),
-      PRISON_CODE_LEEDS,
+      prisonCode,
     )
 
   private fun alertEntity(
     activeFrom: LocalDate = LocalDate.now(),
     activeTo: LocalDate? = null,
     createdAt: LocalDateTime = LocalDateTime.now(),
-  ) =
-    Alert(
-      id = UUID.randomUUID(),
-      alertCode = AC_VICTIM,
-      prisonNumber = PRISON_NUMBER,
-      description = "Alert description",
-      authorisedBy = "A. Authorizer",
-      activeFrom = activeFrom,
-      activeTo = activeTo,
-      createdAt = createdAt,
-      prisonCodeWhenCreated = null,
-    ).apply {
-      auditEvent(
-        action = AuditEventAction.CREATED,
-        description = "Alert created",
-        actionedAt = LocalDateTime.now(),
-        actionedBy = "CREATED_BY",
-        actionedByDisplayName = "CREATED_BY_DISPLAY_NAME",
-        source = DPS,
-        activeCaseLoadId = PRISON_CODE_MOORLANDS,
-      )
-    }
+  ) = Alert(
+    id = UUID.randomUUID(),
+    alertCode = AC_VICTIM,
+    prisonNumber = PRISON_NUMBER,
+    description = "Alert description",
+    authorisedBy = "A. Authorizer",
+    activeFrom = activeFrom,
+    activeTo = activeTo,
+    createdAt = createdAt,
+    prisonCodeWhenCreated = null,
+  ).apply {
+    auditEvent(
+      action = AuditEventAction.CREATED,
+      description = "Alert created",
+      actionedAt = LocalDateTime.now(),
+      actionedBy = "CREATED_BY",
+      actionedByDisplayName = "CREATED_BY_DISPLAY_NAME",
+      source = DPS,
+      activeCaseLoadId = PRISON_CODE_MOORLANDS,
+    )
+  }
 
   companion object {
     private val requestAttributes: RequestAttributes = mock()
