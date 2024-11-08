@@ -3,6 +3,10 @@ generic-service:
   productId: "DPS090" # productId for the product that this belongs too, i.e. DPS001, see README.md for details
 
   replicaCount: 4
+  resources:
+    requests:
+      cpu: 128m
+      memory: 512Mi
 
   image:
     repository: quay.io/hmpps/hmpps-alerts-api
