@@ -10,6 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
+import org.mockito.ArgumentMatchers.anyString
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
@@ -17,11 +18,15 @@ import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.context.SecurityContextHolder
+import reactor.core.publisher.Mono
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.NOMIS_SYS_USER_DISPLAY_NAME
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_MOORLANDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
@@ -31,12 +36,15 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.userDetailsDto
 import uk.gov.justice.hmpps.kotlin.auth.AuthAwareAuthenticationToken
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
 class AlertRequestContextConfigurationTest {
   private val userService = mock<UserService>()
-  private val interceptor: AlertRequestContextInterceptor = AlertRequestContextInterceptor(userService)
+  private val prisonerSearchClient = mock<PrisonerSearchClient>()
+  private val interceptor: AlertRequestContextInterceptor =
+    AlertRequestContextInterceptor(userService, prisonerSearchClient)
 
   private val req = MockHttpServletRequest()
   private val res = MockHttpServletResponse()
@@ -45,7 +53,7 @@ class AlertRequestContextConfigurationTest {
   fun beforeEach() {
     req.method = "POST"
     SecurityContextHolder.clearContext()
-    whenever(userService.getUserDetails(TEST_USER)).thenReturn(userDetailsDto())
+    whenever(userService.getUserDetails(TEST_USER)).thenReturn(Mono.just(userDetailsDto()))
   }
 
   @Test
@@ -107,7 +115,7 @@ class AlertRequestContextConfigurationTest {
     setSecurityContext(emptyMap())
     val username = "a".repeat(64)
     req.addHeader(USERNAME, username)
-    whenever(userService.getUserDetails(username)).thenReturn(userDetailsDto(username))
+    whenever(userService.getUserDetails(username)).thenReturn(Mono.just(userDetailsDto(username)))
 
     interceptor.preHandle(req, res, "null")
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
@@ -121,6 +129,8 @@ class AlertRequestContextConfigurationTest {
     setSecurityContext(emptyMap())
     req.addHeader(SOURCE, DPS.name)
     req.addHeader(USERNAME, USER_NOT_FOUND)
+    whenever(userService.getUserDetails(anyString())).thenReturn(Mono.empty())
+
     val exception = assertThrows<ValidationException> { interceptor.preHandle(req, res, "null") }
     assertThat(exception.message).isEqualTo("User details for supplied username not found")
   }
@@ -130,6 +140,7 @@ class AlertRequestContextConfigurationTest {
     setSecurityContext(emptyMap())
     req.addHeader(SOURCE, NOMIS.name)
     req.addHeader(USERNAME, USER_NOT_FOUND)
+    whenever(userService.getUserDetails(USER_NOT_FOUND)).thenReturn(Mono.empty())
 
     interceptor.preHandle(req, res, "null")
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
@@ -143,6 +154,7 @@ class AlertRequestContextConfigurationTest {
     setSecurityContext(emptyMap())
     req.addHeader(SOURCE, NOMIS.name)
     req.addHeader(USERNAME, USER_NOT_FOUND)
+    whenever(userService.getUserDetails(USER_NOT_FOUND)).thenReturn(Mono.empty())
 
     interceptor.preHandle(req, res, "null")
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext
@@ -178,6 +190,20 @@ class AlertRequestContextConfigurationTest {
   fun `modifying request methods populates context`(method: String) {
     setSecurityContext(mapOf("subject" to TEST_USER))
     req.method = method
+    req.servletPath = "/prisoners/A1234BC/alerts"
+    whenever(prisonerSearchClient.getPrisoner("A1234BC")).thenReturn(
+      Mono.just(
+        PrisonerDto(
+          "A1234BC",
+          null,
+          "Alan",
+          null,
+          "Brown",
+          LocalDate.now().minusYears(30),
+          PRISON_CODE_LEEDS,
+        ),
+      ),
+    )
 
     val result = interceptor.preHandle(req, res, "null")
     val context = req.getAttribute(AlertRequestContext::class.simpleName!!) as AlertRequestContext

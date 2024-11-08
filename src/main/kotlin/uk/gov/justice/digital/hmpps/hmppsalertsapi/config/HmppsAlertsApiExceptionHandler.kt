@@ -205,4 +205,4 @@ class HmppsAlertsApiExceptionHandler {
       )
 }
 
-class DownstreamServiceException(message: String, cause: Throwable) : Exception(message, cause)
+class DownstreamServiceException(message: String, cause: Throwable) : RuntimeException(message, cause)
