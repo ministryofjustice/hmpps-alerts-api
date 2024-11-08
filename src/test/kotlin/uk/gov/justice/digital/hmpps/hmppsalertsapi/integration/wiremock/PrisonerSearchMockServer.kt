@@ -18,9 +18,9 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.Pri
 import java.time.LocalDate
 
 internal const val PRISON_NUMBER = "A1234AA"
-internal const val PRISON_NUMBER_NOT_FOUND = "NOT_FOUND"
-internal const val PRISON_NUMBER_NULL_RESPONSE = "NULL"
-internal const val PRISON_NUMBER_THROW_EXCEPTION = "THROW"
+internal const val PRISON_NUMBER_NOT_FOUND = "N1234FN"
+internal const val PRISON_NUMBER_NULL_RESPONSE = "P1234NU"
+internal const val PRISON_NUMBER_THROW_EXCEPTION = "T1234EX"
 
 class PrisonerSearchServer : WireMockServer(8112) {
   private val mapper: ObjectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())

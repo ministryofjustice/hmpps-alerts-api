@@ -36,7 +36,7 @@ class PrisonerSearchClientTest {
     val prisonCode = "SWI"
     server.stubGetPrisoner(prisonNumber, prisonCode)
 
-    val result = client.getPrisoner(prisonNumber)
+    val result = client.getPrisoner(prisonNumber).block()
 
     assertThat(result!!).isEqualTo(
       PrisonerDto(
@@ -54,7 +54,7 @@ class PrisonerSearchClientTest {
 
   @Test
   fun `getPrisoner - prisoner not found`() {
-    val result = client.getPrisoner(PRISON_NUMBER_NOT_FOUND)
+    val result = client.getPrisoner(PRISON_NUMBER_NOT_FOUND).block()
 
     assertThat(result).isNull()
     server.verify(exactly(1), getRequestedFor(urlEqualTo("/prisoner/$PRISON_NUMBER_NOT_FOUND")))
@@ -64,7 +64,7 @@ class PrisonerSearchClientTest {
   fun `getPrisoner - downstream service exception`() {
     server.stubGetPrisonerException()
 
-    val exception = assertThrows<DownstreamServiceException> { client.getPrisoner(PRISON_NUMBER_THROW_EXCEPTION) }
+    val exception = assertThrows<DownstreamServiceException> { client.getPrisoner(PRISON_NUMBER_THROW_EXCEPTION).block() }
     assertThat(exception.message).isEqualTo("Get prisoner request failed")
     with(exception.cause) {
       assertThat(this).isInstanceOf(WebClientResponseException::class.java)

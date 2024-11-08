@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
@@ -32,7 +32,7 @@ import java.time.LocalDate
 
 @RestController
 @RequestMapping("/prisoners", produces = [MediaType.APPLICATION_JSON_VALUE])
-class PrisonerAlertsController(val alertService: AlertService, private val prisonerSearchClient: PrisonerSearchClient) {
+class PrisonerAlertsController(val alertService: AlertService) {
   @ResponseStatus(HttpStatus.OK)
   @GetMapping("/{prisonNumber}/alerts")
   @Operation(
@@ -202,8 +202,5 @@ class PrisonerAlertsController(val alertService: AlertService, private val priso
       description = "Allows the creation of an alert using an inactive code. Intended only for use by the Alerts UI when the user has the ‘Manage Alerts in Bulk for Prison Estate’ role. Defaults to false",
     )
     allowInactiveCode: Boolean = false,
-  ): Alert {
-    val prisoner = requireNotNull(prisonerSearchClient.getPrisoner(prisonNumber)) { "Prison number not found" }
-    return alertService.createAlert(prisoner, request, allowInactiveCode)
-  }
+  ): Alert = alertService.createAlert(requireNotNull(AlertRequestContext.get().prisoner), request, allowInactiveCode)
 }

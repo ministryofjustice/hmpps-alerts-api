@@ -34,7 +34,7 @@ class ManageUsersClientTest {
   fun `getUserDetails - success`() {
     server.stubGetUserDetails()
 
-    val result = client.getUserDetails(TEST_USER)
+    val result = client.getUserDetails(TEST_USER).block()
 
     assertThat(result!!).isEqualTo(
       UserDetailsDto(
@@ -52,7 +52,7 @@ class ManageUsersClientTest {
 
   @Test
   fun `getUserDetails - user not found`() {
-    val result = client.getUserDetails(USER_NOT_FOUND)
+    val result = client.getUserDetails(USER_NOT_FOUND).block()
 
     assertThat(result).isNull()
     server.verify(exactly(1), getRequestedFor(urlEqualTo("/users/$USER_NOT_FOUND")))
@@ -62,7 +62,7 @@ class ManageUsersClientTest {
   fun `getUserDetails - downstream service exception`() {
     server.stubGetUserDetailsException()
 
-    val exception = assertThrows<DownstreamServiceException> { client.getUserDetails(USER_THROW_EXCEPTION) }
+    val exception = assertThrows<DownstreamServiceException> { client.getUserDetails(USER_THROW_EXCEPTION).block() }
     assertThat(exception.message).isEqualTo("Get user details request failed")
     with(exception.cause) {
       assertThat(this).isInstanceOf(WebClientResponseException::class.java)

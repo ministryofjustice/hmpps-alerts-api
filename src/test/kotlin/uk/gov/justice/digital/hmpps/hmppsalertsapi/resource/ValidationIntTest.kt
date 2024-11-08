@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
 import java.util.UUID
@@ -87,7 +88,7 @@ class ValidationIntTest : IntegrationTestBase() {
 
   @Test
   fun `Validate active from is equal to active to should pass on update`() {
-    val prisonNumber = givenPrisoner()
+    val prisonNumber = prisonNumber()
     val alert = givenAlert(alert(prisonNumber))
 
     val updateResponse = webTestClient.put()
