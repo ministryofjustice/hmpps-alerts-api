@@ -5,8 +5,11 @@ generic-service:
   replicaCount: 4
   resources:
     requests:
-      cpu: 128m
+      cpu: 1024m
       memory: 512Mi
+    limits:
+      cpu: 2048
+      memory: 1024Mi
 
   image:
     repository: quay.io/hmpps/hmpps-alerts-api
