@@ -2,13 +2,13 @@ generic-service:
   nameOverride: hmpps-alerts-api
   productId: "DPS090" # productId for the product that this belongs too, i.e. DPS001, see README.md for details
 
-  replicaCount: 4
+  replicaCount: 2
   resources:
     requests:
-      cpu: 1024m
+      cpu: 2048m
       memory: 512Mi
     limits:
-      cpu: 2048
+      cpu: 4096
       memory: 1024Mi
 
   image:
