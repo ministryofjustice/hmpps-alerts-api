@@ -27,11 +27,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertsFilter
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AuditEventRepository
 import java.time.LocalDate
-import java.time.LocalDateTime.now
-import java.time.format.DateTimeFormatter
 import java.util.UUID
-import kotlin.time.measureTime
-import kotlin.time.measureTimedValue
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 @Service
@@ -43,31 +39,17 @@ class AlertService(
   private val telemetryClient: TelemetryClient,
 ) {
   @PublishPersonAlertsChanged
-  fun createAlert(prisoner: PrisonerDto, request: CreateAlert, allowInactiveCode: Boolean): Alert = measureTimedValue {
-    telemetryClient.trackEvent(
-      "CreatingAlert",
-      mapOf("timestamp" to now().format(DateTimeFormatter.ISO_DATE_TIME)),
-      mapOf(),
-    )
+  fun createAlert(prisoner: PrisonerDto, request: CreateAlert, allowInactiveCode: Boolean): Alert {
     val context = AlertRequestContext.get()
     val notNomis = context.source != Source.NOMIS
     val alertCode = request.getAlertCode(notNomis && !allowInactiveCode)
-    val duration = measureTime {
-      if (notNomis) {
-        check(request.dateRangeIsValid()) { "Active from must be before active to" }
-        checkForExistingActiveAlert(prisoner.prisonerNumber, request.alertCode)
-      }
-    }
-    telemetryClient.trackEvent(
-      "ValidationCompleted",
-      mapOf(
-        "duration" to duration.inWholeMilliseconds.toString(),
-        "timestamp" to now().format(DateTimeFormatter.ISO_DATE_TIME),
-      ),
-      mapOf(),
-    )
 
-    alertRepository.save(request.toAlertEntity(context, prisoner.prisonerNumber, alertCode, prisoner.prisonId))
+    if (notNomis) {
+      check(request.dateRangeIsValid()) { "Active from must be before active to" }
+      checkForExistingActiveAlert(prisoner.prisonerNumber, request.alertCode)
+    }
+
+    return alertRepository.save(request.toAlertEntity(context, prisoner.prisonerNumber, alertCode, prisoner.prisonId))
       .toAlertModel().apply {
         if (allowInactiveCode && !alertCode.isActive()) {
           telemetryClient.trackEvent(
@@ -81,16 +63,7 @@ class AlertService(
           )
         }
       }
-  }.also {
-    telemetryClient.trackEvent(
-      "AlertCreated",
-      mapOf(
-        "duration" to it.duration.inWholeMilliseconds.toString(),
-        "timestamp" to now().format(DateTimeFormatter.ISO_DATE_TIME),
-      ),
-      mapOf(),
-    )
-  }.value
+  }
 
   private fun CreateAlert.dateRangeIsValid() = !(activeFrom?.isAfter(activeTo ?: activeFrom) ?: false)
 
