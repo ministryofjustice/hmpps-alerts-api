@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertPlan
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.BulkAlertService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
@@ -111,7 +112,7 @@ class BulkAlertsController(
     )
     request: BulkCreateAlerts,
     httpRequest: HttpServletRequest,
-  ): BulkAlert = bulkAlertService.planBulkCreateAlerts(request, httpRequest.alertRequestContext())
+  ): BulkAlertPlan = bulkAlertService.planBulkCreateAlerts(request, httpRequest.alertRequestContext())
 
   private fun HttpServletRequest.alertRequestContext() =
     getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext

@@ -104,3 +104,34 @@ data class BulkAlertAlert(
   )
   val message: String,
 )
+
+@Schema(
+  description = "The plan of a bulk alert request. Contains detailed information of the result if the bulk alert creation request is actually executed.",
+)
+data class BulkAlertPlan(
+  @Schema(
+    description = "The original request body used to create alerts for multiple people in bulk",
+  )
+  val request: BulkCreateAlerts,
+
+  @Schema(
+    description = "Collection of prisoner numbers of the existing active alerts that will not be modified, " +
+      "nor have additional alert created for the same prison number",
+  )
+  val existingActiveAlertsPrisonNumbers: Collection<String>,
+
+  @Schema(
+    description = "Collection of prisoner numbers that will have new alerts created",
+  )
+  val alertsToBeCreatedForPrisonNumbers: Collection<String>,
+
+  @Schema(
+    description = "Collection of prison numbers of the existing alerts that will be updated as a result of the bulk alert creation request.",
+  )
+  val alertsToBeUpdatedForPrisonNumbers: Collection<String>,
+
+  @Schema(
+    description = "Collection of prison numbers of the existing alerts that will be made inactive as a result of the bulk alert creation request",
+  )
+  val alertsToBeExpiredForPrisonNumbers: Collection<String>,
+)

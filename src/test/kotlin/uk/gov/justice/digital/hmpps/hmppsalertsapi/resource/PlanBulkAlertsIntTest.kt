@@ -5,18 +5,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import org.mockito.kotlin.any
-import org.mockito.kotlin.timeout
-import org.mockito.kotlin.verify
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
-import org.springframework.test.web.reactive.server.expectBody
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertCleanupMode.EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -24,18 +16,11 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_N
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.BulkAlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.bulkAlertRequest
-import java.time.LocalDate
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert as BulkAlertModel
 
+// Only failure tests in this class. Success tests are combined into BulkAlertsIntTest to validate that their results match.
 class PlanBulkAlertsIntTest : IntegrationTestBase() {
-
-  @Autowired
-  lateinit var bulkAlertRepository: BulkAlertRepository
-
   @Test
   fun `401 unauthorised`() {
     webTestClient.post()
@@ -78,7 +63,7 @@ class PlanBulkAlertsIntTest : IntegrationTestBase() {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Couldn't read request body")
-      assertThat(developerMessage).isEqualTo("Required request body is missing: public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.BulkAlertsController.planBulkCreateAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts,jakarta.servlet.http.HttpServletRequest)")
+      assertThat(developerMessage).isEqualTo("Required request body is missing: public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertPlan uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.BulkAlertsController.planBulkCreateAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts,jakarta.servlet.http.HttpServletRequest)")
       assertThat(moreInfo).isNull()
     }
   }
@@ -136,7 +121,7 @@ class PlanBulkAlertsIntTest : IntegrationTestBase() {
           |At least one prison number must be supplied
         """.trimMargin(),
       )
-      assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlert uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.BulkAlertsController.planBulkCreateAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts,jakarta.servlet.http.HttpServletRequest) with 2 errors:")
+      assertThat(developerMessage).startsWith("Validation failed for argument [0] in public uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertPlan uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.BulkAlertsController.planBulkCreateAlerts(uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts,jakarta.servlet.http.HttpServletRequest) with 2 errors:")
       assertThat(moreInfo).isNull()
     }
   }
@@ -242,109 +227,6 @@ class PlanBulkAlertsIntTest : IntegrationTestBase() {
     }
   }
 
-  @Test
-  fun `does not create new alert`() {
-    val prisonNumber = "B1234LK"
-    givenPrisonersExist(prisonNumber)
-
-    val request = bulkAlertRequest(prisonNumber)
-    val response = webTestClient.planBulkCreateAlert(request)
-
-    val createdAlert = response.alertsCreated.single()
-    assertThat(alertRepository.findByIdOrNull(createdAlert.alertUuid)).isNull()
-  }
-
-  @Test
-  fun `does not store bulk alert`() {
-    val prisonNumber = "A1235LK"
-    givenPrisonersExist(prisonNumber)
-
-    val request = bulkAlertRequest(prisonNumber)
-    val response = webTestClient.planBulkCreateAlert(request)
-
-    assertThat(bulkAlertRepository.findByBulkAlertUuid(response.bulkAlertUuid)).isNull()
-  }
-
-  @Test
-  fun `returns list of new alerts to be created but does not create them`() {
-    val prisonNumber = "A1237LK"
-    givenPrisonersExist(prisonNumber)
-    val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
-    val existingAlert = givenAlert(alert(prisonNumber, alertCode))
-
-    val request = bulkAlertRequest(prisonNumber)
-
-    val response = webTestClient.planBulkCreateAlert(request)
-
-    assertThat(response.alertsCreated).isEmpty()
-    assertThat(response.alertsUpdated).isEmpty()
-    assertThat(response.alertsExpired).isEmpty()
-    with(response.existingActiveAlerts.single()) {
-      assertThat(alertUuid).isEqualTo(existingAlert.id)
-      assertThat(prisonNumber).isEqualTo(existingAlert.prisonNumber)
-      assertThat(message).isEmpty()
-    }
-
-    verify(hmppsQueueService, timeout(1000).times(0)).findByTopicId(any())
-  }
-
-  @Test
-  fun `returns list of alerts to be updated but do not update them`() {
-    val prisonNumber = "A1238LK"
-    givenPrisonersExist(prisonNumber)
-    val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
-    val existingAlert = givenAlert(alert(prisonNumber, alertCode, activeTo = LocalDate.now().plusDays(1)))
-
-    val request = bulkAlertRequest(prisonNumber)
-    val response = webTestClient.planBulkCreateAlert(request)
-
-    assertThat(response.existingActiveAlerts).isEmpty()
-    assertThat(response.alertsCreated).isEmpty()
-    assertThat(response.alertsExpired).isEmpty()
-    with(response.alertsUpdated.single()) {
-      assertThat(alertUuid).isEqualTo(existingAlert.id)
-      assertThat(prisonNumber).isEqualTo(existingAlert.prisonNumber)
-      assertThat(message).isEqualTo("Updated active to from '${existingAlert.activeTo}' to 'null'")
-      with(alertRepository.findByIdOrNull(alertUuid)!!) {
-        assertThat(isActive()).isTrue()
-        assertThat(activeTo).isNotNull()
-      }
-    }
-  }
-
-  @Test
-  fun `cleanupMode = EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED returns list of alert to be deactivated but does not update them`() {
-    val prisonNumber = prisonNumber()
-    givenPrisonersExist(prisonNumber)
-    val request = bulkAlertRequest(
-      prisonNumber,
-      cleanupMode = EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED,
-    )
-
-    val prisonNumbersToExpire = setOf(prisonNumber(), prisonNumber())
-    val toExpire = prisonNumbersToExpire.map { givenAlert(alert(it, givenExistingAlertCode(request.alertCode))) }
-
-    val response = webTestClient.planBulkCreateAlert(request)
-
-    assertThat(response.existingActiveAlerts).isEmpty()
-    assertThat(response.alertsUpdated).isEmpty()
-    with(response.alertsCreated.single()) {
-      assertThat(this.prisonNumber).isEqualTo(prisonNumber)
-      assertThat(message).isEmpty()
-      assertThat(alertRepository.findByIdOrNull(alertUuid)).isNull()
-    }
-    with(response.alertsExpired) {
-      assertThat(this).hasSizeGreaterThanOrEqualTo(2)
-      assertThat(map { it.alertUuid }).containsAll(toExpire.map { it.id })
-      assertThat(map { it.prisonNumber }).containsAll(prisonNumbersToExpire)
-      toExpire.onEach {
-        with(alertRepository.findByIdOrNull(it.id)!!) {
-          assertThat(isActive()).isTrue()
-        }
-      }
-    }
-  }
-
   private fun WebTestClient.planBulkCreateAlertResponseSpec(request: BulkCreateAlerts) =
     post()
       .uri("/bulk-alerts/plan")
@@ -353,10 +235,4 @@ class PlanBulkAlertsIntTest : IntegrationTestBase() {
       .headers(setAlertRequestContext(source = DPS))
       .exchange()
       .expectHeader().contentType(MediaType.APPLICATION_JSON)
-
-  private fun WebTestClient.planBulkCreateAlert(request: BulkCreateAlerts) =
-    planBulkCreateAlertResponseSpec(request)
-      .expectStatus().isOk
-      .expectBody<BulkAlertModel>()
-      .returnResult().responseBody!!
 }

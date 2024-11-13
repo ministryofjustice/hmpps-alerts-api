@@ -39,6 +39,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertPlan
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.BulkAlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
@@ -267,7 +268,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     givenPrisonersExist(prisonNumber)
 
     val request = bulkAlertRequest(prisonNumber)
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     val createdAlert = response.alertsCreated.single()
     val alert = alertRepository.findByIdOrNull(createdAlert.alertUuid)!!
@@ -310,7 +313,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       alertCode = ALERT_CODE_VICTIM,
       description = "Victim alert description",
     )
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     val createdAlert = response.alertsCreated.single()
     val alert = alertRepository.findByIdOrNull(createdAlert.alertUuid)!!
@@ -338,7 +343,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     givenPrisonersExist(prisonNumber)
 
     val request = bulkAlertRequest(prisonNumber)
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     val bulkAlert = bulkAlertRepository.findByBulkAlertUuid(response.bulkAlertUuid)!!
 
@@ -367,7 +374,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     givenPrisonersExist(prisonNumber)
 
     val request = bulkAlertRequest(prisonNumber)
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
@@ -388,7 +397,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
     val request = bulkAlertRequest(prisonNumber)
 
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     assertThat(response.alertsCreated).isEmpty()
     assertThat(response.alertsUpdated).isEmpty()
@@ -410,7 +421,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     val existingAlert = givenAlert(alert(prisonNumber, alertCode, activeTo = LocalDate.now().plusDays(1)))
 
     val request = bulkAlertRequest(prisonNumber)
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     assertThat(response.existingActiveAlerts).isEmpty()
     assertThat(response.alertsCreated).isEmpty()
@@ -450,7 +463,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     )
 
     val request = bulkAlertRequest(prisonNumber)
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     assertThat(response.existingActiveAlerts).isEmpty()
     assertThat(response.alertsCreated).isEmpty()
@@ -490,7 +505,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     val prisonNumbersToExpire = setOf(prisonNumber(), prisonNumber())
     val toExpire = prisonNumbersToExpire.map { givenAlert(alert(it, givenExistingAlertCode(request.alertCode))) }
 
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     assertThat(response.existingActiveAlerts).isEmpty()
     assertThat(response.alertsUpdated).isEmpty()
@@ -527,6 +544,13 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     assertThat(changed.map { it.personReference.findNomsNumber() }).containsAll(prisonNumbersToExpire + prisonNumber)
   }
 
+  private fun BulkAlertPlan.matchExecutionResult(result: BulkAlertModel) {
+    assertThat(result.existingActiveAlerts.map { it.prisonNumber }).containsExactlyInAnyOrder(*existingActiveAlertsPrisonNumbers.toTypedArray())
+    assertThat(result.alertsCreated.map { it.prisonNumber }).containsExactlyInAnyOrder(*alertsToBeCreatedForPrisonNumbers.toTypedArray())
+    assertThat(result.alertsExpired.map { it.prisonNumber }).containsExactlyInAnyOrder(*alertsToBeExpiredForPrisonNumbers.toTypedArray())
+    assertThat(result.alertsUpdated.map { it.prisonNumber }).containsExactlyInAnyOrder(*alertsToBeUpdatedForPrisonNumbers.toTypedArray())
+  }
+
   private fun WebTestClient.bulkCreateAlertResponseSpec(request: BulkCreateAlerts) =
     post()
       .uri("/bulk-alerts")
@@ -540,5 +564,20 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     bulkCreateAlertResponseSpec(request)
       .expectStatus().isCreated
       .expectBody<BulkAlertModel>()
+      .returnResult().responseBody!!
+
+  private fun WebTestClient.planBulkCreateAlertResponseSpec(request: BulkCreateAlerts) =
+    post()
+      .uri("/bulk-alerts/plan")
+      .bodyValue(request)
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
+      .headers(setAlertRequestContext(source = DPS))
+      .exchange()
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+
+  private fun WebTestClient.planBulkCreateAlert(request: BulkCreateAlerts) =
+    planBulkCreateAlertResponseSpec(request)
+      .expectStatus().isOk
+      .expectBody<BulkAlertPlan>()
       .returnResult().responseBody!!
 }
