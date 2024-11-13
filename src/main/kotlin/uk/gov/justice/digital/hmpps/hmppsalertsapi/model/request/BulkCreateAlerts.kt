@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertCleanupMode
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode
 
 @Schema(
   description = "The request body for bulk creating alerts for multiple people",
@@ -27,10 +26,13 @@ data class BulkCreateAlerts(
   val alertCode: String,
 
   @Schema(
-    description = "The strategy to use when creating alerts in bulk",
-    example = "ADD_MISSING",
+    description = "The description of the alert. " +
+      "This is a free text field and can be used to provide additional information about the alert e.g. the reasons for adding it." +
+      "It is limited to 4000 characters.",
+    example = "Alert description",
   )
-  val mode: BulkCreateAlertMode,
+  @field:Size(max = 4000, message = "Description must be <= 4000 characters")
+  val description: String?,
 
   @Schema(
     description = "The strategy to use when cleaning up existing alerts for people supplied list of prison numbers",

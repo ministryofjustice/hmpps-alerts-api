@@ -26,8 +26,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertCleanupMode.EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.ADD_MISSING
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.EXPIRE_AND_REPLACE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.PERSON_ALERTS_CHANGED
@@ -41,9 +39,11 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertPlan
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.BulkAlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.bulkAlertRequest
 import java.time.LocalDate
@@ -268,7 +268,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     givenPrisonersExist(prisonNumber)
 
     val request = bulkAlertRequest(prisonNumber)
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     val createdAlert = response.alertsCreated.single()
     val alert = alertRepository.findByIdOrNull(createdAlert.alertUuid)!!
@@ -302,12 +304,48 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `creates new active alert with description`() {
+    val prisonNumber = "B1234LK"
+    givenPrisonersExist(prisonNumber)
+
+    val request = bulkAlertRequest(
+      prisonNumbers = arrayOf(prisonNumber),
+      alertCode = ALERT_CODE_VICTIM,
+      description = "Victim alert description",
+    )
+    val plan = webTestClient.planBulkCreateAlert(request)
+    val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
+
+    val createdAlert = response.alertsCreated.single()
+    val alert = alertRepository.findByIdOrNull(createdAlert.alertUuid)!!
+    val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
+
+    assertThat(alert).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType")
+      .isEqualTo(
+        Alert(
+          id = createdAlert.alertUuid,
+          alertCode = alertCode,
+          prisonNumber = prisonNumber,
+          description = "Victim alert description",
+          authorisedBy = null,
+          activeFrom = LocalDate.now(),
+          activeTo = null,
+          createdAt = alert.createdAt,
+          prisonCodeWhenCreated = null,
+        ),
+      )
+  }
+
+  @Test
   fun `stores and returns bulk alert with created alert`() {
     val prisonNumber = "B1235LK"
     givenPrisonersExist(prisonNumber)
 
     val request = bulkAlertRequest(prisonNumber)
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     val bulkAlert = bulkAlertRepository.findByBulkAlertUuid(response.bulkAlertUuid)!!
 
@@ -336,7 +374,9 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     givenPrisonersExist(prisonNumber)
 
     val request = bulkAlertRequest(prisonNumber)
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 2 }
     with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
@@ -349,15 +389,17 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `mode = ADD_MISSING does not create new alert when existing active alert exists`() {
+  fun `does not create new alert when existing active alert exists`() {
     val prisonNumber = "B1237LK"
     givenPrisonersExist(prisonNumber)
     val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
     val existingAlert = givenAlert(alert(prisonNumber, alertCode))
 
-    val request = bulkAlertRequest(prisonNumber, mode = ADD_MISSING)
+    val request = bulkAlertRequest(prisonNumber)
 
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     assertThat(response.alertsCreated).isEmpty()
     assertThat(response.alertsUpdated).isEmpty()
@@ -372,14 +414,16 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `mode = ADD_MISSING clears active to date when existing active alert exists`() {
+  fun `clears active to date when existing active alert exists`() {
     val prisonNumber = "B1238LK"
     givenPrisonersExist(prisonNumber)
     val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
     val existingAlert = givenAlert(alert(prisonNumber, alertCode, activeTo = LocalDate.now().plusDays(1)))
 
-    val request = bulkAlertRequest(prisonNumber, mode = ADD_MISSING)
+    val request = bulkAlertRequest(prisonNumber)
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     assertThat(response.existingActiveAlerts).isEmpty()
     assertThat(response.alertsCreated).isEmpty()
@@ -405,7 +449,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `mode = ADD_MISSING sets active from to today when existing will become active alert exists`() {
+  fun `sets active from to today when existing will become active alert exists`() {
     val prisonNumber = "B1239LK"
     givenPrisonersExist(prisonNumber)
     val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
@@ -418,8 +462,10 @@ class BulkAlertsIntTest : IntegrationTestBase() {
       ),
     )
 
-    val request = bulkAlertRequest(prisonNumber, mode = ADD_MISSING)
+    val request = bulkAlertRequest(prisonNumber)
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     assertThat(response.existingActiveAlerts).isEmpty()
     assertThat(response.alertsCreated).isEmpty()
@@ -448,101 +494,20 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `mode = EXPIRE_AND_REPLACE expires existing active alert and creates new active alert to replace it`() {
-    val prisonNumber = "B1240LK"
-    givenPrisonersExist(prisonNumber)
-    val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
-    val existingAlert = givenAlert(alert(prisonNumber, alertCode))
-
-    val request = bulkAlertRequest(prisonNumber, mode = EXPIRE_AND_REPLACE)
-
-    val response = webTestClient.bulkCreateAlert(request)
-
-    assertThat(response.existingActiveAlerts).isEmpty()
-    assertThat(response.alertsUpdated).isEmpty()
-    with(response.alertsCreated.single()) {
-      assertThat(alertUuid).isNotEqualTo(existingAlert.id)
-      assertThat(prisonNumber).isEqualTo(existingAlert.prisonNumber)
-      assertThat(message).isEmpty()
-      assertThat(alertRepository.findByIdOrNull(alertUuid)!!.isActive()).isTrue()
-    }
-    with(response.alertsExpired.single()) {
-      assertThat(alertUuid).isEqualTo(existingAlert.id)
-      assertThat(prisonNumber).isEqualTo(existingAlert.prisonNumber)
-      assertThat(message).isEmpty()
-      assertThat(alertRepository.findByIdOrNull(alertUuid)!!.isActive()).isFalse()
-    }
-
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
-      assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(existingAlert.id.toString())
-    }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
-      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(response.alertsCreated.single().alertUuid.toString())
-    }
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
-  }
-
-  @Test
-  fun `mode = EXPIRE_AND_REPLACE expires existing will become active alert and creates new active alert to replace it`() {
-    val prisonNumber = "B1241LK"
-    givenPrisonersExist(prisonNumber)
-    val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
-    val existingAlert = givenAlert(alert(prisonNumber, alertCode, activeFrom = LocalDate.now().plusDays(1)))
-
-    val request = bulkAlertRequest(prisonNumber, mode = EXPIRE_AND_REPLACE)
-    val response = webTestClient.bulkCreateAlert(request)
-
-    assertThat(response.existingActiveAlerts).isEmpty()
-    assertThat(response.alertsUpdated).isEmpty()
-    with(response.alertsCreated.single()) {
-      assertThat(alertUuid).isNotEqualTo(existingAlert.id)
-      assertThat(prisonNumber).isEqualTo(existingAlert.prisonNumber)
-      assertThat(message).isEmpty()
-      assertThat(alertRepository.findByIdOrNull(alertUuid)!!.isActive()).isTrue()
-    }
-    with(response.alertsExpired.single()) {
-      assertThat(alertUuid).isEqualTo(existingAlert.id)
-      assertThat(prisonNumber).isEqualTo(existingAlert.prisonNumber)
-      assertThat(message).isEmpty()
-      with(alertRepository.findByIdOrNull(alertUuid)!!) {
-        assertThat(isActive()).isFalse()
-        assertThat(activeTo).isEqualTo(LocalDate.now())
-      }
-    }
-
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
-      assertThat(eventType).isEqualTo(ALERT_UPDATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(existingAlert.id.toString())
-    }
-    with(hmppsEventsQueue.receiveAlertDomainEventOnQueue<AlertAdditionalInformation>()) {
-      assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
-      assertThat(additionalInformation.identifier()).isEqualTo(response.alertsCreated.single().alertUuid.toString())
-    }
-    with(hmppsEventsQueue.hmppsDomainEventOnQueue()) {
-      assertThat(eventType).isEqualTo(PERSON_ALERTS_CHANGED.eventType)
-    }
-  }
-
-  @Test
   fun `cleanupMode = EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED expires existing active and will become active alerts for prison numbers not in list`() {
     val prisonNumber = prisonNumber()
     givenPrisonersExist(prisonNumber)
     val request = bulkAlertRequest(
       prisonNumber,
-      mode = ADD_MISSING,
       cleanupMode = EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED,
     )
 
     val prisonNumbersToExpire = setOf(prisonNumber(), prisonNumber())
     val toExpire = prisonNumbersToExpire.map { givenAlert(alert(it, givenExistingAlertCode(request.alertCode))) }
 
+    val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
+    plan.matchExecutionResult(response)
 
     assertThat(response.existingActiveAlerts).isEmpty()
     assertThat(response.alertsUpdated).isEmpty()
@@ -579,6 +544,13 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     assertThat(changed.map { it.personReference.findNomsNumber() }).containsAll(prisonNumbersToExpire + prisonNumber)
   }
 
+  private fun BulkAlertPlan.matchExecutionResult(result: BulkAlertModel) {
+    assertThat(result.existingActiveAlerts.map { it.prisonNumber }).containsExactlyInAnyOrder(*existingActiveAlertsPrisonNumbers.toTypedArray())
+    assertThat(result.alertsCreated.map { it.prisonNumber }).containsExactlyInAnyOrder(*alertsToBeCreatedForPrisonNumbers.toTypedArray())
+    assertThat(result.alertsExpired.map { it.prisonNumber }).containsExactlyInAnyOrder(*alertsToBeExpiredForPrisonNumbers.toTypedArray())
+    assertThat(result.alertsUpdated.map { it.prisonNumber }).containsExactlyInAnyOrder(*alertsToBeUpdatedForPrisonNumbers.toTypedArray())
+  }
+
   private fun WebTestClient.bulkCreateAlertResponseSpec(request: BulkCreateAlerts) =
     post()
       .uri("/bulk-alerts")
@@ -592,5 +564,20 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     bulkCreateAlertResponseSpec(request)
       .expectStatus().isCreated
       .expectBody<BulkAlertModel>()
+      .returnResult().responseBody!!
+
+  private fun WebTestClient.planBulkCreateAlertResponseSpec(request: BulkCreateAlerts) =
+    post()
+      .uri("/bulk-alerts/plan")
+      .bodyValue(request)
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
+      .headers(setAlertRequestContext(source = DPS))
+      .exchange()
+      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+
+  private fun WebTestClient.planBulkCreateAlert(request: BulkCreateAlerts) =
+    planBulkCreateAlertResponseSpec(request)
+      .expectStatus().isOk
+      .expectBody<BulkAlertPlan>()
       .returnResult().responseBody!!
 }

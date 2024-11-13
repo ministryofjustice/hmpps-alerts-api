@@ -10,7 +10,6 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertCleanupMode.KEEP_ALL
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertMode.ADD_MISSING
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
@@ -146,7 +145,7 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     val request = BulkCreateAlerts(
       prisonNumbers = prisonerNumbers.toList(),
       alertCode = ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL,
-      mode = ADD_MISSING,
+      description = null,
       cleanupMode = KEEP_ALL,
     )
 

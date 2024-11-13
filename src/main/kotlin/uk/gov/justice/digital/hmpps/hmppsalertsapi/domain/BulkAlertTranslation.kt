@@ -24,7 +24,7 @@ fun BulkCreateAlerts.toAlertEntity(
 ) = Alert(
   alertCode = alertCode,
   prisonNumber = prisonNumber,
-  description = alertCodeDescriptionMap[this.alertCode],
+  description = alertCodeDescriptionMap[this.alertCode] ?: this.description,
   authorisedBy = null,
   activeFrom = LocalDate.now(),
   activeTo = null,
