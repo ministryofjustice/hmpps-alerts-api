@@ -81,7 +81,7 @@ class BulkAlertsController(
       ApiResponse(
         responseCode = "200",
         description = "Alerts creation plan generated successfully",
-        content = [Content(schema = Schema(implementation = BulkAlert::class))],
+        content = [Content(schema = Schema(implementation = BulkAlertPlan::class))],
       ),
       ApiResponse(
         responseCode = "400",
