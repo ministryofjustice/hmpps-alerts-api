@@ -115,40 +115,6 @@ class PrisonerAlertsController(val alertService: AlertService) {
     pageable = pageable,
   )
 
-  @ResponseStatus(HttpStatus.OK)
-  @GetMapping("/alerts")
-  @Operation(
-    summary = "Gets all the alerts for prisoners by their prison numbers",
-    description = "Returns all the alerts for the supplied prison numbers. The alerts for each prisoner are mapped to their prison number.",
-  )
-  @ApiResponses(
-    value = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Alerts found",
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorised, requires a valid Oauth2 token",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Forbidden, requires an appropriate role",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
-  fun retrievePrisonerAlerts(
-    @RequestParam
-    @Parameter(
-      description = "The prison numbers of the prisoners",
-      required = true,
-    )
-    prisonNumbers: Collection<String>,
-  ): Map<String, List<Alert>> = alertService.retrieveAlertsForPrisonNumbers(prisonNumbers)
-
   @Operation(
     summary = "Create an alert",
   )

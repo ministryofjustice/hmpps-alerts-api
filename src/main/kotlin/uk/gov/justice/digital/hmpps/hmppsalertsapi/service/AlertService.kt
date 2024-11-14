@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidInputExcept
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.verifyExists
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertsResponse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
@@ -150,12 +151,8 @@ class AlertService(
       alert.auditEvents().map { it.toAuditEventModel() }
     } ?: throw NotFoundException("Alert", alertUuid.toString())
 
-  fun retrieveAlertsForPrisonNumbers(prisonNumbers: Collection<String>) =
-    alertRepository.findByPrisonNumberInOrderByActiveFromDesc(prisonNumbers).let { alerts ->
-      val alertIds = alerts.map { it.id }
-      val auditEvents =
-        auditEventRepository.findAuditEventsByAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.id }
-      alerts.map { it.toAlertModel(auditEvents[it.id]) }
-        .groupBy { it.prisonNumber }
-    }
+  fun retrieveAlertsForPrisonNumbers(prisonNumbers: Set<String>, includeInactive: Boolean): AlertsResponse =
+    AlertsResponse(
+      alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive).map { it.toAlertModel(it.auditEvents()) },
+    )
 }
