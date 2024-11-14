@@ -129,7 +129,7 @@ class BulkAlertService(
   ) = existingUnexpiredAlerts.updateToBePermanentlyActive(this, context, batchSize)
 
   private fun BulkCreateAlerts.getAlertsToBeExpired() = if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) {
-    alertRepository.findByPrisonNumberNotInAndAlertCodeCode(prisonNumbers, alertCode)
+    alertRepository.findByPrisonNumberNotInAndAlertCodeCode(prisonNumbers, alertCode).filter { it.isActive() }
   } else {
     emptyList()
   }
