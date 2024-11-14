@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.service
 
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -30,6 +29,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertsFilter
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AuditEventRepository
 import java.time.LocalDate
 import java.util.UUID
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 @Service
 @Transactional
@@ -153,6 +153,6 @@ class AlertService(
 
   fun retrieveAlertsForPrisonNumbers(prisonNumbers: Set<String>, includeInactive: Boolean): AlertsResponse =
     AlertsResponse(
-        alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive).map { it.toAlertModel(it.auditEvents()) },
+      alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive).map { it.toAlertModel(it.auditEvents()) },
     )
 }
