@@ -30,6 +30,13 @@ interface AlertRepository : JpaRepository<Alert, UUID> {
   @Query(value = "select * from alert a where a.id = :alertUuid", nativeQuery = true)
   fun findByAlertUuidIncludingSoftDelete(alertUuid: UUID): Alert?
 
-  @EntityGraph(value = "alert")
-  fun findByPrisonNumberInOrderByActiveFromDesc(prisonNumbers: Collection<String>): Collection<Alert>
+  @EntityGraph(attributePaths = ["alertCode.alertType", "auditEvents"])
+  @Query(
+    """
+    select a from Alert a 
+    where a.prisonNumber in :prisonNumbers
+    and (:includeInactive = true or a.activeTo is null or a.activeTo > current_date)
+  """,
+  )
+  fun findByPrisonNumberIn(prisonNumbers: Collection<String>, includeInactive: Boolean): Collection<Alert>
 }
