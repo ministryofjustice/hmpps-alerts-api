@@ -15,6 +15,7 @@ generic-service:
     SERVICE_UI_URL: "https://alerts-ui.hmpps.service.justice.gov.uk"
   postgresDatabaseRestore:
     enabled: true
+    timeout: 1800
     namespace_secrets:
       rds-postgresql-instance-output:
         DB_NAME: "database_name"
