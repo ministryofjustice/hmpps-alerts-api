@@ -17,6 +17,13 @@ generic-service:
     enabled: true
     host: app-hostname.local # override per environment
     tlsSecretName: hmpps-alerts-api-cert
+    annotations:
+      nginx.ingress.kubernetes.io/server-snippet: |
+        server_tokens off;
+        location /alerts/inactive {
+          deny all;
+          return 401;
+        }
 
   # Used to access resources like S3 buckets, SQS queues and SNS topics
   serviceAccountName: hmpps-alerts-api
@@ -71,3 +78,6 @@ generic-data-analytics-extractor:
   databaseSecretName: rds-postgresql-instance-output
   destinationS3SecretName: analytical-platform-reporting-s3-bucket
   enabled: false
+
+publish_inactive_events:
+  schedule: "0 8 * * *"

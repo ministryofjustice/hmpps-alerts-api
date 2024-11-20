@@ -10,6 +10,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.Pri
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PublishPersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext.Companion.SYS_DISPLAY_NAME
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext.Companion.SYS_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAuditEventModel
@@ -155,4 +157,19 @@ class AlertService(
     AlertsResponse(
       alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive).map { it.toAlertModel(it.auditEvents()) },
     )
+
+  @PublishPersonAlertsChanged
+  fun publishInactiveTodayAlertEvents() {
+    alertRepository.saveAll(
+      alertRepository.findAllByActiveTo(LocalDate.now())
+        .map {
+          it.deactivate(
+            updatedBy = SYS_USER,
+            updatedByDisplayName = SYS_DISPLAY_NAME,
+            source = Source.DPS,
+            activeCaseLoadId = null,
+          )
+        },
+    )
+  }
 }

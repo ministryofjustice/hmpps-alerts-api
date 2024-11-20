@@ -34,6 +34,7 @@ class AlertRequestContextConfiguration(
       .addPathPatterns("/prisoners/**/alerts/**")
       .addPathPatterns("/alert-**/**")
       .addPathPatterns("/bulk-alerts/**")
+      .excludePathPatterns("/alerts/inactive")
   }
 }
 

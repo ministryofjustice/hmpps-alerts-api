@@ -18,11 +18,13 @@ import org.springframework.data.domain.AbstractAggregateRoot
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCreatedEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDeactivatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDeletedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertUpdatedEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import java.time.LocalDate
+import java.time.LocalDate.now
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -59,7 +61,7 @@ class Alert(
 ) : AbstractAggregateRoot<Alert>() {
   var lastModifiedAt: LocalDateTime? = null
 
-  fun isActive() = activeTo == null || activeTo!! > LocalDate.now()
+  fun isActive() = activeTo == null || activeTo!! > now()
 
   @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST, CascadeType.MERGE])
   @OrderBy("actioned_at DESC")
@@ -221,6 +223,9 @@ class Alert(
     }
     if (activeToUpdated) {
       sb.appendLine("Updated active to from '${this.activeTo}' to '$activeTo'")
+      if (isActive() && activeTo?.isAfter(now()) == false) {
+        deactivate(updatedAt, updatedBy, updatedByDisplayName, source, activeCaseLoadId)
+      }
       this.activeTo = activeTo
       updated = true
     }
@@ -256,6 +261,40 @@ class Alert(
       )
       PersonAlertsChanged.registerChange(prisonNumber)
     }
+  }
+
+  fun deactivate(
+    updatedAt: LocalDateTime = LocalDateTime.now(),
+    updatedBy: String,
+    updatedByDisplayName: String,
+    source: Source,
+    activeCaseLoadId: String?,
+  ): Alert = apply {
+    auditEvent(
+      action = AuditEventAction.INACTIVE,
+      description = "Alert became inactive",
+      actionedAt = updatedAt,
+      actionedBy = updatedBy,
+      actionedByDisplayName = updatedByDisplayName,
+      source = source,
+      activeCaseLoadId = activeCaseLoadId,
+      activeToUpdated = true,
+    )
+    registerEvent(
+      AlertDeactivatedEvent(
+        alertUuid = id,
+        prisonNumber = prisonNumber,
+        alertCode = alertCode.code,
+        occurredAt = updatedAt,
+        source = source,
+        updatedBy = updatedBy,
+        descriptionUpdated = false,
+        authorisedByUpdated = false,
+        activeFromUpdated = false,
+        activeToUpdated = true,
+      ),
+    )
+    PersonAlertsChanged.registerChange(prisonNumber)
   }
 
   fun delete(

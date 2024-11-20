@@ -86,7 +86,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `resync of updated alert should create audit event`() {
-    val prisonNumber = "R1234AE"
+    val prisonNumber = givenPrisoner()
     val request = resyncAlert(
       lastModifiedAt = LocalDateTime.now().minusDays(1),
       lastModifiedBy = "AG1221GG",
@@ -146,7 +146,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `Successful resync results in 201 created response and sending of domain events`() {
-    val prisonNumber = "R1234DE"
+    val prisonNumber = givenPrisoner()
     val existingAlert = givenAlert(alert(prisonNumber))
 
     val alert = resyncAlert()
@@ -167,7 +167,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `Successful resync copies audit history when matching existing alert`() {
-    val prisonNumber = "R1234EA"
+    val prisonNumber = givenPrisoner()
     val originalAlert = alertWithAuditHistory(prisonNumber)
     val originalAudit = originalAlert.auditEvents()
     assertThat(originalAudit.size).isEqualTo(2)
@@ -213,7 +213,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `Successful resync creates a resync audit record`() {
-    val prisonNumber = "R1234AR"
+    val prisonNumber = givenPrisoner()
     val originalAlert = alertWithAuditHistory(prisonNumber)
     val alert1 = resyncAlert(
       alertCode = originalAlert.alertCode.code,
@@ -235,7 +235,7 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `Passing empty list to resync removes alerts and sends domain events`() {
-    val prisonNumber = "R1234DA"
+    val prisonNumber = givenPrisoner()
     val existingAlert = givenAlert(alert(prisonNumber))
 
     webTestClient.resyncAlerts(prisonNumber, emptyList())

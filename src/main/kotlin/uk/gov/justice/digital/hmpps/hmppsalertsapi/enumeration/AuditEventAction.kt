@@ -4,4 +4,5 @@ enum class AuditEventAction {
   CREATED,
   UPDATED,
   DELETED,
+  INACTIVE,
 }

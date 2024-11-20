@@ -1,0 +1,24 @@
+{{- if .Values.publish_inactive_events.schedule -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: publish-inactive-events
+spec:
+  schedule: {{ .Values.publish_inactive_events.schedule }}
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 120
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: publish-inactive-events
+              image: ghcr.io/ministryofjustice/hmpps-devops-tools
+              args:
+                - /bin/sh
+                - -c
+                - curl -XPOST --connect-timeout 5 --max-time 10 --retry 3 --retry-delay 50 http://{{ include "generic-service.fullname" . }}/alerts/inactive
+          restartPolicy: Never
+  {{- end}}

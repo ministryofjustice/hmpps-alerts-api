@@ -24,6 +24,8 @@ components:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-created.yaml
     person.alert.updated:
       $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-updated.yaml
+    person.alert.inactive:
+      $ref: https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-inactive.yaml
     person.alert.deleted:
       $ref: "https://raw.githubusercontent.com/ministryofjustice/hmpps-domain-events/main/spec/schemas/alerts/person-alert-deleted.yaml"
     person.alerts.changed:
@@ -41,6 +43,8 @@ channels:
         $ref: '#/components/messages/person.alert.created'
       person.alert.updated:
         $ref: '#/components/messages/person.alert.updated'
+      person.alert.inactive:
+        $ref: '#/components/messages/person.alert.inactive'
       person.alert.deleted:
         $ref: '#/components/messages/person.alert.deleted'
       person.alerts.changed:
@@ -54,5 +58,6 @@ operations:
     messages:
       - $ref: '#/channels/hmpps-domain-events/messages/person.alert.created'
       - $ref: '#/channels/hmpps-domain-events/messages/person.alert.updated'
+      - $ref: '#/channels/hmpps-domain-events/messages/person.alert.inactive'
       - $ref: '#/channels/hmpps-domain-events/messages/person.alert.deleted'
       - $ref: '#/channels/hmpps-domain-events/messages/person.alerts.changed'
