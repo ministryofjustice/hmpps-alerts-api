@@ -6,6 +6,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.A
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CODE_UPDATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_INACTIVE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_TYPE_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
@@ -65,6 +66,21 @@ data class AlertUpdatedEvent(
   val activeToUpdated: Boolean,
 ) : AlertEvent {
   override val type: DomainEventType = ALERT_UPDATED
+}
+
+data class AlertDeactivatedEvent(
+  override val alertUuid: UUID,
+  override val prisonNumber: String,
+  override val alertCode: String,
+  override val occurredAt: LocalDateTime,
+  override val source: Source,
+  val updatedBy: String,
+  val descriptionUpdated: Boolean,
+  val authorisedByUpdated: Boolean,
+  val activeFromUpdated: Boolean,
+  val activeToUpdated: Boolean,
+) : AlertEvent {
+  override val type: DomainEventType = ALERT_INACTIVE
 }
 
 data class AlertDeletedEvent(

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
+import java.time.LocalDate
 import java.util.UUID
 
 @Repository
@@ -39,4 +40,7 @@ interface AlertRepository : JpaRepository<Alert, UUID> {
   """,
   )
   fun findByPrisonNumberIn(prisonNumbers: Collection<String>, includeInactive: Boolean): Collection<Alert>
+
+  @EntityGraph(value = "alert")
+  fun findAllByActiveTo(activeTo: LocalDate): List<Alert>
 }
