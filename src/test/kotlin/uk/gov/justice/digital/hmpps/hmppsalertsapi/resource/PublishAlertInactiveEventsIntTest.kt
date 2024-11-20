@@ -30,8 +30,7 @@ class PublishAlertInactiveEventsIntTest : IntegrationTestBase() {
       )
     }
 
-    webTestClient.post().uri("/alerts/inactive").headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .exchange().expectStatus().is2xxSuccessful
+    webTestClient.post().uri("/alerts/inactive").exchange().expectStatus().is2xxSuccessful
 
     val msgs = hmppsEventsQueue.receiveAllMessages()
     val prisonNumbers = inactiveAlerts.map { it.prisonNumber }.toSet()
