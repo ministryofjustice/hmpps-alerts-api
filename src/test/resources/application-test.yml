@@ -6,7 +6,7 @@ spring:
         generate_statistics: true
 
   datasource:
-    url: 'jdbc:postgresql://localhost:5432/alerts'
+    url: 'jdbc:postgresql://localhost:5432/alerts?reWriteBatchedInserts=true'
     username: alerts
     password: alerts
 

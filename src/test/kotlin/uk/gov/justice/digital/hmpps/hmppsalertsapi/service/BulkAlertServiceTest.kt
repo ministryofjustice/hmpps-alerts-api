@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AuditEventRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.BulkAlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.bulkAlertRequest
 
@@ -25,6 +26,9 @@ class BulkAlertServiceTest {
 
   @Mock
   lateinit var alertRepository: AlertRepository
+
+  @Mock
+  lateinit var auditEventRepository: AuditEventRepository
 
   @Mock
   lateinit var bulkAlertRepository: BulkAlertRepository
