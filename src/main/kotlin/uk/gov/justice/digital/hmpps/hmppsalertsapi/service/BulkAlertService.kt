@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertPlan
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AuditEventRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.BulkAlertRepository
 import java.time.LocalDate
 
@@ -27,6 +28,7 @@ import java.time.LocalDate
 @Transactional
 class BulkAlertService(
   private val alertRepository: AlertRepository,
+  private val auditEventRepository: AuditEventRepository,
   private val alertCodeRepository: AlertCodeRepository,
   private val bulkAlertRepository: BulkAlertRepository,
   private val prisonerSearchClient: PrisonerSearchClient,
@@ -45,7 +47,7 @@ class BulkAlertService(
       val existingUnexpiredAlerts = it.getExistingUnexpiredAlerts(batchSize)
 
       // The order of these procedures is important. They action the request based on the logic for mode and cleanup mode
-      val existingActiveAlerts = it.getAnyExistingActiveAlertsThatWillNotBeRecreated(existingUnexpiredAlerts)
+      val existingActiveAlerts = getAnyExistingActiveAlertsThatWillNotBeRecreated(existingUnexpiredAlerts)
       val alertsUpdated =
         it.updateRelevantExistingUnexpiredAlertsToBePermanentlyActive(context, existingUnexpiredAlerts, batchSize)
       val alertsExpired = it.expireRelevantExistingUnexpiredAlertsAndAlertsForPrisonNumbersNotInRequest(
@@ -87,7 +89,8 @@ class BulkAlertService(
       val alertsUpdated = existingUnexpiredAlerts.filter { it.activeTo != null }
       val alertsExpired = request.getAlertsToBeExpired()
       val prisonNumbersWithActiveAlerts = existingUnexpiredAlerts.map { it.prisonNumber }.toSet()
-      val prisonNumbersWithoutActiveAlerts = request.prisonNumbers.filterNot { prisonNumbersWithActiveAlerts.contains(it) }
+      val prisonNumbersWithoutActiveAlerts =
+        request.prisonNumbers.filterNot { prisonNumbersWithActiveAlerts.contains(it) }
 
       BulkAlertPlan(
         request = request,
@@ -118,7 +121,7 @@ class BulkAlertService(
         .filter { alert -> alert.isActive() }
     }
 
-  private fun BulkCreateAlerts.getAnyExistingActiveAlertsThatWillNotBeRecreated(existingUnexpiredAlerts: Collection<Alert>) =
+  private fun getAnyExistingActiveAlertsThatWillNotBeRecreated(existingUnexpiredAlerts: Collection<Alert>) =
     existingUnexpiredAlerts.filter { it.isActive() && it.activeTo == null }
       .map { it.toBulkAlertAlertModel() }
 
@@ -191,19 +194,26 @@ class BulkAlertService(
     val prisonNumbersWithoutActiveAlerts = prisonNumbers.filterNot { prisonNumbersWithActiveAlerts.contains(it) }
 
     return prisonNumbersWithoutActiveAlerts.chunked(batchSize).flatMap {
-      alertRepository.saveAll(
-        it.map { prisonNumber ->
-          toAlertEntity(
-            alertCode = alertCode,
-            prisonNumber = prisonNumber,
-            createdAt = context.requestAt,
-            createdBy = context.username,
-            createdByDisplayName = context.userDisplayName,
-            source = context.source,
-            activeCaseLoadId = context.activeCaseLoadId,
-          )
-        },
-      ).map { alert -> alert.toBulkAlertAlertModel() }
+      it.map { prisonNumber ->
+        toAlertEntity(
+          alertCode = alertCode,
+          prisonNumber = prisonNumber,
+          createdAt = context.requestAt,
+          createdBy = context.username,
+          createdByDisplayName = context.userDisplayName,
+          source = context.source,
+          activeCaseLoadId = context.activeCaseLoadId,
+        )
+      }.bulkInsert()
+        .map { alert -> alert.toBulkAlertAlertModel() }
     }
+  }
+
+  private fun List<Alert>.bulkInsert(): List<Alert> {
+    val audit = flatMap { it.auditEvents() }
+    val alerts = map { it.withoutAuditEvents() }
+    alertRepository.saveAll(alerts)
+    auditEventRepository.saveAll(audit)
+    return this
   }
 }

@@ -264,48 +264,49 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `creates new active alert`() {
-    val prisonNumber = "B1234LK"
-    givenPrisonersExist(prisonNumber)
+    val prisonNumbers = givenPrisonersExist(prisonNumber(), prisonNumber())
 
-    val request = bulkAlertRequest(prisonNumber)
+    val request = bulkAlertRequest(*prisonNumbers)
     val plan = webTestClient.planBulkCreateAlert(request)
     val response = webTestClient.bulkCreateAlert(request)
     plan.matchExecutionResult(response)
 
-    val createdAlert = response.alertsCreated.single()
-    val alert = alertRepository.findByIdOrNull(createdAlert.alertUuid)!!
-    val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
+    assertThat(response.alertsCreated.map { it.prisonNumber }).containsExactlyInAnyOrder(*prisonNumbers)
 
-    assertThat(alert).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType")
-      .isEqualTo(
-        Alert(
-          id = createdAlert.alertUuid,
-          alertCode = alertCode,
-          prisonNumber = prisonNumber,
-          description = alertCodeDescriptionMap[request.alertCode],
-          authorisedBy = null,
-          activeFrom = LocalDate.now(),
-          activeTo = null,
-          createdAt = alert.createdAt,
-          prisonCodeWhenCreated = null,
-        ),
-      )
-    assertThat(alert.isActive()).isTrue()
-    with(alert.auditEvents().single()) {
-      assertThat(action).isEqualTo(CREATED)
-      assertThat(description).isEqualTo("Alert created")
-      assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
-      assertThat(actionedAt).isEqualTo(alert.createdAt)
-      assertThat(actionedBy).isEqualTo(TEST_USER)
-      assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
-      assertThat(source).isEqualTo(DPS)
-      assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
+    response.alertsCreated.forEach { createdAlert ->
+      val alert = alertRepository.findByIdOrNull(createdAlert.alertUuid)!!
+      val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
+      assertThat(alert).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "version")
+        .isEqualTo(
+          Alert(
+            id = createdAlert.alertUuid,
+            alertCode = alertCode,
+            prisonNumber = createdAlert.prisonNumber,
+            description = alertCodeDescriptionMap[request.alertCode],
+            authorisedBy = null,
+            activeFrom = LocalDate.now(),
+            activeTo = null,
+            createdAt = alert.createdAt,
+            prisonCodeWhenCreated = null,
+          ),
+        )
+      assertThat(alert.isActive()).isTrue()
+      with(alert.auditEvents().single()) {
+        assertThat(action).isEqualTo(CREATED)
+        assertThat(description).isEqualTo("Alert created")
+        assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+        assertThat(actionedAt).isEqualTo(alert.createdAt)
+        assertThat(actionedBy).isEqualTo(TEST_USER)
+        assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+        assertThat(source).isEqualTo(DPS)
+        assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
+      }
     }
   }
 
   @Test
   fun `creates new active alert with description`() {
-    val prisonNumber = "B1234LK"
+    val prisonNumber = prisonNumber()
     givenPrisonersExist(prisonNumber)
 
     val request = bulkAlertRequest(
@@ -321,7 +322,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
     val alert = alertRepository.findByIdOrNull(createdAlert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
-    assertThat(alert).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType")
+    assertThat(alert).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "version")
       .isEqualTo(
         Alert(
           id = createdAlert.alertUuid,
@@ -339,7 +340,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `stores and returns bulk alert with created alert`() {
-    val prisonNumber = "B1235LK"
+    val prisonNumber = prisonNumber()
     givenPrisonersExist(prisonNumber)
 
     val request = bulkAlertRequest(prisonNumber)
@@ -370,7 +371,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `publishes alert created event`() {
-    val prisonNumber = "B1236LK"
+    val prisonNumber = prisonNumber()
     givenPrisonersExist(prisonNumber)
 
     val request = bulkAlertRequest(prisonNumber)
@@ -390,7 +391,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `does not create new alert when existing active alert exists`() {
-    val prisonNumber = "B1237LK"
+    val prisonNumber = prisonNumber()
     givenPrisonersExist(prisonNumber)
     val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
     val existingAlert = givenAlert(alert(prisonNumber, alertCode))
@@ -415,7 +416,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `clears active to date when existing active alert exists`() {
-    val prisonNumber = "B1238LK"
+    val prisonNumber = prisonNumber()
     givenPrisonersExist(prisonNumber)
     val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
     val existingAlert = givenAlert(alert(prisonNumber, alertCode, activeTo = LocalDate.now().plusDays(1)))
@@ -450,7 +451,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
 
   @Test
   fun `sets active from to today when existing will become active alert exists`() {
-    val prisonNumber = "B1239LK"
+    val prisonNumber = prisonNumber()
     givenPrisonersExist(prisonNumber)
     val alertCode = givenExistingAlertCode(ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL)
     val existingAlert = givenAlert(

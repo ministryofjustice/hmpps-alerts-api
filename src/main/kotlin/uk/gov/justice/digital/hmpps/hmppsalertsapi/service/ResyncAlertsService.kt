@@ -92,7 +92,7 @@ class ResyncAlertsService(
 
   private fun ResyncAlertMerge.alertFor(prisonNumber: String, alertCodes: Map<String, AlertCode>): ResyncAlertMerge {
     with(resync) {
-      val alert = Alert(
+      Alert(
         alertCode = alertCodes[alertCode]!!,
         prisonNumber = prisonNumber,
         description = description,
@@ -101,8 +101,7 @@ class ResyncAlertsService(
         activeTo = activeTo,
         createdAt = createdAt,
         prisonCodeWhenCreated = null,
-      )
-      alert.let {
+      ).let {
         it.lastModifiedAt = lastModifiedAt
         it.resync(
           createdBy = createdBy,

@@ -13,6 +13,7 @@ import jakarta.persistence.NamedSubgraph
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OrderBy
 import jakarta.persistence.Table
+import jakarta.persistence.Version
 import org.hibernate.annotations.SQLRestriction
 import org.springframework.data.domain.AbstractAggregateRoot
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
@@ -59,6 +60,9 @@ class Alert(
   @Id
   val id: UUID = newUuid(),
 ) : AbstractAggregateRoot<Alert>() {
+  @Version
+  val version: Int? = null
+
   var lastModifiedAt: LocalDateTime? = null
 
   fun isActive() = activeTo == null || activeTo!! > now()
@@ -68,6 +72,8 @@ class Alert(
   private val auditEvents: MutableList<AuditEvent> = mutableListOf()
 
   fun auditEvents() = auditEvents.toList().sortedByDescending { it.actionedAt }
+
+  fun withoutAuditEvents() = apply { auditEvents.clear() }
 
   fun auditEvent(
     action: AuditEventAction,

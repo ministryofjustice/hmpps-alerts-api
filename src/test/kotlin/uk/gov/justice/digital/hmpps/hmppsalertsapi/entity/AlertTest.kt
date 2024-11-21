@@ -64,18 +64,19 @@ class AlertTest {
       )
     }
 
-    assertThat(entity.auditEvents().single { it.action == UPDATED }).usingRecursiveComparison().isEqualTo(
-      AuditEvent(
-        alert = entity,
-        action = UPDATED,
-        description = "Alert updated",
-        actionedAt = actionedAt,
-        actionedBy = "UPDATED_BY",
-        actionedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
-        source = DPS,
-        activeCaseLoadId = PRISON_CODE_MOORLANDS,
-      ),
-    )
+    assertThat(entity.auditEvents().single { it.action == UPDATED }).usingRecursiveComparison().ignoringFields("id")
+      .isEqualTo(
+        AuditEvent(
+          alert = entity,
+          action = UPDATED,
+          description = "Alert updated",
+          actionedAt = actionedAt,
+          actionedBy = "UPDATED_BY",
+          actionedByDisplayName = "UPDATED_BY_DISPLAY_NAME",
+          source = DPS,
+          activeCaseLoadId = PRISON_CODE_MOORLANDS,
+        ),
+      )
   }
 
   @Test
@@ -146,7 +147,7 @@ class AlertTest {
       )
     }
 
-    assertThat(entity.createdAuditEvent()).usingRecursiveComparison().isEqualTo(
+    assertThat(entity.createdAuditEvent()).usingRecursiveComparison().ignoringFields("id").isEqualTo(
       AuditEvent(
         alert = entity,
         action = CREATED,
@@ -202,7 +203,7 @@ class AlertTest {
       )
     }
 
-    assertThat(entity.lastModifiedAuditEvent()).usingRecursiveComparison().isEqualTo(
+    assertThat(entity.lastModifiedAuditEvent()).usingRecursiveComparison().ignoringFields("id").isEqualTo(
       AuditEvent(
         alert = entity,
         action = UPDATED,
@@ -241,7 +242,7 @@ class AlertTest {
       activeCaseLoadId = activeCaseLoadId,
     )
 
-    assertThat(entity.auditEvents().single()).usingRecursiveComparison().isEqualTo(
+    assertThat(entity.auditEvents().single()).usingRecursiveComparison().ignoringFields("id").isEqualTo(
       AuditEvent(
         alert = entity,
         action = CREATED,
@@ -324,22 +325,23 @@ class AlertTest {
     )
 
     assertThat(entity.lastModifiedAt).isEqualTo(updatedAt)
-    assertThat(entity.auditEvents().single { it.action == UPDATED }).usingRecursiveComparison().isEqualTo(
-      AuditEvent(
-        alert = entity,
-        action = UPDATED,
-        description = expectedDescription,
-        actionedAt = updatedAt,
-        actionedBy = updatedBy,
-        actionedByDisplayName = updatedByDisplayName,
-        source = source,
-        activeCaseLoadId = activeCaseLoadId,
-        descriptionUpdated = true,
-        authorisedByUpdated = true,
-        activeFromUpdated = true,
-        activeToUpdated = true,
-      ),
-    )
+    assertThat(entity.auditEvents().single { it.action == UPDATED }).usingRecursiveComparison().ignoringFields("id")
+      .isEqualTo(
+        AuditEvent(
+          alert = entity,
+          action = UPDATED,
+          description = expectedDescription,
+          actionedAt = updatedAt,
+          actionedBy = updatedBy,
+          actionedByDisplayName = updatedByDisplayName,
+          source = source,
+          activeCaseLoadId = activeCaseLoadId,
+          descriptionUpdated = true,
+          authorisedByUpdated = true,
+          activeFromUpdated = true,
+          activeToUpdated = true,
+        ),
+      )
   }
 
   @Test
@@ -625,18 +627,19 @@ class AlertTest {
 
     assertThat(entity.lastModifiedAt).isEqualTo(deletedAt)
     assertThat(entity.deletedAt).isEqualTo(deletedAt)
-    assertThat(entity.auditEvents().single { it.action == DELETED }).usingRecursiveComparison().isEqualTo(
-      AuditEvent(
-        alert = entity,
-        action = DELETED,
-        description = "Alert deleted",
-        actionedAt = deletedAt,
-        actionedBy = "DELETED_BY",
-        actionedByDisplayName = "DELETED_BY_DISPLAY_NAME",
-        source = source,
-        activeCaseLoadId = activeCaseLoadId,
-      ),
-    )
+    assertThat(entity.auditEvents().single { it.action == DELETED }).usingRecursiveComparison().ignoringFields("id")
+      .isEqualTo(
+        AuditEvent(
+          alert = entity,
+          action = DELETED,
+          description = "Alert deleted",
+          actionedAt = deletedAt,
+          actionedBy = "DELETED_BY",
+          actionedByDisplayName = "DELETED_BY_DISPLAY_NAME",
+          source = source,
+          activeCaseLoadId = activeCaseLoadId,
+        ),
+      )
   }
 
   @Test

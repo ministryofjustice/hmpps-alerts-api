@@ -191,7 +191,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
       )
 
       assertThat(alertEntity).usingRecursiveComparison()
-        .ignoringFields("auditEvents", "alertCode.alertType").isEqualTo(
+        .ignoringFields("auditEvents", "alertCode.alertType", "version").isEqualTo(
           AlertEntity(
             id = alertEntity.id,
             alertCode = alertCode,
@@ -259,7 +259,7 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
       )
 
       assertThat(alertEntity).usingRecursiveComparison()
-        .ignoringFields("auditEvents", "alertCode.alertType").isEqualTo(
+        .ignoringFields("auditEvents", "alertCode.alertType", "version").isEqualTo(
           AlertEntity(
             id = alertEntity.id,
             alertCode = alertCode,
@@ -326,7 +326,7 @@ Updated active from from '${alert.activeFrom}' to '$activeFrom'""",
       )
 
       assertThat(alertEntity).usingRecursiveComparison()
-        .ignoringFields("auditEvents", "alertCode.alertType").isEqualTo(
+        .ignoringFields("auditEvents", "alertCode.alertType", "version").isEqualTo(
           AlertEntity(
             id = alertEntity.id,
             alertCode = alertCode,

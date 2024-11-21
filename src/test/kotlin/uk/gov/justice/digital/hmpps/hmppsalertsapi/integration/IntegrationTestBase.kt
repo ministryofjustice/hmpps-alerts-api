@@ -171,19 +171,16 @@ abstract class IntegrationTestBase {
       .expectBody(T::class.java)
       .returnResult().responseBody!!
 
-  fun givenPrisoner(): String {
-    val prisonNumber = prisonNumber()
-    prisonerSearch.stubGetPrisoner(prisonNumber)
-    return prisonNumber
-  }
+  fun givenPrisoner(): String = givenPrisonerExists(prisonNumber())
 
   fun givenPrisonerExists(prisonNumber: String): String {
     prisonerSearch.stubGetPrisoner(prisonNumber)
     return prisonNumber
   }
 
-  fun givenPrisonersExist(vararg prisonNumbers: String) {
+  fun givenPrisonersExist(vararg prisonNumbers: String): Array<out String> {
     prisonerSearch.stubGetPrisoners(prisonNumbers.toList())
+    return prisonNumbers
   }
 
   fun givenExistingAlertType(code: String): AlertType = requireNotNull(alertTypeRepository.findByCode(code))
