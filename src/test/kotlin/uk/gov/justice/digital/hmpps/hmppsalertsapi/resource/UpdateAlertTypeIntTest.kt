@@ -72,6 +72,29 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `400 bad request - invalid code format`() {
+    val response = webTestClient.patch()
+      .uri("/alert-types/INVALID_!")
+      .headers(
+        setAuthorisation(
+          user = TEST_USER,
+          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+          isUserToken = true,
+        ),
+      )
+      .bodyValue(UpdateAlertTypeRequest("description"))
+      .exchange().errorResponse(BAD_REQUEST)
+
+    with(response) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).contains("Validation failure: Code must only contain alphanumeric characters and the following symbols: # & ' + \\ - . / < = >")
+      assertThat(developerMessage).contains("Validation failure: Code must only contain alphanumeric characters and the following symbols: # & ' + \\ - . / < = >")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
   fun `404 alert type not found`() {
     val response = webTestClient.patch()
       .uri("/alert-types/ALK")

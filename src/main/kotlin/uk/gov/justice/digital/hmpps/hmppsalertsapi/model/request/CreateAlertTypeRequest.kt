@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 
 @Schema(
@@ -12,6 +13,7 @@ data class CreateAlertTypeRequest(
     example = "A",
   )
   @field:Size(max = 12, min = 1, message = "Code must be between 1 & 12 characters")
+  @field:Pattern(regexp = "^[\\w #&'+\\-./<=>]+\$|^$", message = "Code must only contain alphanumeric characters and the following symbols: # & ' + \\ - . / < = >")
   val code: String,
 
   @Schema(

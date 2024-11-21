@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Pattern
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.CREATED
 import org.springframework.http.MediaType
@@ -243,7 +244,9 @@ class AlertTypesController(
   )
   @UsernameHeader
   fun updateAlertType(
-    @PathVariable alertType: String,
+    @PathVariable
+    @Pattern(regexp = "^[\\w #&'+\\-./<=>]+\$|^$", message = "Code must only contain alphanumeric characters and the following symbols: # & ' + \\ - . / < = >")
+    alertType: String,
     @Valid @RequestBody updateRequest: UpdateAlertTypeRequest,
     httpRequest: HttpServletRequest,
   ) = alertTypeService.updateAlertType(alertType, updateRequest, httpRequest.alertRequestContext())
