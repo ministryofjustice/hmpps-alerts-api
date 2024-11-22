@@ -13,7 +13,7 @@ data class CreateAlertCodeRequest(
     example = "A",
   )
   @field:Size(max = 12, min = 1, message = "Code must be between 1 & 12 characters")
-  @field:Pattern(regexp = "^[\\w #&'+\\-./<=>]+\$|^$", message = "Code must only contain alphanumeric characters and the following symbols: # & ' + \\ - . / < = >")
+  @field:Pattern(regexp = "^[A-Z0-9]+\$|^$", message = "Code must only contain uppercase alphabetical and/or numeric characters")
   val code: String,
 
   @Schema(

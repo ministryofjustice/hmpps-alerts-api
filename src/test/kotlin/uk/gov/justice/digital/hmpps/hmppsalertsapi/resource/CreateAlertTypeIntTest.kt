@@ -229,9 +229,9 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
     val response = webTestClient.createAlertTypeResponseSpec(request).errorResponse(BAD_REQUEST)
     with(response) {
       assertThat(status).isEqualTo(400)
-      assertThat(userMessage).isEqualTo("Validation failure(s): Code must only contain alphanumeric characters and the following symbols: # & ' + \\ - . / < = >")
+      assertThat(userMessage).isEqualTo("Validation failure(s): Code must only contain uppercase alphabetical and/or numeric characters")
       assertThat(developerMessage).contains("[Field error in object 'createAlertTypeRequest' on field 'code': rejected value [12345!]")
-      assertThat(developerMessage).contains("Code must only contain alphanumeric characters and the following symbols: # & ' + \\ - . / < = >")
+      assertThat(developerMessage).contains("Code must only contain uppercase alphabetical and/or numeric characters")
     }
   }
 

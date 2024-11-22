@@ -245,7 +245,7 @@ class AlertTypesController(
   @UsernameHeader
   fun updateAlertType(
     @PathVariable
-    @Pattern(regexp = "^[\\w #&'+\\-./<=>]+\$|^$", message = "Code must only contain alphanumeric characters and the following symbols: # & ' + \\ - . / < = >")
+    @Pattern(regexp = "^[A-Z0-9]+\$|^$", message = "Code must only contain uppercase alphabetical and/or numeric characters")
     alertType: String,
     @Valid @RequestBody updateRequest: UpdateAlertTypeRequest,
     httpRequest: HttpServletRequest,

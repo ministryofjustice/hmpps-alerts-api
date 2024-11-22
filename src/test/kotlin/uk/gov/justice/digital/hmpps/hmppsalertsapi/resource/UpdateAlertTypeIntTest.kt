@@ -88,8 +88,8 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
     with(response) {
       assertThat(status).isEqualTo(400)
       assertThat(errorCode).isNull()
-      assertThat(userMessage).contains("Validation failure: Code must only contain alphanumeric characters and the following symbols: # & ' + \\ - . / < = >")
-      assertThat(developerMessage).contains("Validation failure: Code must only contain alphanumeric characters and the following symbols: # & ' + \\ - . / < = >")
+      assertThat(userMessage).contains("Validation failure: Code must only contain uppercase alphabetical and/or numeric characters")
+      assertThat(developerMessage).contains("Validation failure: Code must only contain uppercase alphabetical and/or numeric characters")
       assertThat(moreInfo).isNull()
     }
   }

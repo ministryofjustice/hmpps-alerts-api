@@ -248,7 +248,7 @@ class AlertCodesController(
   @UsernameHeader
   fun updateAlertCode(
     @PathVariable
-    @Pattern(regexp = "^[\\w #&'+\\-./<=>]+\$|^$", message = "Code must only contain alphanumeric characters and the following symbols: # & ' + \\ - . / < = >")
+    @Pattern(regexp = "^[A-Z0-9]+\$|^$", message = "Code must only contain uppercase alphabetical and/or numeric characters")
     alertCode: String,
     @Valid @RequestBody updateRequest: UpdateAlertCodeRequest,
     httpRequest: HttpServletRequest,
