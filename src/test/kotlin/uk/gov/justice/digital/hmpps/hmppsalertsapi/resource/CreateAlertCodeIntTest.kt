@@ -218,6 +218,18 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `validation - invalid symbol in code`() {
+    val request = CreateAlertCodeRequest("12345!", "desc", AT_VULNERABILITY.code)
+    val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse(BAD_REQUEST)
+    with(response) {
+      assertThat(status).isEqualTo(400)
+      assertThat(userMessage).isEqualTo("Validation failure(s): Code must only contain uppercase alphabetical and/or numeric characters")
+      assertThat(developerMessage).contains("[Field error in object 'createAlertCodeRequest' on field 'code': rejected value [12345!]")
+      assertThat(developerMessage).contains("Code must only contain uppercase alphabetical and/or numeric characters")
+    }
+  }
+
+  @Test
   fun `validation - parent type not found`() {
     val request = CreateAlertCodeRequest("AA", "desc", "ABCDE")
     val response = webTestClient.createAlertCodeResponseSpec(request = request).errorResponse(NOT_FOUND)

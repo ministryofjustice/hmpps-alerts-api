@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Pattern
+import jakarta.validation.constraints.Size
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -246,7 +248,10 @@ class AlertCodesController(
   )
   @UsernameHeader
   fun updateAlertCode(
-    @PathVariable alertCode: String,
+    @PathVariable
+    @Size(max = 12, min = 1, message = "Code must be between 1 & 12 characters")
+    @Pattern(regexp = "^[A-Z0-9]+$", message = "Code must only contain uppercase alphabetical and/or numeric characters")
+    alertCode: String,
     @Valid @RequestBody updateRequest: UpdateAlertCodeRequest,
     httpRequest: HttpServletRequest,
   ) = alertCodeService.updateAlertCode(alertCode, updateRequest, httpRequest.alertRequestContext())
