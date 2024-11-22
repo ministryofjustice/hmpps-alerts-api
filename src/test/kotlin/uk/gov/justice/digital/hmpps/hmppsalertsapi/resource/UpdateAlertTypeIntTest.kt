@@ -95,6 +95,29 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `400 bad request - invalid code size`() {
+    val response = webTestClient.patch()
+      .uri("/alert-types/0123456789ABCD")
+      .headers(
+        setAuthorisation(
+          user = TEST_USER,
+          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+          isUserToken = true,
+        ),
+      )
+      .bodyValue(UpdateAlertTypeRequest("description"))
+      .exchange().errorResponse(BAD_REQUEST)
+
+    with(response) {
+      assertThat(status).isEqualTo(400)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).contains("Validation failure: Code must be between 1 & 12 characters")
+      assertThat(developerMessage).contains("Validation failure: Code must be between 1 & 12 characters")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
   fun `404 alert type not found`() {
     val response = webTestClient.patch()
       .uri("/alert-types/ALK")
