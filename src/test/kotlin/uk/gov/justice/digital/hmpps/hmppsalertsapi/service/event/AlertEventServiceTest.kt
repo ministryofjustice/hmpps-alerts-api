@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.DomainEventBatcher
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.EventProperties
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
@@ -20,14 +21,14 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 class AlertEventServiceTest {
-  private val domainEventPublisher = mock<DomainEventPublisher>()
+  private val domainEventBatcher = mock<DomainEventBatcher>()
 
   private val baseUrl = "http://localhost:8080"
 
   @Test
   fun `handle alert event - publish enabled`() {
     val eventProperties = EventProperties(baseUrl)
-    val alertEventService = AlertEventService(eventProperties, domainEventPublisher)
+    val alertEventService = AlertEventService(eventProperties, domainEventBatcher)
     val alertEvent = AlertCreatedEvent(
       UUID.randomUUID(),
       PRISON_NUMBER,
@@ -40,7 +41,7 @@ class AlertEventServiceTest {
     alertEventService.handleAlertEvent(alertEvent)
 
     val domainEventCaptor = argumentCaptor<AlertDomainEvent<AlertAdditionalInformation>>()
-    verify(domainEventPublisher).publish(domainEventCaptor.capture())
+    verify(domainEventBatcher).batchEvent(domainEventCaptor.capture())
     assertThat(domainEventCaptor.firstValue).isEqualTo(
       AlertDomainEvent(
         eventType = ALERT_CREATED.eventType,

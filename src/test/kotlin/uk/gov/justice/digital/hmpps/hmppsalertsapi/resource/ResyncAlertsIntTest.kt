@@ -182,10 +182,9 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     assertThat(response.offenderBookId).isEqualTo(alert.offenderBookId)
     assertThat(response.alertSeq).isEqualTo(alert.alertSeq)
 
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 5 }
-    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts(5)
-    assertThat(typeCounts[DomainEventType.ALERT_CREATED.eventType]).isEqualTo(2)
-    assertThat(typeCounts[DomainEventType.ALERT_UPDATED.eventType]).isEqualTo(1)
+    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 3 }
+    val typeCounts = hmppsEventsQueue.receiveMessageTypeCounts(3)
+    assertThat(typeCounts[DomainEventType.ALERT_CREATED.eventType]).isEqualTo(1)
     assertThat(typeCounts[DomainEventType.ALERT_DELETED.eventType]).isEqualTo(1)
     assertThat(typeCounts[DomainEventType.PERSON_ALERTS_CHANGED.eventType]).isEqualTo(1)
 
