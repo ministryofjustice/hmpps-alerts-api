@@ -13,6 +13,6 @@ class AlertReferenceDataEventService(
 ) {
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
   fun handleAlertEvent(event: AlertReferenceDataEvent) {
-    domainEventPublisher.publish(event.toDomainEvent(eventProperties.baseUrl))
+    domainEventPublisher.publishSingle(event.toDomainEvent(eventProperties.baseUrl))
   }
 }

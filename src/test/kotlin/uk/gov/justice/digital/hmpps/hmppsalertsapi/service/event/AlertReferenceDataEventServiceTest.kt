@@ -32,7 +32,7 @@ class AlertReferenceDataEventServiceTest {
     alertReferenceDataEventService.handleAlertEvent(alertEvent)
 
     val domainEventCaptor = argumentCaptor<AlertDomainEvent<ReferenceDataAdditionalInformation>>()
-    verify(domainEventPublisher).publish(domainEventCaptor.capture())
+    verify(domainEventPublisher).publishSingle(domainEventCaptor.capture())
     assertThat(domainEventCaptor.firstValue).isEqualTo(
       AlertDomainEvent(
         eventType = ALERT_TYPE_CREATED.eventType,

@@ -27,8 +27,8 @@ class AlertBaseDomainEventPublisherTest {
   @Test
   fun `throws IllegalStateException when topic not found`() {
     whenever(hmppsQueueService.findByTopicId("hmppseventtopic")).thenReturn(null)
-    val domainEventPublisher = DomainEventPublisher(hmppsQueueService, objectMapper)
-    val exception = assertThrows<IllegalStateException> { domainEventPublisher.publish(mock<AlertDomainEvent<AlertAdditionalInformation>>()) }
+    val domainEventPublisher = DomainEventPublisher(hmppsQueueService, objectMapper, 1000)
+    val exception = assertThrows<IllegalStateException> { domainEventPublisher.publishSingle(mock<AlertDomainEvent<AlertAdditionalInformation>>()) }
     assertThat(exception.message).isEqualTo("hmppseventtopic not found")
   }
 
@@ -37,12 +37,12 @@ class AlertBaseDomainEventPublisherTest {
     whenever(hmppsQueueService.findByTopicId("hmppseventtopic")).thenReturn(domainEventsTopic)
     whenever(domainEventsTopic.snsClient).thenReturn(domainEventsSnsClient)
     whenever(domainEventsTopic.arn).thenReturn(domainEventsTopicArn)
-    val domainEventPublisher = DomainEventPublisher(hmppsQueueService, objectMapper)
+    val domainEventPublisher = DomainEventPublisher(hmppsQueueService, objectMapper, 1000)
     val domainEvent = mock<AlertDomainEvent<AlertAdditionalInformation>>()
     whenever(domainEvent.eventType).thenReturn("some.event.type")
     whenever(domainEventsSnsClient.publish(any<PublishRequest>())).thenThrow(RuntimeException("Failed to publish"))
 
-    val ex = assertThrows<RuntimeException> { domainEventPublisher.publish(domainEvent) }
+    val ex = assertThrows<RuntimeException> { domainEventPublisher.publishSingle(domainEvent) }
     assertThat(ex.message).isEqualTo("Failed to publish")
   }
 }
