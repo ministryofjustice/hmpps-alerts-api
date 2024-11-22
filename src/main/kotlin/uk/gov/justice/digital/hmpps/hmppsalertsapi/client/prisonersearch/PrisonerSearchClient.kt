@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToFlux
 import org.springframework.web.reactive.function.client.bodyToMono
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerNumbersDto
@@ -26,21 +27,20 @@ class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val web
       .retryNetworkExceptions("Get prisoner request failed")
   }
 
-  fun getPrisoners(prisonNumbers: Collection<String>, batchSize: Int = 1000): Collection<PrisonerDto> {
+  fun getPrisoners(prisonNumbers: Collection<String>, batchSize: Int = 1000): List<PrisonerDto> {
     require(batchSize in 1..1000) {
       "Batch size must be between 1 and 1000"
     }
     if (prisonNumbers.isEmpty()) return emptyList()
-    return prisonNumbers.chunked(batchSize).flatMap {
+    return Flux.fromIterable(prisonNumbers).buffer(batchSize).flatMap {
       webClient
         .post()
         .uri("/prisoner-search/prisoner-numbers")
         .bodyValue(PrisonerNumbersDto(it))
         .retrieve()
         .bodyToFlux<PrisonerDto>()
-        .collectList()
         .retryNetworkExceptions("Get prisoner request failed")
-        .block() ?: emptyList()
-    }
+    }.collectList()
+      .block()!!
   }
 }

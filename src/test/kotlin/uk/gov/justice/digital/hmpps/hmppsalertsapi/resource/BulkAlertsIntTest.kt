@@ -42,7 +42,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertPlan
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.BulkAlertRepository
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.bulkAlertRequest
@@ -177,21 +176,6 @@ class BulkAlertsIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `400 bad request - alert code is inactive`() {
-    val request = bulkAlertRequest(PRISON_NUMBER, alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
-
-    val response = webTestClient.bulkCreateAlertResponseSpec(request = request).errorResponse(BAD_REQUEST)
-
-    with(response) {
-      assertThat(status).isEqualTo(400)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Alert code is inactive")
-      assertThat(developerMessage).isEqualTo("Alert code is inactive")
-      assertThat(moreInfo).isNull()
-    }
-  }
-
-  @Test
   fun `400 bad request - prisoner not found`() {
     val request = bulkAlertRequest(PRISON_NUMBER_NOT_FOUND)
 
@@ -287,7 +271,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
             activeFrom = LocalDate.now(),
             activeTo = null,
             createdAt = alert.createdAt,
-            prisonCodeWhenCreated = null,
+            prisonCodeWhenCreated = PRISON_CODE_LEEDS,
           ),
         )
       assertThat(alert.isActive()).isTrue()
@@ -333,7 +317,7 @@ class BulkAlertsIntTest : IntegrationTestBase() {
           activeFrom = LocalDate.now(),
           activeTo = null,
           createdAt = alert.createdAt,
-          prisonCodeWhenCreated = null,
+          prisonCodeWhenCreated = PRISON_CODE_LEEDS,
         ),
       )
   }

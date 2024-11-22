@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PublishPersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertEntity
@@ -42,7 +43,7 @@ class BulkAlertService(
       }
 
       val alertCode = it.getAlertCode()
-      it.validatePrisonNumbers(batchSize)
+      val prisoners = it.validatePrisonNumbers(batchSize)
 
       val existingUnexpiredAlerts = it.getExistingUnexpiredAlerts(batchSize)
 
@@ -58,6 +59,7 @@ class BulkAlertService(
         context,
         alertCode,
         existingUnexpiredAlerts,
+        prisoners.associateBy { pr -> pr.prisonerNumber },
         batchSize,
       )
 
@@ -101,18 +103,14 @@ class BulkAlertService(
       )
     }
 
-  private fun BulkCreateAlerts.getAlertCode() =
-    verifyExists(alertCodeRepository.findByCode(alertCode)) {
-      InvalidInputException("Alert code", alertCode)
-    }.also {
-      require(it.isActive()) { "Alert code is inactive" }
-    }
+  private fun BulkCreateAlerts.getAlertCode() = verifyExists(alertCodeRepository.findByCode(alertCode)) {
+    InvalidInputException("Alert code", alertCode)
+  }
 
-  private fun BulkCreateAlerts.validatePrisonNumbers(batchSize: Int) =
-    prisonerSearchClient.getPrisoners(prisonNumbers, batchSize).associateBy { it.prisonerNumber }.also { prisoners ->
-      prisonNumbers.filterNot { prisoners.containsKey(it) }.also {
-        require(it.isEmpty()) { "Prison number(s) not found" }
-      }
+  private fun BulkCreateAlerts.validatePrisonNumbers(batchSize: Int): List<PrisonerDto> =
+    prisonerSearchClient.getPrisoners(prisonNumbers, batchSize).also { prisoners ->
+      val diff = prisonNumbers.toSet() - prisoners.map { it.prisonerNumber }.toSet()
+      check(diff.isEmpty()) { "Prison number(s) not found" }
     }
 
   private fun BulkCreateAlerts.getExistingUnexpiredAlerts(batchSize: Int) =
@@ -146,24 +144,23 @@ class BulkAlertService(
     bulk: BulkCreateAlerts,
     context: AlertRequestContext,
     batchSize: Int,
-  ) =
-    chunked(batchSize).flatMap {
-      alertRepository.saveAll(
-        filter { it.activeTo != null }.map {
-          it.update(
-            description = bulk.description,
-            authorisedBy = null,
-            activeFrom = it.activeFrom,
-            activeTo = null,
-            updatedAt = context.requestAt,
-            updatedBy = context.username,
-            updatedByDisplayName = context.userDisplayName,
-            source = context.source,
-            activeCaseLoadId = context.activeCaseLoadId,
-          )
-        },
-      ).map { alert -> alert.toBulkAlertAlertModel(alert.lastModifiedAuditEvent()!!.description) }
-    }
+  ) = chunked(batchSize).flatMap {
+    alertRepository.saveAll(
+      filter { it.activeTo != null }.map {
+        it.update(
+          description = bulk.description,
+          authorisedBy = null,
+          activeFrom = it.activeFrom,
+          activeTo = null,
+          updatedAt = context.requestAt,
+          updatedBy = context.username,
+          updatedByDisplayName = context.userDisplayName,
+          source = context.source,
+          activeCaseLoadId = context.activeCaseLoadId,
+        )
+      },
+    ).map { alert -> alert.toBulkAlertAlertModel(alert.lastModifiedAuditEvent()!!.description) }
+  }
 
   private fun Collection<Alert>.expire(context: AlertRequestContext, batchSize: Int) =
     chunked(batchSize).flatMap {
@@ -188,6 +185,7 @@ class BulkAlertService(
     context: AlertRequestContext,
     alertCode: AlertCode,
     existingUnexpiredAlerts: Collection<Alert>,
+    prisoners: Map<String, PrisonerDto>,
     batchSize: Int,
   ): Collection<BulkAlertAlert> {
     val prisonNumbersWithActiveAlerts = existingUnexpiredAlerts.filter { it.isActive() }.map { it.prisonNumber }.toSet()
@@ -203,6 +201,7 @@ class BulkAlertService(
           createdByDisplayName = context.userDisplayName,
           source = context.source,
           activeCaseLoadId = context.activeCaseLoadId,
+          prisonCodeWhenCreated = prisoners[prisonNumber]?.prisonId,
         )
       }.bulkInsert()
         .map { alert -> alert.toBulkAlertAlertModel() }

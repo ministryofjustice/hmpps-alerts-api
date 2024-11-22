@@ -16,7 +16,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_N
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkCreateAlerts
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.bulkAlertRequest
 
 // Only failure tests in this class. Success tests are combined into BulkAlertsIntTest to validate that their results match.
@@ -137,21 +136,6 @@ class PlanBulkAlertsIntTest : IntegrationTestBase() {
       assertThat(errorCode).isNull()
       assertThat(userMessage).isEqualTo("Validation failure: Alert code is invalid")
       assertThat(developerMessage).isEqualTo("Details => Alert code:NOT_FOUND")
-      assertThat(moreInfo).isNull()
-    }
-  }
-
-  @Test
-  fun `400 bad request - alert code is inactive`() {
-    val request = bulkAlertRequest(PRISON_NUMBER, alertCode = ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD)
-
-    val response = webTestClient.planBulkCreateAlertResponseSpec(request = request).errorResponse(BAD_REQUEST)
-
-    with(response) {
-      assertThat(status).isEqualTo(400)
-      assertThat(errorCode).isNull()
-      assertThat(userMessage).isEqualTo("Validation failure: Alert code is inactive")
-      assertThat(developerMessage).isEqualTo("Alert code is inactive")
       assertThat(moreInfo).isNull()
     }
   }

@@ -21,6 +21,7 @@ fun BulkCreateAlerts.toAlertEntity(
   createdByDisplayName: String,
   source: Source,
   activeCaseLoadId: String?,
+  prisonCodeWhenCreated: String? = null,
 ) = Alert(
   alertCode = alertCode,
   prisonNumber = prisonNumber,
@@ -29,7 +30,7 @@ fun BulkCreateAlerts.toAlertEntity(
   activeFrom = LocalDate.now(),
   activeTo = null,
   createdAt = createdAt,
-  prisonCodeWhenCreated = null,
+  prisonCodeWhenCreated = prisonCodeWhenCreated,
 ).create(createdAt = createdAt, createdBy = createdBy, createdByDisplayName = createdByDisplayName, source = source, activeCaseLoadId = activeCaseLoadId)
 
 fun Alert.toBulkAlertAlertModel(message: String = "") =
