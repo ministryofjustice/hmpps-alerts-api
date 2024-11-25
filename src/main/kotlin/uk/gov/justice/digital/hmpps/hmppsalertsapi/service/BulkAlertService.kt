@@ -36,31 +36,25 @@ class BulkAlertService(
   private val objectMapper: ObjectMapper,
 ) {
   @PublishPersonAlertsChanged
-  fun bulkCreateAlerts(bulk: BulkCreateAlerts, context: AlertRequestContext, batchSize: Int = 1000) =
+  fun bulkCreateAlerts(bulk: BulkCreateAlerts, context: AlertRequestContext) =
     bulk.let {
-      require(batchSize in 1..1000) {
-        "Batch size must be between 1 and 1000"
-      }
-
       val alertCode = it.getAlertCode()
-      val prisoners = it.validatePrisonNumbers(batchSize)
+      val prisoners = it.validatePrisonNumbers()
 
-      val existingUnexpiredAlerts = it.getExistingUnexpiredAlerts(batchSize)
+      val existingUnexpiredAlerts = it.getExistingUnexpiredAlerts()
 
       // The order of these procedures is important. They action the request based on the logic for mode and cleanup mode
       val existingActiveAlerts = getAnyExistingActiveAlertsThatWillNotBeRecreated(existingUnexpiredAlerts)
       val alertsUpdated =
-        it.updateRelevantExistingUnexpiredAlertsToBePermanentlyActive(context, existingUnexpiredAlerts, batchSize)
+        it.updateRelevantExistingUnexpiredAlertsToBePermanentlyActive(context, existingUnexpiredAlerts)
       val alertsExpired = it.expireRelevantExistingUnexpiredAlertsAndAlertsForPrisonNumbersNotInRequest(
         context,
-        batchSize,
       )
       val alertsCreated = it.createAlertsWhereNoActiveAlertFromPreviousActionsExists(
         context,
         alertCode,
         existingUnexpiredAlerts,
         prisoners.associateBy { pr -> pr.prisonerNumber },
-        batchSize,
       )
 
       bulkAlertRepository.save(
@@ -78,15 +72,12 @@ class BulkAlertService(
     }
 
   @Transactional(readOnly = true)
-  fun planBulkCreateAlerts(bulk: BulkCreateAlerts, context: AlertRequestContext, batchSize: Int = 1000) =
+  fun planBulkCreateAlerts(bulk: BulkCreateAlerts, context: AlertRequestContext) =
     bulk.let { request ->
-      require(batchSize in 1..1000) {
-        "Batch size must be between 1 and 1000"
-      }
       request.getAlertCode()
-      request.validatePrisonNumbers(batchSize)
+      request.validatePrisonNumbers()
 
-      val existingUnexpiredAlerts = request.getExistingUnexpiredAlerts(batchSize)
+      val existingUnexpiredAlerts = request.getExistingUnexpiredAlerts()
       val existingActiveAlerts = existingUnexpiredAlerts.filter { it.activeTo == null }
       val alertsUpdated = existingUnexpiredAlerts.filter { it.activeTo != null }
       val alertsExpired = request.getAlertsToBeExpired()
@@ -107,17 +98,14 @@ class BulkAlertService(
     InvalidInputException("Alert code", alertCode)
   }
 
-  private fun BulkCreateAlerts.validatePrisonNumbers(batchSize: Int): List<PrisonerDto> =
-    prisonerSearchClient.getPrisoners(prisonNumbers, batchSize).also { prisoners ->
+  private fun BulkCreateAlerts.validatePrisonNumbers(): List<PrisonerDto> =
+    prisonerSearchClient.getPrisoners(prisonNumbers).also { prisoners ->
       val diff = prisonNumbers.toSet() - prisoners.map { it.prisonerNumber }.toSet()
       check(diff.isEmpty()) { "Prison number(s) not found" }
     }
 
-  private fun BulkCreateAlerts.getExistingUnexpiredAlerts(batchSize: Int) =
-    prisonNumbers.chunked(batchSize).flatMap {
-      alertRepository.findByPrisonNumberInAndAlertCodeCode(it, alertCode)
-        .filter { alert -> alert.isActive() }
-    }
+  private fun BulkCreateAlerts.getExistingUnexpiredAlerts() =
+    alertRepository.findByPrisonNumberInAndAlertCodeCode(prisonNumbers, alertCode).filter { alert -> alert.isActive() }
 
   private fun getAnyExistingActiveAlertsThatWillNotBeRecreated(existingUnexpiredAlerts: Collection<Alert>) =
     existingUnexpiredAlerts.filter { it.isActive() && it.activeTo == null }
@@ -126,8 +114,7 @@ class BulkAlertService(
   private fun BulkCreateAlerts.updateRelevantExistingUnexpiredAlertsToBePermanentlyActive(
     context: AlertRequestContext,
     existingUnexpiredAlerts: Collection<Alert>,
-    batchSize: Int,
-  ) = existingUnexpiredAlerts.updateToBePermanentlyActive(this, context, batchSize)
+  ) = existingUnexpiredAlerts.updateToBePermanentlyActive(this, context)
 
   private fun BulkCreateAlerts.getAlertsToBeExpired() = if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) {
     alertRepository.findByPrisonNumberNotInAndAlertCodeCode(prisonNumbers, alertCode).filter { it.isActive() }
@@ -137,21 +124,35 @@ class BulkAlertService(
 
   private fun BulkCreateAlerts.expireRelevantExistingUnexpiredAlertsAndAlertsForPrisonNumbersNotInRequest(
     context: AlertRequestContext,
-    batchSize: Int,
-  ) = getAlertsToBeExpired().expire(context, batchSize)
+  ) = getAlertsToBeExpired().expire(context)
 
   private fun Collection<Alert>.updateToBePermanentlyActive(
     bulk: BulkCreateAlerts,
     context: AlertRequestContext,
-    batchSize: Int,
-  ) = chunked(batchSize).flatMap {
+  ) = alertRepository.saveAll(
+    filter { it.activeTo != null }.map {
+      it.update(
+        description = bulk.description,
+        authorisedBy = null,
+        activeFrom = it.activeFrom,
+        activeTo = null,
+        updatedAt = context.requestAt,
+        updatedBy = context.username,
+        updatedByDisplayName = context.userDisplayName,
+        source = context.source,
+        activeCaseLoadId = context.activeCaseLoadId,
+      )
+    },
+  ).map { alert -> alert.toBulkAlertAlertModel(alert.lastModifiedAuditEvent()!!.description) }
+
+  private fun Collection<Alert>.expire(context: AlertRequestContext) =
     alertRepository.saveAll(
-      filter { it.activeTo != null }.map {
+      map {
         it.update(
-          description = bulk.description,
+          description = null,
           authorisedBy = null,
-          activeFrom = it.activeFrom,
-          activeTo = null,
+          activeFrom = null,
+          activeTo = LocalDate.now(),
           updatedAt = context.requestAt,
           updatedBy = context.username,
           updatedByDisplayName = context.userDisplayName,
@@ -159,53 +160,29 @@ class BulkAlertService(
           activeCaseLoadId = context.activeCaseLoadId,
         )
       },
-    ).map { alert -> alert.toBulkAlertAlertModel(alert.lastModifiedAuditEvent()!!.description) }
-  }
-
-  private fun Collection<Alert>.expire(context: AlertRequestContext, batchSize: Int) =
-    chunked(batchSize).flatMap {
-      alertRepository.saveAll(
-        map {
-          it.update(
-            description = null,
-            authorisedBy = null,
-            activeFrom = null,
-            activeTo = LocalDate.now(),
-            updatedAt = context.requestAt,
-            updatedBy = context.username,
-            updatedByDisplayName = context.userDisplayName,
-            source = context.source,
-            activeCaseLoadId = context.activeCaseLoadId,
-          )
-        },
-      ).map { alert -> alert.toBulkAlertAlertModel() }
-    }
+    ).map { alert -> alert.toBulkAlertAlertModel() }
 
   private fun BulkCreateAlerts.createAlertsWhereNoActiveAlertFromPreviousActionsExists(
     context: AlertRequestContext,
     alertCode: AlertCode,
     existingUnexpiredAlerts: Collection<Alert>,
     prisoners: Map<String, PrisonerDto>,
-    batchSize: Int,
   ): Collection<BulkAlertAlert> {
     val prisonNumbersWithActiveAlerts = existingUnexpiredAlerts.filter { it.isActive() }.map { it.prisonNumber }.toSet()
     val prisonNumbersWithoutActiveAlerts = prisonNumbers.filterNot { prisonNumbersWithActiveAlerts.contains(it) }
 
-    return prisonNumbersWithoutActiveAlerts.chunked(batchSize).flatMap {
-      it.map { prisonNumber ->
-        toAlertEntity(
-          alertCode = alertCode,
-          prisonNumber = prisonNumber,
-          createdAt = context.requestAt,
-          createdBy = context.username,
-          createdByDisplayName = context.userDisplayName,
-          source = context.source,
-          activeCaseLoadId = context.activeCaseLoadId,
-          prisonCodeWhenCreated = prisoners[prisonNumber]?.prisonId,
-        )
-      }.bulkInsert()
-        .map { alert -> alert.toBulkAlertAlertModel() }
-    }
+    return prisonNumbersWithoutActiveAlerts.map { prisonNumber ->
+      toAlertEntity(
+        alertCode = alertCode,
+        prisonNumber = prisonNumber,
+        createdAt = context.requestAt,
+        createdBy = context.username,
+        createdByDisplayName = context.userDisplayName,
+        source = context.source,
+        activeCaseLoadId = context.activeCaseLoadId,
+        prisonCodeWhenCreated = prisoners[prisonNumber]?.prisonId,
+      )
+    }.bulkInsert().map { alert -> alert.toBulkAlertAlertModel() }
   }
 
   private fun List<Alert>.bulkInsert(): List<Alert> {

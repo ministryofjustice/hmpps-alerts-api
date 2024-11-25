@@ -27,7 +27,7 @@ class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val web
       .retryNetworkExceptions("Get prisoner request failed")
   }
 
-  fun getPrisoners(prisonNumbers: Collection<String>, batchSize: Int = 1000): List<PrisonerDto> {
+  fun getPrisoners(prisonNumbers: Collection<String>, batchSize: Int = 250): List<PrisonerDto> {
     require(batchSize in 1..1000) {
       "Batch size must be between 1 and 1000"
     }
