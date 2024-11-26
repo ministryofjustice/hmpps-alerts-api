@@ -7,9 +7,6 @@ generic-service:
   ingress:
     host: alerts-api-dev.hmpps.service.justice.gov.uk
 
-  scheduledDowntime:
-    enabled: true
-
   env:
     SENTRY_ENVIRONMENT: dev
     SPRING_PROFILES_ACTIVE: dev
