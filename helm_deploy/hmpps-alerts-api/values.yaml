@@ -30,7 +30,7 @@ generic-service:
 
   # Environment variables to load into the deployment
   env:
-    JDK_JAVA_OPTIONS: "-XX:MaxRAMPercentage=75.0"
+    JDK_JAVA_OPTIONS: "-Xmx512m"
     SERVER_PORT: "8080"
     SPRING_PROFILES_ACTIVE: "logstash"
     APPLICATIONINSIGHTS_CONNECTION_STRING: "InstrumentationKey=$(APPINSIGHTS_INSTRUMENTATIONKEY)"
