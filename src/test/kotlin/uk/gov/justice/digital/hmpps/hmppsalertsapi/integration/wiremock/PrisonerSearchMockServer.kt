@@ -60,6 +60,31 @@ class PrisonerSearchServer : WireMockServer(8112) {
         ),
     )
 
+  fun stubGetPrisonerDetails(prisonerDetails: PrisonerDetails): StubMapping =
+    stubFor(
+      get("/prisoner/${prisonerDetails.prisonerNumber}")
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withBody(
+              mapper.writeValueAsString(
+                PrisonerDetails(
+                  prisonerDetails.prisonerNumber,
+                  prisonerDetails.firstName,
+                  prisonerDetails.middleNames,
+                  prisonerDetails.lastName,
+                  prisonerDetails.prisonId,
+                  prisonerDetails.status,
+                  prisonerDetails.restrictedPatient,
+                  prisonerDetails.cellLocation,
+                  prisonerDetails.supportingPrisonId,
+                ),
+              ),
+            )
+            .withStatus(200),
+        ),
+    )
+
   fun stubGetPrisonerException(prisonNumber: String = PRISON_NUMBER_THROW_EXCEPTION): StubMapping =
     stubFor(get("/prisoner/$prisonNumber").willReturn(aResponse().withStatus(500)))
 

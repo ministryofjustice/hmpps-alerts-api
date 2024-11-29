@@ -48,7 +48,9 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import uk.gov.justice.hmpps.sqs.HmppsQueue
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import uk.gov.justice.hmpps.sqs.MissingQueueException
+import uk.gov.justice.hmpps.sqs.MissingTopicException
 import uk.gov.justice.hmpps.sqs.countAllMessagesOnQueue
+import uk.gov.justice.hmpps.sqs.publish
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.UUID
@@ -91,6 +93,19 @@ abstract class IntegrationTestBase {
   @BeforeEach
   fun `clear queues`() {
     hmppsEventsQueue.sqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(hmppsEventsQueue.queueUrl).build()).get()
+  }
+
+  val domainEventsTopic by lazy {
+    hmppsQueueService.findByTopicId("hmppseventtopic") ?: throw MissingTopicException("hmppseventtopic not found")
+  }
+
+  internal fun sendDomainEvent(event: HmppsDomainEvent) {
+    domainEventsTopic.publish(event.eventType, objectMapper.writeValueAsString(event))
+  }
+
+  internal val hmppsDomainEventsQueue by lazy {
+    hmppsQueueService.findByQueueId("hmppsdomaineventsqueue")
+      ?: throw MissingQueueException("hmppsdomaineventsqueue queue not found")
   }
 
   internal fun setAuthorisation(
