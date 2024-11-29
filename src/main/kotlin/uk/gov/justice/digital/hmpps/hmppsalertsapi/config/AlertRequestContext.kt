@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.config
 
 import org.springframework.web.context.request.RequestContextHolder
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDetails
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import java.time.LocalDateTime
@@ -12,9 +12,10 @@ data class AlertRequestContext(
   val activeCaseLoadId: String? = null,
   val source: Source = DPS,
   val requestAt: LocalDateTime = LocalDateTime.now(),
-  val prisoner: PrisonerDto? = null,
+  val prisoner: PrisonerDetails? = null,
 ) {
   companion object {
+    const val PRISON_NUMBER_REGEX = "\\w\\d{4}\\w{2}"
     const val SYS_USER = "SYS"
     const val SYS_DISPLAY_NAME = "Sys"
 

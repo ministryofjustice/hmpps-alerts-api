@@ -13,9 +13,8 @@ import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDetails
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerNumbersDto
-import java.time.LocalDate
 
 internal const val PRISON_NUMBER = "A1234AA"
 internal const val PRISON_NUMBER_NOT_FOUND = "N1234FN"
@@ -44,14 +43,16 @@ class PrisonerSearchServer : WireMockServer(8112) {
             .withHeader("Content-Type", "application/json")
             .withBody(
               mapper.writeValueAsString(
-                PrisonerDto(
+                PrisonerDetails(
                   prisonerNumber = prisonNumber,
-                  bookingId = 1234,
                   "First",
                   "Middle",
                   "Last",
-                  LocalDate.of(1988, 4, 3),
                   prisonCode,
+                  status = "ACTIVE IN",
+                  restrictedPatient = false,
+                  cellLocation = null,
+                  supportingPrisonId = null,
                 ),
               ),
             )
@@ -72,14 +73,16 @@ class PrisonerSearchServer : WireMockServer(8112) {
             .withBody(
               mapper.writeValueAsString(
                 prisonNumbers.mapIndexed { index, prisonNumber ->
-                  PrisonerDto(
+                  PrisonerDetails(
                     prisonerNumber = prisonNumber,
-                    bookingId = index + 1L,
                     "First$index",
                     "Middle",
                     "Last$index",
-                    LocalDate.of(1988, 4, 3).plusDays(index.toLong()),
                     PRISON_CODE_LEEDS,
+                    status = "ACTIVE IN",
+                    restrictedPatient = false,
+                    cellLocation = null,
+                    supportingPrisonId = null,
                   )
                 },
               ),
@@ -95,7 +98,7 @@ class PrisonerSearchServer : WireMockServer(8112) {
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")
-            .withBody(mapper.writeValueAsString(emptyList<PrisonerDto>()))
+            .withBody(mapper.writeValueAsString(emptyList<PrisonerDetails>()))
             .withStatus(200),
         ),
     )

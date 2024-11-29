@@ -19,7 +19,7 @@ import org.mockito.kotlin.whenever
 import org.springframework.web.context.request.RequestAttributes
 import org.springframework.web.context.request.RequestContextHolder
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDetails
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
@@ -338,14 +338,16 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
     }
 
   private fun prisoner(prisonNumber: String = IdGenerator.prisonNumber(), prisonCode: String = PRISON_CODE_LEEDS) =
-    PrisonerDto(
+    PrisonerDetails(
       prisonNumber,
-      123,
       "prisoner",
       "middle",
       "lastName",
-      LocalDate.of(1988, 3, 4),
       prisonCode,
+      status = "ACTIVE IN",
+      restrictedPatient = false,
+      cellLocation = null,
+      supportingPrisonId = null,
     )
 
   private fun alertEntity(

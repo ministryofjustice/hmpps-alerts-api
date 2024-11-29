@@ -12,13 +12,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDetails
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.DownstreamServiceException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_NULL_RESPONSE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER_THROW_EXCEPTION
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PrisonerSearchServer
-import java.time.LocalDate
 
 class PrisonerSearchClientTest {
   private lateinit var client: PrisonerSearchClient
@@ -39,14 +38,16 @@ class PrisonerSearchClientTest {
     val result = client.getPrisoner(prisonNumber).block()
 
     assertThat(result!!).isEqualTo(
-      PrisonerDto(
+      PrisonerDetails(
         prisonerNumber = prisonNumber,
-        bookingId = 1234,
         "First",
         "Middle",
         "Last",
-        LocalDate.of(1988, 4, 3),
         prisonId = prisonCode,
+        status = "ACTIVE IN",
+        restrictedPatient = false,
+        cellLocation = null,
+        supportingPrisonId = null,
       ),
     )
     server.verify(exactly(1), getRequestedFor(urlEqualTo("/prisoner/$prisonNumber")))
@@ -64,7 +65,8 @@ class PrisonerSearchClientTest {
   fun `getPrisoner - downstream service exception`() {
     server.stubGetPrisonerException()
 
-    val exception = assertThrows<DownstreamServiceException> { client.getPrisoner(PRISON_NUMBER_THROW_EXCEPTION).block() }
+    val exception =
+      assertThrows<DownstreamServiceException> { client.getPrisoner(PRISON_NUMBER_THROW_EXCEPTION).block() }
     assertThat(exception.message).isEqualTo("Get prisoner request failed")
     with(exception.cause) {
       assertThat(this).isInstanceOf(WebClientResponseException::class.java)

@@ -45,13 +45,13 @@ data class BulkAlert(
     example = "2021-09-27T14:19:25",
   )
   @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-  val completedAt: LocalDateTime,
+  val completedAt: LocalDateTime?,
 
   @Schema(
     description = "Whether the request to create alerts in bulk was successful or not",
     example = "true",
   )
-  val successful: Boolean,
+  val successful: Boolean?,
 
   @Schema(
     description = "Collection of displayable messages relating to the result of the bulk alert creation request as a whole",

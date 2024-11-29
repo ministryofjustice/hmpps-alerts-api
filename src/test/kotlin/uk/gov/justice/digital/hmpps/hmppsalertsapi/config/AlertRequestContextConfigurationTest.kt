@@ -20,7 +20,7 @@ import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.context.SecurityContextHolder
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDetails
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.NOMIS
@@ -36,7 +36,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.UserService
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.userDetailsDto
 import uk.gov.justice.hmpps.kotlin.auth.AuthAwareAuthenticationToken
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -193,14 +192,16 @@ class AlertRequestContextConfigurationTest {
     req.servletPath = "/prisoners/A1234BC/alerts"
     whenever(prisonerSearchClient.getPrisoner("A1234BC")).thenReturn(
       Mono.just(
-        PrisonerDto(
+        PrisonerDetails(
           "A1234BC",
-          null,
           "Alan",
           null,
           "Brown",
-          LocalDate.now().minusYears(30),
           PRISON_CODE_LEEDS,
+          status = "ACTIVE IN",
+          restrictedPatient = false,
+          cellLocation = null,
+          supportingPrisonId = null,
         ),
       ),
     )
