@@ -21,6 +21,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.servlet.resource.NoResourceFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlreadyExistsException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidInputException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidRowException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
@@ -203,6 +204,19 @@ class HmppsAlertsApiExceptionHandler {
           developerMessage = e.message,
         ),
       )
+
+  @ExceptionHandler(InvalidRowException::class)
+  fun handleInvalidRow(ire: InvalidRowException): ResponseEntity<ErrorResponse> {
+    val (rows, were) = if (ire.rows.size == 1) "row" to "was" else "rows" to "were"
+    val rowNumbers = ire.rows.joinToString(", ")
+    return ResponseEntity.status(BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = BAD_REQUEST,
+          userMessage = "Prison number from $rows $rowNumbers $were invalid",
+        ),
+      )
+  }
 }
 
 class DownstreamServiceException(message: String, cause: Throwable) : RuntimeException(message, cause)

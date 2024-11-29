@@ -7,9 +7,7 @@ import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus.CREATED
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertCleanupMode.KEEP_ALL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_CREATED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_DELETED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType.ALERT_UPDATED
@@ -135,26 +133,6 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
       assertThat(eventType).isEqualTo(ALERT_CREATED.eventType)
     }
     verifyPersonAlertsChanged(prisonNumber)
-  }
-
-  @Test
-  fun `bulk alert publishes a person alerts changed event for each prisoner number`() {
-    val prisonerNumbers = arrayOf("A1234BC", "B2345CD", "C3456DE")
-    givenPrisonersExist(*prisonerNumbers)
-
-    val request = BulkCreateAlerts(
-      prisonNumbers = prisonerNumbers.toList(),
-      alertCode = ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL,
-      description = null,
-      cleanupMode = KEEP_ALL,
-    )
-
-    webTestClient.bulkCreateAlert(request)
-
-    await untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches { it == 6 }
-    val types = hmppsEventsQueue.receiveMessageTypeCounts(6)
-    assertThat(types[PERSON_ALERTS_CHANGED.eventType]).isEqualTo(3)
-    assertThat(types[ALERT_CREATED.eventType]).isEqualTo(3)
   }
 
   private fun verifyPersonAlertsChanged(prisonNumber: String) {

@@ -12,7 +12,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.manageusers.dto.UserDetailsDto
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDetails
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext.Companion.PRISON_NUMBER_REGEX
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext.Companion.SYS_DISPLAY_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext.Companion.SYS_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
@@ -112,12 +113,8 @@ class AlertRequestContextInterceptor(
     }
   }
 
-  private fun HttpServletRequest.getPrisoner(): Mono<PrisonerDto> =
+  private fun HttpServletRequest.getPrisoner(): Mono<PrisonerDetails> =
     servletPath.split("/").first { it.matches(PRISON_NUMBER_REGEX.toRegex()) }.let { pn ->
       prisonerSearchClient.getPrisoner(pn).switchIfEmpty(Mono.error(ValidationException("Prison number not found")))
     }
-
-  companion object {
-    const val PRISON_NUMBER_REGEX = "\\w\\d{4}\\w{2}"
-  }
 }

@@ -6,7 +6,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDetails
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PublishPersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
@@ -42,7 +42,7 @@ class AlertService(
   private val telemetryClient: TelemetryClient,
 ) {
   @PublishPersonAlertsChanged
-  fun createAlert(prisoner: PrisonerDto, request: CreateAlert, allowInactiveCode: Boolean): Alert {
+  fun createAlert(prisoner: PrisonerDetails, request: CreateAlert, allowInactiveCode: Boolean): Alert {
     val context = AlertRequestContext.get()
     val notNomis = context.source != Source.NOMIS
     val alertCode = request.getAlertCode(notNomis && !allowInactiveCode)
