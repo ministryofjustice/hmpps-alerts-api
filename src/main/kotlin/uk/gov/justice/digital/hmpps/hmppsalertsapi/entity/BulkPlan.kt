@@ -1,8 +1,11 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity
 
+import jakarta.persistence.CascadeType
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
+import jakarta.persistence.ManyToMany
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.Version
@@ -20,6 +23,8 @@ class BulkPlan(
   @ManyToOne
   @JoinColumn(name = "alert_code_id")
   var alertCode: AlertCode? = null,
+
+  var description: String? = null,
   @Id
   val id: UUID = newUuid(),
 ) {
@@ -29,6 +34,14 @@ class BulkPlan(
   val createdAt: LocalDateTime = get().requestAt
   val createdBy: String = get().username
   val createdByDisplayName: String = get().userDisplayName
+
+  @ManyToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+  @JoinTable(
+    name = "plan_person",
+    joinColumns = [JoinColumn(name = "plan_id")],
+    inverseJoinColumns = [JoinColumn(name = "prison_number")],
+  )
+  val people: MutableList<PersonSummary> = mutableListOf()
 }
 
 interface BulkPlanRepository : JpaRepository<BulkPlan, UUID>

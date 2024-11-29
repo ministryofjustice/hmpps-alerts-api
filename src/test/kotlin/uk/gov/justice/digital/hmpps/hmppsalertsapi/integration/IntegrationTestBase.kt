@@ -23,6 +23,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.BulkPlan
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.BulkPlanRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertBaseAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.HmppsDomainEvent
@@ -76,6 +78,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   lateinit var alertTypeRepository: AlertTypeRepository
+
+  @Autowired
+  lateinit var bulkPlanRepository: BulkPlanRepository
 
   @SpyBean
   lateinit var hmppsQueueService: HmppsQueueService
@@ -233,4 +238,9 @@ abstract class IntegrationTestBase {
     alertUuid: UUID = newUuid(),
   ) = Alert(alertCode, prisonNumber, description, authorisedBy, activeFrom, activeTo, createdAt, null, alertUuid)
     .apply { set(::deletedAt, deletedAt) }
+
+  fun plan(alertCode: AlertCode? = null, description: String? = null, id: UUID = newUuid()) =
+    BulkPlan(alertCode, description, id)
+
+  fun givenBulkPlan(plan: BulkPlan): BulkPlan = bulkPlanRepository.save(plan)
 }

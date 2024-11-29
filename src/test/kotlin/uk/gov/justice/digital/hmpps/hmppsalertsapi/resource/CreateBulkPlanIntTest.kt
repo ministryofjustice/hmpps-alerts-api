@@ -8,7 +8,7 @@ import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlan
 
-class PlanBulkAlertIntTest : IntegrationTestBase() {
+class CreateBulkPlanIntTest : IntegrationTestBase() {
   @Test
   fun `401 unauthorised`() {
     webTestClient.post()
