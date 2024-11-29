@@ -5,6 +5,8 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotEmpty
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -87,5 +89,6 @@ class BulkAlertsController(private val plan: PlanBulkAlert) {
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @UsernameHeader
   @SourceHeader
-  fun updatePlan(@PathVariable id: UUID, @RequestBody actions: Set<BulkAction>): BulkPlan = plan.update(id, actions)
+  fun updatePlan(@PathVariable id: UUID, @RequestBody @NotEmpty @Valid actions: Set<BulkAction>): BulkPlan =
+    plan.update(id, actions)
 }

@@ -17,6 +17,7 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
+import org.springframework.transaction.support.TransactionTemplate
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
 import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
@@ -25,6 +26,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.BulkPlan
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.BulkPlanRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.PersonSummary
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.PersonSummaryRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertBaseAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.HmppsDomainEvent
@@ -34,6 +37,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalSt
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.HmppsAuthApiExtension
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.ManageUsersExtension
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PrisonerSearchExtension
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
@@ -44,6 +48,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepositor
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.SOURCE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.cellLocation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.set
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
@@ -81,6 +86,12 @@ abstract class IntegrationTestBase {
 
   @Autowired
   lateinit var bulkPlanRepository: BulkPlanRepository
+
+  @Autowired
+  lateinit var personSummaryRepository: PersonSummaryRepository
+
+  @Autowired
+  lateinit var transactionTemplate: TransactionTemplate
 
   @SpyBean
   lateinit var hmppsQueueService: HmppsQueueService
@@ -243,4 +254,26 @@ abstract class IntegrationTestBase {
     BulkPlan(alertCode, description, id)
 
   fun givenBulkPlan(plan: BulkPlan): BulkPlan = bulkPlanRepository.save(plan)
+
+  fun personSummary(
+    prisonNumber: String = prisonNumber(),
+    firstName: String = "First",
+    lastName: String = "Last",
+    status: String = "ACTIVE IN",
+    restrictedPatient: Boolean = false,
+    prisonCode: String? = PRISON_CODE_LEEDS,
+    cellLocation: String? = cellLocation(),
+    supportingPrisonCode: String? = null,
+  ): PersonSummary = PersonSummary(
+    prisonNumber,
+    firstName,
+    lastName,
+    status,
+    restrictedPatient,
+    prisonCode,
+    cellLocation,
+    supportingPrisonCode,
+  )
+
+  fun givenPersonSummary(personSummary: PersonSummary): PersonSummary = personSummaryRepository.save(personSummary)
 }

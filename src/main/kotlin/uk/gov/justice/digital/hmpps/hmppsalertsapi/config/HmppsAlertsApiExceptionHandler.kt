@@ -207,13 +207,13 @@ class HmppsAlertsApiExceptionHandler {
 
   @ExceptionHandler(InvalidRowException::class)
   fun handleInvalidRow(ire: InvalidRowException): ResponseEntity<ErrorResponse> {
-    val rows = if (ire.rows.size == 1) "row" else "rows"
+    val (rows, were) = if (ire.rows.size == 1) "row" to "was" else "rows" to "were"
     val rowNumbers = ire.rows.joinToString(", ")
     return ResponseEntity.status(BAD_REQUEST)
       .body(
         ErrorResponse(
           status = BAD_REQUEST,
-          userMessage = "Prison numbers from $rows $rowNumbers were invalid",
+          userMessage = "Prison number from $rows $rowNumbers $were invalid",
         ),
       )
   }

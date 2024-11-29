@@ -65,7 +65,7 @@ class PlanBulkAlert(
     val existingPrisonNumbers = existingPeople.map { it.prisonNumber }.toSet()
     return prisonerSearch.getPrisoners(this - existingPrisonNumbers).let { prisoners ->
       val newPeople = personSummaryRepository.saveAll(prisoners.map { it.toPersonSummary() })
-      val diff = (this - existingPrisonNumbers) - prisoners.map { it.prisonerNumber }.toSet()
+      val diff = this - existingPrisonNumbers - prisoners.map { it.prisonerNumber }.toSet()
       check(diff.isEmpty()) {
         val pnIndex = mapIndexed { index, pn -> pn to (index + 1) }.toMap()
         throw InvalidRowException(diff.mapNotNull { pnIndex[it] }.toSet())

@@ -8,11 +8,9 @@ import org.awaitility.kotlin.withPollDelay
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.PrisonerDetails
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.PersonSummary
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.PersonSummaryRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.HmppsAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.PersonReference.Companion.withPrisonNumber
@@ -26,8 +24,6 @@ import java.time.Duration
 import java.time.ZonedDateTime
 
 class PersonSummaryUpdateIntTest : IntegrationTestBase() {
-  @Autowired
-  lateinit var personSummaryRepository: PersonSummaryRepository
 
   @Test
   fun `message ignored if category not of interest`() {

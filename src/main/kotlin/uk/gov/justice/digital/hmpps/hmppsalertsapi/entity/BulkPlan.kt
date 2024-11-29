@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity
 
-import jakarta.persistence.CascadeType
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
@@ -35,13 +34,13 @@ class BulkPlan(
   val createdBy: String = get().username
   val createdByDisplayName: String = get().userDisplayName
 
-  @ManyToMany(cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+  @ManyToMany
   @JoinTable(
     name = "plan_person",
     joinColumns = [JoinColumn(name = "plan_id")],
     inverseJoinColumns = [JoinColumn(name = "prison_number")],
   )
-  val people: MutableList<PersonSummary> = mutableListOf()
+  val people: MutableSet<PersonSummary> = mutableSetOf()
 }
 
 interface BulkPlanRepository : JpaRepository<BulkPlan, UUID>

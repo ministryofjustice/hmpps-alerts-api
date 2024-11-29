@@ -91,7 +91,7 @@ class PrisonerSearchServer : WireMockServer(8112) {
   fun stubGetPrisoners(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER)): StubMapping =
     stubFor(
       post("/prisoner-search/prisoner-numbers")
-        .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
+        .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, true))
         .willReturn(
           aResponse()
             .withHeader("Content-Type", "application/json")

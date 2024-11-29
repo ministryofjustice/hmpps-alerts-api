@@ -18,14 +18,14 @@ sealed interface BulkAction {
 }
 
 data class SetAlertCode(
-  @field:Size(min = 1, max = 100, message = "Alert code must be supplied and be <= 12 characters")
+  @field:Size(min = 1, max = 12, message = "Alert code must be supplied and be <= 12 characters")
   val alertCode: String,
 ) : BulkAction {
   override val type: String = this::class.simpleName!!
 }
 
 data class SetDescription(
-  @field:Size(max = 100, message = "Description must be <= 255 characters")
+  @field:Size(max = 255, message = "Description must be <= 255 characters")
   val description: String?,
 ) : BulkAction {
   override val type: String = this::class.simpleName!!
