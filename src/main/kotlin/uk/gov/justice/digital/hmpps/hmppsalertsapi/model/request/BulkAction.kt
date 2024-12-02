@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Size
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(
@@ -31,7 +32,20 @@ data class SetDescription(
   override val type: String = this::class.simpleName!!
 }
 
+data class SetCleanupMode(
+  val cleanupMode: BulkAlertCleanupMode,
+) : BulkAction {
+  override val type: String = this::class.simpleName!!
+}
+
 data class AddPrisonNumbers(
+  @field:NotEmpty(message = "At least one prison number should be provided")
+  val prisonNumbers: LinkedHashSet<String>,
+) : BulkAction {
+  override val type: String = this::class.simpleName!!
+}
+
+data class RemovePrisonNumbers(
   @field:NotEmpty(message = "At least one prison number should be provided")
   val prisonNumbers: LinkedHashSet<String>,
 ) : BulkAction {

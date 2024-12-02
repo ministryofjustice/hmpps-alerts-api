@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.PersonSummaryRepositor
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertBaseAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.HmppsDomainEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer.setLocalStackProperties
@@ -250,8 +251,12 @@ abstract class IntegrationTestBase {
   ) = Alert(alertCode, prisonNumber, description, authorisedBy, activeFrom, activeTo, createdAt, null, alertUuid)
     .apply { set(::deletedAt, deletedAt) }
 
-  fun plan(alertCode: AlertCode? = null, description: String? = null, id: UUID = newUuid()) =
-    BulkPlan(alertCode, description, id)
+  fun plan(
+    alertCode: AlertCode? = null,
+    description: String? = null,
+    cleanupMode: BulkAlertCleanupMode? = null,
+    id: UUID = newUuid(),
+  ) = BulkPlan(alertCode, description, cleanupMode, id)
 
   fun givenBulkPlan(plan: BulkPlan): BulkPlan = bulkPlanRepository.save(plan)
 

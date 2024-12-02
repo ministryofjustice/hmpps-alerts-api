@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotEmpty
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -91,4 +92,33 @@ class BulkAlertsController(private val plan: PlanBulkAlert) {
   @SourceHeader
   fun updatePlan(@PathVariable id: UUID, @RequestBody @NotEmpty @Valid actions: Set<BulkAction>): BulkPlan =
     plan.update(id, actions)
+
+  @GetMapping("/plan/{id}/prisoners")
+  @Operation(summary = "Get prisoners associated with a plan")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Alerts creation plan generated successfully",
+        content = [Content(schema = Schema(implementation = BulkAlertPlan::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No plan found with the provided identifier",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  fun getPlanPrisoners(@PathVariable id: UUID) = plan.getAssociatedPrisoners(id)
 }

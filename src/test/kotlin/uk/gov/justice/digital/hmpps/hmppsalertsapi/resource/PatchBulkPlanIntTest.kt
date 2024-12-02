@@ -8,13 +8,16 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlan
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.AddPrisonNumbers
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.RemovePrisonNumbers
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.SetAlertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.SetCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.SetDescription
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import java.util.LinkedHashSet.newLinkedHashSet
@@ -166,7 +169,7 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
       plan to existingPeople
     }!!
     val newPrisonNumbers = (1..10).map { _ -> prisonNumber() }
-    val prisonNumbers: LinkedHashSet<String> = LinkedHashSet.newLinkedHashSet<String?>(10).apply {
+    val prisonNumbers: LinkedHashSet<String> = newLinkedHashSet<String>(12).apply {
       addAll(existingPeople.map { it.prisonNumber })
       addAll(newPrisonNumbers)
     }
@@ -180,8 +183,55 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
 
     transactionTemplate.execute {
       val saved = requireNotNull(bulkPlanRepository.findByIdOrNull(plan.id))
+      assertThat(saved.people.size).isEqualTo(12)
       assertThat(saved.people.map { it.prisonNumber }).containsExactlyInAnyOrderElementsOf(prisonNumbers)
     }
+  }
+
+  @Test
+  fun `200 ok - remove prisoners from plan`() {
+    val (plan, existingPeople) = transactionTemplate.execute {
+      val existingPeople = (1..5).map {
+        givenPersonSummary(personSummary())
+      }
+      val plan = givenBulkPlan(plan(givenAlertCode()).apply { people.addAll(existingPeople) })
+      plan to existingPeople
+    }!!
+    assertThat(existingPeople.size).isEqualTo(5)
+    val toRemove = listOf(existingPeople.first().prisonNumber, existingPeople.last().prisonNumber).toSet()
+
+    val res = patchPlan(
+      plan.id,
+      setOf(
+        RemovePrisonNumbers(
+          newLinkedHashSet<String>(2).apply {
+            addAll(toRemove)
+          },
+        ),
+      ),
+    )
+    assertThat(res.id).isEqualTo(plan.id)
+
+    transactionTemplate.execute {
+      val saved = requireNotNull(bulkPlanRepository.findByIdOrNull(plan.id))
+      assertThat(saved.people.map { it.prisonNumber })
+        .containsExactlyInAnyOrderElementsOf(existingPeople.map { it.prisonNumber } - toRemove)
+    }
+  }
+
+  @Test
+  fun `200 ok - set the cleanup mode of a plan`() {
+    val plan = givenBulkPlan(plan(alertCode = givenAlertCode()))
+    assertThat(plan.cleanupMode).isNull()
+
+    val res = patchPlan(
+      plan.id,
+      setOf(SetCleanupMode(BulkAlertCleanupMode.KEEP_ALL)),
+    )
+    assertThat(res.id).isEqualTo(plan.id)
+
+    val saved = requireNotNull(bulkPlanRepository.findByIdOrNull(plan.id))
+    assertThat(saved.cleanupMode).isEqualTo(BulkAlertCleanupMode.KEEP_ALL)
   }
 
   private fun patchPlanResponseSpec(

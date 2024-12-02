@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Size
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkCreateAlertCleanupMode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode
 
 @Schema(
   description = "The request body for bulk creating alerts for multiple people",
@@ -38,5 +38,5 @@ data class BulkCreateAlerts(
     description = "The strategy to use when cleaning up existing alerts for people supplied list of prison numbers",
     example = "KEEP_ALL",
   )
-  val cleanupMode: BulkCreateAlertCleanupMode,
+  val cleanupMode: BulkAlertCleanupMode,
 )
