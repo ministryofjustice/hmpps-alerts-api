@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext.Companion.get
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
 import java.time.LocalDateTime
 import java.util.UUID
@@ -24,6 +25,9 @@ class BulkPlan(
   var alertCode: AlertCode? = null,
 
   var description: String? = null,
+
+  var cleanupMode: BulkAlertCleanupMode? = null,
+
   @Id
   val id: UUID = newUuid(),
 ) {

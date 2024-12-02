@@ -55,6 +55,15 @@ class PersonSummary(
     this.cellLocation = cellLocation
     this.supportingPrisonCode = supportingPrisonCode
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+    other as PersonSummary
+    return prisonNumber == other.prisonNumber
+  }
+
+  override fun hashCode(): Int = prisonNumber.hashCode()
 }
 
 fun PrisonerDetails.toPersonSummary() =

@@ -11,9 +11,13 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.getPlan
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.toPersonSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidRowException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlan
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanPrisoners
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.PrisonerSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.AddPrisonNumbers
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.RemovePrisonNumbers
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.SetAlertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.SetCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.SetDescription
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.getByCode
@@ -29,6 +33,12 @@ class PlanBulkAlert(
   private val prisonerSearch: PrisonerSearchClient,
 ) {
   fun createNew(): BulkPlan = planRepository.save(Plan()).toModel()
+
+  fun getAssociatedPrisoners(id: UUID): BulkPlanPrisoners {
+    val plan = planRepository.getPlan(id)
+    return BulkPlanPrisoners(plan.people.map { it.asPrisonerSummary() }.toSortedSet())
+  }
+
   fun update(id: UUID, actions: Set<BulkAction>): BulkPlan {
     val plan = planRepository.getPlan(id)
     actions.forEach { action ->
@@ -36,6 +46,8 @@ class PlanBulkAlert(
         is SetAlertCode -> plan.setAlertCode(action)
         is SetDescription -> plan.setDescription(action)
         is AddPrisonNumbers -> plan.addPrisonNumbers(action)
+        is RemovePrisonNumbers -> plan.removePrisonNumbers(action)
+        is SetCleanupMode -> plan.setCleanupMode(action)
       }
     }
     return plan.toModel()
@@ -50,8 +62,15 @@ class PlanBulkAlert(
   }
 
   private fun Plan.addPrisonNumbers(action: AddPrisonNumbers) {
-    this.people += action.prisonNumbers.validate()
-    // TODO further logic to add the actual alerts
+    people += action.prisonNumbers.validate()
+  }
+
+  private fun Plan.removePrisonNumbers(action: RemovePrisonNumbers) {
+    people.removeIf { it.prisonNumber in action.prisonNumbers }
+  }
+
+  private fun Plan.setCleanupMode(action: SetCleanupMode) {
+    cleanupMode = action.cleanupMode
   }
 
   private fun LinkedHashSet<String>.validate(): List<PersonSummary> {
@@ -76,3 +95,4 @@ class PlanBulkAlert(
 }
 
 fun Plan.toModel() = BulkPlan(id)
+fun PersonSummary.asPrisonerSummary() = PrisonerSummary(prisonNumber, firstName, lastName, prisonCode, cellLocation)
