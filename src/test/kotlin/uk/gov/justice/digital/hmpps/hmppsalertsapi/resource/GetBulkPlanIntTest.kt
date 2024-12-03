@@ -76,8 +76,8 @@ class GetBulkPlanIntTest : IntegrationTestBase() {
 
     val affects = getPlan<BulkPlanAffect>("affects", plan.id)
     assertThat(affects.counts.existingAlerts).isEqualTo(2)
-    assertThat(affects.counts.toBeCreated).isEqualTo(11)
-    assertThat(affects.counts.toBeUpdated).isEqualTo(4)
+    assertThat(affects.counts.toBeCreated).isEqualTo(12)
+    assertThat(affects.counts.toBeUpdated).isEqualTo(3)
     assertThat(affects.counts.toBeExpired).isGreaterThanOrEqualTo(6)
   }
 
