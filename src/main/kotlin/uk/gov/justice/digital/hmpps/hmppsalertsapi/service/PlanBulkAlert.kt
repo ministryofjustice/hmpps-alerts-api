@@ -7,10 +7,14 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext.Co
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.BulkPlanRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.PersonSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.PersonSummaryRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Status
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.getPlan
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.toPersonSummary
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidRowException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlan
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanAffect
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanCounts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanPrisoners
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.PrisonerSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.AddPrisonNumbers
@@ -37,6 +41,18 @@ class PlanBulkAlert(
   fun getAssociatedPrisoners(id: UUID): BulkPlanPrisoners {
     val plan = planRepository.getPlan(id)
     return BulkPlanPrisoners(plan.people.map { it.asPrisonerSummary() }.toSortedSet())
+  }
+
+  fun getPlanAffect(id: UUID): BulkPlanAffect {
+    val plan = planRepository.getPlan(id)
+    val alertCode = checkNotNull(plan.alertCode) {
+      "Unable to calculate affect of plan until the alert code is selected"
+    }
+    val cleanupMode = checkNotNull(plan.cleanupMode) {
+      "Unable to calculate affect of plan until the cleanup mode is selected"
+    }
+    val counts = planRepository.findPlanAffects(plan.id, alertCode.code).associate { it.status to it.count }
+    return BulkPlanAffect(counts.asBulkPlanCounts(cleanupMode))
   }
 
   fun update(id: UUID, actions: Set<BulkAction>): BulkPlan {
@@ -96,3 +112,12 @@ class PlanBulkAlert(
 
 fun Plan.toModel() = BulkPlan(id)
 fun PersonSummary.asPrisonerSummary() = PrisonerSummary(prisonNumber, firstName, lastName, prisonCode, cellLocation)
+fun Map<Status, Int>.asBulkPlanCounts(cleanupMode: BulkAlertCleanupMode): BulkPlanCounts = BulkPlanCounts(
+  getOrDefault(Status.ACTIVE, 0),
+  getOrDefault(Status.CREATE, 0),
+  getOrDefault(Status.UPDATE, 0),
+  when (cleanupMode) {
+    BulkAlertCleanupMode.KEEP_ALL -> 0
+    BulkAlertCleanupMode.EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED -> getOrDefault(Status.EXPIRE, 0)
+  },
+)

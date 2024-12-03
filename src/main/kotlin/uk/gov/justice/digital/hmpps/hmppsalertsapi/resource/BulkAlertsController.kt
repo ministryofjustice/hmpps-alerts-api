@@ -99,7 +99,7 @@ class BulkAlertsController(private val plan: PlanBulkAlert) {
     value = [
       ApiResponse(
         responseCode = "200",
-        description = "Alerts creation plan generated successfully",
+        description = "Successfully retrieved prisoners associated with a plan",
         content = [Content(schema = Schema(implementation = BulkAlertPlan::class))],
       ),
       ApiResponse(
@@ -121,4 +121,33 @@ class BulkAlertsController(private val plan: PlanBulkAlert) {
   )
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   fun getPlanPrisoners(@PathVariable id: UUID) = plan.getAssociatedPrisoners(id)
+
+  @GetMapping("/plan/{id}/affects")
+  @Operation(summary = "Get counts associated with a plan")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Successfully retrieved counts of affect of plan",
+        content = [Content(schema = Schema(implementation = BulkAlertPlan::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No plan found with the provided identifier",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  fun getPlanAffect(@PathVariable id: UUID) = plan.getPlanAffect(id)
 }
