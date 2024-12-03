@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity
 
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
@@ -9,6 +11,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.Version
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext.Companion.get
@@ -26,6 +29,7 @@ class BulkPlan(
 
   var description: String? = null,
 
+  @Enumerated(EnumType.STRING)
   var cleanupMode: BulkAlertCleanupMode? = null,
 
   @Id
@@ -47,6 +51,38 @@ class BulkPlan(
   val people: MutableSet<PersonSummary> = mutableSetOf()
 }
 
-interface BulkPlanRepository : JpaRepository<BulkPlan, UUID>
+interface BulkPlanRepository : JpaRepository<BulkPlan, UUID> {
+  @Query(
+    """
+    with existing_alerts as (select a.id as id, a.prisonNumber as pn, a.activeFrom as activeFrom, a.activeTo as activeTo
+                         from Alert a
+                         where a.alertCode.code = :alertCode),
+     prisoner_status as (select bp.id as id,
+                                pp.prisonNumber as pn,
+                                case
+                                    when psea.id is null then 'CREATE'
+                                    when psea.activeTo is null then 'ACTIVE'
+                                    else 'UPDATE'
+                                    end as stat
+                         from BulkPlan bp
+                         join bp.people pp
+                                left join existing_alerts psea on psea.pn = pp.prisonNumber
+                         where bp.id = :id)
+    select
+        case when ps.stat is null then 'EXPIRE' else ps.stat end as status, count(1) as count
+    from existing_alerts ea
+             full outer join prisoner_status ps on ea.pn = ps.pn
+    group by status 
+    """,
+  )
+  fun findPlanAffects(id: UUID, alertCode: String): List<PlanAffectCount>
+}
 
 fun BulkPlanRepository.getPlan(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Plan", id.toString())
+
+interface PlanAffectCount {
+  val status: Status
+  val count: Int
+}
+
+enum class Status { ACTIVE, CREATE, UPDATE, EXPIRE }

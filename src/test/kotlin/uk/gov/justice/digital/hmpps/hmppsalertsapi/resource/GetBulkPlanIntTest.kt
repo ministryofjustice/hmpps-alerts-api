@@ -8,8 +8,10 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.PersonSummary
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode.EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanAffect
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanPrisoners
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.PrisonerSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
@@ -60,14 +62,23 @@ class GetBulkPlanIntTest : IntegrationTestBase() {
       }
       (0..5).forEach { _ -> givenAlert(alert(prisonNumber(), alertCode)) }
 
-      val plan = givenBulkPlan(plan(alertCode).apply { people.addAll(existingPeople) })
+      val plan = givenBulkPlan(
+        plan(alertCode, "", EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED)
+          .apply { people.addAll(existingPeople) },
+      )
       plan to existingPeople
     }!!
 
-    val res = getPlan<BulkPlanPrisoners>("prisoners", plan.id)
-    res.prisoners.forEach {
+    val prisoners = getPlan<BulkPlanPrisoners>("prisoners", plan.id)
+    prisoners.prisoners.forEach {
       it.verifyAgainst(existingPeople.get(it.prisonNumber))
     }
+
+    val affects = getPlan<BulkPlanAffect>("affects", plan.id)
+    assertThat(affects.counts.existingAlerts).isEqualTo(2)
+    assertThat(affects.counts.toBeCreated).isEqualTo(11)
+    assertThat(affects.counts.toBeUpdated).isEqualTo(4)
+    assertThat(affects.counts.toBeExpired).isGreaterThanOrEqualTo(6)
   }
 
   private fun List<PersonSummary>.get(prisonNumber: String): PersonSummary = first { it.prisonNumber == prisonNumber }
@@ -88,7 +99,7 @@ class GetBulkPlanIntTest : IntegrationTestBase() {
 
   companion object {
     private const val BASE_URL = "/bulk-alerts/plan/{id}"
-    private val PATHS = listOf("prisoners")
+    private val PATHS = listOf("prisoners", "affects")
 
     @JvmStatic
     fun pathSource(): List<Arguments> = PATHS.map { Arguments.of(it) }

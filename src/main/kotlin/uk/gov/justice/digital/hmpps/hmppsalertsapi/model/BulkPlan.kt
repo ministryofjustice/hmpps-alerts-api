@@ -23,3 +23,6 @@ data class PrisonerSummary(
     return res
   }
 }
+
+data class BulkPlanAffect(val counts: BulkPlanCounts)
+data class BulkPlanCounts(val existingAlerts: Int, val toBeCreated: Int, val toBeUpdated: Int, val toBeExpired: Int)
