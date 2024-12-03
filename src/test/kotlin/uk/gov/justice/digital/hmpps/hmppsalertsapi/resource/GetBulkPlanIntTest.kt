@@ -5,10 +5,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.PersonSummary
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode.EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode.KEEP_ALL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanAffect
@@ -41,7 +44,37 @@ class GetBulkPlanIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `200 ok - can retrieve details from plan`() {
+  fun `400 bad request - cannot get affects if alert code not set`() {
+    val plan = transactionTemplate.execute {
+      val existingPeople = (1..5).map { givenPersonSummary(personSummary()) }
+      val alertCode = givenAlertCode()
+      givenAlert(alert(prisonNumber(), alertCode))
+      givenBulkPlan(plan(null, null, KEEP_ALL).apply { people.addAll(existingPeople) })
+    }!!
+
+    val res = getPlanResponseSpec("affects", plan.id).errorResponse(HttpStatus.BAD_REQUEST)
+    assertThat(res.status).isEqualTo(400)
+    assertThat(res.userMessage).isEqualTo("Validation failure: Unable to calculate affect of plan until the alert code is selected")
+  }
+
+  @Test
+  fun `400 bad request - cannot get affects if cleanup mode not set`() {
+    val plan = transactionTemplate.execute {
+      val existingPeople = (1..5).map { givenPersonSummary(personSummary()) }
+      val alertCode = givenAlertCode()
+      givenAlert(alert(prisonNumber(), alertCode))
+      givenBulkPlan(plan(alertCode, null, null).apply { people.addAll(existingPeople) })
+    }!!
+
+    val res = getPlanResponseSpec("affects", plan.id).errorResponse(HttpStatus.BAD_REQUEST)
+    assertThat(res.status).isEqualTo(400)
+    assertThat(res.userMessage).isEqualTo("Validation failure: Unable to calculate affect of plan until the cleanup mode is selected")
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["KEEP_ALL", "EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED"])
+  fun `200 ok - can retrieve details from plan`(cleanupModeString: String) {
+    val cleanupMode = BulkAlertCleanupMode.valueOf(cleanupModeString)
     val (plan, existingPeople) = transactionTemplate.execute {
       val existingPeople = (0..16).map { givenPersonSummary(personSummary()) }
       val alertCode = givenAlertCode()
@@ -63,7 +96,7 @@ class GetBulkPlanIntTest : IntegrationTestBase() {
       (0..5).forEach { _ -> givenAlert(alert(prisonNumber(), alertCode)) }
 
       val plan = givenBulkPlan(
-        plan(alertCode, "", EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED)
+        plan(alertCode, "A description for the bulk alert", cleanupMode)
           .apply { people.addAll(existingPeople) },
       )
       plan to existingPeople
@@ -78,7 +111,10 @@ class GetBulkPlanIntTest : IntegrationTestBase() {
     assertThat(affects.counts.existingAlerts).isEqualTo(2)
     assertThat(affects.counts.toBeCreated).isEqualTo(12)
     assertThat(affects.counts.toBeUpdated).isEqualTo(3)
-    assertThat(affects.counts.toBeExpired).isGreaterThanOrEqualTo(6)
+    when (cleanupMode) {
+      EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED -> assertThat(affects.counts.toBeExpired).isGreaterThanOrEqualTo(6)
+      KEEP_ALL -> assertThat(affects.counts.toBeExpired).isEqualTo(0)
+    }
   }
 
   private fun List<PersonSummary>.get(prisonNumber: String): PersonSummary = first { it.prisonNumber == prisonNumber }
