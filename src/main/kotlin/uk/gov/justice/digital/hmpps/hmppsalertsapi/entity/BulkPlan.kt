@@ -117,6 +117,15 @@ interface BulkPlanRepository : JpaRepository<BulkPlan, UUID> {
     """,
   )
   fun findPlanAffects(id: UUID, alertCode: String): List<PlanAffectCount>
+
+  @Query(
+    """
+    select plan from BulkPlan plan
+    join plan.people ppl
+    where ppl.prisonNumber = :prisonNumber
+    """,
+  )
+  fun findPlansWithPrisonNumber(prisonNumber: String): List<BulkPlan>
 }
 
 fun BulkPlanRepository.getPlan(id: UUID) = findByIdOrNull(id) ?: throw NotFoundException("Plan", id.toString())

@@ -139,6 +139,8 @@ class PlanBulkAlert(
 
   fun status(id: UUID): BulkPlanStatus = planRepository.getPlan(id).status()
 
+  fun findPlansFromPrisonNumber(prisonNumber: String) = planRepository.findPlansWithPrisonNumber(prisonNumber)
+
   private fun Plan.setAlertCode(action: SetAlertCode) {
     alertCode = alertCodeRepository.getByCode(action.alertCode)
   }

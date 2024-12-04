@@ -83,6 +83,7 @@ data class ReferenceDataAdditionalInformation(
 
 val HmppsAdditionalInformation.nomsNumber get() = get("nomsNumber") as String
 val HmppsAdditionalInformation.categoriesChanged get() = (get("categoriesChanged") as List<String>).toSet()
+val HmppsAdditionalInformation.removedNomsNumber get() = get("removedNomsNumber") as String
 
 object PersonChanged {
   val CATEGORIES_OF_INTEREST = setOf("PERSONAL_DETAILS", "STATUS", "LOCATION")
