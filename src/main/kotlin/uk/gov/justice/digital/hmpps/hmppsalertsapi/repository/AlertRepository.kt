@@ -22,12 +22,6 @@ interface AlertRepository : JpaRepository<Alert, UUID> {
   @EntityGraph(value = "alert")
   fun findByPrisonNumberAndAlertCodeCode(prisonNumber: String, alertCode: String): Collection<Alert>
 
-  @EntityGraph(value = "alert")
-  fun findByPrisonNumberInAndAlertCodeCode(prisonNumbers: Collection<String>, alertCode: String): Collection<Alert>
-
-  @EntityGraph(value = "alert")
-  fun findByPrisonNumberNotInAndAlertCodeCode(prisonNumbers: Collection<String>, alertCode: String): Collection<Alert>
-
   @Query(value = "select * from alert a where a.id = :alertUuid", nativeQuery = true)
   fun findByAlertUuidIncludingSoftDelete(alertUuid: UUID): Alert?
 
@@ -45,4 +39,16 @@ interface AlertRepository : JpaRepository<Alert, UUID> {
 
   @EntityGraph(value = "alert")
   fun findAllByActiveTo(activeTo: LocalDate): List<Alert>
+
+  @Query(
+    """
+    select a from Alert a
+    join fetch a.alertCode ac
+    join fetch ac.alertType at
+    join fetch a.auditEvents ae
+    where ac.code = :code
+    and (a.activeTo is null or a.activeTo > current_date)
+  """,
+  )
+  fun findAllActiveByCode(code: String): List<Alert>
 }

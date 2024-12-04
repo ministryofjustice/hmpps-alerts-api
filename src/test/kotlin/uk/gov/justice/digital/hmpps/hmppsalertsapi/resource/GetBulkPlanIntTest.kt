@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -8,6 +9,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.http.HttpStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.PersonSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode.EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED
@@ -15,10 +17,13 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanAffect
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanCounts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanPrisoners
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.PrisonerSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class GetBulkPlanIntTest : IntegrationTestBase() {
@@ -109,11 +114,27 @@ class GetBulkPlanIntTest : IntegrationTestBase() {
 
     val affects = getPlan<BulkPlanAffect>("affects", plan.id)
     assertThat(affects.counts.existingAlerts).isEqualTo(2)
-    assertThat(affects.counts.toBeCreated).isEqualTo(12)
-    assertThat(affects.counts.toBeUpdated).isEqualTo(3)
+    assertThat(affects.counts.created).isEqualTo(12)
+    assertThat(affects.counts.updated).isEqualTo(3)
     when (cleanupMode) {
-      EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED -> assertThat(affects.counts.toBeExpired).isGreaterThanOrEqualTo(6)
-      KEEP_ALL -> assertThat(affects.counts.toBeExpired).isEqualTo(0)
+      EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED -> assertThat(affects.counts.expired).isGreaterThanOrEqualTo(6)
+      KEEP_ALL -> assertThat(affects.counts.expired).isEqualTo(0)
+    }
+
+    val saved = bulkPlanRepository.save(
+      plan
+        .start(AlertRequestContext("STARTED_BY", "Started By Display Name"))
+        .completed(9, 3, 7, 12),
+    )
+
+    val status = getPlan<BulkPlanStatus>("status", plan.id)
+    with(status) {
+      assertThat(createdBy).isEqualTo(saved.createdBy)
+      assertThat(createdByDisplayName).isEqualTo(saved.createdByDisplayName)
+      assertThat(startedBy).isEqualTo(saved.startedBy)
+      assertThat(startedByDisplayName).isEqualTo(saved.startedByDisplayName)
+      assertThat(completedAt).isCloseTo(saved.completedAt, within(1, ChronoUnit.SECONDS))
+      assertThat(counts).isEqualTo(BulkPlanCounts(7, 9, 3, 12))
     }
   }
 
@@ -135,7 +156,7 @@ class GetBulkPlanIntTest : IntegrationTestBase() {
 
   companion object {
     private const val BASE_URL = "/bulk-alerts/plan/{id}"
-    private val PATHS = listOf("prisoners", "affects")
+    private val PATHS = listOf("prisoners", "affects", "status")
 
     @JvmStatic
     fun pathSource(): List<Arguments> = PATHS.map { Arguments.of(it) }

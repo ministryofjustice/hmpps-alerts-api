@@ -18,8 +18,11 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkAlertPlan
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlan
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanAffect
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanPrisoners
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.PlanBulkAlert
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
@@ -36,7 +39,7 @@ class BulkAlertsController(private val plan: PlanBulkAlert) {
       ApiResponse(
         responseCode = "201",
         description = "Alerts creation plan generated successfully",
-        content = [Content(schema = Schema(implementation = BulkAlertPlan::class))],
+        content = [Content(schema = Schema(implementation = BulkPlan::class))],
       ),
       ApiResponse(
         responseCode = "400",
@@ -68,7 +71,7 @@ class BulkAlertsController(private val plan: PlanBulkAlert) {
       ApiResponse(
         responseCode = "200",
         description = "Alerts creation plan generated successfully",
-        content = [Content(schema = Schema(implementation = BulkAlertPlan::class))],
+        content = [Content(schema = Schema(implementation = BulkPlan::class))],
       ),
       ApiResponse(
         responseCode = "400",
@@ -100,7 +103,7 @@ class BulkAlertsController(private val plan: PlanBulkAlert) {
       ApiResponse(
         responseCode = "200",
         description = "Successfully retrieved prisoners associated with a plan",
-        content = [Content(schema = Schema(implementation = BulkAlertPlan::class))],
+        content = [Content(schema = Schema(implementation = BulkPlanPrisoners::class))],
       ),
       ApiResponse(
         responseCode = "401",
@@ -120,7 +123,7 @@ class BulkAlertsController(private val plan: PlanBulkAlert) {
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
-  fun getPlanPrisoners(@PathVariable id: UUID) = plan.getAssociatedPrisoners(id)
+  fun getPlanPrisoners(@PathVariable id: UUID): BulkPlanPrisoners = plan.getAssociatedPrisoners(id)
 
   @GetMapping("/plan/{id}/affects")
   @Operation(summary = "Get counts associated with a plan")
@@ -129,7 +132,7 @@ class BulkAlertsController(private val plan: PlanBulkAlert) {
       ApiResponse(
         responseCode = "200",
         description = "Successfully retrieved counts of affect of plan",
-        content = [Content(schema = Schema(implementation = BulkAlertPlan::class))],
+        content = [Content(schema = Schema(implementation = BulkPlanAffect::class))],
       ),
       ApiResponse(
         responseCode = "401",
@@ -149,5 +152,62 @@ class BulkAlertsController(private val plan: PlanBulkAlert) {
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
-  fun getPlanAffect(@PathVariable id: UUID) = plan.getPlanAffect(id)
+  fun getPlanAffect(@PathVariable id: UUID): BulkPlanAffect = plan.getPlanAffect(id)
+
+  @PostMapping("/plan/{id}/start")
+  @Operation(summary = "Start the plan for bulk alerts")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "202",
+        description = "Start plan accepted - will run asynchronously",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @ResponseStatus(HttpStatus.ACCEPTED)
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @UsernameHeader
+  @SourceHeader
+  fun startPlan(@PathVariable id: UUID) {
+    plan.start(id, AlertRequestContext.get())
+  }
+
+  @GetMapping("/plan/{id}/status")
+  @Operation(summary = "Get the status of a plan")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Successfully retrieved the status of a plan",
+        content = [Content(schema = Schema(implementation = BulkPlanStatus::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No plan found with the provided identifier",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  fun getPlanStatus(@PathVariable id: UUID): BulkPlanStatus = plan.status(id)
 }

@@ -14,6 +14,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext.Companion.get
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
@@ -49,6 +50,45 @@ class BulkPlan(
     inverseJoinColumns = [JoinColumn(name = "prison_number")],
   )
   val people: MutableSet<PersonSummary> = mutableSetOf()
+
+  var startedAt: LocalDateTime? = null
+  var startedBy: String? = null
+  var startedByDisplayName: String? = null
+
+  var completedAt: LocalDateTime? = null
+  var createdCount: Int? = null
+  var updatedCount: Int? = null
+  var unchangedCount: Int? = null
+  var expiredCount: Int? = null
+
+  fun ready(): Pair<AlertCode, BulkAlertCleanupMode> {
+    val alertCode = checkNotNull(alertCode) {
+      "Unable to calculate affect of plan until the alert code is selected"
+    }
+    val cleanupMode = checkNotNull(cleanupMode) {
+      "Unable to calculate affect of plan until the cleanup mode is selected"
+    }
+    return alertCode to cleanupMode
+  }
+
+  fun start(context: AlertRequestContext) = apply {
+    startedAt = context.requestAt
+    startedBy = context.username
+    startedByDisplayName = context.userDisplayName
+  }
+
+  fun completed(created: Int, updated: Int, unchanged: Int, expired: Int) = apply {
+    completedAt = LocalDateTime.now()
+    createdCount = created
+    updatedCount = updated
+    unchangedCount = unchanged
+    expiredCount = expired
+  }
+
+  companion object {
+    const val BULK_ALERT_USERNAME = "BULK_ALERTS"
+    const val BULK_ALERT_DISPLAY_NAME = "Bulk Alerts Operation"
+  }
 }
 
 interface BulkPlanRepository : JpaRepository<BulkPlan, UUID> {
