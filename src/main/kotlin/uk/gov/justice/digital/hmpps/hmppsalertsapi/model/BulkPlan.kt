@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.model
 
+import java.time.LocalDateTime
 import java.util.SequencedSet
 import java.util.UUID
 
@@ -25,4 +26,15 @@ data class PrisonerSummary(
 }
 
 data class BulkPlanAffect(val counts: BulkPlanCounts)
-data class BulkPlanCounts(val existingAlerts: Int, val toBeCreated: Int, val toBeUpdated: Int, val toBeExpired: Int)
+data class BulkPlanCounts(val existingAlerts: Int, val created: Int, val updated: Int, val expired: Int)
+
+data class BulkPlanStatus(
+  val createdAt: LocalDateTime?,
+  val createdBy: String?,
+  var createdByDisplayName: String?,
+  val startedAt: LocalDateTime?,
+  val startedBy: String?,
+  var startedByDisplayName: String?,
+  val completedAt: LocalDateTime?,
+  val counts: BulkPlanCounts?,
+)

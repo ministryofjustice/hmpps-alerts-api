@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlan
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanAffect
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanCounts
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanPrisoners
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.PrisonerSummary
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.AddPrisonNumbers
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkAction
@@ -136,6 +137,8 @@ class PlanBulkAlert(
     )
   }
 
+  fun status(id: UUID): BulkPlanStatus = planRepository.getPlan(id).status()
+
   private fun Plan.setAlertCode(action: SetAlertCode) {
     alertCode = alertCodeRepository.getByCode(action.alertCode)
   }
@@ -202,11 +205,24 @@ fun Plan.createAlert(prisonNumber: String): Alert {
 fun Plan.toModel() = BulkPlan(id)
 fun PersonSummary.asPrisonerSummary() = PrisonerSummary(prisonNumber, firstName, lastName, prisonCode, cellLocation)
 fun Map<Status, Int>.asBulkPlanCounts(cleanupMode: BulkAlertCleanupMode): BulkPlanCounts = BulkPlanCounts(
-  getOrDefault(Status.ACTIVE, 0),
+  getOrDefault(ACTIVE, 0),
   getOrDefault(CREATE, 0),
-  getOrDefault(Status.UPDATE, 0),
+  getOrDefault(UPDATE, 0),
   when (cleanupMode) {
     BulkAlertCleanupMode.KEEP_ALL -> 0
     EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED -> getOrDefault(Status.EXPIRE, 0)
   },
 )
+
+fun Plan.status() = BulkPlanStatus(
+  createdAt,
+  createdBy,
+  createdByDisplayName,
+  startedAt,
+  startedBy,
+  startedByDisplayName,
+  completedAt,
+  completedAt?.let { counts() },
+)
+
+fun Plan.counts() = BulkPlanCounts(unchangedCount ?: 0, createdCount ?: 0, updatedCount ?: 0, expiredCount ?: 0)

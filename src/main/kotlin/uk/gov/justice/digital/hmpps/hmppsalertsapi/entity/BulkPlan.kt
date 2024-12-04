@@ -77,7 +77,7 @@ class BulkPlan(
     startedByDisplayName = context.userDisplayName
   }
 
-  fun completed(created: Int, updated: Int, unchanged: Int, expired: Int) {
+  fun completed(created: Int, updated: Int, unchanged: Int, expired: Int) = apply {
     completedAt = LocalDateTime.now()
     createdCount = created
     updatedCount = updated

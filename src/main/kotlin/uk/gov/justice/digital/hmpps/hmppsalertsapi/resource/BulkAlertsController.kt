@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlan
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanAffect
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanPrisoners
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.PlanBulkAlert
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
@@ -162,11 +163,6 @@ class BulkAlertsController(private val plan: PlanBulkAlert) {
         description = "Start plan accepted - will run asynchronously",
       ),
       ApiResponse(
-        responseCode = "400",
-        description = "Bad request",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
         responseCode = "401",
         description = "Unauthorised, requires a valid Oauth2 token",
         content = [Content(schema = Schema(implementation = ErrorResponse::class))],
@@ -185,4 +181,33 @@ class BulkAlertsController(private val plan: PlanBulkAlert) {
   fun startPlan(@PathVariable id: UUID) {
     plan.start(id, AlertRequestContext.get())
   }
+
+  @GetMapping("/plan/{id}/status")
+  @Operation(summary = "Get the status of a plan")
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Successfully retrieved the status of a plan",
+        content = [Content(schema = Schema(implementation = BulkPlanStatus::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "No plan found with the provided identifier",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  fun getPlanStatus(@PathVariable id: UUID): BulkPlanStatus = plan.status(id)
 }
