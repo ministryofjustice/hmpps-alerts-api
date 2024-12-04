@@ -12,6 +12,8 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupM
     JsonSubTypes.Type(value = SetAlertCode::class, name = "SetAlertCode"),
     JsonSubTypes.Type(value = SetDescription::class, name = "SetDescription"),
     JsonSubTypes.Type(value = AddPrisonNumbers::class, name = "AddPrisonNumbers"),
+    JsonSubTypes.Type(value = RemovePrisonNumbers::class, name = "RemovePrisonNumbers"),
+    JsonSubTypes.Type(value = SetCleanupMode::class, name = "SetCleanupMode"),
   ],
 )
 sealed interface BulkAction {
