@@ -16,6 +16,8 @@ For detailed insights into the architectural decisions made during the developme
 - [ADR004: Prisoner and booking changes in NOMIS triggers a prisoner alerts resync](architectural_design_record/004-prisoner-alerts-resync.md)
 - [ADR005: Prisoner alerts data flattening implemented as a NOMIS data fix](architectural_design_record/005-alerts-flattening-data-fix.md)
 - [ADR006: Prisoner alerts data extraction for Analytics Platform](architectural_design_record/006-analytics-platform.md)
+- [ADR007: NOMIS system audit columns will be migrated however full audit history will not](architectural_design_record/007-system-audit-columns-will-be-migrated.md)
+- [ADR008: Historic Prisoner Alerts data fix will not be run in production](architectural_design_record/008-no-historic-alerts-data-fix.md)
 
 ## HMPPS Project Setup instructions
 
