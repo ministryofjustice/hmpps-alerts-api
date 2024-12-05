@@ -48,7 +48,6 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
   @ParameterizedTest
   @ValueSource(strings = ["EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED", "KEEP_ALL"])
   fun `202 accepted - can start a plan`(cleanupModeString: String) {
-    `clear queues`()
     val cleanupMode = BulkAlertCleanupMode.valueOf(cleanupModeString)
     val (plan, people) = transactionTemplate.execute {
       val existingPeople = (0..16).map { givenPersonSummary(personSummary()) }
