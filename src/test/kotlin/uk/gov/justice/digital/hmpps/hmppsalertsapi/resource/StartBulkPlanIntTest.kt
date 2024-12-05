@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction.
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode.EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode.KEEP_ALL
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
@@ -47,6 +48,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
   @ParameterizedTest
   @ValueSource(strings = ["EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED", "KEEP_ALL"])
   fun `202 accepted - can start a plan`(cleanupModeString: String) {
+    `clear queues`()
     val cleanupMode = BulkAlertCleanupMode.valueOf(cleanupModeString)
     val (plan, people) = transactionTemplate.execute {
       val existingPeople = (0..16).map { givenPersonSummary(personSummary()) }
@@ -123,6 +125,20 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
         }
       }
     }
+
+    await withPollDelay ofSeconds(5) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches {
+      (it ?: 0) >= 30
+    }
+    val messages = hmppsEventsQueue.receiveAllMessages()
+    val created = messages.filter { it.eventType == DomainEventType.ALERT_CREATED.eventType }
+    assertThat(created).hasSize(12)
+    val updated = messages.filter { it.eventType == DomainEventType.ALERT_UPDATED.eventType }
+    assertThat(updated).hasSize(3)
+    assertThat((created + updated).mapNotNull { it.personReference.findNomsNumber() } - prisonNumbers).isEmpty()
+    val expired = messages.filter { it.eventType == DomainEventType.ALERT_INACTIVE.eventType }
+    assertThat(expired).hasSize(saved.expiredCount ?: 0)
+    val personAlertsChanged = messages.filter { it.eventType == DomainEventType.PERSON_ALERTS_CHANGED.eventType }
+    assertThat(personAlertsChanged).hasSizeGreaterThanOrEqualTo(15)
   }
 
   private fun startPlanResponseSpec(
