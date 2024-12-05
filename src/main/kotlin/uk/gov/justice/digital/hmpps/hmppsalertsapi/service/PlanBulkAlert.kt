@@ -4,6 +4,7 @@ import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.PrisonerSearchClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PublishPersonAlertsChanged
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext.Companion.PRISON_NUMBER_REGEX
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
@@ -80,6 +81,7 @@ class PlanBulkAlert(
   }
 
   @Async
+  @PublishPersonAlertsChanged
   fun start(id: UUID, context: AlertRequestContext) {
     val plan = planRepository.getPlan(id)
     val (alertCode, cleanupMode) = plan.ready()
