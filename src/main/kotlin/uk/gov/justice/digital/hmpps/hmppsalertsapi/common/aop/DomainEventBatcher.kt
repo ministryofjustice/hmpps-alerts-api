@@ -4,6 +4,8 @@ import org.aspectj.lang.annotation.After
 import org.aspectj.lang.annotation.Aspect
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
+import org.springframework.transaction.event.TransactionPhase
+import org.springframework.transaction.event.TransactionalEventListener
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.DomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.event.DomainEventPublisher
 import java.lang.ThreadLocal.withInitial
@@ -19,6 +21,11 @@ class DomainEventBatcher(
   fun batchEvent(event: DomainEvent) {
     batchedEvents.get().add(event)
     if (batchedEvents.get().size >= eventBatchSize) batchComplete()
+  }
+
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  fun handleEvent(event: BatchCompleteEvent) {
+    batchComplete()
   }
 
   @After(

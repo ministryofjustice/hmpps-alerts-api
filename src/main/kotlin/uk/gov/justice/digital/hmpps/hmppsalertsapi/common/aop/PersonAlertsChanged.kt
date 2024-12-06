@@ -31,6 +31,7 @@ class PersonAlertsChanged(private val eventPublisher: ApplicationEventPublisher)
   fun publish() {
     prisonerNumbers.get().forEach(::publishPersonAlertsChanged)
     prisonerNumbers.get().clear()
+    eventPublisher.publishEvent(BatchCompleteEvent)
   }
 
   private fun publishPersonAlertsChanged(prisonNumber: String) {
@@ -49,3 +50,5 @@ class PersonAlertsChanged(private val eventPublisher: ApplicationEventPublisher)
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
 annotation class PublishPersonAlertsChanged
+
+data object BatchCompleteEvent

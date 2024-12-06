@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.NullSource
 import org.junit.jupiter.params.provider.ValueSource
+import org.springframework.data.repository.findByIdOrNull
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.BulkPlan.Companion.BULK_ALERT_DISPLAY_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.BulkPlan.Companion.BULK_ALERT_USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Status
@@ -67,7 +68,15 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
           )
         }
       }
-      (0..5).forEach { _ -> givenAlert(alert(prisonNumber(), alertCode)) }
+      (0..5).forEachIndexed { i, _ ->
+        givenAlert(
+          alert(
+            prisonNumber(),
+            alertCode,
+            activeTo = if (i % 2 == 0) LocalDate.now().plusDays(10) else null,
+          ),
+        )
+      }
 
       val plan = givenBulkPlan(
         plan(alertCode, "A description for the bulk alert", cleanupMode)
@@ -95,12 +104,13 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     assertThat(saved.updatedCount).isEqualTo(3)
     assertThat(saved.unchangedCount).isEqualTo(2)
     when (cleanupMode) {
-      EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED -> assertThat(saved.expiredCount).isGreaterThanOrEqualTo(6)
+      EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED -> assertThat(saved.expiredCount).isEqualTo(existingAlertsToExpire.size)
       KEEP_ALL -> assertThat(saved.expiredCount).isEqualTo(0)
     }
 
     val alerts = alertRepository.findAllActiveByCode("XSA").filter { it.prisonNumber in prisonNumbers }
     assertThat(alerts.size).isEqualTo(17)
+    assertThat(alerts.map { it.activeTo }.all { it == null }).isTrue()
 
     val results = alerts.map {
       val auditEvent = it.auditEvents().first()
@@ -116,7 +126,10 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     assertThat(results[Status.ACTIVE]).hasSize(2)
 
     if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) {
-      existingAlertsToExpire.mapNotNull { alertRepository.findByAlertUuidIncludingSoftDelete(it.id) }.forEach {
+      val expired = existingAlertsToExpire.map { alertRepository.findByIdOrNull(it.id)!! }
+      assertThat(expired).hasSize(existingAlertsToExpire.size)
+      expired.forEach {
+        assertThat(it.activeTo).isEqualTo(LocalDate.now())
         with(it.auditEvents().first()) {
           assertThat(action).isEqualTo(AuditEventAction.INACTIVE)
           assertThat(actionedBy).isEqualTo(BULK_ALERT_USERNAME)
@@ -126,7 +139,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     }
 
     await withPollDelay ofSeconds(5) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches {
-      (it ?: 0) >= 30
+      it == (30 + (2 * (saved.expiredCount ?: 0)))
     }
     val messages = hmppsEventsQueue.receiveAllMessages()
     val created = messages.filter { it.eventType == DomainEventType.ALERT_CREATED.eventType }
@@ -134,10 +147,12 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     val updated = messages.filter { it.eventType == DomainEventType.ALERT_UPDATED.eventType }
     assertThat(updated).hasSize(3)
     assertThat((created + updated).mapNotNull { it.personReference.findNomsNumber() } - prisonNumbers).isEmpty()
-    val expired = messages.filter { it.eventType == DomainEventType.ALERT_INACTIVE.eventType }
-    assertThat(expired).hasSize(saved.expiredCount ?: 0)
+    if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) {
+      val expired = messages.filter { it.eventType == DomainEventType.ALERT_INACTIVE.eventType }
+      assertThat(expired).hasSize(saved.expiredCount ?: 0)
+    }
     val personAlertsChanged = messages.filter { it.eventType == DomainEventType.PERSON_ALERTS_CHANGED.eventType }
-    assertThat(personAlertsChanged).hasSizeGreaterThanOrEqualTo(15)
+    assertThat(personAlertsChanged).hasSize(15 + (saved.expiredCount ?: 0))
   }
 
   private fun startPlanResponseSpec(
