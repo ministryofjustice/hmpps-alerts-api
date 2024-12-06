@@ -64,6 +64,11 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
                 index % 5 == 0 -> LocalDate.now()
                 else -> null
               },
+              deletedAt = if (index % 4 == 0) {
+                LocalDateTime.now().minusDays(1)
+              } else {
+                null
+              },
             ),
           )
         }
@@ -74,6 +79,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
             prisonNumber(),
             alertCode,
             activeTo = if (i % 2 == 0) LocalDate.now().plusDays(10) else null,
+            deletedAt = if (i % 5 == 0) LocalDateTime.now().minusDays(1) else null,
           ),
         )
       }
@@ -100,8 +106,8 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     assertThat(saved.startedAt!!).isCloseTo(startTime, within(5, ChronoUnit.SECONDS))
     assertThat(saved.startedBy).isEqualTo(TEST_USER)
     assertThat(saved.startedByDisplayName).isEqualTo(TEST_USER_NAME)
-    assertThat(saved.createdCount).isEqualTo(12)
-    assertThat(saved.updatedCount).isEqualTo(3)
+    assertThat(saved.createdCount).isEqualTo(14)
+    assertThat(saved.updatedCount).isEqualTo(1)
     assertThat(saved.unchangedCount).isEqualTo(2)
     when (cleanupMode) {
       EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED -> assertThat(saved.expiredCount).isEqualTo(existingAlertsToExpire.size)
@@ -121,8 +127,8 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
       }
     }.groupBy({ it.first }, { it.second })
 
-    assertThat(results[Status.CREATE]).hasSize(12)
-    assertThat(results[Status.UPDATE]).hasSize(3)
+    assertThat(results[Status.CREATE]).hasSize(14)
+    assertThat(results[Status.UPDATE]).hasSize(1)
     assertThat(results[Status.ACTIVE]).hasSize(2)
 
     if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) {
@@ -139,20 +145,20 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     }
 
     await withPollDelay ofSeconds(5) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches {
-      it == (30 + (2 * (saved.expiredCount ?: 0)))
+      it == (30 + (2 * saved.expiredCount!!)) + if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) 4 else 0
     }
     val messages = hmppsEventsQueue.receiveAllMessages()
     val created = messages.filter { it.eventType == DomainEventType.ALERT_CREATED.eventType }
-    assertThat(created).hasSize(12)
+    assertThat(created).hasSize(saved.createdCount!!)
     val updated = messages.filter { it.eventType == DomainEventType.ALERT_UPDATED.eventType }
-    assertThat(updated).hasSize(3)
-    assertThat((created + updated).mapNotNull { it.personReference.findNomsNumber() } - prisonNumbers).isEmpty()
+    assertThat(updated).hasSize(saved.updatedCount!! + saved.expiredCount!!)
+    assertThat((created + updated).mapNotNull { it.personReference.findNomsNumber() } - prisonNumbers).hasSize(saved.expiredCount!!)
     if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) {
       val expired = messages.filter { it.eventType == DomainEventType.ALERT_INACTIVE.eventType }
-      assertThat(expired).hasSize(saved.expiredCount ?: 0)
+      assertThat(expired).hasSize(saved.expiredCount!!)
     }
     val personAlertsChanged = messages.filter { it.eventType == DomainEventType.PERSON_ALERTS_CHANGED.eventType }
-    assertThat(personAlertsChanged).hasSize(15 + (saved.expiredCount ?: 0))
+    assertThat(personAlertsChanged).hasSize(15 + saved.expiredCount!!)
   }
 
   private fun startPlanResponseSpec(
