@@ -97,7 +97,8 @@ interface BulkPlanRepository : JpaRepository<BulkPlan, UUID> {
     with existing_alerts as (select a.id as id, a.prisonNumber as pn, a.activeFrom as activeFrom, a.activeTo as activeTo
                          from Alert a
                          where a.alertCode.code = :alertCode
-                            and a.activeTo is null or a.activeTo > current_date),
+                            and (a.activeTo is null or a.activeTo > current_date)
+                            and a.deletedAt is null),
      prisoner_status as (select bp.id as id,
                                 pp.prisonNumber as pn,
                                 case
