@@ -102,7 +102,34 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
 
     with(res) {
       assertThat(status).isEqualTo(400)
-      assertThat(userMessage).isEqualTo("Prison number from rows 2, 4 were invalid")
+      assertThat(userMessage).isEqualTo("The prison numbers from rows 2 and 4 were not recognised")
+    }
+  }
+
+  @Test
+  fun `400 bad request - more than three invalid prison numbers`() {
+    val plan = givenBulkPlan(plan())
+    val res = patchPlanResponseSpec(
+      plan.id,
+      setOf(
+        AddPrisonNumbers(
+          newLinkedHashSet<String?>(5).apply {
+            add(prisonNumber())
+            add("Invalid")
+            add(prisonNumber())
+            add("ANOTHER_INVALID")
+            add(prisonNumber())
+            add("SomeOtherText")
+            add("Final Issue")
+            add(prisonNumber())
+          },
+        ),
+      ),
+    ).errorResponse(HttpStatus.BAD_REQUEST)
+
+    with(res) {
+      assertThat(status).isEqualTo(400)
+      assertThat(userMessage).isEqualTo("The prison numbers from the following rows were not recognised: 2, 4, 6, 7")
     }
   }
 
@@ -125,7 +152,7 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
 
     with(res) {
       assertThat(status).isEqualTo(400)
-      assertThat(userMessage).isEqualTo("Prison number from row 1 was invalid")
+      assertThat(userMessage).isEqualTo("The prison number from row 1 was not recognised")
     }
   }
 
