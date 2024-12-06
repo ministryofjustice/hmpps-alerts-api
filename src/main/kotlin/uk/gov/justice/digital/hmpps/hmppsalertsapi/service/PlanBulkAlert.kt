@@ -102,7 +102,7 @@ class PlanBulkAlert(
               alert.authorisedBy,
               alert.activeFrom,
               null,
-              updatedAt = AlertRequestContext.get().requestAt,
+              updatedAt = context.requestAt,
               updatedBy = BULK_ALERT_USERNAME,
               updatedByDisplayName = BULK_ALERT_DISPLAY_NAME,
               source = Source.DPS,
@@ -117,7 +117,11 @@ class PlanBulkAlert(
     val prisonNumbers = plan.people.map { it.prisonNumber }.toSet()
     val toExpire: List<Alert> = if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) {
       val toExpire = existingAlerts.values.filter { it.prisonNumber !in prisonNumbers }.map {
-        it.apply { it.activeTo = LocalDate.now() }.deactivate(
+        it.update(
+          it.description,
+          it.authorisedBy,
+          it.activeFrom,
+          LocalDate.now(),
           updatedAt = context.requestAt,
           updatedBy = BULK_ALERT_USERNAME,
           updatedByDisplayName = BULK_ALERT_DISPLAY_NAME,
