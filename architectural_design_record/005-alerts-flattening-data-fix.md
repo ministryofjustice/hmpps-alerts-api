@@ -1,6 +1,6 @@
 # ADR005: Prisoner Alerts data flattening implemented as a NOMIS data fix
 
-## Status: Accepted by Claire Fraiser and Paul Morris from the classic NOMIS team and Darren Betts-Graves
+## Status: Superseded by [ADR008](008-no-historic-alerts-data-fix.md). Originally accepted by Claire Fraiser and Paul Morris from the classic NOMIS team and Darren Betts-Graves
 
 ## Context
 
