@@ -1,7 +1,7 @@
 erDiagram
-    alert one to one or more audit_event : "detailed change history"
-    alert many to one alert_code : "categorised by"
-    alert_code one to one or more alert_type : "grouped by"
+    alert one to one or more audit_event: "detailed change history"
+    alert many to one alert_code: "categorised by"
+    alert_code one to one or more alert_type: "grouped by"
 
     alert {
         bigserial alert_id PK "not null"
@@ -23,7 +23,7 @@ erDiagram
         varchar(40) action "not null"
         text description "not null"
         timestamp actioned_at "not null"
-        varchar(32) actioned_by "not null"
+        varchar(64) actioned_by "not null"
         varchar(255) actioned_by_display_name "not null"
         varchar(12) source "not null"
         varchar(6) active_case_load_id
@@ -40,11 +40,11 @@ erDiagram
         varchar(40) description "not null"
         integer list_sequence
         timestamp created_at "not null"
-        varchar(32) created_by "not null"
+        varchar(64) created_by "not null"
         timestamp modified_at
-        varchar(32) modified_by
+        varchar(64) modified_by
         timestamp deactivated_at
-        varchar(32) deactivated_by
+        varchar(64) deactivated_by
     }
 
     alert_type {
@@ -53,27 +53,11 @@ erDiagram
         varchar(40) description "not null"
         integer list_sequence
         timestamp created_at "not null"
-        varchar(32) created_by "not null"
+        varchar(64) created_by "not null"
         timestamp modified_at
-        varchar(32) modified_by
+        varchar(64) modified_by
         timestamp deactivated_at
-        varchar(32) deactivated_by
-    }
-
-    bulk_alert {
-        bigserial bulk_alert_id PK "not null"
-        uuid bulk_alert_uuid "not null"
-        jsonb request "not null"
-        timestamp requested_at "not null"
-        varchar(32) requested_by "not null"
-        varchar(255) requested_by_display_name "not null"
-        timestamp completed_at "not null"
-        boolean successful "not null"
-        jsonb messages "not null"
-        jsonb existing_active_alerts "not null"
-        jsonb alerts_created "not null"
-        jsonb alerts_updated "not null"
-        jsonb alerts_expired "not null"
+        varchar(64) deactivated_by
     }
 
     resync_audit {
@@ -81,10 +65,21 @@ erDiagram
         varchar(10) prison_number "not null"
         jsonb request "not null"
         timestamp requested_at "not null"
-        varchar(32) requested_by "not null"
+        varchar(64) requested_by "not null"
         varchar(255) requested_by_display_name "not null"
         varchar(12) source "not null"
         timestamp completed_at "not null"
         uuid[] alerts_deleted "not null"
         uuid[] alerts_created "not null"
+    }
+
+    bulk_plan {
+        uuid id PK "not null",
+        integer alert_code_id,
+        text description,
+        integer version       "not null",
+        timestamp created_at "not null",
+        varchar(64) created_by "not null",
+        varchar(255) created_by_display_name "not null",
+        varchar(64) cleanup_mode
     }
