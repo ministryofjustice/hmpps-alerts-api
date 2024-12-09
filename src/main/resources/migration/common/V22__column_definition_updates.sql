@@ -1,5 +1,7 @@
 alter table bulk_plan
-    alter column description type text;
+    alter column description type text,
+    alter column created_by type varchar(64),
+    alter column started_by type varchar(64);
 
 alter table alert_code
     alter column created_by type varchar(64),

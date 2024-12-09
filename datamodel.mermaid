@@ -2,10 +2,11 @@ erDiagram
     alert one to one or more audit_event: "detailed change history"
     alert many to one alert_code: "categorised by"
     alert_code one to one or more alert_type: "grouped by"
+    bulk_plan one to one or more plan_person : "plan for"
+    plan_person one to one or more person_summary : ""
 
     alert {
-        bigserial alert_id PK "not null"
-        uuid alert_uuid "public unique id"
+        uuid id PK "not null"
         bigint alert_code_id "not null"
         varchar(10) prison_number "not null"
         text description
@@ -15,11 +16,12 @@ erDiagram
         timestamp created_at
         timestamp last_modified_at
         timestamp deleted_at
+        varchar(6) prison_code_when_created
     }
 
     audit_event {
-        bigserial audit_event_id PK "not null"
-        bigserial alert_id FK "not null"
+        uuid id PK "not null"
+        uuid alert_id FK "not null"
         varchar(40) action "not null"
         text description "not null"
         timestamp actioned_at "not null"
@@ -60,8 +62,42 @@ erDiagram
         varchar(64) deactivated_by
     }
 
+    bulk_plan {
+        uuid id PK "not null"
+        integer alert_code_id
+        text description
+        timestamp created_at "not null"
+        varchar(64) created_by "not null"
+        varchar(255) created_by_display_name "not null"
+        varchar(64) cleanup_mode
+        timestamp started_at "not null"
+        varchar(64) started_by "not null"
+        varchar(255) started_by_display_name "not null"
+        timestamp completed_at "not null"
+        integer created_count
+        integer updated_count
+        integer unchanged_count
+        integer expired_count
+    }
+
+    plan_person {
+        uuid plan_id FK "not null"
+        varchar(10) prison_number FK "not null"
+    }
+
+    person_summary {
+        varchar(10) prison_number PK "not null"
+        varchar(64) first_name "not null"
+        varchar(64) last_name "not null"
+        varchar(16) status "not null"
+        boolean restricted_patient "not null"
+        varchar(16) prison_code
+        varchar(64) cell_location
+        varchar(16) supporting_prison_code
+    }
+
     resync_audit {
-        bigserial resync_audit_id PK "not null"
+        bigint id PK "not null"
         varchar(10) prison_number "not null"
         jsonb request "not null"
         timestamp requested_at "not null"
@@ -71,15 +107,4 @@ erDiagram
         timestamp completed_at "not null"
         uuid[] alerts_deleted "not null"
         uuid[] alerts_created "not null"
-    }
-
-    bulk_plan {
-        uuid id PK "not null",
-        integer alert_code_id,
-        text description,
-        integer version       "not null",
-        timestamp created_at "not null",
-        varchar(64) created_by "not null",
-        varchar(255) created_by_display_name "not null",
-        varchar(64) cleanup_mode
     }
