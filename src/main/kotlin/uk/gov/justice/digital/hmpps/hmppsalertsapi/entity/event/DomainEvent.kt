@@ -53,7 +53,6 @@ data class HmppsAdditionalInformation(private val mutableMap: MutableMap<String,
 
 interface AlertBaseAdditionalInformation : AdditionalInformation {
   val source: Source
-  fun identifier(): String
 }
 
 data class AlertDomainEvent<T : AlertBaseAdditionalInformation>(
@@ -70,16 +69,12 @@ data class AlertAdditionalInformation(
   val alertUuid: UUID,
   val alertCode: String,
   override val source: Source,
-) : AlertBaseAdditionalInformation {
-  override fun identifier(): String = alertUuid.toString()
-}
+) : AlertBaseAdditionalInformation
 
 data class ReferenceDataAdditionalInformation(
   val alertCode: String,
   override val source: Source,
-) : AlertBaseAdditionalInformation {
-  override fun identifier(): String = alertCode
-}
+) : AlertBaseAdditionalInformation
 
 val HmppsAdditionalInformation.nomsNumber get() = get("nomsNumber") as String
 val HmppsAdditionalInformation.categoriesChanged get() = (get("categoriesChanged") as List<String>).toSet()
