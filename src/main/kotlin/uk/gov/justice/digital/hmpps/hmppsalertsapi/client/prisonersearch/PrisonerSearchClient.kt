@@ -32,15 +32,18 @@ class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val web
       "Batch size must be between 1 and 1000"
     }
     if (prisonNumbers.isEmpty()) return emptyList()
-    return Flux.fromIterable(prisonNumbers).buffer(batchSize).flatMap {
-      webClient
-        .post()
-        .uri("/prisoner-search/prisoner-numbers")
-        .bodyValue(PrisonerNumbersDto(it))
-        .retrieve()
-        .bodyToFlux<PrisonerDetails>()
-        .retryNetworkExceptions("Get prisoner request failed")
-    }.collectList()
+    return Flux.fromIterable(prisonNumbers).buffer(batchSize).flatMap(
+      {
+        webClient
+          .post()
+          .uri("/prisoner-search/prisoner-numbers")
+          .bodyValue(PrisonerNumbersDto(it))
+          .retrieve()
+          .bodyToFlux<PrisonerDetails>()
+          .retryNetworkExceptions("Get prisoner request failed")
+      },
+      5,
+    ).collectList()
       .block()!!
   }
 }
