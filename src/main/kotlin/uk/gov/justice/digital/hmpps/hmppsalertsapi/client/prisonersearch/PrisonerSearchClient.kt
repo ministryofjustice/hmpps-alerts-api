@@ -33,16 +33,16 @@ class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val web
     }
     if (prisonNumbers.isEmpty()) return emptyList()
     return Flux.fromIterable(prisonNumbers).buffer(batchSize).flatMap(
-        {
-            webClient
-                .post()
-                .uri("/prisoner-search/prisoner-numbers")
-                .bodyValue(PrisonerNumbersDto(it))
-                .retrieve()
-                .bodyToFlux<PrisonerDetails>()
-                .retryNetworkExceptions("Get prisoner request failed")
-        },
-        5,
+      {
+        webClient
+          .post()
+          .uri("/prisoner-search/prisoner-numbers")
+          .bodyValue(PrisonerNumbersDto(it))
+          .retrieve()
+          .bodyToFlux<PrisonerDetails>()
+          .retryNetworkExceptions("Get prisoner request failed")
+      },
+      5,
     ).collectList()
       .block()!!
   }
