@@ -63,7 +63,7 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
       newUuid(),
       setOf(
         SetAlertCode("n".repeat(13)),
-        SetDescription("n".repeat(256)),
+        SetDescription("n".repeat(4001)),
         AddPrisonNumbers(newLinkedHashSet(0)),
       ),
     ).errorResponse(HttpStatus.BAD_REQUEST)
