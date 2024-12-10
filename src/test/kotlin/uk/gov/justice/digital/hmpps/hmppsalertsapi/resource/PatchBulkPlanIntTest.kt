@@ -75,7 +75,7 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
         |Validation failures: 
         |Alert code must be supplied and be <= 12 characters
         |At least one prison number should be provided
-        |Description must be <= 255 characters
+        |Description must be <= 4000 characters
         |
         """.trimMargin(),
       )
