@@ -28,7 +28,7 @@ data class SetAlertCode(
 }
 
 data class SetDescription(
-  @field:Size(max = 255, message = "Description must be <= 255 characters")
+  @field:Size(max = 4000, message = "Description must be <= 4000 characters")
   val description: String?,
 ) : BulkAction {
   override val type: String = this::class.simpleName!!

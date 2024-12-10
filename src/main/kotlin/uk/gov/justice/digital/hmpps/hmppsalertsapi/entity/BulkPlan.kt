@@ -100,6 +100,7 @@ interface BulkPlanRepository : JpaRepository<BulkPlan, UUID> {
                             and (a.activeTo is null or a.activeTo > current_date)),
      prisoner_status as (select bp.id as id,
                                 pp.prisonNumber as pn,
+                                psea.id as alertId,
                                 case
                                     when psea.id is null then 'CREATE'
                                     when psea.activeTo is null then 'ACTIVE'
@@ -112,7 +113,7 @@ interface BulkPlanRepository : JpaRepository<BulkPlan, UUID> {
     select
         case when ps.stat is null then 'EXPIRE' else ps.stat end as status, count(1) as count
     from existing_alerts ea
-             full outer join prisoner_status ps on ea.pn = ps.pn
+             full outer join prisoner_status ps on ea.pn = ps.pn and ea.id = ps.alertId
     group by status 
     """,
   )
