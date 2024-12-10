@@ -86,28 +86,34 @@ class PlanBulkAlert(
     val plan = planRepository.getPlan(id)
     val (alertCode, cleanupMode) = plan.ready()
     plan.start(context)
-    val existingAlerts = alertRepository.findAllActiveByCode(alertCode.code).associateBy { it.prisonNumber }
-    val toAction = plan.people.map {
-      val alert = existingAlerts[it.prisonNumber]
+    val existingAlerts = alertRepository.findAllActiveByCode(alertCode.code).groupBy { it.prisonNumber }
+    val toAction = plan.people.flatMap {
+      val alerts = existingAlerts[it.prisonNumber]
       when {
-        alert == null -> {
-          CREATE to plan.createAlert(it.prisonNumber)
+        alerts.isNullOrEmpty() -> {
+          listOf(CREATE to plan.createAlert(it.prisonNumber))
         }
 
-        alert.activeTo == null -> ACTIVE to alert
         else -> {
-          UPDATE to
-            alert.update(
-              alert.description,
-              alert.authorisedBy,
-              alert.activeFrom,
-              null,
-              updatedAt = context.requestAt,
-              updatedBy = BULK_ALERT_USERNAME,
-              updatedByDisplayName = BULK_ALERT_DISPLAY_NAME,
-              source = Source.DPS,
-              activeCaseLoadId = null,
-            )
+          alerts.map { alert ->
+            when {
+              alert.activeTo == null -> ACTIVE to alert
+              else -> {
+                UPDATE to
+                  alert.update(
+                    alert.description,
+                    alert.authorisedBy,
+                    alert.activeFrom,
+                    null,
+                    updatedAt = context.requestAt,
+                    updatedBy = BULK_ALERT_USERNAME,
+                    updatedByDisplayName = BULK_ALERT_DISPLAY_NAME,
+                    source = Source.DPS,
+                    activeCaseLoadId = null,
+                  )
+              }
+            }
+          }
         }
       }
     }.groupBy({ it.first }, { it.second })
@@ -116,7 +122,7 @@ class PlanBulkAlert(
 
     val prisonNumbers = plan.people.map { it.prisonNumber }.toSet()
     val toExpire: List<Alert> = if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) {
-      val toExpire = existingAlerts.values.filter { it.prisonNumber !in prisonNumbers }.map {
+      val toExpire = existingAlerts.values.flatten().filter { it.prisonNumber !in prisonNumbers }.map {
         it.update(
           it.description,
           it.authorisedBy,

@@ -161,6 +161,115 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     assertThat(personAlertsChanged).hasSize(15 + saved.expiredCount!!)
   }
 
+  @Test
+  fun `202 accepted - can handle multiple active alerts`() {
+    val (plan, people) = transactionTemplate.execute {
+      val existingPeople = (0..10).map { givenPersonSummary(personSummary()) }
+      val alertCode = givenAlertCode("XNR")
+      existingPeople.forEachIndexed { index, personSummary ->
+        repeat(2) {
+          if (index % 2 == 0) {
+            givenAlert(
+              alert(
+                personSummary.prisonNumber,
+                alertCode,
+                activeTo = when {
+                  index % 3 == 0 -> LocalDate.now().plusDays(7)
+                  index % 5 == 0 -> LocalDate.now()
+                  else -> null
+                },
+                deletedAt = if (index % 4 == 0) {
+                  LocalDateTime.now().minusDays(1)
+                } else {
+                  null
+                },
+              ),
+            )
+          }
+        }
+      }
+      (0..5).forEachIndexed { i, _ ->
+        repeat(2) {
+          givenAlert(
+            alert(
+              prisonNumber(),
+              alertCode,
+              activeTo = if (i % 2 == 0) LocalDate.now().plusDays(10) else null,
+              deletedAt = if (i % 5 == 0) LocalDateTime.now().minusDays(1) else null,
+            ),
+          )
+        }
+      }
+
+      val plan = givenBulkPlan(
+        plan(alertCode, "A description for multiple active alert", EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED)
+          .apply { people.addAll(existingPeople) },
+      )
+      plan to existingPeople
+    }!!
+
+    val prisonNumbers = people.map { it.prisonNumber }.toSet()
+    val existingAlertsToExpire = alertRepository.findAllActiveByCode("XNR")
+      .filter { it.prisonNumber !in prisonNumbers }
+
+    val startTime = LocalDateTime.now()
+    startPlanResponseSpec(plan.id).expectStatus().isAccepted
+
+    await withPollDelay ofSeconds(1) untilCallTo {
+      bulkPlanRepository.getPlan(plan.id).completedAt
+    } matches { it != null }
+
+    val saved = bulkPlanRepository.getPlan(plan.id)
+    assertThat(saved.startedAt!!).isCloseTo(startTime, within(5, ChronoUnit.SECONDS))
+    assertThat(saved.startedBy).isEqualTo(TEST_USER)
+    assertThat(saved.startedByDisplayName).isEqualTo(TEST_USER_NAME)
+    assertThat(saved.createdCount).isEqualTo(9)
+    assertThat(saved.updatedCount).isEqualTo(2)
+    assertThat(saved.unchangedCount).isEqualTo(2)
+    assertThat(saved.expiredCount).isEqualTo(existingAlertsToExpire.size)
+
+    val alerts = alertRepository.findAllActiveByCode("XNR").filter { it.prisonNumber in prisonNumbers }
+    assertThat(alerts.size).isEqualTo(13)
+    assertThat(alerts.map { it.activeTo }.all { it == null }).isTrue()
+
+    val results = alerts.map {
+      val auditEvent = it.auditEvents().first()
+      when {
+        auditEvent.actionedBy == BULK_ALERT_USERNAME && auditEvent.action == CREATED -> Status.CREATE to it
+        auditEvent.actionedBy == BULK_ALERT_USERNAME && auditEvent.action == UPDATED -> Status.UPDATE to it
+        else -> Status.ACTIVE to it
+      }
+    }.groupBy({ it.first }, { it.second })
+
+    assertThat(results[Status.CREATE]).hasSize(saved.createdCount!!)
+    assertThat(results[Status.UPDATE]).hasSize(saved.updatedCount!!)
+    assertThat(results[Status.ACTIVE]).hasSize(saved.unchangedCount!!)
+    val expired = existingAlertsToExpire.map { alertRepository.findByIdOrNull(it.id)!! }
+    assertThat(expired).hasSize(existingAlertsToExpire.size)
+    expired.forEach {
+      assertThat(it.activeTo).isEqualTo(LocalDate.now())
+      with(it.auditEvents().first()) {
+        assertThat(action).isEqualTo(AuditEventAction.INACTIVE)
+        assertThat(actionedBy).isEqualTo(BULK_ALERT_USERNAME)
+        assertThat(actionedByDisplayName).isEqualTo(BULK_ALERT_DISPLAY_NAME)
+      }
+    }
+
+    await withPollDelay ofSeconds(5) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches {
+      it == 45
+    }
+    val messages = hmppsEventsQueue.receiveAllMessages()
+    val created = messages.filter { it.eventType == DomainEventType.ALERT_CREATED.eventType }
+    assertThat(created).hasSize(saved.createdCount!!)
+    val updated = messages.filter { it.eventType == DomainEventType.ALERT_UPDATED.eventType }
+    assertThat(updated).hasSize(saved.updatedCount!! + saved.expiredCount!!)
+    assertThat((created + updated).mapNotNull { it.personReference.findNomsNumber() } - prisonNumbers).hasSize(saved.expiredCount!!)
+    val expiredMessages = messages.filter { it.eventType == DomainEventType.ALERT_INACTIVE.eventType }
+    assertThat(expiredMessages).hasSize(saved.expiredCount!!)
+    val personAlertsChanged = messages.filter { it.eventType == DomainEventType.PERSON_ALERTS_CHANGED.eventType }
+    assertThat(personAlertsChanged).hasSize(18)
+  }
+
   private fun startPlanResponseSpec(
     id: UUID,
     username: String = TEST_USER,
