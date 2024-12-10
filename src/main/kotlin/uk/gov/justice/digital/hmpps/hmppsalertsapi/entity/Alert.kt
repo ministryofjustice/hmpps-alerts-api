@@ -293,11 +293,6 @@ class Alert(
         alertCode = alertCode.code,
         occurredAt = updatedAt,
         source = source,
-        updatedBy = updatedBy,
-        descriptionUpdated = false,
-        authorisedByUpdated = false,
-        activeFromUpdated = false,
-        activeToUpdated = true,
       ),
     )
     PersonAlertsChanged.registerChange(prisonNumber)
