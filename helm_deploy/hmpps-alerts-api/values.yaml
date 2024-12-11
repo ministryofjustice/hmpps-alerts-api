@@ -2,11 +2,14 @@ generic-service:
   nameOverride: hmpps-alerts-api
   productId: "DPS090" # productId for the product that this belongs too, i.e. DPS001, see README.md for details
 
-  replicaCount: 4
+  replicaCount: 2
   resources:
     requests:
       cpu: 128m
-      memory: 768Mi
+      memory: 1024Mi
+    limits:
+      cpu: 2048m
+      memory: 1280Mi
 
   image:
     repository: quay.io/hmpps/hmpps-alerts-api
@@ -31,6 +34,7 @@ generic-service:
   # Environment variables to load into the deployment
   env:
     SERVER_PORT: "8080"
+    JDK_JAVA_OPTIONS: "-Xmx512m -XX:+UseG1GC"
     SPRING_PROFILES_ACTIVE: "logstash"
     APPLICATIONINSIGHTS_CONNECTION_STRING: "InstrumentationKey=$(APPINSIGHTS_INSTRUMENTATIONKEY)"
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
