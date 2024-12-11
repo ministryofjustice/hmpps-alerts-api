@@ -74,11 +74,6 @@ data class AlertDeactivatedEvent(
   override val alertCode: String,
   override val occurredAt: LocalDateTime,
   override val source: Source,
-  val updatedBy: String,
-  val descriptionUpdated: Boolean,
-  val authorisedByUpdated: Boolean,
-  val activeFromUpdated: Boolean,
-  val activeToUpdated: Boolean,
 ) : AlertEvent {
   override val type: DomainEventType = ALERT_INACTIVE
 }

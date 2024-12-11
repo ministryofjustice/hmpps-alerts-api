@@ -24,13 +24,14 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanAffect
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanPrisoners
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanStatus
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.BulkAction
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AuditEventService
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.PlanBulkAlert
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.util.UUID
 
 @RestController
 @RequestMapping("/bulk-alerts", produces = [MediaType.APPLICATION_JSON_VALUE])
-class BulkAlertsController(private val plan: PlanBulkAlert) {
+class BulkAlertsController(private val plan: PlanBulkAlert, private val auditEvents: AuditEventService) {
 
   @PostMapping("/plan")
   @Operation(summary = "Create the plan for bulk alerts")
@@ -210,4 +211,34 @@ class BulkAlertsController(private val plan: PlanBulkAlert) {
   )
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   fun getPlanStatus(@PathVariable id: UUID): BulkPlanStatus = plan.status(id)
+
+  @PostMapping("/plan/{id}/events")
+  @Operation(
+    summary = "Resend the events originally published by a plan",
+    description = "Used to resend events published when a plan was actioned in case of loss of messages",
+    hidden = true,
+  )
+  @ApiResponses(
+    value = [
+      ApiResponse(
+        responseCode = "202",
+        description = "Accepted the request, will send events as an async process",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorised, requires a valid Oauth2 token",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Forbidden, requires an appropriate role",
+        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  @ResponseStatus(HttpStatus.ACCEPTED)
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  fun resendPlanEvents(@PathVariable id: UUID) {
+    auditEvents.resendDomainEventsForPlan(id)
+  }
 }

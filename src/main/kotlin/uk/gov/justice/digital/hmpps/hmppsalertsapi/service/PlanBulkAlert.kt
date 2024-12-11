@@ -208,6 +208,7 @@ fun Plan.createAlert(prisonNumber: String): Alert {
   ).apply {
     create(
       description ?: "Alert created",
+      createdAt = startedAt!!,
       createdBy = BULK_ALERT_USERNAME,
       createdByDisplayName = BULK_ALERT_DISPLAY_NAME,
       source = Source.DPS,
