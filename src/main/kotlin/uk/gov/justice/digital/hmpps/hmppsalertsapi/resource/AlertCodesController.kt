@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Pattern
@@ -21,7 +22,9 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ADMIN_UI_ONLY
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.RO_OPERATIONS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertCodeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertCodeRequest
@@ -34,6 +37,7 @@ class AlertCodesController(
   private val alertCodeService: AlertCodeService,
 ) {
 
+  @Tag(name = ADMIN_UI_ONLY)
   @ResponseStatus(HttpStatus.CREATED)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PostMapping
@@ -76,6 +80,7 @@ class AlertCodesController(
     httpRequest: HttpServletRequest,
   ): AlertCode = alertCodeService.createAlertCode(createAlertCodeRequest, httpRequest.alertRequestContext())
 
+  @Tag(name = ADMIN_UI_ONLY)
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PatchMapping("/{alertCode}/deactivate")
@@ -113,6 +118,7 @@ class AlertCodesController(
     httpRequest: HttpServletRequest,
   ) = alertCodeService.deactivateAlertCode(alertCode, httpRequest.alertRequestContext())
 
+  @Tag(name = ADMIN_UI_ONLY)
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PatchMapping("/{alertCode}/reactivate")
@@ -150,6 +156,7 @@ class AlertCodesController(
     httpRequest: HttpServletRequest,
   ) = alertCodeService.reactivateAlertCode(alertCode, httpRequest.alertRequestContext())
 
+  @Tag(name = RO_OPERATIONS)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @GetMapping
   @Operation(
@@ -181,6 +188,7 @@ class AlertCodesController(
     includeInactive: Boolean = false,
   ) = alertCodeService.retrieveAlertCodes(includeInactive)
 
+  @Tag(name = RO_OPERATIONS)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @GetMapping("/{alertCode}")
   @Operation(
@@ -215,6 +223,7 @@ class AlertCodesController(
     httpRequest: HttpServletRequest,
   ) = alertCodeService.retrieveAlertCode(alertCode)
 
+  @Tag(name = ADMIN_UI_ONLY)
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PatchMapping("/{alertCode}")
@@ -250,7 +259,10 @@ class AlertCodesController(
   fun updateAlertCode(
     @PathVariable
     @Size(max = 12, min = 1, message = "Code must be between 1 & 12 characters")
-    @Pattern(regexp = "^[A-Z0-9]+$", message = "Code must only contain uppercase alphabetical and/or numeric characters")
+    @Pattern(
+      regexp = "^[A-Z0-9]+$",
+      message = "Code must only contain uppercase alphabetical and/or numeric characters",
+    )
     alertCode: String,
     @Valid @RequestBody updateRequest: UpdateAlertCodeRequest,
     httpRequest: HttpServletRequest,

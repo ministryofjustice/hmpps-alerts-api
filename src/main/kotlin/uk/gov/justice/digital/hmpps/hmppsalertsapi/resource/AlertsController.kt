@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -22,8 +23,10 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.NOMIS_SYNC_ONLY
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.RO_OPERATIONS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.RW_OPERATIONS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
@@ -31,10 +34,9 @@ import java.util.UUID
 
 @RestController
 @RequestMapping("/alerts", produces = [MediaType.APPLICATION_JSON_VALUE])
-class AlertsController(
-  private val alertService: AlertService,
-) {
+class AlertsController(private val alertService: AlertService) {
 
+  @Tag(name = RO_OPERATIONS)
   @ResponseStatus(HttpStatus.OK)
   @GetMapping("/{alertUuid}")
   @Operation(
@@ -75,6 +77,7 @@ class AlertsController(
     alertUuid: UUID,
   ): Alert = alertService.retrieveAlert(alertUuid)
 
+  @Tag(name = RW_OPERATIONS)
   @ResponseStatus(HttpStatus.OK)
   @PutMapping("/{alertUuid}")
   @Operation(
@@ -124,6 +127,7 @@ class AlertsController(
     httpRequest: HttpServletRequest,
   ): Alert = alertService.updateAlert(alertUuid, request, httpRequest.alertRequestContext())
 
+  @Tag(name = NOMIS_SYNC_ONLY)
   @DeleteMapping("/{alertUuid}")
   @ResponseStatus(NO_CONTENT)
   @Operation(
@@ -167,45 +171,6 @@ class AlertsController(
     alertUuid: UUID,
     httpRequest: HttpServletRequest,
   ): Unit = alertService.deleteAlert(alertUuid, httpRequest.alertRequestContext())
-
-  @GetMapping("/{alertUuid}/audit-events")
-  @Operation(
-    summary = "Get audit events for an alert",
-    description = "This endpoint retrieves all the audit events for a given alert",
-  )
-  @ApiResponses(
-    value = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Audit events retrieved for a given alert",
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorised, requires a valid Oauth2 token",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Forbidden, requires an appropriate role",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "Alert was not found or already deleted",
-        content = [Content(schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
-  @SourceHeader
-  fun retrieveAlertAuditEvents(
-    @PathVariable
-    @Parameter(
-      description = "Alert unique identifier",
-      required = true,
-    )
-    alertUuid: UUID,
-  ): Collection<AuditEvent> = alertService.retrieveAuditEventsForAlert(alertUuid)
 
   @Operation(hidden = true)
   @PostMapping("/inactive")
