@@ -96,11 +96,11 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
         .description("Endpoints below this point are for special and explicit usage and should not be used under any circumstances without prior consultation with the team maintaining this API."),
     )
     .addTagsItem(
-      Tag().name(ADMIN_UI_ONLY)
-        .description("Endpoints for alerts admin ui only - Not to be used by any service other than the alert admin ui"),
+      Tag().name(NOMIS_SYNC_ONLY).description("Endpoints for nomis sync only - not to be use by any other client"),
     )
     .addTagsItem(
-      Tag().name(NOMIS_SYNC_ONLY).description("Endpoints for nomis sync only - not to be use by any other client"),
+      Tag().name(ADMIN_UI_ONLY)
+        .description("Endpoints for alerts admin ui only - Not to be used by any service other than the alert admin ui"),
     )
 
   @Bean
