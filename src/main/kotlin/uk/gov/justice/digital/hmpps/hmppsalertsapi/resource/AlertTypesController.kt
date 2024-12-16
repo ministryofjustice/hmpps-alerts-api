@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Pattern
@@ -23,7 +24,9 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.ADMIN_UI_ONLY
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.RO_OPERATIONS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlertTypeRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlertTypeRequest
@@ -35,6 +38,7 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 class AlertTypesController(
   private val alertTypeService: AlertTypeService,
 ) {
+  @Tag(name = RO_OPERATIONS)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @GetMapping
   @Operation(
@@ -69,6 +73,7 @@ class AlertTypesController(
     includeInactive: Boolean = false,
   ): Collection<AlertType> = alertTypeService.getAlertTypes(includeInactive)
 
+  @Tag(name = RO_OPERATIONS)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @GetMapping("/{alertTypeCode}")
   @Operation(
@@ -101,6 +106,7 @@ class AlertTypesController(
   )
   fun retrieveAlertType(@PathVariable alertTypeCode: String): AlertType = alertTypeService.getAlertType(alertTypeCode)
 
+  @Tag(name = ADMIN_UI_ONLY)
   @ResponseStatus(CREATED)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PostMapping
@@ -138,6 +144,7 @@ class AlertTypesController(
     httpRequest: HttpServletRequest,
   ): AlertType = alertTypeService.createAlertType(createAlertTypeRequest, httpRequest.alertRequestContext())
 
+  @Tag(name = ADMIN_UI_ONLY)
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PatchMapping("/{alertType}/deactivate")
@@ -175,6 +182,7 @@ class AlertTypesController(
     httpRequest: HttpServletRequest,
   ) = alertTypeService.deactivateAlertType(alertType, httpRequest.alertRequestContext())
 
+  @Tag(name = ADMIN_UI_ONLY)
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PatchMapping("/{alertType}/reactivate")
@@ -212,6 +220,7 @@ class AlertTypesController(
     httpRequest: HttpServletRequest,
   ) = alertTypeService.reactivateAlertType(alertType, httpRequest.alertRequestContext())
 
+  @Tag(name = ADMIN_UI_ONLY)
   @ResponseStatus(HttpStatus.OK)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @PatchMapping("/{alertType}")

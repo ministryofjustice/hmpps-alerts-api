@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Page
@@ -24,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.RO_OPERATIONS
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.RW_OPERATIONS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
@@ -33,6 +36,8 @@ import java.time.LocalDate
 @RestController
 @RequestMapping("/prisoners", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PrisonerAlertsController(val alertService: AlertService) {
+
+  @Tag(name = RO_OPERATIONS)
   @ResponseStatus(HttpStatus.OK)
   @GetMapping("/{prisonNumber}/alerts")
   @Operation(
@@ -115,6 +120,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
     pageable = pageable,
   )
 
+  @Tag(name = RW_OPERATIONS)
   @Operation(
     summary = "Create an alert",
   )

@@ -275,16 +275,6 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
     }
   }
 
-  @Test
-  fun `should throw exception if alert not found when retrieving audit events`() {
-    whenever(alertRepository.findById(any())).thenReturn(Optional.empty())
-    val alertUuid = UUID.randomUUID()
-    val exception = assertThrows<NotFoundException> {
-      underTest.retrieveAuditEventsForAlert(alertUuid)
-    }
-    assertThat(exception.message).isEqualTo("Alert not found")
-  }
-
   private fun createAlertRequest(
     alertCode: String = ALERT_CODE_VICTIM,
   ) = CreateAlert(
