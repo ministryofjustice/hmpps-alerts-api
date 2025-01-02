@@ -87,4 +87,4 @@ generic-data-analytics-extractor:
   enabled: false
 
 publish_inactive_events:
-  schedule: "0 8 * * *"
+  schedule: "0 3 * * *"
