@@ -38,6 +38,3 @@ generic-prometheus-alerts:
 generic-data-analytics-extractor:
   enabled: true
   cronJobSchedule: "0 3 * * 1-5"
-
-publish_inactive_events:
-  schedule: "0 3 * * *"
