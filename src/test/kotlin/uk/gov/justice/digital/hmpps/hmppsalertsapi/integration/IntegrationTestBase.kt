@@ -210,11 +210,6 @@ abstract class IntegrationTestBase {
     return prisonNumber
   }
 
-  fun givenPrisonersExist(vararg prisonNumbers: String): Array<out String> {
-    prisonerSearch.stubGetPrisoners(prisonNumbers.toList())
-    return prisonNumbers
-  }
-
   fun givenExistingAlertType(code: String): AlertType = requireNotNull(alertTypeRepository.findByCode(code))
   fun givenExistingAlertCode(code: String): AlertCode = requireNotNull(alertCodeRepository.findByCode(code))
 
