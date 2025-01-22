@@ -27,6 +27,10 @@ generic-service:
           deny all;
           return 401;
         }
+        location /queue-admin/retry-all-dlqs {
+          deny all;
+          return 401;
+        }
 
   # Used to access resources like S3 buckets, SQS queues and SNS topics
   serviceAccountName: hmpps-alerts-api
@@ -74,6 +78,10 @@ generic-service:
     groups:
       - digital_staff_and_mojo
       - moj_cloud_platform
+
+  retryDlqCronjob:
+    enabled: true
+    retryDlqSchedule: "0 * * * *"
 
 generic-prometheus-alerts:
   targetApplication: hmpps-alerts-api
