@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
@@ -12,9 +13,9 @@ import java.time.LocalDate
 import java.util.UUID
 
 @Repository
-interface AlertRepository : JpaRepository<Alert, UUID> {
+interface AlertRepository : JpaRepository<Alert, UUID>, JpaSpecificationExecutor<Alert> {
   @EntityGraph(value = "alert")
-  fun findAll(filter: Specification<Alert>, pageable: Pageable): Page<Alert>
+  override fun findAll(filter: Specification<Alert>, pageable: Pageable): Page<Alert>
 
   @EntityGraph(value = "alert")
   fun findByPrisonNumber(prisonNumber: String): Collection<Alert>

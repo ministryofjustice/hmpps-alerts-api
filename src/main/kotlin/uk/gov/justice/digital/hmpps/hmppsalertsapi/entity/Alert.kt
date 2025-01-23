@@ -73,8 +73,6 @@ class Alert(
 
   fun auditEvents() = auditEvents.toList().sortedByDescending { it.actionedAt }
 
-  fun withoutAuditEvents() = apply { auditEvents.clear() }
-
   fun auditEvent(
     action: AuditEventAction,
     description: String,

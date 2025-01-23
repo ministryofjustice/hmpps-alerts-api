@@ -6,3 +6,6 @@ const val ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI = "ROLE_PRISON
 
 // Sync/migration roles
 const val ROLE_NOMIS_ALERTS = "ROLE_NOMIS_ALERTS"
+
+// Role for case-notes api to get data to backfill missing case notes only
+const val ROLE_CASE_NOTES = "ROLE_PRISONER_CASE_NOTES__SYSTEM_GENERATED__RW"
