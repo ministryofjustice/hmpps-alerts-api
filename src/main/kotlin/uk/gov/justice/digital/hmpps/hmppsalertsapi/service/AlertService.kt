@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidInputExcept
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.verifyExists
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertsResponse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
@@ -29,7 +30,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertsFilter
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AuditEventRepository
 import java.time.LocalDate
 import java.util.UUID
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 @Service
 @Transactional
@@ -155,8 +155,9 @@ class AlertService(
   fun publishInactiveTodayAlertEvents() {
     alertRepository.saveAll(
       alertRepository.findAllByActiveTo(LocalDate.now())
-        .map {
-          it.deactivate(
+        .mapNotNull {
+          if (it.isDeactivated()) null
+          else it.deactivate(
             updatedBy = SYS_USER,
             updatedByDisplayName = SYS_DISPLAY_NAME,
             source = Source.DPS,
