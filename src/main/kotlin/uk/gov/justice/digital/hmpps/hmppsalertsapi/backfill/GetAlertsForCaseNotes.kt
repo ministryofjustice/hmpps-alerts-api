@@ -35,7 +35,15 @@ class GetAlertsForCaseNotes(private val alertRepository: AlertRepository) {
 
   private fun Alert.forCaseNotes(): CaseNoteAlert {
     val (type, subtype) = typeInfo()
-    return CaseNoteAlert(type, subtype, prisonCodeWhenCreated, activeFrom, activeTo, createdAt, lastModifiedAt)
+    return CaseNoteAlert(
+      type,
+      subtype,
+      prisonCodeWhenCreated,
+      activeFrom,
+      activeTo,
+      createdAt,
+      deactivationEvent()?.actionedAt,
+    )
   }
 }
 
@@ -46,7 +54,7 @@ data class CaseNoteAlert(
   val activeFrom: LocalDate,
   val activeTo: LocalDate?,
   val createdAt: LocalDateTime,
-  val lastModifiedAt: LocalDateTime?,
+  val madeInactiveAt: LocalDateTime?,
 )
 
 data class CodedDescription(val code: String, val description: String)
