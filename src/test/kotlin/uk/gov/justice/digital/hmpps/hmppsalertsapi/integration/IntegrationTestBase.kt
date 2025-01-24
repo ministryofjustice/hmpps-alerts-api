@@ -8,13 +8,13 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
-import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBody
 import org.springframework.transaction.support.TransactionTemplate
@@ -94,7 +94,7 @@ abstract class IntegrationTestBase {
   @Autowired
   lateinit var transactionTemplate: TransactionTemplate
 
-  @SpyBean
+  @MockitoSpyBean
   lateinit var hmppsQueueService: HmppsQueueService
 
   internal val hmppsEventsQueue by lazy {
