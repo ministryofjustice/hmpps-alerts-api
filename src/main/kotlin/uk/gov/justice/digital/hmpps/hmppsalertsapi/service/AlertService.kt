@@ -155,13 +155,17 @@ class AlertService(
   fun publishInactiveTodayAlertEvents() {
     alertRepository.saveAll(
       alertRepository.findAllByActiveTo(LocalDate.now())
-        .map {
-          it.deactivate(
-            updatedBy = SYS_USER,
-            updatedByDisplayName = SYS_DISPLAY_NAME,
-            source = Source.DPS,
-            activeCaseLoadId = null,
-          )
+        .mapNotNull {
+          if (it.isDeactivated()) {
+            null
+          } else {
+            it.deactivate(
+              updatedBy = SYS_USER,
+              updatedByDisplayName = SYS_DISPLAY_NAME,
+              source = Source.DPS,
+              activeCaseLoadId = null,
+            )
+          }
         },
     )
   }
