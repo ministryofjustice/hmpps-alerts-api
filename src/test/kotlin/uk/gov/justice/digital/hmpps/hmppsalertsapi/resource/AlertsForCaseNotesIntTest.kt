@@ -4,10 +4,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.backfill.CaseNoteAlertResponse
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import java.time.LocalDate
 import java.time.LocalDate.now
+import java.time.LocalTime
 
 class AlertsForCaseNotesIntTest : IntegrationTestBase() {
 
@@ -32,7 +34,7 @@ class AlertsForCaseNotesIntTest : IntegrationTestBase() {
     val prisonNumber = givenPrisoner()
     val from = now().minusDays(90)
     val to = now()
-    val codes = alertCodeRepository.findAll().shuffled().take(5)
+    val codes = alertCodeRepository.findAll().shuffled().take(6)
     givenAlert(
       alert(
         prisonNumber,
@@ -66,22 +68,41 @@ class AlertsForCaseNotesIntTest : IntegrationTestBase() {
         activeTo = to.minusDays(1),
       ),
     )
-    givenAlert(
+    val modifiedInRange = givenAlert(
       alert(
         prisonNumber,
         codes[4],
+        activeFrom = from.minusDays(1),
+        createdAt = from.minusDays(1).atStartOfDay(),
+        activeTo = to.plusDays(1),
+      ).update(
+        "Updated description",
+        null,
+        from.plusDays(1),
+        null,
+        from.plusDays(3).atTime(LocalTime.now()),
+        "ANO123",
+        "A N Other",
+        Source.DPS,
+        null,
+      ),
+    )
+    givenAlert(
+      alert(
+        prisonNumber,
+        codes[5],
         activeFrom = to.plusDays(1),
         createdAt = to.plusDays(1).atStartOfDay(),
       ),
     )
 
     val saved = alertRepository.findByPrisonNumber(prisonNumber)
-    assertThat(saved).hasSize(5)
+    assertThat(saved).hasSize(6)
     val res = getAlerts(prisonNumber, from, to)
     with(res.content) {
-      assertThat(size).isEqualTo(3)
+      assertThat(size).isEqualTo(4)
       val actualCodes = map { it.type.code to it.subType.code }
-      val expectedCodes = listOf(createdInRange, activeFromInRange, activeToInRange)
+      val expectedCodes = listOf(createdInRange, activeFromInRange, activeToInRange, modifiedInRange)
         .map { it.alertCode.alertType.code to it.alertCode.code }
       assertThat(actualCodes).containsExactlyInAnyOrderElementsOf(expectedCodes)
     }

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.backfill
 
+import jakarta.persistence.criteria.Join
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
@@ -8,6 +9,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import java.time.LocalDate
+import java.time.LocalDate.parse
 import java.time.LocalDateTime
 
 @Service
@@ -19,13 +21,13 @@ class GetAlertsForCaseNotes(private val alertRepository: AlertRepository) {
     Specification<Alert> { alert, _, cb ->
       val pn = cb.equal(alert.get<String>("prisonNumber"), prisonNumber)
       val created = cb.between(alert.get("createdAt"), from, to)
-      val modified = cb.between(alert.get("lastModifiedAt"), from, to)
       val activeFrom = cb.between(alert.get("activeFrom"), from, to)
       val activeTo = cb.between(alert.get("activeTo"), from, to)
       val code = alert.fetch<Alert, AlertCode>("alertCode")
       code.fetch<AlertCode, AlertType>("alertType")
-      alert.fetch<Alert, AuditEvent>("auditEvents")
-      cb.and(pn, cb.or(created, modified, activeFrom, activeTo))
+      val audit = (alert.fetch<Alert, AuditEvent>("auditEvents") as Join<*, *>)
+      val modified = cb.between(audit.get("actionedAt"), from, to)
+      cb.and(pn, cb.or(created, activeFrom, activeTo, modified))
     }
 
   private fun Alert.typeInfo() = Pair(
@@ -35,11 +37,16 @@ class GetAlertsForCaseNotes(private val alertRepository: AlertRepository) {
 
   private fun Alert.forCaseNotes(): CaseNoteAlert {
     val (type, subtype) = typeInfo()
+    val activeFromChanged = auditEvents().lastOrNull { it.activeFromUpdated == true }
+    val regex = "Updated active from from '(\\d{4}-\\d{2}-\\d{2})' to '(\\d{4}-\\d{2}-\\d{2})'".toRegex()
+    val originalActiveFrom = activeFromChanged?.description?.let {
+      regex.find(it)?.groupValues?.get(1)?.let { date -> parse(date) }
+    }
     return CaseNoteAlert(
       type,
       subtype,
       prisonCodeWhenCreated,
-      activeFrom,
+      originalActiveFrom ?: activeFrom,
       activeTo,
       createdAt,
       deactivationEvent()?.actionedAt,
