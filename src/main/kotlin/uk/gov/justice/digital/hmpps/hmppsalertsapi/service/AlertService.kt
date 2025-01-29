@@ -68,38 +68,35 @@ class AlertService(
 
   private fun CreateAlert.dateRangeIsValid() = !(activeFrom?.isAfter(activeTo ?: activeFrom) ?: false)
 
-  private fun CreateAlert.getAlertCode(activeOnly: Boolean = true) =
-    verifyExists(alertCodeRepository.findByCode(alertCode)) {
-      InvalidInputException("Alert code", alertCode)
-    }.also {
-      if (activeOnly) require(it.isActive()) { "Alert code is inactive" }
-    }
+  private fun CreateAlert.getAlertCode(activeOnly: Boolean = true) = verifyExists(alertCodeRepository.findByCode(alertCode)) {
+    InvalidInputException("Alert code", alertCode)
+  }.also {
+    if (activeOnly) require(it.isActive()) { "Alert code is inactive" }
+  }
 
-  private fun checkForExistingActiveAlert(prisonNumber: String, alertCode: String) =
-    alertRepository.findByPrisonNumberAndAlertCodeCode(prisonNumber, alertCode)
-      .any { it.isActive() } && throw AlreadyExistsException("Alert", alertCode)
+  private fun checkForExistingActiveAlert(prisonNumber: String, alertCode: String) = alertRepository.findByPrisonNumberAndAlertCodeCode(prisonNumber, alertCode)
+    .any { it.isActive() } &&
+    throw AlreadyExistsException("Alert", alertCode)
 
-  fun retrieveAlert(alertUuid: UUID): AlertModel =
-    alertRepository.findByIdOrNull(alertUuid)?.toAlertModel()
-      ?: throw NotFoundException("Alert", alertUuid.toString())
+  fun retrieveAlert(alertUuid: UUID): AlertModel = alertRepository.findByIdOrNull(alertUuid)?.toAlertModel()
+    ?: throw NotFoundException("Alert", alertUuid.toString())
 
   @PublishPersonAlertsChanged
-  fun updateAlert(alertUuid: UUID, request: UpdateAlert, context: AlertRequestContext) =
-    alertRepository.findByIdOrNull(alertUuid)?.let {
-      alertRepository.save(
-        it.update(
-          description = request.description,
-          authorisedBy = request.authorisedBy,
-          activeFrom = request.activeFrom,
-          activeTo = request.activeTo,
-          updatedAt = context.requestAt,
-          updatedBy = context.username,
-          updatedByDisplayName = context.userDisplayName,
-          source = context.source,
-          activeCaseLoadId = context.activeCaseLoadId,
-        ),
-      ).toAlertModel()
-    } ?: throw NotFoundException("Alert", alertUuid.toString())
+  fun updateAlert(alertUuid: UUID, request: UpdateAlert, context: AlertRequestContext) = alertRepository.findByIdOrNull(alertUuid)?.let {
+    alertRepository.save(
+      it.update(
+        description = request.description,
+        authorisedBy = request.authorisedBy,
+        activeFrom = request.activeFrom,
+        activeTo = request.activeTo,
+        updatedAt = context.requestAt,
+        updatedBy = context.username,
+        updatedByDisplayName = context.userDisplayName,
+        source = context.source,
+        activeCaseLoadId = context.activeCaseLoadId,
+      ),
+    ).toAlertModel()
+  } ?: throw NotFoundException("Alert", alertUuid.toString())
 
   @PublishPersonAlertsChanged
   fun deleteAlert(alertUuid: UUID, context: AlertRequestContext) {
@@ -127,29 +124,27 @@ class AlertService(
     activeFromEnd: LocalDate?,
     search: String?,
     pageable: Pageable,
-  ): Page<AlertModel> =
-    alertRepository.findAll(
-      AlertsFilter(
-        prisonNumber = prisonNumber,
-        isActive = isActive,
-        alertType = alertType,
-        alertCode = alertCode,
-        activeFromStart = activeFromStart,
-        activeFromEnd = activeFromEnd,
-        search = search,
-      ),
-      pageable = pageable,
-    ).let { alerts ->
-      val alertIds = alerts.content.map { it.id }
-      val auditEvents =
-        auditEventRepository.findAuditEventsByAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.id }
-      alerts.map { it.toAlertModel(auditEvents[it.id]) }
-    }
+  ): Page<AlertModel> = alertRepository.findAll(
+    AlertsFilter(
+      prisonNumber = prisonNumber,
+      isActive = isActive,
+      alertType = alertType,
+      alertCode = alertCode,
+      activeFromStart = activeFromStart,
+      activeFromEnd = activeFromEnd,
+      search = search,
+    ),
+    pageable = pageable,
+  ).let { alerts ->
+    val alertIds = alerts.content.map { it.id }
+    val auditEvents =
+      auditEventRepository.findAuditEventsByAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.id }
+    alerts.map { it.toAlertModel(auditEvents[it.id]) }
+  }
 
-  fun retrieveAlertsForPrisonNumbers(prisonNumbers: Set<String>, includeInactive: Boolean): AlertsResponse =
-    AlertsResponse(
-      alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive).map { it.toAlertModel(it.auditEvents()) },
-    )
+  fun retrieveAlertsForPrisonNumbers(prisonNumbers: Set<String>, includeInactive: Boolean): AlertsResponse = AlertsResponse(
+    alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive).map { it.toAlertModel(it.auditEvents()) },
+  )
 
   @PublishPersonAlertsChanged
   fun publishInactiveTodayAlertEvents() {

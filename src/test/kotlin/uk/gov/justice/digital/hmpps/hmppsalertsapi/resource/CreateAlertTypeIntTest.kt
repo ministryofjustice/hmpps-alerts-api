@@ -298,22 +298,20 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
 
   private fun createAlertTypeRequest() = CreateAlertTypeRequest("CO", "Description")
 
-  private fun WebTestClient.createAlertTypeResponseSpec(request: CreateAlertTypeRequest) =
-    post()
-      .uri("/alert-types")
-      .bodyValue(request)
-      .headers(
-        setAuthorisation(
-          user = TEST_USER,
-          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
-        ),
-      )
-      .exchange()
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+  private fun WebTestClient.createAlertTypeResponseSpec(request: CreateAlertTypeRequest) = post()
+    .uri("/alert-types")
+    .bodyValue(request)
+    .headers(
+      setAuthorisation(
+        user = TEST_USER,
+        roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+      ),
+    )
+    .exchange()
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
-  private fun WebTestClient.createAlertType(request: CreateAlertTypeRequest) =
-    createAlertTypeResponseSpec(request)
-      .expectStatus().isCreated
-      .expectBody(AlertType::class.java)
-      .returnResult().responseBody!!
+  private fun WebTestClient.createAlertType(request: CreateAlertTypeRequest) = createAlertTypeResponseSpec(request)
+    .expectStatus().isCreated
+    .expectBody(AlertType::class.java)
+    .returnResult().responseBody!!
 }

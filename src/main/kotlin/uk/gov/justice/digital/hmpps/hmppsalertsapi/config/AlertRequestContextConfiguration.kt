@@ -81,40 +81,34 @@ class AlertRequestContextInterceptor(
     return true
   }
 
-  private fun HttpServletRequest.getSource(): Source =
-    getHeader(SOURCE)?.let { Source.valueOf(it) } ?: DPS
+  private fun HttpServletRequest.getSource(): Source = getHeader(SOURCE)?.let { Source.valueOf(it) } ?: DPS
 
-  private fun authentication(): AuthAwareAuthenticationToken =
-    SecurityContextHolder.getContext().authentication as AuthAwareAuthenticationToken?
-      ?: throw AccessDeniedException("User is not authenticated")
+  private fun authentication(): AuthAwareAuthenticationToken = SecurityContextHolder.getContext().authentication as AuthAwareAuthenticationToken?
+    ?: throw AccessDeniedException("User is not authenticated")
 
-  private fun HttpServletRequest.getUsername(source: Source): String? =
-    (getHeader(USERNAME) ?: if (source == NOMIS) null else authentication().name)?.trim()?.also {
-      if (it.length > 64) throw ValidationException("Username by must be <= 64 characters")
-    }
-
-  private fun getUserDetails(username: String?, source: Source): Mono<UserDetailsDto> {
-    return if (username != null && source != NOMIS) {
-      userService.getUserDetails(username)
-        .switchIfEmpty(Mono.error(ValidationException("User details for supplied username not found")))
-    } else {
-      val system = Mono.just(
-        UserDetailsDto(
-          username = SYS_USER,
-          active = true,
-          name = SYS_DISPLAY_NAME,
-          authSource = NOMIS.name,
-          userId = SYS_USER,
-          activeCaseLoadId = null,
-          uuid = null,
-        ),
-      )
-      username?.let { userService.getUserDetails(it).switchIfEmpty(system) } ?: system
-    }
+  private fun HttpServletRequest.getUsername(source: Source): String? = (getHeader(USERNAME) ?: if (source == NOMIS) null else authentication().name)?.trim()?.also {
+    if (it.length > 64) throw ValidationException("Username by must be <= 64 characters")
   }
 
-  private fun HttpServletRequest.getPrisoner(): Mono<PrisonerDetails> =
-    servletPath.split("/").first { it.matches(PRISON_NUMBER_REGEX.toRegex()) }.let { pn ->
-      prisonerSearchClient.getPrisoner(pn).switchIfEmpty(Mono.error(ValidationException("Prison number not found")))
-    }
+  private fun getUserDetails(username: String?, source: Source): Mono<UserDetailsDto> = if (username != null && source != NOMIS) {
+    userService.getUserDetails(username)
+      .switchIfEmpty(Mono.error(ValidationException("User details for supplied username not found")))
+  } else {
+    val system = Mono.just(
+      UserDetailsDto(
+        username = SYS_USER,
+        active = true,
+        name = SYS_DISPLAY_NAME,
+        authSource = NOMIS.name,
+        userId = SYS_USER,
+        activeCaseLoadId = null,
+        uuid = null,
+      ),
+    )
+    username?.let { userService.getUserDetails(it).switchIfEmpty(system) } ?: system
+  }
+
+  private fun HttpServletRequest.getPrisoner(): Mono<PrisonerDetails> = servletPath.split("/").first { it.matches(PRISON_NUMBER_REGEX.toRegex()) }.let { pn ->
+    prisonerSearchClient.getPrisoner(pn).switchIfEmpty(Mono.error(ValidationException("Prison number not found")))
+  }
 }

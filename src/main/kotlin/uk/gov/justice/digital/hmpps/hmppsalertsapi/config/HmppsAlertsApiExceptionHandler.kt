@@ -28,16 +28,15 @@ import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 @RestControllerAdvice
 class HmppsAlertsApiExceptionHandler {
   @ExceptionHandler(AlreadyExistsException::class)
-  fun handleAlreadyExistsException(e: AlreadyExistsException): ResponseEntity<ErrorResponse> =
-    ResponseEntity
-      .status(HttpStatus.CONFLICT)
-      .body(
-        ErrorResponse(
-          status = HttpStatus.CONFLICT.value(),
-          userMessage = "Duplicate failure: ${e.message}",
-          developerMessage = "${e.resource} already exists with identifier ${e.identifier}",
-        ),
-      )
+  fun handleAlreadyExistsException(e: AlreadyExistsException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(HttpStatus.CONFLICT)
+    .body(
+      ErrorResponse(
+        status = HttpStatus.CONFLICT.value(),
+        userMessage = "Duplicate failure: ${e.message}",
+        developerMessage = "${e.resource} already exists with identifier ${e.identifier}",
+      ),
+    )
 
   @ExceptionHandler(AccessDeniedException::class)
   fun handleAccessDeniedException(e: AccessDeniedException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -51,16 +50,15 @@ class HmppsAlertsApiExceptionHandler {
     )
 
   @ExceptionHandler(MissingServletRequestParameterException::class)
-  fun handleMissingServletRequestParameterException(e: MissingServletRequestParameterException): ResponseEntity<ErrorResponse> =
-    ResponseEntity
-      .status(BAD_REQUEST)
-      .body(
-        ErrorResponse(
-          status = BAD_REQUEST,
-          userMessage = "Validation failure: ${e.message}",
-          developerMessage = e.message,
-        ),
-      )
+  fun handleMissingServletRequestParameterException(e: MissingServletRequestParameterException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(BAD_REQUEST)
+    .body(
+      ErrorResponse(
+        status = BAD_REQUEST,
+        userMessage = "Validation failure: ${e.message}",
+        developerMessage = e.message,
+      ),
+    )
 
   @ExceptionHandler(MethodArgumentTypeMismatchException::class)
   fun handleMethodArgumentTypeMismatchException(e: MethodArgumentTypeMismatchException): ResponseEntity<ErrorResponse> {
@@ -83,16 +81,15 @@ class HmppsAlertsApiExceptionHandler {
   }
 
   @ExceptionHandler(HttpMessageNotReadableException::class)
-  fun handleHttpMessageNotReadableException(e: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> =
-    ResponseEntity
-      .status(BAD_REQUEST)
-      .body(
-        ErrorResponse(
-          status = BAD_REQUEST,
-          userMessage = "Validation failure: Couldn't read request body",
-          developerMessage = e.message,
-        ),
-      )
+  fun handleHttpMessageNotReadableException(e: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(BAD_REQUEST)
+    .body(
+      ErrorResponse(
+        status = BAD_REQUEST,
+        userMessage = "Validation failure: Couldn't read request body",
+        developerMessage = e.message,
+      ),
+    )
 
   @ExceptionHandler(MethodArgumentNotValidException::class)
   fun handleValidationException(e: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -124,28 +121,27 @@ class HmppsAlertsApiExceptionHandler {
   }
 
   @ExceptionHandler(HandlerMethodValidationException::class)
-  fun handleHandlerMethodValidationException(e: HandlerMethodValidationException): ResponseEntity<ErrorResponse> =
-    e.allErrors.map { it.defaultMessage }.distinct().sorted().let {
-      val validationFailure = "Validation failure"
-      val message = if (it.size > 1) {
-        """
+  fun handleHandlerMethodValidationException(e: HandlerMethodValidationException): ResponseEntity<ErrorResponse> = e.allErrors.map { it.defaultMessage }.distinct().sorted().let {
+    val validationFailure = "Validation failure"
+    val message = if (it.size > 1) {
+      """
               |${validationFailure}s: 
               |${it.joinToString(System.lineSeparator())}
               |
-        """.trimMargin()
-      } else {
-        "$validationFailure: ${it.joinToString(System.lineSeparator())}"
-      }
-      ResponseEntity
-        .status(BAD_REQUEST)
-        .body(
-          ErrorResponse(
-            status = BAD_REQUEST,
-            userMessage = message,
-            developerMessage = "400 BAD_REQUEST $message",
-          ),
-        )
+      """.trimMargin()
+    } else {
+      "$validationFailure: ${it.joinToString(System.lineSeparator())}"
     }
+    ResponseEntity
+      .status(BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = BAD_REQUEST,
+          userMessage = message,
+          developerMessage = "400 BAD_REQUEST $message",
+        ),
+      )
+  }
 
   @ExceptionHandler(NoResourceFoundException::class)
   fun handleNoResourceFoundException(e: NoResourceFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -159,28 +155,26 @@ class HmppsAlertsApiExceptionHandler {
     )
 
   @ExceptionHandler(NotFoundException::class)
-  fun handleNotFoundException(e: NotFoundException): ResponseEntity<ErrorResponse> =
-    ResponseEntity
-      .status(404)
-      .body(
-        ErrorResponse(
-          status = NOT_FOUND.value(),
-          userMessage = "Not found: ${e.message}",
-          developerMessage = "${e.resource} not found with identifier ${e.identifier}",
-        ),
-      )
+  fun handleNotFoundException(e: NotFoundException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(404)
+    .body(
+      ErrorResponse(
+        status = NOT_FOUND.value(),
+        userMessage = "Not found: ${e.message}",
+        developerMessage = "${e.resource} not found with identifier ${e.identifier}",
+      ),
+    )
 
   @ExceptionHandler(HttpRequestMethodNotSupportedException::class)
-  fun handleHttpRequestMethodNotSupportedException(e: HttpRequestMethodNotSupportedException): ResponseEntity<ErrorResponse> =
-    ResponseEntity
-      .status(METHOD_NOT_ALLOWED)
-      .body(
-        ErrorResponse(
-          status = METHOD_NOT_ALLOWED,
-          userMessage = "Method not allowed failure: ${e.message}",
-          developerMessage = e.message,
-        ),
-      )
+  fun handleHttpRequestMethodNotSupportedException(e: HttpRequestMethodNotSupportedException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(METHOD_NOT_ALLOWED)
+    .body(
+      ErrorResponse(
+        status = METHOD_NOT_ALLOWED,
+        userMessage = "Method not allowed failure: ${e.message}",
+        developerMessage = e.message,
+      ),
+    )
 
   @ExceptionHandler(DownstreamServiceException::class)
   fun handleDownstreamException(e: DownstreamServiceException): ResponseEntity<ErrorResponse> = ResponseEntity
@@ -194,16 +188,15 @@ class HmppsAlertsApiExceptionHandler {
     )
 
   @ExceptionHandler(Exception::class)
-  fun handleException(e: Exception): ResponseEntity<ErrorResponse> =
-    ResponseEntity
-      .status(INTERNAL_SERVER_ERROR)
-      .body(
-        ErrorResponse(
-          status = INTERNAL_SERVER_ERROR,
-          userMessage = "Unexpected error: ${e.message}",
-          developerMessage = e.message,
-        ),
-      )
+  fun handleException(e: Exception): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(INTERNAL_SERVER_ERROR)
+    .body(
+      ErrorResponse(
+        status = INTERNAL_SERVER_ERROR,
+        userMessage = "Unexpected error: ${e.message}",
+        developerMessage = e.message,
+      ),
+    )
 
   @ExceptionHandler(InvalidRowException::class)
   fun handleInvalidRow(ire: InvalidRowException): ResponseEntity<ErrorResponse> {

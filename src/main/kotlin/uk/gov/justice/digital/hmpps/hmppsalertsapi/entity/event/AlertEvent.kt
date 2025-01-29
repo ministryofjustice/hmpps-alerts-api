@@ -27,19 +27,18 @@ sealed interface AlertEvent : DomainEventable {
   val occurredAt: LocalDateTime
   val source: Source
   override fun detailPath(): String = "/alerts/$alertUuid"
-  override fun toDomainEvent(baseUrl: String): AlertDomainEvent<AlertAdditionalInformation> =
-    AlertDomainEvent(
-      eventType = type.eventType,
-      additionalInformation = AlertAdditionalInformation(
-        alertUuid = alertUuid,
-        alertCode = alertCode,
-        source = source,
-      ),
-      description = type.description,
-      occurredAt = occurredAt.toZoneDateTime(),
-      detailUrl = "$baseUrl${detailPath()}",
-      personReference = PersonReference.withPrisonNumber(prisonNumber),
-    )
+  override fun toDomainEvent(baseUrl: String): AlertDomainEvent<AlertAdditionalInformation> = AlertDomainEvent(
+    eventType = type.eventType,
+    additionalInformation = AlertAdditionalInformation(
+      alertUuid = alertUuid,
+      alertCode = alertCode,
+      source = source,
+    ),
+    description = type.description,
+    occurredAt = occurredAt.toZoneDateTime(),
+    detailUrl = "$baseUrl${detailPath()}",
+    personReference = PersonReference.withPrisonNumber(prisonNumber),
+  )
 }
 
 data class AlertCreatedEvent(
@@ -94,17 +93,16 @@ sealed interface AlertReferenceDataEvent : DomainEventable {
   val occurredAt: LocalDateTime
   override fun toDomainEvent(
     baseUrl: String,
-  ): AlertDomainEvent<ReferenceDataAdditionalInformation> =
-    AlertDomainEvent(
-      eventType = type.eventType,
-      additionalInformation = ReferenceDataAdditionalInformation(
-        alertCode = alertCode,
-        source = DPS,
-      ),
-      description = type.description,
-      occurredAt = occurredAt.toZoneDateTime(),
-      detailUrl = "$baseUrl${detailPath()}",
-    )
+  ): AlertDomainEvent<ReferenceDataAdditionalInformation> = AlertDomainEvent(
+    eventType = type.eventType,
+    additionalInformation = ReferenceDataAdditionalInformation(
+      alertCode = alertCode,
+      source = DPS,
+    ),
+    description = type.description,
+    occurredAt = occurredAt.toZoneDateTime(),
+    detailUrl = "$baseUrl${detailPath()}",
+  )
 }
 
 sealed interface AlertCodeEvent : AlertReferenceDataEvent {

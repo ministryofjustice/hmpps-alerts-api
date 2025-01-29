@@ -178,6 +178,5 @@ class AlertsController(private val alertService: AlertService) {
     alertService.publishInactiveTodayAlertEvents()
   }
 
-  private fun HttpServletRequest.alertRequestContext() =
-    getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
+  private fun HttpServletRequest.alertRequestContext() = getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
 }

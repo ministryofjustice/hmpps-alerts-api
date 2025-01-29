@@ -14,21 +14,19 @@ import java.time.LocalDateTime
 
 @Service
 class GetAlertsForCaseNotes(private val alertRepository: AlertRepository) {
-  fun get(prisonNumber: String, from: LocalDate, to: LocalDate): List<CaseNoteAlert> =
-    alertRepository.findAll(caseNoteSpecification(prisonNumber, from, to)).map { it.forCaseNotes() }
+  fun get(prisonNumber: String, from: LocalDate, to: LocalDate): List<CaseNoteAlert> = alertRepository.findAll(caseNoteSpecification(prisonNumber, from, to)).map { it.forCaseNotes() }
 
-  private fun caseNoteSpecification(prisonNumber: String, from: LocalDate, to: LocalDate) =
-    Specification<Alert> { alert, _, cb ->
-      val pn = cb.equal(alert.get<String>("prisonNumber"), prisonNumber)
-      val created = cb.between(alert.get("createdAt"), from, to)
-      val activeFrom = cb.between(alert.get("activeFrom"), from, to)
-      val activeTo = cb.between(alert.get("activeTo"), from, to)
-      val code = alert.fetch<Alert, AlertCode>("alertCode")
-      code.fetch<AlertCode, AlertType>("alertType")
-      val audit = (alert.fetch<Alert, AuditEvent>("auditEvents") as Join<*, *>)
-      val modified = cb.between(audit.get("actionedAt"), from, to)
-      cb.and(pn, cb.or(created, activeFrom, activeTo, modified))
-    }
+  private fun caseNoteSpecification(prisonNumber: String, from: LocalDate, to: LocalDate) = Specification<Alert> { alert, _, cb ->
+    val pn = cb.equal(alert.get<String>("prisonNumber"), prisonNumber)
+    val created = cb.between(alert.get("createdAt"), from, to)
+    val activeFrom = cb.between(alert.get("activeFrom"), from, to)
+    val activeTo = cb.between(alert.get("activeTo"), from, to)
+    val code = alert.fetch<Alert, AlertCode>("alertCode")
+    code.fetch<AlertCode, AlertType>("alertType")
+    val audit = (alert.fetch<Alert, AuditEvent>("auditEvents") as Join<*, *>)
+    val modified = cb.between(audit.get("actionedAt"), from, to)
+    cb.and(pn, cb.or(created, activeFrom, activeTo, modified))
+  }
 
   private fun Alert.typeInfo() = Pair(
     CodedDescription(alertCode.alertType.code, alertCode.alertType.description),

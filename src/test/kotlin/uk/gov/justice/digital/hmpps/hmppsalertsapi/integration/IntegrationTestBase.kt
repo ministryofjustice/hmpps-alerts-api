@@ -140,16 +140,14 @@ abstract class IntegrationTestBase {
     it.set(USERNAME, username)
   }
 
-  internal fun HmppsQueue.countAllMessagesOnQueue() =
-    sqsClient.countAllMessagesOnQueue(queueUrl).get()
+  internal fun HmppsQueue.countAllMessagesOnQueue() = sqsClient.countAllMessagesOnQueue(queueUrl).get()
 
   internal fun HmppsQueue.receiveAllMessages(): List<HmppsDomainEvent> {
     val count = countAllMessagesOnQueue()
     return (1..count).map { hmppsDomainEventOnQueue() }
   }
 
-  internal fun HmppsQueue.receiveMessageOnQueue() =
-    sqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build()).get().messages().single()
+  internal fun HmppsQueue.receiveMessageOnQueue() = sqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(queueUrl).build()).get().messages().single()
 
   internal final fun HmppsQueue.receiveMessageTypeCounts(
     messageCount: Int = 1,
@@ -162,10 +160,9 @@ abstract class IntegrationTestBase {
 
   data class EventType(val eventType: String)
 
-  internal final inline fun <reified T : AlertBaseAdditionalInformation> HmppsQueue.receiveAlertDomainEventOnQueue() =
-    receiveMessageOnQueue()
-      .let { objectMapper.readValue<MsgBody>(it.body()) }
-      .let { objectMapper.readValue<AlertDomainEvent<T>>(it.message) }
+  internal final inline fun <reified T : AlertBaseAdditionalInformation> HmppsQueue.receiveAlertDomainEventOnQueue() = receiveMessageOnQueue()
+    .let { objectMapper.readValue<MsgBody>(it.body()) }
+    .let { objectMapper.readValue<AlertDomainEvent<T>>(it.message) }
 
   internal fun HmppsQueue.hmppsDomainEventOnQueue() = receiveMessageOnQueue()
     .let { objectMapper.readValue<MsgBody>(it.body()) }
@@ -192,16 +189,14 @@ abstract class IntegrationTestBase {
     }
   }
 
-  fun WebTestClient.ResponseSpec.errorResponse(httpStatus: HttpStatus) =
-    expectStatus().isEqualTo(httpStatus)
-      .expectBody<ErrorResponse>()
-      .returnResult().responseBody!!
+  fun WebTestClient.ResponseSpec.errorResponse(httpStatus: HttpStatus) = expectStatus().isEqualTo(httpStatus)
+    .expectBody<ErrorResponse>()
+    .returnResult().responseBody!!
 
-  final inline fun <reified T> WebTestClient.ResponseSpec.successResponse(httpStatus: HttpStatus = HttpStatus.OK): T =
-    expectStatus().isEqualTo(httpStatus)
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
-      .expectBody(T::class.java)
-      .returnResult().responseBody!!
+  final inline fun <reified T> WebTestClient.ResponseSpec.successResponse(httpStatus: HttpStatus = HttpStatus.OK): T = expectStatus().isEqualTo(httpStatus)
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
+    .expectBody(T::class.java)
+    .returnResult().responseBody!!
 
   fun givenPrisoner(): String = givenPrisonerExists(prisonNumber())
 
@@ -213,8 +208,7 @@ abstract class IntegrationTestBase {
   fun givenExistingAlertType(code: String): AlertType = requireNotNull(alertTypeRepository.findByCode(code))
   fun givenExistingAlertCode(code: String): AlertCode = requireNotNull(alertCodeRepository.findByCode(code))
 
-  fun givenAlertCode(code: String? = null, active: Boolean = true): AlertCode =
-    alertCodeRepository.findAll().first { it.isActive() == active && (code.isNullOrBlank() || it.code == code) }
+  fun givenAlertCode(code: String? = null, active: Boolean = true): AlertCode = alertCodeRepository.findAll().first { it.isActive() == active && (code.isNullOrBlank() || it.code == code) }
 
   fun givenNewAlertType(alertType: AlertType): AlertType = alertTypeRepository.save(alertType)
 

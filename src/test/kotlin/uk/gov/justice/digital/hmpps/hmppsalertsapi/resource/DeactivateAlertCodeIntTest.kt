@@ -128,9 +128,8 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun WebTestClient.deleteAlertCode(alertCode: String): AlertCode =
-    patch()
-      .uri("/alert-codes/$alertCode/deactivate")
-      .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = true))
-      .exchange().successResponse()
+  private fun WebTestClient.deleteAlertCode(alertCode: String): AlertCode = patch()
+    .uri("/alert-codes/$alertCode/deactivate")
+    .headers(setAuthorisation(user = TEST_USER, roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI), isUserToken = true))
+    .exchange().successResponse()
 }

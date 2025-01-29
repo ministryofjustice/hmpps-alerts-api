@@ -272,9 +272,8 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
     .headers(setAlertRequestContext(username = username))
     .exchange()
 
-  private fun patchPlan(id: UUID, actions: Set<BulkAction>): BulkPlan =
-    patchPlanResponseSpec(id, actions).expectStatus().isOk
-      .expectBody<BulkPlan>().returnResult().responseBody!!
+  private fun patchPlan(id: UUID, actions: Set<BulkAction>): BulkPlan = patchPlanResponseSpec(id, actions).expectStatus().isOk
+    .expectBody<BulkPlan>().returnResult().responseBody!!
 
   companion object {
     private const val URL = "/bulk-alerts/plan/{id}"

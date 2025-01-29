@@ -329,25 +329,22 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun createAlertCodeRequest(code: String = "CO", description: String = "Description") =
-    CreateAlertCodeRequest(code, description, AT_VULNERABILITY.code)
+  private fun createAlertCodeRequest(code: String = "CO", description: String = "Description") = CreateAlertCodeRequest(code, description, AT_VULNERABILITY.code)
 
-  private fun WebTestClient.createAlertCodeResponseSpec(request: CreateAlertCodeRequest) =
-    post()
-      .uri("/alert-codes")
-      .bodyValue(request)
-      .headers(
-        setAuthorisation(
-          user = TEST_USER,
-          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
-        ),
-      )
-      .exchange()
-      .expectHeader().contentType(MediaType.APPLICATION_JSON)
+  private fun WebTestClient.createAlertCodeResponseSpec(request: CreateAlertCodeRequest) = post()
+    .uri("/alert-codes")
+    .bodyValue(request)
+    .headers(
+      setAuthorisation(
+        user = TEST_USER,
+        roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+      ),
+    )
+    .exchange()
+    .expectHeader().contentType(MediaType.APPLICATION_JSON)
 
-  private fun WebTestClient.createAlertCode(request: CreateAlertCodeRequest) =
-    createAlertCodeResponseSpec(request)
-      .expectStatus().isCreated
-      .expectBody(AlertCode::class.java)
-      .returnResult().responseBody!!
+  private fun WebTestClient.createAlertCode(request: CreateAlertCodeRequest) = createAlertCodeResponseSpec(request)
+    .expectStatus().isCreated
+    .expectBody(AlertCode::class.java)
+    .returnResult().responseBody!!
 }

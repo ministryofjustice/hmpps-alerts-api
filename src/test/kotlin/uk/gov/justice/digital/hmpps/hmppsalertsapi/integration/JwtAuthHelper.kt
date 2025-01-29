@@ -57,27 +57,26 @@ class JwtAuthHelper {
     expiryTime: Duration = Duration.ofHours(1),
     jwtId: String = UUID.randomUUID().toString(),
     isUserToken: Boolean = true,
-  ): String =
-    mutableMapOf<String, Any>()
-      .also {
-        user?.let { user ->
-          it[
-            when (isUserToken) {
-              true -> "user_name" false -> "username"
-            },
-          ] = user
-        }
+  ): String = mutableMapOf<String, Any>()
+    .also {
+      user?.let { user ->
+        it[
+          when (isUserToken) {
+            true -> "user_name" false -> "username"
+          },
+        ] = user
       }
-      .also { client?.let { client -> it["client_id"] = client } }
-      .also { roles?.let { roles -> it["authorities"] = roles } }
-      .also { scope?.let { scope -> it["scope"] = scope } }
-      .let {
-        Jwts.builder()
-          .id(jwtId)
-          .subject(subject)
-          .claims(it.toMap())
-          .expiration(Date(System.currentTimeMillis() + expiryTime.toMillis()))
-          .signWith(keyPair.private, SIG.RS256)
-          .compact()
-      }
+    }
+    .also { client?.let { client -> it["client_id"] = client } }
+    .also { roles?.let { roles -> it["authorities"] = roles } }
+    .also { scope?.let { scope -> it["scope"] = scope } }
+    .let {
+      Jwts.builder()
+        .id(jwtId)
+        .subject(subject)
+        .claims(it.toMap())
+        .expiration(Date(System.currentTimeMillis() + expiryTime.toMillis()))
+        .signWith(keyPair.private, SIG.RS256)
+        .compact()
+    }
 }

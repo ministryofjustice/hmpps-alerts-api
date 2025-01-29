@@ -69,11 +69,10 @@ fun Alert.toAlertModel(auditEvents: Collection<AuditEvent>? = null): AlertModel 
   )
 }
 
-fun AuditEvent.toAuditEventModel() =
-  AuditEventModel(
-    action = action,
-    description = description,
-    actionedAt = actionedAt,
-    actionedBy = actionedBy,
-    actionedByDisplayName = actionedByDisplayName,
-  )
+fun AuditEvent.toAuditEventModel() = AuditEventModel(
+  action = action,
+  description = description,
+  actionedAt = actionedAt,
+  actionedBy = actionedBy,
+  actionedByDisplayName = actionedByDisplayName,
+)

@@ -222,16 +222,15 @@ class UpdateAlertCodeIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun WebTestClient.updateAlertCodeDescription(alertCode: String, description: String): AlertCode =
-    patch()
-      .uri("/alert-codes/$alertCode")
-      .headers(
-        setAuthorisation(
-          user = TEST_USER,
-          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
-          isUserToken = true,
-        ),
-      )
-      .bodyValue(UpdateAlertCodeRequest(description))
-      .exchange().successResponse()
+  private fun WebTestClient.updateAlertCodeDescription(alertCode: String, description: String): AlertCode = patch()
+    .uri("/alert-codes/$alertCode")
+    .headers(
+      setAuthorisation(
+        user = TEST_USER,
+        roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+        isUserToken = true,
+      ),
+    )
+    .bodyValue(UpdateAlertCodeRequest(description))
+    .exchange().successResponse()
 }

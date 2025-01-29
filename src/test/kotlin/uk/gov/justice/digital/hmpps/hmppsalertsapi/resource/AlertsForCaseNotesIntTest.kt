@@ -108,19 +108,18 @@ class AlertsForCaseNotesIntTest : IntegrationTestBase() {
     }
   }
 
-  private fun getAlerts(prisonNumber: String, from: LocalDate, to: LocalDate): CaseNoteAlertResponse =
-    webTestClient.get()
-      .uri {
-        it.path(urlToTest(prisonNumber))
-        it.queryParam("from", from)
-        it.queryParam("to", to)
-        it.build()
-      }
-      .headers(setAuthorisation(roles = listOf(ROLE_CASE_NOTES)))
-      .exchange()
-      .expectStatus().isOk
-      .expectBody<CaseNoteAlertResponse>()
-      .returnResult().responseBody!!
+  private fun getAlerts(prisonNumber: String, from: LocalDate, to: LocalDate): CaseNoteAlertResponse = webTestClient.get()
+    .uri {
+      it.path(urlToTest(prisonNumber))
+      it.queryParam("from", from)
+      it.queryParam("to", to)
+      it.build()
+    }
+    .headers(setAuthorisation(roles = listOf(ROLE_CASE_NOTES)))
+    .exchange()
+    .expectStatus().isOk
+    .expectBody<CaseNoteAlertResponse>()
+    .returnResult().responseBody!!
 
   fun urlToTest(prisonNumber: String) = "alerts/case-notes/$prisonNumber"
 }

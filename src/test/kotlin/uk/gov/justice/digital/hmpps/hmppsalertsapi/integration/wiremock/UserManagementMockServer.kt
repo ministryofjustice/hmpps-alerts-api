@@ -37,34 +37,35 @@ class ManageUsersServer : WireMockServer(8111) {
     )
   }
 
-  fun stubGetUserDetails(username: String = TEST_USER, name: String = TEST_USER_NAME): StubMapping =
-    stubFor(
-      get("/users/$username")
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", "application/json")
-            .withBody(
-              mapper.writeValueAsString(
-                UserDetailsDto(
-                  username = username,
-                  active = true,
-                  name = name,
-                  authSource = "nomis",
-                  activeCaseLoadId = PRISON_CODE_LEEDS,
-                  userId = "123",
-                  uuid = UUID.randomUUID(),
-                ),
+  fun stubGetUserDetails(username: String = TEST_USER, name: String = TEST_USER_NAME): StubMapping = stubFor(
+    get("/users/$username")
+      .willReturn(
+        aResponse()
+          .withHeader("Content-Type", "application/json")
+          .withBody(
+            mapper.writeValueAsString(
+              UserDetailsDto(
+                username = username,
+                active = true,
+                name = name,
+                authSource = "nomis",
+                activeCaseLoadId = PRISON_CODE_LEEDS,
+                userId = "123",
+                uuid = UUID.randomUUID(),
               ),
-            )
-            .withStatus(200),
-        ),
-    )
+            ),
+          )
+          .withStatus(200),
+      ),
+  )
 
-  fun stubGetUserDetailsException(username: String = USER_THROW_EXCEPTION): StubMapping =
-    stubFor(get("/users/$username").willReturn(aResponse().withStatus(500)))
+  fun stubGetUserDetailsException(username: String = USER_THROW_EXCEPTION): StubMapping = stubFor(get("/users/$username").willReturn(aResponse().withStatus(500)))
 }
 
-class ManageUsersExtension : BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
+class ManageUsersExtension :
+  BeforeAllCallback,
+  AfterAllCallback,
+  BeforeEachCallback {
   companion object {
     @JvmField
     val manageUsers = ManageUsersServer()

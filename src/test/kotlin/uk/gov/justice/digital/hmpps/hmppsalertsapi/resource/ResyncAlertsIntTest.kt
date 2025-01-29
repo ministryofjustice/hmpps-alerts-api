@@ -422,7 +422,6 @@ class ResyncAlertsIntTest : IntegrationTestBase() {
     prisonNumber: String,
     request: Collection<ResyncAlert>,
     role: String = ROLE_NOMIS_ALERTS,
-  ): MutableList<ResyncedAlert> =
-    resyncResponseSpec(prisonNumber, request, role).expectStatus().isCreated
-      .expectBodyList<ResyncedAlert>().returnResult().responseBody!!
+  ): MutableList<ResyncedAlert> = resyncResponseSpec(prisonNumber, request, role).expectStatus().isCreated
+    .expectBodyList<ResyncedAlert>().returnResult().responseBody!!
 }

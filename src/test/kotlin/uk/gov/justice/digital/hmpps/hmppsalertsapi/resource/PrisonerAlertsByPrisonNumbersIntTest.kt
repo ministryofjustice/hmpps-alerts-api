@@ -94,19 +94,18 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
     }
   }
 
-  private fun getPrisonerAlerts(prisonNumbers: Set<String>, includeInactive: Boolean = false): List<Alert> =
-    webTestClient.post()
-      .uri {
-        it.path(SEARCH_URL)
-        if (includeInactive) it.queryParam("includeInactive", "true")
-        it.build()
-      }
-      .bodyValue(prisonNumbers)
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-      .exchange()
-      .expectStatus().isOk
-      .expectBody<AlertsResponse>()
-      .returnResult().responseBody!!.content
+  private fun getPrisonerAlerts(prisonNumbers: Set<String>, includeInactive: Boolean = false): List<Alert> = webTestClient.post()
+    .uri {
+      it.path(SEARCH_URL)
+      if (includeInactive) it.queryParam("includeInactive", "true")
+      it.build()
+    }
+    .bodyValue(prisonNumbers)
+    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
+    .exchange()
+    .expectStatus().isOk
+    .expectBody<AlertsResponse>()
+    .returnResult().responseBody!!.content
 
   companion object {
     const val SEARCH_URL = "/search/alerts/prison-numbers"

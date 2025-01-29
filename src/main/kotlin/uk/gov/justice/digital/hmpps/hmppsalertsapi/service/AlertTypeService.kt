@@ -19,73 +19,65 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepositor
 class AlertTypeService(
   private val alertTypeRepository: AlertTypeRepository,
 ) {
-  fun getAlertTypes(includeInactive: Boolean) =
-    alertTypeRepository.findAll().toAlertTypeModels(includeInactive)
+  fun getAlertTypes(includeInactive: Boolean) = alertTypeRepository.findAll().toAlertTypeModels(includeInactive)
 
-  fun createAlertType(createAlertTypeRequest: CreateAlertTypeRequest, context: AlertRequestContext): AlertType =
-    createAlertTypeRequest.let {
-      it.checkForExistingAlertType()
-      val entity = it.toEntity(context)
-      with(entity) {
-        val toSave = create()
-        alertTypeRepository.save(toSave).toAlertTypeModel(false)
-      }
+  fun createAlertType(createAlertTypeRequest: CreateAlertTypeRequest, context: AlertRequestContext): AlertType = createAlertTypeRequest.let {
+    it.checkForExistingAlertType()
+    val entity = it.toEntity(context)
+    with(entity) {
+      val toSave = create()
+      alertTypeRepository.save(toSave).toAlertTypeModel(false)
     }
+  }
 
-  fun getAlertType(alertType: String): AlertType =
-    alertType.let {
-      it.checkAlertTypeExists()
-      alertTypeRepository.findByCode(alertType)!!.toAlertTypeModel(true)
-    }
+  fun getAlertType(alertType: String): AlertType = alertType.let {
+    it.checkAlertTypeExists()
+    alertTypeRepository.findByCode(alertType)!!.toAlertTypeModel(true)
+  }
 
   @Transactional
-  fun deactivateAlertType(alertType: String, alertRequestContext: AlertRequestContext): AlertType =
-    alertType.let {
-      it.checkAlertTypeExists()
-      with(alertTypeRepository.findByCode(it)!!) {
-        deactivatedAt = alertRequestContext.requestAt
-        deactivatedBy = alertRequestContext.username
-        deactivate()
-        alertTypeRepository.save(this).toAlertTypeModel(true)
-      }
+  fun deactivateAlertType(alertType: String, alertRequestContext: AlertRequestContext): AlertType = alertType.let {
+    it.checkAlertTypeExists()
+    with(alertTypeRepository.findByCode(it)!!) {
+      deactivatedAt = alertRequestContext.requestAt
+      deactivatedBy = alertRequestContext.username
+      deactivate()
+      alertTypeRepository.save(this).toAlertTypeModel(true)
     }
+  }
 
   @Transactional
-  fun reactivateAlertType(alertType: String, alertRequestContext: AlertRequestContext) =
-    alertType.let {
-      it.checkAlertTypeExists()
-      with(alertTypeRepository.findByCode(it)!!) {
-        if (deactivatedAt != null) {
-          deactivatedAt = null
-          deactivatedBy = null
-          reactivate(alertRequestContext.requestAt)
-        }
-        alertTypeRepository.save(this).toAlertTypeModel(false)
+  fun reactivateAlertType(alertType: String, alertRequestContext: AlertRequestContext) = alertType.let {
+    it.checkAlertTypeExists()
+    with(alertTypeRepository.findByCode(it)!!) {
+      if (deactivatedAt != null) {
+        deactivatedAt = null
+        deactivatedBy = null
+        reactivate(alertRequestContext.requestAt)
       }
+      alertTypeRepository.save(this).toAlertTypeModel(false)
     }
+  }
 
   @Transactional
   fun updateAlertType(
     alertType: String,
     updateAlertTypeRequest: UpdateAlertTypeRequest,
     alertRequestContext: AlertRequestContext,
-  ): AlertType =
-    alertType.let {
-      it.checkAlertTypeExists()
-      with(alertTypeRepository.findByCode(it)!!) {
-        if (description != updateAlertTypeRequest.description) {
-          description = updateAlertTypeRequest.description
-          modifiedBy = alertRequestContext.username
-          modifiedAt = alertRequestContext.requestAt
-          update()
-        }
-        alertTypeRepository.save(this).toAlertTypeModel(false)
+  ): AlertType = alertType.let {
+    it.checkAlertTypeExists()
+    with(alertTypeRepository.findByCode(it)!!) {
+      if (description != updateAlertTypeRequest.description) {
+        description = updateAlertTypeRequest.description
+        modifiedBy = alertRequestContext.username
+        modifiedAt = alertRequestContext.requestAt
+        update()
       }
+      alertTypeRepository.save(this).toAlertTypeModel(false)
     }
+  }
 
-  fun CreateAlertTypeRequest.checkForExistingAlertType() =
-    verifyDoesNotExist(alertTypeRepository.findByCode(code)) { AlreadyExistsException("Alert type", code) }
+  fun CreateAlertTypeRequest.checkForExistingAlertType() = verifyDoesNotExist(alertTypeRepository.findByCode(code)) { AlreadyExistsException("Alert type", code) }
 
-  private fun String.checkAlertTypeExists() =
-    verifyExists(alertTypeRepository.findByCode(this)) { NotFoundException("Alert type", this) }
+  private fun String.checkAlertTypeExists() = verifyExists(alertTypeRepository.findByCode(this)) { NotFoundException("Alert type", this) }
 }

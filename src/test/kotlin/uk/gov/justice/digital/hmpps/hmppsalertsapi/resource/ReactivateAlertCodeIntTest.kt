@@ -138,14 +138,13 @@ class ReactivateAlertCodeIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun WebTestClient.reactivateAlertCode(alertCode: String): AlertCode =
-    patch()
-      .uri("/alert-codes/$alertCode/reactivate")
-      .headers(
-        setAuthorisation(
-          user = TEST_USER,
-          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
-          isUserToken = true,
-        ),
-      ).exchange().successResponse()
+  private fun WebTestClient.reactivateAlertCode(alertCode: String): AlertCode = patch()
+    .uri("/alert-codes/$alertCode/reactivate")
+    .headers(
+      setAuthorisation(
+        user = TEST_USER,
+        roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+        isUserToken = true,
+      ),
+    ).exchange().successResponse()
 }
