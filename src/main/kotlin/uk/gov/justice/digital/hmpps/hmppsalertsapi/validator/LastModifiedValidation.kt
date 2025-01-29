@@ -14,15 +14,11 @@ interface Modifiable {
 }
 
 class LastModifiedByValidator : ConstraintValidator<LastModifiedByRequired, Modifiable> {
-  override fun isValid(value: Modifiable, context: ConstraintValidatorContext?): Boolean {
-    return value.lastModifiedAt == null || value.lastModifiedBy?.isNotBlank() ?: false
-  }
+  override fun isValid(value: Modifiable, context: ConstraintValidatorContext?): Boolean = value.lastModifiedAt == null || value.lastModifiedBy?.isNotBlank() ?: false
 }
 
 class LastModifiedByDisplayNameValidator : ConstraintValidator<LastModifiedByDisplayNameRequired, Modifiable> {
-  override fun isValid(value: Modifiable, context: ConstraintValidatorContext?): Boolean {
-    return value.lastModifiedAt == null || value.lastModifiedByDisplayName?.isNotBlank() ?: false
-  }
+  override fun isValid(value: Modifiable, context: ConstraintValidatorContext?): Boolean = value.lastModifiedAt == null || value.lastModifiedByDisplayName?.isNotBlank() ?: false
 }
 
 @Constraint(validatedBy = [LastModifiedByValidator::class])

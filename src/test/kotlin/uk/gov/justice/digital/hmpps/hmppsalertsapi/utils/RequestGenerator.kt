@@ -9,6 +9,5 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AT_VULN
 object RequestGenerator {
   fun AlertCode.summary() = AlertCodeSummary(alertType.code, alertType.description, code, description)
 
-  fun alertCodeSummary(alertType: AlertType = AT_VULNERABILITY, alertCode: AlertCode = AC_VICTIM) =
-    AlertCodeSummary(alertType.code, alertType.description, alertCode.code, alertCode.description)
+  fun alertCodeSummary(alertType: AlertType = AT_VULNERABILITY, alertCode: AlertCode = AC_VICTIM) = AlertCodeSummary(alertType.code, alertType.description, alertCode.code, alertCode.description)
 }

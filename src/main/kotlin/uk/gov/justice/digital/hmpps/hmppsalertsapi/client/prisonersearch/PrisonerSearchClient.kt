@@ -14,18 +14,16 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.retryNetworkExceptions
 
 @Component
 class PrisonerSearchClient(@Qualifier("prisonerSearchWebClient") private val webClient: WebClient) {
-  fun getPrisoner(prisonerId: String): Mono<PrisonerDetails> {
-    return webClient.get()
-      .uri("/prisoner/{prisonerId}", prisonerId)
-      .exchangeToMono { res ->
-        when (res.statusCode()) {
-          HttpStatus.NOT_FOUND -> Mono.empty()
-          HttpStatus.OK -> res.bodyToMono<PrisonerDetails>()
-          else -> res.createError()
-        }
+  fun getPrisoner(prisonerId: String): Mono<PrisonerDetails> = webClient.get()
+    .uri("/prisoner/{prisonerId}", prisonerId)
+    .exchangeToMono { res ->
+      when (res.statusCode()) {
+        HttpStatus.NOT_FOUND -> Mono.empty()
+        HttpStatus.OK -> res.bodyToMono<PrisonerDetails>()
+        else -> res.createError()
       }
-      .retryNetworkExceptions("Get prisoner request failed")
-  }
+    }
+    .retryNetworkExceptions("Get prisoner request failed")
 
   fun getPrisoners(prisonNumbers: Collection<String>, batchSize: Int = 1000): List<PrisonerDetails> {
     require(batchSize in 1..1000) {

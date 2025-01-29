@@ -294,51 +294,48 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
     activeTo = LocalDate.now().plusDays(10),
   )
 
-  private fun updateAlertRequestChange() =
-    UpdateAlert(
-      description = "another new description",
-      authorisedBy = "C Cauthorizer",
-      activeFrom = LocalDate.now().minusMonths(2),
-      activeTo = LocalDate.now().plusMonths(10),
-    )
+  private fun updateAlertRequestChange() = UpdateAlert(
+    description = "another new description",
+    authorisedBy = "C Cauthorizer",
+    activeFrom = LocalDate.now().minusMonths(2),
+    activeTo = LocalDate.now().plusMonths(10),
+  )
 
-  private fun alert(uuid: UUID = UUID.randomUUID(), updateAlert: UpdateAlert = updateAlertRequestNoChange()) =
-    LocalDateTime.now().minusDays(1).let {
-      Alert(
-        id = uuid,
-        alertCode = AC_VICTIM,
-        prisonNumber = PRISON_NUMBER,
-        description = "new description",
-        authorisedBy = "B Bauthorizer",
-        activeTo = updateAlert.activeTo,
-        activeFrom = updateAlert.activeFrom!!,
-        createdAt = it,
-        prisonCodeWhenCreated = null,
-      ).apply {
-        auditEvent(
-          AuditEventAction.CREATED,
-          "Alert created",
-          it,
-          "CREATED_BY",
-          "CREATED_BY_DISPLAY_NAME",
-          DPS,
-          PRISON_CODE_LEEDS,
-        )
-      }
+  private fun alert(uuid: UUID = UUID.randomUUID(), updateAlert: UpdateAlert = updateAlertRequestNoChange()) = LocalDateTime.now().minusDays(1).let {
+    Alert(
+      id = uuid,
+      alertCode = AC_VICTIM,
+      prisonNumber = PRISON_NUMBER,
+      description = "new description",
+      authorisedBy = "B Bauthorizer",
+      activeTo = updateAlert.activeTo,
+      activeFrom = updateAlert.activeFrom!!,
+      createdAt = it,
+      prisonCodeWhenCreated = null,
+    ).apply {
+      auditEvent(
+        AuditEventAction.CREATED,
+        "Alert created",
+        it,
+        "CREATED_BY",
+        "CREATED_BY_DISPLAY_NAME",
+        DPS,
+        PRISON_CODE_LEEDS,
+      )
     }
+  }
 
-  private fun prisoner(prisonNumber: String = IdGenerator.prisonNumber(), prisonCode: String = PRISON_CODE_LEEDS) =
-    PrisonerDetails(
-      prisonNumber,
-      "prisoner",
-      "middle",
-      "lastName",
-      prisonCode,
-      status = "ACTIVE IN",
-      restrictedPatient = false,
-      cellLocation = null,
-      supportingPrisonId = null,
-    )
+  private fun prisoner(prisonNumber: String = IdGenerator.prisonNumber(), prisonCode: String = PRISON_CODE_LEEDS) = PrisonerDetails(
+    prisonNumber,
+    "prisoner",
+    "middle",
+    "lastName",
+    prisonCode,
+    status = "ACTIVE IN",
+    restrictedPatient = false,
+    cellLocation = null,
+    supportingPrisonId = null,
+  )
 
   private fun alertEntity(
     activeFrom: LocalDate = LocalDate.now(),

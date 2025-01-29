@@ -21,8 +21,7 @@ const val ALERT_CODE_READY_FOR_WORK = "ORFW"
 
 const val ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD = "URS"
 
-fun userDetailsDto(username: String = TEST_USER, name: String = TEST_USER_NAME, uuid: UUID? = UUID.randomUUID()) =
-  UserDetailsDto(username, true, name, "nomis", PRISON_CODE_MOORLANDS, "123", uuid)
+fun userDetailsDto(username: String = TEST_USER, name: String = TEST_USER_NAME, uuid: UUID? = UUID.randomUUID()) = UserDetailsDto(username, true, name, "nomis", PRISON_CODE_MOORLANDS, "123", uuid)
 
 fun prisoner(
   prisonerNumber: String = prisonNumber(),

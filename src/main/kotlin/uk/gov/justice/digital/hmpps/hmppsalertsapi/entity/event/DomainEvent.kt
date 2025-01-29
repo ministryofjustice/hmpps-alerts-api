@@ -49,7 +49,8 @@ abstract class AlertBaseDomainEvent<T : AlertBaseAdditionalInformation> : Domain
 interface AdditionalInformation
 
 data class HmppsAdditionalInformation(private val mutableMap: MutableMap<String, Any?> = mutableMapOf()) :
-  AdditionalInformation, MutableMap<String, Any?> by mutableMap
+  AdditionalInformation,
+  MutableMap<String, Any?> by mutableMap
 
 interface AlertBaseAdditionalInformation : AdditionalInformation {
   val source: Source

@@ -46,20 +46,18 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
     assertThat(alertType.code).isEqualTo("L")
   }
 
-  private fun WebTestClient.getAlertTypes(includeInactive: Boolean?) =
-    get()
-      .uri { builder ->
-        builder
-          .path("/alert-types")
-          .queryParamIfPresent("includeInactive", Optional.ofNullable(includeInactive))
-          .build()
-      }
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-      .exchange().expectStatus().isOk.expectBodyList<AlertType>().returnResult().responseBody!!
+  private fun WebTestClient.getAlertTypes(includeInactive: Boolean?) = get()
+    .uri { builder ->
+      builder
+        .path("/alert-types")
+        .queryParamIfPresent("includeInactive", Optional.ofNullable(includeInactive))
+        .build()
+    }
+    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
+    .exchange().expectStatus().isOk.expectBodyList<AlertType>().returnResult().responseBody!!
 
-  private fun WebTestClient.getAlertType(alertTypeCode: String) =
-    get()
-      .uri { builder -> builder.path("/alert-types/$alertTypeCode").build() }
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-      .exchange().successResponse<AlertType>()
+  private fun WebTestClient.getAlertType(alertTypeCode: String) = get()
+    .uri { builder -> builder.path("/alert-types/$alertTypeCode").build() }
+    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
+    .exchange().successResponse<AlertType>()
 }

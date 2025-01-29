@@ -623,18 +623,17 @@ class CreateAlertIntTest : IntegrationTestBase() {
     source: Source = DPS,
   ) = createAlertResponseSpec(prisonNumber, request, source).successResponse<AlertModel>(HttpStatus.CREATED)
 
-  private fun getActivePrisonerAlerts(prisonNumber: String) =
-    webTestClient.get()
-      .uri { builder ->
-        builder
-          .path("/prisoners/$prisonNumber/alerts")
-          .queryParam("isActive", true)
-          .build()
-      }
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-      .exchange()
-      .expectStatus().isOk
-      .expectHeader().valueEquals("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
-      .expectBody(AlertsPage::class.java)
-      .returnResult().responseBody!!.content
+  private fun getActivePrisonerAlerts(prisonNumber: String) = webTestClient.get()
+    .uri { builder ->
+      builder
+        .path("/prisoners/$prisonNumber/alerts")
+        .queryParam("isActive", true)
+        .build()
+    }
+    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
+    .exchange()
+    .expectStatus().isOk
+    .expectHeader().valueEquals("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
+    .expectBody(AlertsPage::class.java)
+    .returnResult().responseBody!!.content
 }

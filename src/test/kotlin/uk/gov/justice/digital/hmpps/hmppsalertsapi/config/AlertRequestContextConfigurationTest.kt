@@ -248,9 +248,8 @@ class AlertRequestContextConfigurationTest {
     assertThat(context.activeCaseLoadId).isNull()
   }
 
-  private fun setSecurityContext(claims: Map<String, Any>) =
-    mock<AuthAwareAuthenticationToken> { on { tokenAttributes } doReturn claims }.also { token ->
-      SecurityContextHolder.setContext(mock { on { authentication } doReturn token })
-      claims["subject"]?.also { whenever(token.name) doReturn (it as String) }
-    }
+  private fun setSecurityContext(claims: Map<String, Any>) = mock<AuthAwareAuthenticationToken> { on { tokenAttributes } doReturn claims }.also { token ->
+    SecurityContextHolder.setContext(mock { on { authentication } doReturn token })
+    claims["subject"]?.also { whenever(token.name) doReturn (it as String) }
+  }
 }

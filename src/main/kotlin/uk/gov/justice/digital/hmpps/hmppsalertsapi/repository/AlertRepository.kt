@@ -13,7 +13,9 @@ import java.time.LocalDate
 import java.util.UUID
 
 @Repository
-interface AlertRepository : JpaRepository<Alert, UUID>, JpaSpecificationExecutor<Alert> {
+interface AlertRepository :
+  JpaRepository<Alert, UUID>,
+  JpaSpecificationExecutor<Alert> {
   @EntityGraph(value = "alert")
   override fun findAll(filter: Specification<Alert>, pageable: Pageable): Page<Alert>
 

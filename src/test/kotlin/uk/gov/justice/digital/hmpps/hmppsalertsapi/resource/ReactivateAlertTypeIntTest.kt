@@ -135,15 +135,14 @@ class ReactivateAlertTypeIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun WebTestClient.reactivateAlertType(alertCode: String): AlertType =
-    patch()
-      .uri("/alert-types/$alertCode/reactivate")
-      .headers(
-        setAuthorisation(
-          user = TEST_USER,
-          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
-          isUserToken = true,
-        ),
-      )
-      .exchange().successResponse()
+  private fun WebTestClient.reactivateAlertType(alertCode: String): AlertType = patch()
+    .uri("/alert-types/$alertCode/reactivate")
+    .headers(
+      setAuthorisation(
+        user = TEST_USER,
+        roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+        isUserToken = true,
+      ),
+    )
+    .exchange().successResponse()
 }

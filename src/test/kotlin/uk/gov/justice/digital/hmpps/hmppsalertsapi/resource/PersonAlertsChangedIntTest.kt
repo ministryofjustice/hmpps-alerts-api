@@ -172,16 +172,14 @@ class PersonAlertsChangedIntTest : IntegrationTestBase() {
     .expectStatus().isNoContent
     .expectBody().isEmpty
 
-  private fun WebTestClient.resyncAlert(prisonNumber: String, request: Collection<ResyncAlert>) =
-    post().uri("/resync/$prisonNumber/alerts")
-      .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
-      .exchange().successResponse<List<ResyncedAlert>>(CREATED)
+  private fun WebTestClient.resyncAlert(prisonNumber: String, request: Collection<ResyncAlert>) = post().uri("/resync/$prisonNumber/alerts")
+    .bodyValue(request)
+    .headers(setAuthorisation(roles = listOf(ROLE_NOMIS_ALERTS)))
+    .exchange().successResponse<List<ResyncedAlert>>(CREATED)
 
-  private fun WebTestClient.bulkCreateAlert(request: BulkCreateAlerts) =
-    post().uri("/bulk-alerts")
-      .bodyValue(request)
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
-      .headers(setAlertRequestContext(source = DPS))
-      .exchange().successResponse<BulkAlert>(CREATED)
+  private fun WebTestClient.bulkCreateAlert(request: BulkCreateAlerts) = post().uri("/bulk-alerts")
+    .bodyValue(request)
+    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
+    .headers(setAlertRequestContext(source = DPS))
+    .exchange().successResponse<BulkAlert>(CREATED)
 }

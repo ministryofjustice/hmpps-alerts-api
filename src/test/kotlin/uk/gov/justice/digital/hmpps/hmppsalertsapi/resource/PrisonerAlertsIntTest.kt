@@ -328,62 +328,44 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     response.content.assertOrderedByLastModifiedAtDesc()
   }
 
-  private fun Collection<Alert>.assertAllForPrisonNumber(prisonNumber: String) =
-    assertThat(all { it.prisonNumber == prisonNumber }).isTrue
+  private fun Collection<Alert>.assertAllForPrisonNumber(prisonNumber: String) = assertThat(all { it.prisonNumber == prisonNumber }).isTrue
 
-  private fun Collection<Alert>.assertAllOfAlertType(vararg alertType: String) =
-    assertThat(all { alertType.contains(it.alertCode.alertTypeCode) }).isTrue
+  private fun Collection<Alert>.assertAllOfAlertType(vararg alertType: String) = assertThat(all { alertType.contains(it.alertCode.alertTypeCode) }).isTrue
 
-  private fun Collection<Alert>.assertAllOfAlertCode(vararg alertCode: String) =
-    assertThat(all { alertCode.contains(it.alertCode.code) }).isTrue
+  private fun Collection<Alert>.assertAllOfAlertCode(vararg alertCode: String) = assertThat(all { alertCode.contains(it.alertCode.code) }).isTrue
 
-  private fun Collection<Alert>.assertDescriptionContainsCaseInsensitive(search: String) =
-    assertThat(all { it.description!!.contains(search, ignoreCase = true) }).isTrue
+  private fun Collection<Alert>.assertDescriptionContainsCaseInsensitive(search: String) = assertThat(all { it.description!!.contains(search, ignoreCase = true) }).isTrue
 
-  private fun Collection<Alert>.assertAuthorisedByContainsCaseInsensitive(search: String) =
-    assertThat(all { it.authorisedBy!!.contains(search, ignoreCase = true) }).isTrue
+  private fun Collection<Alert>.assertAuthorisedByContainsCaseInsensitive(search: String) = assertThat(all { it.authorisedBy!!.contains(search, ignoreCase = true) }).isTrue
 
-  private fun Collection<Alert>.assertActiveFromOnOrAfter(activeFrom: LocalDate) =
-    assertThat(all { it.activeFrom.onOrAfter(activeFrom) }).isTrue
+  private fun Collection<Alert>.assertActiveFromOnOrAfter(activeFrom: LocalDate) = assertThat(all { it.activeFrom.onOrAfter(activeFrom) }).isTrue
 
-  private fun Collection<Alert>.assertActiveFromOnOrBefore(activeFrom: LocalDate) =
-    assertThat(all { it.activeFrom.onOrBefore(activeFrom) }).isTrue
+  private fun Collection<Alert>.assertActiveFromOnOrBefore(activeFrom: LocalDate) = assertThat(all { it.activeFrom.onOrBefore(activeFrom) }).isTrue
 
-  private fun Collection<Alert>.assertContainsActiveAndInactive() =
-    with(this) {
-      assertThat(any { it.isActive }).isTrue
-      assertThat(any { !it.isActive }).isTrue
-    }
+  private fun Collection<Alert>.assertContainsActiveAndInactive() = with(this) {
+    assertThat(any { it.isActive }).isTrue
+    assertThat(any { !it.isActive }).isTrue
+  }
 
-  private fun Collection<Alert>.assertContainsOnlyActive() =
-    assertThat(all { it.isActive }).isTrue
+  private fun Collection<Alert>.assertContainsOnlyActive() = assertThat(all { it.isActive }).isTrue
 
-  private fun Collection<Alert>.assertContainsOnlyInactive() =
-    assertThat(none { it.isActive }).isTrue
+  private fun Collection<Alert>.assertContainsOnlyInactive() = assertThat(none { it.isActive }).isTrue
 
-  private fun List<Alert>.assertOrderedByActiveFromAsc() =
-    assertThat(this).isSortedAccordingTo(compareBy { it.activeFrom })
+  private fun List<Alert>.assertOrderedByActiveFromAsc() = assertThat(this).isSortedAccordingTo(compareBy { it.activeFrom })
 
-  private fun List<Alert>.assertOrderedByActiveFromDesc() =
-    assertThat(this).isSortedAccordingTo(compareByDescending { it.activeFrom })
+  private fun List<Alert>.assertOrderedByActiveFromDesc() = assertThat(this).isSortedAccordingTo(compareByDescending { it.activeFrom })
 
-  private fun List<Alert>.assertOrderedByActiveToAsc() =
-    assertThat(this).isSortedAccordingTo(compareBy(nullsLast()) { it.activeTo })
+  private fun List<Alert>.assertOrderedByActiveToAsc() = assertThat(this).isSortedAccordingTo(compareBy(nullsLast()) { it.activeTo })
 
-  private fun List<Alert>.assertOrderedByActiveToDesc() =
-    assertThat(this).isSortedAccordingTo(compareByDescending(nullsLast()) { it.activeTo })
+  private fun List<Alert>.assertOrderedByActiveToDesc() = assertThat(this).isSortedAccordingTo(compareByDescending(nullsLast()) { it.activeTo })
 
-  private fun List<Alert>.assertOrderedByCreatedAtAsc() =
-    assertThat(this).isSortedAccordingTo(compareBy(nullsLast()) { it.createdAt })
+  private fun List<Alert>.assertOrderedByCreatedAtAsc() = assertThat(this).isSortedAccordingTo(compareBy(nullsLast()) { it.createdAt })
 
-  private fun List<Alert>.assertOrderedByCreatedAtDesc() =
-    assertThat(this).isSortedAccordingTo(compareByDescending(nullsLast()) { it.createdAt })
+  private fun List<Alert>.assertOrderedByCreatedAtDesc() = assertThat(this).isSortedAccordingTo(compareByDescending(nullsLast()) { it.createdAt })
 
-  private fun List<Alert>.assertOrderedByLastModifiedAtAsc() =
-    assertThat(this).isSortedAccordingTo(compareBy(nullsLast()) { it.lastModifiedAt })
+  private fun List<Alert>.assertOrderedByLastModifiedAtAsc() = assertThat(this).isSortedAccordingTo(compareBy(nullsLast()) { it.lastModifiedAt })
 
-  private fun List<Alert>.assertOrderedByLastModifiedAtDesc() =
-    assertThat(this).isSortedAccordingTo(compareByDescending(nullsLast()) { it.lastModifiedAt })
+  private fun List<Alert>.assertOrderedByLastModifiedAtDesc() = assertThat(this).isSortedAccordingTo(compareByDescending(nullsLast()) { it.lastModifiedAt })
 
   private fun WebTestClient.getPrisonerAlerts(
     prisonNumber: String,
@@ -396,28 +378,27 @@ class PrisonerAlertsIntTest : IntegrationTestBase() {
     page: Int? = null,
     size: Int? = null,
     sort: Array<String>? = null,
-  ) =
-    get()
-      .uri { builder ->
-        builder
-          .path("/prisoners/$prisonNumber/alerts")
-          .queryParamIfPresent("isActive", Optional.ofNullable(isActive))
-          .queryParamIfPresent("alertType", Optional.ofNullable(alertType))
-          .queryParamIfPresent("alertCode", Optional.ofNullable(alertCode))
-          .queryParamIfPresent("activeFromStart", Optional.ofNullable(activeFromStart))
-          .queryParamIfPresent("activeFromEnd", Optional.ofNullable(activeFromEnd))
-          .queryParamIfPresent("search", Optional.ofNullable(search))
-          .queryParamIfPresent("page", Optional.ofNullable(page))
-          .queryParamIfPresent("size", Optional.ofNullable(size))
-          .also {
-            sort?.forEach {
-              builder.queryParam("sort", it)
-            }
+  ) = get()
+    .uri { builder ->
+      builder
+        .path("/prisoners/$prisonNumber/alerts")
+        .queryParamIfPresent("isActive", Optional.ofNullable(isActive))
+        .queryParamIfPresent("alertType", Optional.ofNullable(alertType))
+        .queryParamIfPresent("alertCode", Optional.ofNullable(alertCode))
+        .queryParamIfPresent("activeFromStart", Optional.ofNullable(activeFromStart))
+        .queryParamIfPresent("activeFromEnd", Optional.ofNullable(activeFromEnd))
+        .queryParamIfPresent("search", Optional.ofNullable(search))
+        .queryParamIfPresent("page", Optional.ofNullable(page))
+        .queryParamIfPresent("size", Optional.ofNullable(size))
+        .also {
+          sort?.forEach {
+            builder.queryParam("sort", it)
           }
-          .build()
-      }
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-      .exchange().successResponse<AlertsPage>()
+        }
+        .build()
+    }
+    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
+    .exchange().successResponse<AlertsPage>()
 
   data class AlertsPage(
     val totalElements: Int,

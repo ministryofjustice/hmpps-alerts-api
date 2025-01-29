@@ -11,16 +11,14 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.retryNetworkExceptions
 
 @Component
 class ManageUsersClient(@Qualifier("manageUsersWebClient") private val webClient: WebClient) {
-  fun getUserDetails(username: String): Mono<UserDetailsDto> {
-    return webClient.get()
-      .uri("/users/{username}", username)
-      .exchangeToMono { res ->
-        when (res.statusCode()) {
-          HttpStatus.NOT_FOUND -> Mono.empty()
-          HttpStatus.OK -> res.bodyToMono<UserDetailsDto>()
-          else -> res.createError()
-        }
+  fun getUserDetails(username: String): Mono<UserDetailsDto> = webClient.get()
+    .uri("/users/{username}", username)
+    .exchangeToMono { res ->
+      when (res.statusCode()) {
+        HttpStatus.NOT_FOUND -> Mono.empty()
+        HttpStatus.OK -> res.bodyToMono<UserDetailsDto>()
+        else -> res.createError()
       }
-      .retryNetworkExceptions("Get user details request failed")
-  }
+    }
+    .retryNetworkExceptions("Get user details request failed")
 }

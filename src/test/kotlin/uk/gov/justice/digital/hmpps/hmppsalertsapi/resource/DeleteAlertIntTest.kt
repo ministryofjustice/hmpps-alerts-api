@@ -286,12 +286,11 @@ class DeleteAlertIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun WebTestClient.deleteAlert(alertUuid: UUID, source: Source = DPS) =
-    delete()
-      .uri("/alerts/$alertUuid")
-      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
-      .headers(setAlertRequestContext(source = source))
-      .exchange()
-      .expectStatus().isNoContent
-      .expectBody().isEmpty
+  private fun WebTestClient.deleteAlert(alertUuid: UUID, source: Source = DPS) = delete()
+    .uri("/alerts/$alertUuid")
+    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
+    .headers(setAlertRequestContext(source = source))
+    .exchange()
+    .expectStatus().isNoContent
+    .expectBody().isEmpty
 }

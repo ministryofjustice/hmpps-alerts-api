@@ -216,16 +216,15 @@ class UpdateAlertTypeIntTest : IntegrationTestBase() {
     )
   }
 
-  private fun WebTestClient.updateAlertTypeDescription(alertCode: String, description: String): AlertType =
-    patch()
-      .uri("/alert-types/$alertCode")
-      .headers(
-        setAuthorisation(
-          user = TEST_USER,
-          roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
-          isUserToken = true,
-        ),
-      )
-      .bodyValue(UpdateAlertTypeRequest(description))
-      .exchange().successResponse()
+  private fun WebTestClient.updateAlertTypeDescription(alertCode: String, description: String): AlertType = patch()
+    .uri("/alert-types/$alertCode")
+    .headers(
+      setAuthorisation(
+        user = TEST_USER,
+        roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI),
+        isUserToken = true,
+      ),
+    )
+    .bodyValue(UpdateAlertTypeRequest(description))
+    .exchange().successResponse()
 }

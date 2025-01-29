@@ -268,6 +268,5 @@ class AlertCodesController(
     httpRequest: HttpServletRequest,
   ) = alertCodeService.updateAlertCode(alertCode, updateRequest, httpRequest.alertRequestContext())
 
-  private fun HttpServletRequest.alertRequestContext() =
-    getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
+  private fun HttpServletRequest.alertRequestContext() = getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
 }

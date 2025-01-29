@@ -25,24 +25,19 @@ class WebClientConfiguration(
   @Value("\${api.timeout:2s}") val timeout: Duration,
 ) {
   @Bean
-  fun hmppsAuthHealthWebClient(builder: Builder): WebClient =
-    builder.healthWebClient(hmppsAuthBaseUri, healthTimeout)
+  fun hmppsAuthHealthWebClient(builder: Builder): WebClient = builder.healthWebClient(hmppsAuthBaseUri, healthTimeout)
 
   @Bean
-  fun manageUsersHealthWebClient(builder: Builder): WebClient =
-    builder.healthWebClient(manageUsersBaseUri, healthTimeout)
+  fun manageUsersHealthWebClient(builder: Builder): WebClient = builder.healthWebClient(manageUsersBaseUri, healthTimeout)
 
   @Bean
-  fun manageUsersWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) =
-    getOAuthWebClient(authorizedClientManager, builder, manageUsersBaseUri)
+  fun manageUsersWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) = getOAuthWebClient(authorizedClientManager, builder, manageUsersBaseUri)
 
   @Bean
-  fun prisonerSearchHealthWebClient(builder: Builder): WebClient =
-    builder.healthWebClient(prisonerSearchBaseUri, healthTimeout)
+  fun prisonerSearchHealthWebClient(builder: Builder): WebClient = builder.healthWebClient(prisonerSearchBaseUri, healthTimeout)
 
   @Bean
-  fun prisonerSearchWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) =
-    getOAuthWebClient(authorizedClientManager, builder, prisonerSearchBaseUri)
+  fun prisonerSearchWebClient(authorizedClientManager: OAuth2AuthorizedClientManager, builder: Builder) = getOAuthWebClient(authorizedClientManager, builder, prisonerSearchBaseUri)
 
   private fun getOAuthWebClient(
     authorizedClientManager: OAuth2AuthorizedClientManager,

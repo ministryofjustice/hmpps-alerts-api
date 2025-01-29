@@ -35,120 +35,116 @@ class PrisonerSearchServer : WireMockServer(8112) {
     )
   }
 
-  fun stubGetPrisoner(prisonNumber: String = PRISON_NUMBER, prisonCode: String = PRISON_CODE_LEEDS): StubMapping =
-    stubFor(
-      get("/prisoner/$prisonNumber")
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", "application/json")
-            .withBody(
-              mapper.writeValueAsString(
+  fun stubGetPrisoner(prisonNumber: String = PRISON_NUMBER, prisonCode: String = PRISON_CODE_LEEDS): StubMapping = stubFor(
+    get("/prisoner/$prisonNumber")
+      .willReturn(
+        aResponse()
+          .withHeader("Content-Type", "application/json")
+          .withBody(
+            mapper.writeValueAsString(
+              PrisonerDetails(
+                prisonerNumber = prisonNumber,
+                "First",
+                "Middle",
+                "Last",
+                prisonCode,
+                status = "ACTIVE IN",
+                restrictedPatient = false,
+                cellLocation = null,
+                supportingPrisonId = null,
+              ),
+            ),
+          )
+          .withStatus(200),
+      ),
+  )
+
+  fun stubGetPrisonerDetails(prisonerDetails: PrisonerDetails): StubMapping = stubFor(
+    get("/prisoner/${prisonerDetails.prisonerNumber}")
+      .willReturn(
+        aResponse()
+          .withHeader("Content-Type", "application/json")
+          .withBody(
+            mapper.writeValueAsString(
+              PrisonerDetails(
+                prisonerDetails.prisonerNumber,
+                prisonerDetails.firstName,
+                prisonerDetails.middleNames,
+                prisonerDetails.lastName,
+                prisonerDetails.prisonId,
+                prisonerDetails.status,
+                prisonerDetails.restrictedPatient,
+                prisonerDetails.cellLocation,
+                prisonerDetails.supportingPrisonId,
+              ),
+            ),
+          )
+          .withStatus(200),
+      ),
+  )
+
+  fun stubGetPrisonerException(prisonNumber: String = PRISON_NUMBER_THROW_EXCEPTION): StubMapping = stubFor(get("/prisoner/$prisonNumber").willReturn(aResponse().withStatus(500)))
+
+  fun stubGetPrisoners(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER)): StubMapping = stubFor(
+    post("/prisoner-search/prisoner-numbers")
+      .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, true))
+      .willReturn(
+        aResponse()
+          .withHeader("Content-Type", "application/json")
+          .withBody(
+            mapper.writeValueAsString(
+              prisonNumbers.mapIndexed { index, prisonNumber ->
                 PrisonerDetails(
                   prisonerNumber = prisonNumber,
-                  "First",
+                  "First$index",
                   "Middle",
-                  "Last",
-                  prisonCode,
+                  "Last$index",
+                  PRISON_CODE_LEEDS,
                   status = "ACTIVE IN",
                   restrictedPatient = false,
                   cellLocation = null,
                   supportingPrisonId = null,
-                ),
-              ),
-            )
-            .withStatus(200),
-        ),
-    )
+                )
+              },
+            ),
+          )
+          .withStatus(200),
+      ),
+  )
 
-  fun stubGetPrisonerDetails(prisonerDetails: PrisonerDetails): StubMapping =
-    stubFor(
-      get("/prisoner/${prisonerDetails.prisonerNumber}")
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", "application/json")
-            .withBody(
-              mapper.writeValueAsString(
-                PrisonerDetails(
-                  prisonerDetails.prisonerNumber,
-                  prisonerDetails.firstName,
-                  prisonerDetails.middleNames,
-                  prisonerDetails.lastName,
-                  prisonerDetails.prisonId,
-                  prisonerDetails.status,
-                  prisonerDetails.restrictedPatient,
-                  prisonerDetails.cellLocation,
-                  prisonerDetails.supportingPrisonId,
-                ),
-              ),
-            )
-            .withStatus(200),
-        ),
-    )
+  fun stubGetPrisonersNotFound(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER_NOT_FOUND)): StubMapping = stubFor(
+    post("/prisoner-search/prisoner-numbers")
+      .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
+      .willReturn(
+        aResponse()
+          .withHeader("Content-Type", "application/json")
+          .withBody(mapper.writeValueAsString(emptyList<PrisonerDetails>()))
+          .withStatus(200),
+      ),
+  )
 
-  fun stubGetPrisonerException(prisonNumber: String = PRISON_NUMBER_THROW_EXCEPTION): StubMapping =
-    stubFor(get("/prisoner/$prisonNumber").willReturn(aResponse().withStatus(500)))
+  fun stubGetPrisonersNullResponse(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER_NULL_RESPONSE)): StubMapping = stubFor(
+    post("/prisoner-search/prisoner-numbers")
+      .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
+      .willReturn(
+        aResponse()
+          .withHeader("Content-Type", "application/json")
+          .withBody("")
+          .withStatus(200),
+      ),
+  )
 
-  fun stubGetPrisoners(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER)): StubMapping =
-    stubFor(
-      post("/prisoner-search/prisoner-numbers")
-        .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, true))
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", "application/json")
-            .withBody(
-              mapper.writeValueAsString(
-                prisonNumbers.mapIndexed { index, prisonNumber ->
-                  PrisonerDetails(
-                    prisonerNumber = prisonNumber,
-                    "First$index",
-                    "Middle",
-                    "Last$index",
-                    PRISON_CODE_LEEDS,
-                    status = "ACTIVE IN",
-                    restrictedPatient = false,
-                    cellLocation = null,
-                    supportingPrisonId = null,
-                  )
-                },
-              ),
-            )
-            .withStatus(200),
-        ),
-    )
-
-  fun stubGetPrisonersNotFound(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER_NOT_FOUND)): StubMapping =
-    stubFor(
-      post("/prisoner-search/prisoner-numbers")
-        .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", "application/json")
-            .withBody(mapper.writeValueAsString(emptyList<PrisonerDetails>()))
-            .withStatus(200),
-        ),
-    )
-
-  fun stubGetPrisonersNullResponse(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER_NULL_RESPONSE)): StubMapping =
-    stubFor(
-      post("/prisoner-search/prisoner-numbers")
-        .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", "application/json")
-            .withBody("")
-            .withStatus(200),
-        ),
-    )
-
-  fun stubGetPrisonersException(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER_THROW_EXCEPTION)): StubMapping =
-    stubFor(
-      post("/prisoner-search/prisoner-numbers")
-        .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
-        .willReturn(aResponse().withStatus(500)),
-    )
+  fun stubGetPrisonersException(prisonNumbers: Collection<String> = listOf(PRISON_NUMBER_THROW_EXCEPTION)): StubMapping = stubFor(
+    post("/prisoner-search/prisoner-numbers")
+      .withRequestBody(equalToJson(mapper.writeValueAsString(PrisonerNumbersDto(prisonNumbers)), true, false))
+      .willReturn(aResponse().withStatus(500)),
+  )
 }
 
-class PrisonerSearchExtension : BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
+class PrisonerSearchExtension :
+  BeforeAllCallback,
+  AfterAllCallback,
+  BeforeEachCallback {
   companion object {
     @JvmField
     val prisonerSearch = PrisonerSearchServer()

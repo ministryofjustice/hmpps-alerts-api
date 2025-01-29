@@ -150,9 +150,8 @@ class GetBulkPlanIntTest : IntegrationTestBase() {
     .headers(setAlertRequestContext(username = username))
     .exchange()
 
-  private inline fun <reified T> getPlan(path: String, id: UUID): T =
-    getPlanResponseSpec(path, id).expectStatus().isOk
-      .expectBody(T::class.java).returnResult().responseBody!!
+  private inline fun <reified T> getPlan(path: String, id: UUID): T = getPlanResponseSpec(path, id).expectStatus().isOk
+    .expectBody(T::class.java).returnResult().responseBody!!
 
   companion object {
     private const val BASE_URL = "/bulk-alerts/plan/{id}"

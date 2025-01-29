@@ -66,16 +66,15 @@ class PersonSummary(
   override fun hashCode(): Int = prisonNumber.hashCode()
 }
 
-fun PrisonerDetails.toPersonSummary() =
-  PersonSummary(
-    prisonerNumber,
-    firstName,
-    lastName,
-    status,
-    restrictedPatient,
-    prisonId,
-    cellLocation,
-    supportingPrisonId,
-  )
+fun PrisonerDetails.toPersonSummary() = PersonSummary(
+  prisonerNumber,
+  firstName,
+  lastName,
+  status,
+  restrictedPatient,
+  prisonId,
+  cellLocation,
+  supportingPrisonId,
+)
 
 interface PersonSummaryRepository : JpaRepository<PersonSummary, String>

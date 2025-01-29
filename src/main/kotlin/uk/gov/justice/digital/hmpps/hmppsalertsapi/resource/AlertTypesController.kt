@@ -262,6 +262,5 @@ class AlertTypesController(
     httpRequest: HttpServletRequest,
   ) = alertTypeService.updateAlertType(alertType, updateRequest, httpRequest.alertRequestContext())
 
-  private fun HttpServletRequest.alertRequestContext() =
-    getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
+  private fun HttpServletRequest.alertRequestContext() = getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
 }

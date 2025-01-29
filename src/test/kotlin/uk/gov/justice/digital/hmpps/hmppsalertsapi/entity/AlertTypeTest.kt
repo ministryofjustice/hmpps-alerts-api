@@ -24,15 +24,14 @@ class AlertTypeTest {
     assertThat(alertType.isActive()).isFalse
   }
 
-  private fun alertType() =
-    AlertType(
-      "A",
-      "Alert type A",
-      1,
-      LocalDateTime.now().minusDays(3),
-      "CREATED_BY",
-    ).apply {
-      modifiedAt = LocalDateTime.now().minusDays(2)
-      modifiedBy = "MODIFIED_BY"
-    }
+  private fun alertType() = AlertType(
+    "A",
+    "Alert type A",
+    1,
+    LocalDateTime.now().minusDays(3),
+    "CREATED_BY",
+  ).apply {
+    modifiedAt = LocalDateTime.now().minusDays(2)
+    modifiedBy = "MODIFIED_BY"
+  }
 }
