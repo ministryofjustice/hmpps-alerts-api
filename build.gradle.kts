@@ -16,7 +16,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.1.1")
-  implementation("io.sentry:sentry-spring-boot-starter-jakarta:7.21.0")
+  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.0.0")
   implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
 
   // Database dependencies
