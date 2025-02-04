@@ -75,10 +75,6 @@ workflows:
             - build_docker
             - helm_lint
           helm_timeout: 5m
-      - request-preprod-approval:
-          type: approval
-          requires:
-            - deploy_dev
       - hmpps/deploy_env:
           name: deploy_preprod
           env: "preprod"
@@ -89,12 +85,19 @@ workflows:
           context:
             - hmpps-common-vars
             - hmpps-alerts-api-preprod
+          filters:
+            branches:
+              only:
+                - main
           requires:
-            - request-preprod-approval
+            - validate
+            - build_docker
+            - helm_lint
           helm_timeout: 5m
       - request-prod-approval:
           type: approval
           requires:
+            - deploy_dev
             - deploy_preprod
       - hmpps/deploy_env:
           name: deploy_prod

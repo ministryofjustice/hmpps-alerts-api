@@ -35,6 +35,8 @@ class GetAlertsForCaseNotes(private val alertRepository: AlertRepository) {
 
   private fun Alert.forCaseNotes(): CaseNoteAlert {
     val (type, subtype) = typeInfo()
+    val created = createdAuditEvent()
+    val deactivated = deactivationEvent()
     val activeFromChanged = auditEvents().lastOrNull { it.activeFromUpdated == true }
     val regex = "Updated active from from '(\\d{4}-\\d{2}-\\d{2})' to '(\\d{4}-\\d{2}-\\d{2})'".toRegex()
     val originalActiveFrom = activeFromChanged?.description?.let {
@@ -47,7 +49,9 @@ class GetAlertsForCaseNotes(private val alertRepository: AlertRepository) {
       originalActiveFrom ?: activeFrom,
       activeTo,
       createdAt,
-      deactivationEvent()?.actionedAt,
+      deactivated?.actionedAt,
+      ActionedBy(created.actionedBy, created.actionedByDisplayName),
+      deactivated?.let { ActionedBy(it.actionedBy, it.actionedByDisplayName) },
     )
   }
 }
@@ -60,6 +64,9 @@ data class CaseNoteAlert(
   val activeTo: LocalDate?,
   val createdAt: LocalDateTime,
   val madeInactiveAt: LocalDateTime?,
+  val createdBy: ActionedBy,
+  val deactivatedBy: ActionedBy?,
 )
 
 data class CodedDescription(val code: String, val description: String)
+data class ActionedBy(val username: String, val displayName: String)
