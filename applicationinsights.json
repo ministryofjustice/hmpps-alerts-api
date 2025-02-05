@@ -39,6 +39,17 @@
         "percentage": 0
       },
       {
+        "telemetryType": "request",
+        "attributes": [
+          {
+            "key": "http.url",
+            "value": "https?://[^/]+/queue-admin/?.*",
+            "matchType": "regexp"
+          }
+        ],
+        "percentage": 0
+      },
+      {
         "telemetryType": "trace",
         "percentage": 0
       }
