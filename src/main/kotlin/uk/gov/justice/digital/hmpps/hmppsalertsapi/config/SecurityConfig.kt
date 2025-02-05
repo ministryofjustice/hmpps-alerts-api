@@ -9,7 +9,7 @@ class SecurityConfig {
   @Bean
   fun resourceServerCustomizer() = ResourceServerConfigurationCustomizer {
     unauthorizedRequestPaths {
-      addPaths = setOf("/alerts/inactive")
+      addPaths = setOf("/alerts/inactive", "/queue-admin/retry-all-dlqs")
     }
   }
 }
