@@ -48,7 +48,10 @@ kotlin {
 
 tasks {
   withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    compilerOptions.jvmTarget.set(JvmTarget.JVM_21)
+    compilerOptions {
+      jvmTarget = JvmTarget.JVM_21
+      freeCompilerArgs.add("-Xwhen-guards")
+    }
   }
 }
 
