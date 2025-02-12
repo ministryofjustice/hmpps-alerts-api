@@ -219,6 +219,7 @@ abstract class IntegrationTestBase {
 
   fun givenAlert(alert: Alert): Alert = alertRepository.save(
     alert.create(
+      createdAt = alert.createdAt,
       createdBy = TEST_USER,
       createdByDisplayName = TEST_USER_NAME,
       source = Source.DPS,

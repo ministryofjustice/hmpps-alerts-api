@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.backfill
 
-import jakarta.persistence.criteria.Join
 import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
@@ -16,16 +15,24 @@ import java.time.LocalDateTime
 class GetAlertsForCaseNotes(private val alertRepository: AlertRepository) {
   fun get(prisonNumber: String, from: LocalDate, to: LocalDate): List<CaseNoteAlert> = alertRepository.findAll(caseNoteSpecification(prisonNumber, from, to)).map { it.forCaseNotes() }
 
-  private fun caseNoteSpecification(prisonNumber: String, from: LocalDate, to: LocalDate) = Specification<Alert> { alert, _, cb ->
+  private fun caseNoteSpecification(prisonNumber: String, from: LocalDate, to: LocalDate) = Specification<Alert> { alert, q, cb ->
     val pn = cb.equal(alert.get<String>("prisonNumber"), prisonNumber)
     val created = cb.between(alert.get("createdAt"), from, to)
     val activeFrom = cb.between(alert.get("activeFrom"), from, to)
     val activeTo = cb.between(alert.get("activeTo"), from, to)
     val code = alert.fetch<Alert, AlertCode>("alertCode")
     code.fetch<AlertCode, AlertType>("alertType")
-    val audit = (alert.fetch<Alert, AuditEvent>("auditEvents") as Join<*, *>)
-    val modified = cb.between(audit.get("actionedAt"), from, to)
-    cb.and(pn, cb.or(created, activeFrom, activeTo, modified))
+    alert.fetch<Alert, AuditEvent>("auditEvents")
+    val modified = q.subquery<AuditEvent>(AuditEvent::class.java)
+    val audit = modified.from<AuditEvent>(AuditEvent::class.java)
+    val auditAlert = audit.join<AuditEvent, Alert>("alert")
+    modified.select(audit).where(
+      cb.and(
+        cb.equal(auditAlert.get<String>("id"), alert.get<String>("id")),
+        cb.between(audit.get("actionedAt"), from, to),
+      ),
+    )
+    cb.and(pn, cb.or(created, activeFrom, activeTo, cb.exists(modified)))
   }
 
   private fun Alert.typeInfo() = Pair(

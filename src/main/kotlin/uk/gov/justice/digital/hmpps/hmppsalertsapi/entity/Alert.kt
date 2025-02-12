@@ -74,7 +74,7 @@ class Alert(
 
   fun deactivationEvent() = auditEvents().firstOrNull {
     it.action == AuditEventAction.INACTIVE ||
-      (it.activeToUpdated ?: false && it.actionedAt.toLocalDate() == activeTo)
+      (it.activeToUpdated == true && it.actionedAt.toLocalDate() == activeTo)
   }
 
   @OneToMany(mappedBy = "alert", fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST, CascadeType.MERGE])
