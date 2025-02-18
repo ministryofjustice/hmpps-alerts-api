@@ -1,0 +1,8 @@
+plan_person
+resync_audit
+audit_event
+alert
+alert_code
+bulk_plan
+alert_type
+person_summary

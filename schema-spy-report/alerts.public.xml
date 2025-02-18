@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?><database name="alerts" schema="public" type="PostgreSQL - 16.7 (Debian 16.7-1.pgdg120+1)">
+   <sequences>
+      <sequence increment="1" name="alert_code_alert_code_id_seq" startValue="1"/>
+      <sequence increment="1" name="alert_type_alert_type_id_seq" startValue="1"/>
+      <sequence increment="1" name="resync_audit_id_seq" startValue="1"/>
+   </sequences>
+   <tables>
+      <table name="alert" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
+            <child column="alert_id" foreignKey="alert_id_fk" implied="false" onDeleteCascade="false" schema="public" table="audit_event"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="alert_code_id" nullable="false" remarks="" size="19" type="int8" typeCode="-5">
+            <parent column="alert_code_id" foreignKey="alert_alert_code_fk" implied="false" onDeleteCascade="false" schema="public" table="alert_code"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="prison_number" nullable="false" remarks="" size="10" type="varchar" typeCode="12">
+            <parent column="prison_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="person_summary"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="description" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="authorised_by" nullable="true" remarks="" size="40" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="active_from" nullable="false" remarks="" size="13" type="date" typeCode="91"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="active_to" nullable="true" remarks="" size="13" type="date" typeCode="91"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="7" name="deleted_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="created_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="9" name="last_modified_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="prison_code_when_created" nullable="true" remarks="" size="6" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="11" name="version" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="alert_pk" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="idx_alert_active_from" unique="false">
+            <column ascending="true" name="active_from"/>
+         </index>
+         <index name="idx_alert_active_to" unique="false">
+            <column ascending="true" name="active_to"/>
+         </index>
+         <index name="idx_alert_alert_code" unique="false">
+            <column ascending="true" name="alert_code_id"/>
+         </index>
+         <index name="idx_alert_created_at" unique="false">
+            <column ascending="true" name="created_at"/>
+         </index>
+         <index name="idx_alert_deleted_at" unique="false">
+            <column ascending="true" name="deleted_at"/>
+         </index>
+         <index name="idx_alert_last_modified_at" unique="false">
+            <column ascending="true" name="last_modified_at"/>
+         </index>
+         <index name="idx_alert_prison_number" unique="false">
+            <column ascending="true" name="prison_number"/>
+         </index>
+      </table>
+      <table name="alert_code" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="true" defaultValue="nextval('alert_code_alert_code_id_seq'::regclass)" digits="0" id="0" name="alert_code_id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5">
+            <child column="alert_code_id" foreignKey="alert_alert_code_fk" implied="false" onDeleteCascade="false" schema="public" table="alert"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="alert_type_id" nullable="false" remarks="" size="19" type="int8" typeCode="-5">
+            <parent column="alert_type_id" foreignKey="alert_code_alert_type_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_type"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="code" nullable="false" remarks="" size="12" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="description" nullable="false" remarks="" size="40" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="list_sequence" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="created_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="created_by" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="7" name="modified_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="modified_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="9" name="deactivated_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="deactivated_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <primaryKey column="alert_code_id" sequenceNumberInPK="1"/>
+         <index name="alert_code_pk" unique="true">
+            <column ascending="true" name="alert_code_id"/>
+         </index>
+         <index name="idx_alert_code_alert_type_id" unique="false">
+            <column ascending="true" name="alert_type_id"/>
+         </index>
+         <index name="idx_alert_code_code" unique="true">
+            <column ascending="true" name="code"/>
+         </index>
+         <index name="idx_alert_code_created_at" unique="false">
+            <column ascending="true" name="created_at"/>
+         </index>
+         <index name="idx_alert_code_deactivated_at" unique="false">
+            <column ascending="true" name="deactivated_at"/>
+         </index>
+         <index name="idx_alert_code_list_sequence" unique="false">
+            <column ascending="true" name="list_sequence"/>
+         </index>
+      </table>
+      <table name="alert_type" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="true" defaultValue="nextval('alert_type_alert_type_id_seq'::regclass)" digits="0" id="0" name="alert_type_id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5">
+            <child column="alert_type_id" foreignKey="alert_code_alert_type_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_code"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="code" nullable="false" remarks="" size="12" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="description" nullable="false" remarks="" size="40" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="list_sequence" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="created_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="created_by" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="modified_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="modified_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="deactivated_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="deactivated_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <primaryKey column="alert_type_id" sequenceNumberInPK="1"/>
+         <index name="alert_type_pk" unique="true">
+            <column ascending="true" name="alert_type_id"/>
+         </index>
+         <index name="idx_alert_type_code" unique="true">
+            <column ascending="true" name="code"/>
+         </index>
+         <index name="idx_alert_type_created_at" unique="false">
+            <column ascending="true" name="created_at"/>
+         </index>
+         <index name="idx_alert_type_deactivated_at" unique="false">
+            <column ascending="true" name="deactivated_at"/>
+         </index>
+         <index name="idx_alert_type_list_sequence" unique="false">
+            <column ascending="true" name="list_sequence"/>
+         </index>
+      </table>
+      <table name="audit_event" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="action" nullable="false" remarks="" size="40" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="description" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="actioned_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="actioned_by" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="actioned_by_display_name" nullable="false" remarks="" size="255" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="source" nullable="false" remarks="" size="12" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="active_case_load_id" nullable="true" remarks="" size="6" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="description_updated" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="authorised_by_updated" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="active_from_updated" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="active_to_updated" nullable="true" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="alert_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="alert_id_fk" implied="false" onDeleteCascade="false" schema="public" table="alert"/>
+         </column>
+         <column autoUpdated="false" defaultValue="0" digits="0" id="12" name="version" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="13" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="audit_event_pk" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="idx_audit_event_action" unique="false">
+            <column ascending="true" name="action"/>
+         </index>
+         <index name="idx_audit_event_actioned_at" unique="false">
+            <column ascending="true" name="actioned_at"/>
+         </index>
+         <index name="idx_audit_event_actioned_by" unique="false">
+            <column ascending="true" name="actioned_by"/>
+            <column ascending="true" name="actioned_at"/>
+         </index>
+         <index name="idx_audit_event_alert_id" unique="false">
+            <column ascending="true" name="alert_id"/>
+         </index>
+      </table>
+      <table name="bulk_plan" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
+            <child column="plan_id" foreignKey="fk_plan_id" implied="false" onDeleteCascade="false" schema="public" table="plan_person"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="alert_code_id" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="description" nullable="true" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="version" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="4" name="created_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="created_by" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="created_by_display_name" nullable="false" remarks="" size="255" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="cleanup_mode" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="8" name="started_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="started_by" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="started_by_display_name" nullable="true" remarks="" size="255" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="11" name="completed_at" nullable="true" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="created_count" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="updated_count" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="unchanged_count" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="15" name="expired_count" nullable="true" remarks="" size="10" type="int4" typeCode="4"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="bulk_plan_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <checkConstraint constraint="(((cleanup_mode)::text = ANY ((ARRAY['KEEP_ALL'::character varying, 'EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED'::character varying])::text[])))" name="ch_bulk_plan_cleanup_mode"/>
+      </table>
+      <table name="person_summary" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="prison_number" nullable="false" remarks="" size="10" type="varchar" typeCode="12">
+            <child column="prison_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="alert"/>
+            <child column="prison_number" foreignKey="fk_prison_number" implied="false" onDeleteCascade="false" schema="public" table="plan_person"/>
+            <child column="prison_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="resync_audit"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="first_name" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="last_name" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="status" nullable="false" remarks="" size="16" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="restricted_patient" nullable="false" remarks="" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="prison_code" nullable="true" remarks="" size="16" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="cell_location" nullable="true" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="supporting_prison_code" nullable="true" remarks="" size="16" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="version" nullable="false" remarks="" size="10" type="int4" typeCode="4"/>
+         <primaryKey column="prison_number" sequenceNumberInPK="1"/>
+         <index name="person_summary_pkey" unique="true">
+            <column ascending="true" name="prison_number"/>
+         </index>
+      </table>
+      <table name="plan_person" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="plan_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
+            <parent column="id" foreignKey="fk_plan_id" implied="false" onDeleteCascade="false" schema="public" table="bulk_plan"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="prison_number" nullable="false" remarks="" size="10" type="varchar" typeCode="12">
+            <parent column="prison_number" foreignKey="fk_prison_number" implied="false" onDeleteCascade="false" schema="public" table="person_summary"/>
+         </column>
+      </table>
+      <table name="resync_audit" remarks="" schema="public" type="TABLE">
+         <column autoUpdated="true" defaultValue="nextval('resync_audit_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="" size="19" type="bigserial" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="prison_number" nullable="false" remarks="" size="10" type="varchar" typeCode="12">
+            <parent column="prison_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="person_summary"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="request" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="requested_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="requested_by" nullable="false" remarks="" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="requested_by_display_name" nullable="false" remarks="" size="255" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="source" nullable="false" remarks="" size="12" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="7" name="completed_at" nullable="false" remarks="" size="29" type="timestamp" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="alerts_deleted" nullable="false" remarks="" size="2147483647" type="_uuid" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="alerts_created" nullable="false" remarks="" size="2147483647" type="_uuid" typeCode="2003"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="pk_resync_audit" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+         <index name="idx_resync_audit_prison_number" unique="false">
+            <column ascending="true" name="prison_number"/>
+         </index>
+      </table>
+   </tables>
+</database>
