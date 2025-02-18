@@ -53,6 +53,18 @@ tasks {
       freeCompilerArgs.add("-Xwhen-guards")
     }
   }
+
+  register("initialiseDatabase", Test::class) {
+    include("**/InitialiseDatabase.class")
+  }
+
+  test {
+    exclude("**/InitialiseDatabase.class")
+  }
+
+  getByName("initialiseDatabase") {
+    onlyIf { gradle.startParameter.taskNames.contains("initialiseDatabase") }
+  }
 }
 
 // Jacoco code coverage
