@@ -31,7 +31,7 @@ generic-service:
 # CloudPlatform AlertManager receiver to route prometheus alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
 generic-prometheus-alerts:
-  alertSeverity: hmpps-alerts-api-prod # sent to Slack channel #move-and-improve-alerts
+  alertSeverity: hmpps-prisoner-profile-prod # sent to Slack channel #connect-dps-prod-alerts
   sqsOldestAlertQueueNames:
     - "hmpps-move-and-improve-production-hmpps_alerts_domain_events_queue"
   sqsNumberAlertQueueNames:
