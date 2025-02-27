@@ -16,7 +16,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.3.0")
-  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.2.0")
+  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.3.0")
   implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
 
   // Database dependencies
@@ -32,12 +32,12 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
 
   // Test dependencies
-  testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+  testImplementation("org.junit.jupiter:junit-jupiter:5.12.0")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
   testImplementation("org.wiremock:wiremock-standalone:3.12.0")
   testImplementation("org.testcontainers:postgresql:1.20.5")
   testImplementation("org.testcontainers:localstack:1.20.5")
-  testImplementation("org.awaitility:awaitility-kotlin:4.2.2")
+  testImplementation("org.awaitility:awaitility-kotlin:4.3.0")
   testImplementation("io.jsonwebtoken:jjwt-impl:0.12.6")
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.6")
 }
