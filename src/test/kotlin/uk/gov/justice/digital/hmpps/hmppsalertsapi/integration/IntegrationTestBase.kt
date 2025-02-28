@@ -237,8 +237,9 @@ abstract class IntegrationTestBase {
     activeTo: LocalDate? = null,
     createdAt: LocalDateTime = LocalDateTime.now(),
     deletedAt: LocalDateTime? = null,
+    prisonCode: String? = PRISON_CODE_LEEDS,
     alertUuid: UUID = newUuid(),
-  ) = Alert(alertCode, prisonNumber, description, authorisedBy, activeFrom, activeTo, createdAt, null, alertUuid)
+  ) = Alert(alertCode, prisonNumber, description, authorisedBy, activeFrom, activeTo, createdAt, prisonCode, alertUuid)
     .apply { set(::deletedAt, deletedAt) }
 
   fun plan(

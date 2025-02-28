@@ -126,4 +126,7 @@ data class Alert(
     example = "Firstname Lastname",
   )
   val activeToLastSetByDisplayName: String?,
+
+  @Schema(description = "The location of the prisoner at the time the alert was created", example = "LEI")
+  val prisonCodeWhenCreated: String?,
 )

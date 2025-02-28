@@ -187,6 +187,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
           lastModifiedAuditEvent.actionedAt.withNano(0),
           TEST_USER,
           TEST_USER_NAME,
+          PRISON_CODE_LEEDS,
         ),
       )
 
@@ -198,10 +199,10 @@ class UpdateAlertIntTest : IntegrationTestBase() {
             prisonNumber = alertEntity.prisonNumber,
             description = description,
             authorisedBy = authorisedBy,
-            activeFrom = activeFrom!!,
+            activeFrom = activeFrom,
             activeTo = activeTo,
             createdAt = alertEntity.createdAt,
-            prisonCodeWhenCreated = null,
+            prisonCodeWhenCreated = PRISON_CODE_LEEDS,
           ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
         )
       with(lastModifiedAuditEvent) {
@@ -255,6 +256,7 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
           null,
           null,
           null,
+          PRISON_CODE_LEEDS,
         ),
       )
 
@@ -266,10 +268,10 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
             prisonNumber = alertEntity.prisonNumber,
             description = description,
             authorisedBy = authorisedBy,
-            activeFrom = activeFrom!!,
+            activeFrom = activeFrom,
             activeTo = activeTo,
             createdAt = alertEntity.createdAt,
-            prisonCodeWhenCreated = null,
+            prisonCodeWhenCreated = PRISON_CODE_LEEDS,
           ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
         )
       with(lastModifiedAuditEvent) {
@@ -322,6 +324,7 @@ Updated active from from '${alert.activeFrom}' to '$activeFrom'""",
           lastModifiedAuditEvent.actionedAt.withNano(0),
           TEST_USER,
           TEST_USER_NAME,
+          PRISON_CODE_LEEDS,
         ),
       )
 
@@ -333,10 +336,10 @@ Updated active from from '${alert.activeFrom}' to '$activeFrom'""",
             prisonNumber = alertEntity.prisonNumber,
             description = description,
             authorisedBy = authorisedBy,
-            activeFrom = activeFrom!!,
+            activeFrom = activeFrom,
             activeTo = activeTo,
             createdAt = alertEntity.createdAt,
-            prisonCodeWhenCreated = null,
+            prisonCodeWhenCreated = PRISON_CODE_LEEDS,
           ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
         )
       with(lastModifiedAuditEvent) {
