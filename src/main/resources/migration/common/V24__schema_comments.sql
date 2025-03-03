@@ -4,12 +4,12 @@ COMMENT ON TABLE alert IS 'Individual alerts associated with a person identifier
 COMMENT ON TABLE audit_event IS 'Detailed change history of alerts. Became the system of record for alert changes from 20th of June 2024';
 COMMENT ON TABLE resync_audit IS 'Audit of alert changes caused by a resync call driven by a prisoner level change to alerts';
 COMMENT ON TABLE bulk_plan IS 'Bulk alert journey session data';
-COMMENT ON TABLE person_summary IS 'Data for the people who are included in a bulk alert journey';
+COMMENT ON TABLE person_summary IS 'Data for the people who are included in a bulk alert journey. Domain events cause the summary data to be updated keeping it accurate';
 COMMENT ON TABLE plan_person IS 'Joining table for people included in a bulk alert journey';
 
 COMMENT ON COLUMN alert_type.alert_type_id IS 'Internal primary key. Not returned by API';
 COMMENT ON COLUMN alert_type.code IS 'The short code for the alert type';
-COMMENT ON COLUMN alert_type.description IS 'The description of the alert tyoe';
+COMMENT ON COLUMN alert_type.description IS 'The description of the alert type';
 COMMENT ON COLUMN alert_type.list_sequence IS 'Migrated list sequence from NOMIS. Not used';
 COMMENT ON COLUMN alert_type.created_at IS 'The date and time the alert type was created';
 COMMENT ON COLUMN alert_type.created_by IS 'The username of the user who created the alert type';
@@ -58,3 +58,43 @@ COMMENT ON COLUMN audit_event.active_from_updated IS 'Whether the alert active f
 COMMENT ON COLUMN audit_event.active_to_updated IS 'Whether the alert active to property changed as a result of the action';
 COMMENT ON COLUMN audit_event.version IS 'Supports bulk Hibernate operations';
 
+COMMENT ON COLUMN resync_audit.id IS 'Internal primary key';
+COMMENT ON COLUMN resync_audit.prison_number IS 'The prison number of the person whose alerts were resynced';
+COMMENT ON COLUMN resync_audit.request IS 'The full resync request';
+COMMENT ON COLUMN resync_audit.requested_at IS 'The date and time of the resync request';
+COMMENT ON COLUMN resync_audit.requested_by IS 'The username of the user whose action caused the resync request';
+COMMENT ON COLUMN resync_audit.requested_by_display_name IS 'The first and last name of the user at the time of the resync request. Does not update if their name changes';
+COMMENT ON COLUMN resync_audit.source IS 'The system used to perform the action that caused the resync request. Will always be NOMIS';
+COMMENT ON COLUMN resync_audit.completed_at IS 'The date and time the resync request actions completed';
+COMMENT ON COLUMN resync_audit.alerts_deleted IS 'Serialised list of alerts deleted via resync';
+COMMENT ON COLUMN resync_audit.alerts_created IS 'Serialised list of alerts created via resync';
+
+COMMENT ON COLUMN bulk_plan.id IS 'Public primary key';
+COMMENT ON COLUMN bulk_plan.alert_code_id IS 'Foreign key to alert code categorising the alerts affected by the bulk plan';
+COMMENT ON COLUMN bulk_plan.description IS 'Description set on all new alerts created by the bulk plan';
+COMMENT ON COLUMN bulk_plan.created_at IS 'The date and time the bulk plan was created';
+COMMENT ON COLUMN bulk_plan.created_by IS 'The username of the user who created the bulk plan';
+COMMENT ON COLUMN bulk_plan.created_by_display_name IS 'The first and last name of the user at the time the bulk plan was created. Does not update if their name changes';
+COMMENT ON COLUMN bulk_plan.cleanup_mode IS 'The processed used to modify existing alerts associated with people not part of the bulk plan';
+COMMENT ON COLUMN bulk_plan.started_at IS 'The date and time the bulk plan was started';
+COMMENT ON COLUMN bulk_plan.started_by IS 'The username of the user who started the bulk plan';
+COMMENT ON COLUMN bulk_plan.started_by_display_name IS 'The first and last name of the user at the time the bulk plan was started. Does not update if their name changes';
+COMMENT ON COLUMN bulk_plan.completed_at IS 'The date and time the bulk plan actions completed';
+COMMENT ON COLUMN bulk_plan.created_count IS 'The number of alerts that will be or have been created by the bulk plan';
+COMMENT ON COLUMN bulk_plan.updated_count IS 'The number of alerts that will be or have been updated by the bulk plan';
+COMMENT ON COLUMN bulk_plan.unchanged_count IS 'The number of alerts that will be or have been unaffected by the bulk plan';
+COMMENT ON COLUMN bulk_plan.expired_count IS 'The number of alerts that will be or have been expired by the bulk plan';
+COMMENT ON COLUMN bulk_plan.version IS 'Supports bulk Hibernate operations';
+
+COMMENT ON COLUMN person_summary.prison_number IS 'The prison number of the person the summary data is associated with';
+COMMENT ON COLUMN person_summary.first_name IS 'The first name of the person';
+COMMENT ON COLUMN person_summary.last_name IS 'The last name of the person';
+COMMENT ON COLUMN person_summary.status IS 'The active/inactive in/out status of the person';
+COMMENT ON COLUMN person_summary.restricted_patient IS 'Whether the person is a restricted patient';
+COMMENT ON COLUMN person_summary.supporting_prison_code IS 'The code of the prison a restricted patient is being supported by';
+COMMENT ON COLUMN person_summary.prison_code IS 'The code of the prison the person is resident at or TRN/OUT if they are not in prison';
+COMMENT ON COLUMN person_summary.cell_location IS 'The cell location of the person if they are currently in prison or an alternative location reference';
+COMMENT ON COLUMN person_summary.version IS 'Supports bulk Hibernate operations';
+
+COMMENT ON COLUMN plan_person.plan_id IS 'Public primary key of the bulk plan';
+COMMENT ON COLUMN plan_person.prison_number IS 'The prison number of the person who is part of the bulk plan';
