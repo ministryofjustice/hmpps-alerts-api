@@ -74,6 +74,19 @@
                 <!-- Content Header (Page header) -->
                 <section class="content-header">
                     <h1>audit_event</h1><p><span id="recordNumber">-1</span> rows</p><br />
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <i class="fa fa-file-text-o"></i>
+                            <h3 id="Description" class="box-title">Description</h3>
+                            <div class="box-tools pull-right">
+                                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                            </div>
+                        </div><!-- /.box-header -->
+                        <div class="box-body clearfix">
+                            <p>Detailed change history of alerts. Became the system of record for alert changes from 20th of June 2024</p>
+                        </div><!-- /.box-body -->
+                    </div>
                 </section>
                 <!-- Main content -->
                 <section class="content">
@@ -123,7 +136,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>The audit event type</p></td>
                                 </tr>
                                 <tr>
                                     <td><span id="description">description</span></td>
@@ -140,7 +153,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>A human readable description of what changed as a result of the action</p></td>
                                 </tr>
                                 <tr>
                                     <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="actioned_at">actioned_at</span></td>
@@ -157,7 +170,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>The date and time the event happened</p></td>
                                 </tr>
                                 <tr>
                                     <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="actioned_by">actioned_by</span></td>
@@ -174,7 +187,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>The username of the user who performed the actioned recorded by the event</p></td>
                                 </tr>
                                 <tr>
                                     <td><span id="actioned_by_display_name">actioned_by_display_name</span></td>
@@ -191,7 +204,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>The first and last name of the user at the time of the event. Does not update if their name changes</p></td>
                                 </tr>
                                 <tr>
                                     <td><span id="source">source</span></td>
@@ -208,7 +221,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>The system used to perform the action. Either DPS if it was via the Alerts API or NOMIS if via the Prison API or the NOMIS application</p></td>
                                 </tr>
                                 <tr>
                                     <td><span id="active_case_load_id">active_case_load_id</span></td>
@@ -225,7 +238,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>The active caseload of the user at the time of the event</p></td>
                                 </tr>
                                 <tr>
                                     <td><span id="description_updated">description_updated</span></td>
@@ -242,7 +255,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>Whether the alert description changed as a result of the action</p></td>
                                 </tr>
                                 <tr>
                                     <td><span id="authorised_by_updated">authorised_by_updated</span></td>
@@ -259,7 +272,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>Whether the alert authorised by property changed as a result of the action. Note this property can no longer be updated in DPS or NOMIS however the API supports changing it</p></td>
                                 </tr>
                                 <tr>
                                     <td><span id="active_from_updated">active_from_updated</span></td>
@@ -276,7 +289,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>Whether the alert active from property changed as a result of the action</p></td>
                                 </tr>
                                 <tr>
                                     <td><span id="active_to_updated">active_to_updated</span></td>
@@ -293,7 +306,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>Whether the alert active to property changed as a result of the action</p></td>
                                 </tr>
                                 <tr>
                                     <td class='foreignKey' title='Foreign Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="alert_id">alert_id</span></td>
@@ -315,7 +328,7 @@
                                             </tr>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>Foreign key to alert</p></td>
                                 </tr>
                                 <tr>
                                     <td><span id="version">version</span></td>
@@ -332,7 +345,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>Supports bulk Hibernate operations</p></td>
                                 </tr>
                                 <tr>
                                     <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="id">id</span></td>
@@ -349,7 +362,7 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td></td>
+                                    <td><p>Primary key</p></td>
                                 </tr>
                                 </tbody>
                             </table>
