@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import java.time.LocalDate
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AuditEvent as AuditEventModel
 
 const val ALERT_CODE_SECURITY_ALERT_OCG_NOMINAL = "DOCGM"
 
@@ -66,13 +65,6 @@ fun Alert.toAlertModel(auditEvents: Collection<AuditEvent>? = null): AlertModel 
     activeToLastSetAt = lastActiveToSetAuditEvent?.actionedAt,
     activeToLastSetBy = lastActiveToSetAuditEvent?.actionedBy,
     activeToLastSetByDisplayName = lastActiveToSetAuditEvent?.actionedByDisplayName,
+    prisonCodeWhenCreated = prisonCodeWhenCreated,
   )
 }
-
-fun AuditEvent.toAuditEventModel() = AuditEventModel(
-  action = action,
-  description = description,
-  actionedAt = actionedAt,
-  actionedBy = actionedBy,
-  actionedByDisplayName = actionedByDisplayName,
-)
