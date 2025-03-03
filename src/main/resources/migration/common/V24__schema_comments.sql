@@ -7,3 +7,54 @@ COMMENT ON TABLE bulk_plan IS 'Bulk alert journey session data';
 COMMENT ON TABLE person_summary IS 'Data for the people who are included in a bulk alert journey';
 COMMENT ON TABLE plan_person IS 'Joining table for people included in a bulk alert journey';
 
+COMMENT ON COLUMN alert_type.alert_type_id IS 'Internal primary key. Not returned by API';
+COMMENT ON COLUMN alert_type.code IS 'The short code for the alert type';
+COMMENT ON COLUMN alert_type.description IS 'The description of the alert tyoe';
+COMMENT ON COLUMN alert_type.list_sequence IS 'Migrated list sequence from NOMIS. Not used';
+COMMENT ON COLUMN alert_type.created_at IS 'The date and time the alert type was created';
+COMMENT ON COLUMN alert_type.created_by IS 'The username of the user who created the alert type';
+COMMENT ON COLUMN alert_type.modified_at IS 'The date and time the alert type was last modified';
+COMMENT ON COLUMN alert_type.modified_by IS 'The username of the user who last modified the alert type';
+COMMENT ON COLUMN alert_type.deactivated_at IS 'The date and time the alert type was deactivated';
+COMMENT ON COLUMN alert_type.deactivated_by IS 'The username of the user who deactivated the alert type';
+
+COMMENT ON COLUMN alert_code.alert_code_id IS 'Internal primary key. Not returned by API';
+COMMENT ON COLUMN alert_code.alert_type_id IS 'Foreign key to alert type';
+COMMENT ON COLUMN alert_code.code IS 'The short code for the alert code';
+COMMENT ON COLUMN alert_code.description IS 'The description of the alert code';
+COMMENT ON COLUMN alert_code.list_sequence IS 'Migrated list sequence from NOMIS. Not used';
+COMMENT ON COLUMN alert_code.created_at IS 'The date and time the alert code was created';
+COMMENT ON COLUMN alert_code.created_by IS 'The username of the user who created the alert code';
+COMMENT ON COLUMN alert_code.modified_at IS 'The date and time the alert code was last modified';
+COMMENT ON COLUMN alert_code.modified_by IS 'The username of the user who last modified the alert code';
+COMMENT ON COLUMN alert_code.deactivated_at IS 'The date and time the alert code was deactivated';
+COMMENT ON COLUMN alert_code.deactivated_by IS 'The username of the user who deactivated the alert code';
+
+COMMENT ON COLUMN alert.id IS 'Public primary key';
+COMMENT ON COLUMN alert.alert_code_id IS 'Foreign key to alert code categorising the alert';
+COMMENT ON COLUMN alert.prison_number IS 'The prison number of the person the alert is for';
+COMMENT ON COLUMN alert.description IS 'The description of the alert';
+COMMENT ON COLUMN alert.authorised_by IS 'Migrated from NOMIS. Not populated or displayed in DPS';
+COMMENT ON COLUMN alert.active_from IS 'The date the alert is or was active from';
+COMMENT ON COLUMN alert.active_to IS 'The date the alert expired or will expire';
+COMMENT ON COLUMN alert.deleted_at IS 'The date the alert was soft deleted';
+COMMENT ON COLUMN alert.created_at IS 'The date and time the alert was created. Used for ordering';
+COMMENT ON COLUMN alert.last_modified_at IS 'The date and time the alert was last modified';
+COMMENT ON COLUMN alert.prison_code_when_created IS 'The location of the person at the time the alert was created';
+COMMENT ON COLUMN alert.version IS 'Supports bulk Hibernate operations';
+
+COMMENT ON COLUMN audit_event.id IS 'Primary key';
+COMMENT ON COLUMN audit_event.alert_id IS 'Foreign key to alert';
+COMMENT ON COLUMN audit_event.action IS 'The audit event type';
+COMMENT ON COLUMN audit_event.description IS 'A human readable description of what changed as a result of the action';
+COMMENT ON COLUMN audit_event.actioned_at IS 'The date and time the event happened';
+COMMENT ON COLUMN audit_event.actioned_by IS 'The username of the user who performed the actioned recorded by the event';
+COMMENT ON COLUMN audit_event.actioned_by_display_name IS 'The first and last name of the user at the time of the event. Does not update if their name changes';
+COMMENT ON COLUMN audit_event.active_case_load_id IS 'The active caseload of the user at the time of the event';
+COMMENT ON COLUMN audit_event.source IS 'The system used to perform the action. Either DPS if it was via the Alerts API or NOMIS if via the Prison API or the NOMIS application';
+COMMENT ON COLUMN audit_event.description_updated IS 'Whether the alert description changed as a result of the action';
+COMMENT ON COLUMN audit_event.authorised_by_updated IS 'Whether the alert authorised by property changed as a result of the action. Note this property can no longer be updated in DPS or NOMIS however the API supports changing it';
+COMMENT ON COLUMN audit_event.active_from_updated IS 'Whether the alert active from property changed as a result of the action';
+COMMENT ON COLUMN audit_event.active_to_updated IS 'Whether the alert active to property changed as a result of the action';
+COMMENT ON COLUMN audit_event.version IS 'Supports bulk Hibernate operations';
+
