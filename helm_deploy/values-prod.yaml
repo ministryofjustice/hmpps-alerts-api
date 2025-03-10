@@ -14,6 +14,7 @@ generic-service:
     SERVICE_ACTIVE_PRISONS: "***"
     SERVICE_UI_URL: "https://alerts-ui.hmpps.service.justice.gov.uk"
   postgresDatabaseRestore:
+    tag: "sha-a08734f"
     enabled: true
     timeout: 1800
     namespace_secrets:
