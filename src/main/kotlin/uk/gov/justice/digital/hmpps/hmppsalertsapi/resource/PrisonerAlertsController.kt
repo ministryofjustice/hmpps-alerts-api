@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.HMPPS_INTEGRATION_API
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.RO_OPERATIONS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.RW_OPERATIONS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
@@ -38,6 +39,7 @@ import java.time.LocalDate
 class PrisonerAlertsController(val alertService: AlertService) {
 
   @Tag(name = RO_OPERATIONS)
+  @Tag(name = HMPPS_INTEGRATION_API)
   @ResponseStatus(HttpStatus.OK)
   @GetMapping("/{prisonNumber}/alerts")
   @Operation(

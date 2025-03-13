@@ -26,6 +26,7 @@ const val RO_OPERATIONS = "RO Operations"
 const val RW_OPERATIONS = "RW Operations"
 const val ADMIN_UI_ONLY = "Admin UI Only"
 const val NOMIS_SYNC_ONLY = "Nomis Sync Only"
+const val HMPPS_INTEGRATION_API = "HMPPS Integration API"
 
 @Configuration
 class OpenApiConfiguration(buildProperties: BuildProperties) {
@@ -101,6 +102,10 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
     .addTagsItem(
       Tag().name(ADMIN_UI_ONLY)
         .description("Endpoints for alerts admin ui only - Not to be used by any service other than the alert admin ui"),
+    )
+    .addTagsItem(
+      Tag().name(HMPPS_INTEGRATION_API)
+        .description("Endpoints used by the HMPPS Integration API"),
     )
 
   @Bean
