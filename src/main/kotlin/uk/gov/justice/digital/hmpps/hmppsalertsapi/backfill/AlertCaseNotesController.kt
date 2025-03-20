@@ -15,7 +15,7 @@ import java.time.LocalDate
 
 @RestController
 @RequestMapping("alerts/case-notes", produces = [MediaType.APPLICATION_JSON_VALUE])
-class BackfillCaseNotesController(private val forCaseNotes: GetAlertsForCaseNotes) {
+class AlertCaseNotesController(private val forCaseNotes: GetAlertsForCaseNotes) {
   @Operation(hidden = true)
   @ResponseStatus(HttpStatus.OK)
   @GetMapping("/{prisonNumber}")
@@ -25,6 +25,16 @@ class BackfillCaseNotesController(private val forCaseNotes: GetAlertsForCaseNote
     @RequestParam from: LocalDate,
     @RequestParam to: LocalDate,
   ): CaseNoteAlertResponse = CaseNoteAlertResponse(forCaseNotes.get(prisonNumber, from, to))
+
+  @Operation(hidden = true)
+  @ResponseStatus(HttpStatus.OK)
+  @GetMapping("/changed")
+  @PreAuthorize("hasRole('$ROLE_CASE_NOTES')")
+  fun prisonNumbersAffectedBetween(
+    @RequestParam from: LocalDate,
+    @RequestParam to: LocalDate,
+  ): PrisonerAlertsChanged = PrisonerAlertsChanged(forCaseNotes.prisonNumbersAffectedBetween(from, to))
 }
 
 data class CaseNoteAlertResponse(val content: List<CaseNoteAlert>)
+data class PrisonerAlertsChanged(val personIdentifiers: Set<String>)

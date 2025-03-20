@@ -15,6 +15,8 @@ import java.time.LocalDateTime
 class GetAlertsForCaseNotes(private val alertRepository: AlertRepository) {
   fun get(prisonNumber: String, from: LocalDate, to: LocalDate): List<CaseNoteAlert> = alertRepository.findAll(caseNoteSpecification(prisonNumber, from, to)).map { it.forCaseNotes() }
 
+  fun prisonNumbersAffectedBetween(from: LocalDate, to: LocalDate): Set<String> = alertRepository.prisonNumbersCreatedOrInactiveBetween(from.atStartOfDay(), to.atStartOfDay())
+
   private fun caseNoteSpecification(prisonNumber: String, from: LocalDate, to: LocalDate) = Specification<Alert> { alert, q, cb ->
     val pn = cb.equal(alert.get<String>("prisonNumber"), prisonNumber)
     val created = cb.between(alert.get("createdAt"), from, to)
