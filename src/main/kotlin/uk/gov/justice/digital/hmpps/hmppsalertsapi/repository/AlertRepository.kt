@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.UUID
 
 @Repository
@@ -54,4 +55,15 @@ interface AlertRepository :
   """,
   )
   fun findAllActiveByCode(code: String): List<Alert>
+
+  @Query(
+    value =
+    """
+      select a.prisonNumber from Alert a
+      join a.auditEvents ae
+      where (ae.action = 'CREATED' or ae.action = 'INACTIVE') 
+      and ae.actionedAt between :from and :to
+    """,
+  )
+  fun prisonNumbersCreatedOrInactiveBetween(from: LocalDateTime, to: LocalDateTime): Set<String>
 }
