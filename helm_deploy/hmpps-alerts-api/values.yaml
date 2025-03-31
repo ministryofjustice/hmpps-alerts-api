@@ -40,7 +40,6 @@ generic-service:
     SERVER_PORT: "8080"
     JDK_JAVA_OPTIONS: "-Xmx512m -XX:+UseG1GC"
     SPRING_PROFILES_ACTIVE: "logstash"
-    APPLICATIONINSIGHTS_CONNECTION_STRING: "InstrumentationKey=$(APPINSIGHTS_INSTRUMENTATIONKEY)"
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
     DB_SSL_MODE: "verify-full"
     AWS_REGION: "eu-west-2"
@@ -56,7 +55,6 @@ generic-service:
 
   namespace_secrets:
     hmpps-alerts-api:
-      APPINSIGHTS_INSTRUMENTATIONKEY: "APPINSIGHTS_INSTRUMENTATIONKEY"
       CLIENT_ID: "CLIENT_ID"
       CLIENT_SECRET: "CLIENT_SECRET"
       SENTRY_DSN: SENTRY_DSN
@@ -72,6 +70,8 @@ generic-service:
       HMPPS_SQS_QUEUES_HMPPSDOMAINEVENTSQUEUE_QUEUE_NAME: "queue_name"
     sqs-domain-events-dlq-secret:
       HMPPS_SQS_QUEUES_HMPPSDOMAINEVENTSQUEUE_DLQ_NAME: "queue_name"
+    application-insights:
+      APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
 
   allowlist:
     groups:
