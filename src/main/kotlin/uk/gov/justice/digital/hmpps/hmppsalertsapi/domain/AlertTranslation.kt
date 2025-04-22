@@ -46,6 +46,15 @@ fun Alert.toAlertModel(auditEvents: Collection<AuditEvent>? = null): AlertModel 
   val lastModifiedAuditEvent = events.firstOrNull { it.action == AuditEventAction.UPDATED }
   val lastActiveToSetAuditEvent = events.takeIf { activeTo != null }
     ?.firstOrNull { it.action == AuditEventAction.UPDATED && it.activeToUpdated == true }
+  val deactivationEvent = events.firstOrNull {
+    it.action == AuditEventAction.INACTIVE ||
+      (it.activeToUpdated == true && it.actionedAt.toLocalDate() == activeTo)
+  }
+  val madeInactiveEvent: AuditEvent? = if (isActive()) {
+    null
+  } else {
+    deactivationEvent ?: lastModifiedAuditEvent ?: createdAuditEvent
+  }
 
   return AlertModel(
     alertUuid = id,
@@ -65,6 +74,9 @@ fun Alert.toAlertModel(auditEvents: Collection<AuditEvent>? = null): AlertModel 
     activeToLastSetAt = lastActiveToSetAuditEvent?.actionedAt,
     activeToLastSetBy = lastActiveToSetAuditEvent?.actionedBy,
     activeToLastSetByDisplayName = lastActiveToSetAuditEvent?.actionedByDisplayName,
+    madeInactiveAt = madeInactiveEvent?.actionedAt,
+    madeInactiveBy = madeInactiveEvent?.actionedBy,
+    madeInactiveByDisplayName = madeInactiveEvent?.actionedByDisplayName,
     prisonCodeWhenCreated = prisonCodeWhenCreated,
   )
 }

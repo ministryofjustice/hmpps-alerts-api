@@ -127,6 +127,25 @@ data class Alert(
   )
   val activeToLastSetByDisplayName: String?,
 
+  @Schema(
+    description = "The date and time the alert was made to expire.",
+    example = "2022-07-15T15:24:56",
+  )
+  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+  val madeInactiveAt: LocalDateTime?,
+
+  @Schema(
+    description = "The username of the user who made the alert to expire.",
+    example = "USER1234",
+  )
+  val madeInactiveBy: String?,
+
+  @Schema(
+    description = "The displayable name of the user who made the alert to expire.",
+    example = "Firstname Lastname",
+  )
+  val madeInactiveByDisplayName: String?,
+
   @Schema(description = "The location of the prisoner at the time the alert was created", example = "LEI")
   val prisonCodeWhenCreated: String?,
 )

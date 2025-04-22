@@ -348,6 +348,9 @@ class CreateAlertIntTest : IntegrationTestBase() {
         null,
         null,
         null,
+        null,
+        null,
+        null,
         PRISON_CODE_LEEDS,
       ),
     )
