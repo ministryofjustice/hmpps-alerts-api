@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus.NOT_FOUND
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
@@ -11,6 +12,9 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 class RetrieveAlertIntTest : IntegrationTestBase() {
@@ -85,6 +89,57 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
           null,
           null,
           null,
+          null,
+          null,
+          null,
+          PRISON_CODE_LEEDS,
+        ),
+      )
+    }
+  }
+
+  @Test
+  fun `retrieve expired alert`() {
+    val prisonNumber = "G1234EX"
+    val alertCode = givenExistingAlertCode(ALERT_CODE_VICTIM)
+    val alert = givenAlert(
+      alert(prisonNumber, alertCode, activeTo = LocalDate.now()).deactivate(
+        updatedAt = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS),
+        updatedBy = "DEAC1",
+        updatedByDisplayName = "Deactivating User",
+        activeCaseLoadId = null,
+        source = Source.DPS,
+      ),
+    )
+
+    val response = webTestClient.get()
+      .uri("/alerts/${alert.id}")
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
+      .exchange().successResponse<Alert>()
+
+    with(alert) {
+      assertThat(response).usingRecursiveComparison().ignoringFields("createdAt").isEqualTo(
+        Alert(
+          alert.id,
+          prisonNumber,
+          alertCodeSummary(alertCode.alertType, alertCode),
+          description,
+          authorisedBy,
+          activeFrom,
+          activeTo,
+          false,
+          alert.createdAt,
+          TEST_USER,
+          TEST_USER_NAME,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          alert.deactivationEvent()?.actionedAt,
+          "DEAC1",
+          "Deactivating User",
           PRISON_CODE_LEEDS,
         ),
       )
