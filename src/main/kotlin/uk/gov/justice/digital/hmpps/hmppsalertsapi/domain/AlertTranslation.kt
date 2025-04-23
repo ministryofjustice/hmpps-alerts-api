@@ -46,14 +46,11 @@ fun Alert.toAlertModel(auditEvents: Collection<AuditEvent>? = null): AlertModel 
   val lastModifiedAuditEvent = events.firstOrNull { it.action == AuditEventAction.UPDATED }
   val lastActiveToSetAuditEvent = events.takeIf { activeTo != null }
     ?.firstOrNull { it.action == AuditEventAction.UPDATED && it.activeToUpdated == true }
-  val deactivationEvent = events.firstOrNull {
-    it.action == AuditEventAction.INACTIVE ||
-      (it.activeToUpdated == true && it.actionedAt.toLocalDate() == activeTo)
-  }
+  val deactivationEvent = events.firstOrNull { it.action == AuditEventAction.INACTIVE }
   val madeInactiveEvent: AuditEvent? = if (isActive()) {
     null
   } else {
-    deactivationEvent ?: lastModifiedAuditEvent ?: createdAuditEvent
+    deactivationEvent ?: lastActiveToSetAuditEvent ?: lastModifiedAuditEvent ?: createdAuditEvent
   }
 
   return AlertModel(
