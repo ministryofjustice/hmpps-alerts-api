@@ -22,6 +22,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlreadyExistsException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidInputException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidRowException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidRowResponse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
@@ -199,13 +200,13 @@ class HmppsAlertsApiExceptionHandler {
     )
 
   @ExceptionHandler(InvalidRowException::class)
-  fun handleInvalidRow(ire: InvalidRowException): ResponseEntity<ErrorResponse> {
+  fun handleInvalidRow(ire: InvalidRowException): ResponseEntity<InvalidRowResponse> {
     val message = when (ire.rows.size) {
       1 -> "The prison number from row ${ire.rows.single()} was not recognised"
       2 -> "The prison numbers from rows ${ire.rows.first()} and ${ire.rows.last()} were not recognised"
       else -> "The prison numbers from the following rows were not recognised: ${ire.rows.joinToString(", ")}"
     }
-    return ResponseEntity.status(BAD_REQUEST).body(ErrorResponse(status = BAD_REQUEST, userMessage = message))
+    return ResponseEntity.status(BAD_REQUEST).body(InvalidRowResponse(message, ire.rows))
   }
 }
 

@@ -176,7 +176,7 @@ class PlanBulkAlert(
   private fun LinkedHashSet<String>.validate(): List<PersonSummary> {
     val invalidRows = mapIndexedNotNull { index, pn ->
       if (pn.matches(PRISON_NUMBER_REGEX.toRegex())) null else (index + 1)
-    }.toSet()
+    }.toSortedSet()
     if (invalidRows.isNotEmpty()) {
       throw InvalidRowException(invalidRows)
     }
@@ -187,7 +187,7 @@ class PlanBulkAlert(
       val diff = this - existingPrisonNumbers - prisoners.map { it.prisonerNumber }.toSet()
       check(diff.isEmpty()) {
         val pnIndex = mapIndexed { index, pn -> pn to (index + 1) }.toMap()
-        throw InvalidRowException(diff.mapNotNull { pnIndex[it] }.toSet())
+        throw InvalidRowException(diff.mapNotNull { pnIndex[it] }.toSortedSet())
       }
       existingPeople + newPeople
     }
@@ -225,7 +225,7 @@ fun Map<Status, Int>.asBulkPlanCounts(cleanupMode: BulkAlertCleanupMode): BulkPl
   getOrDefault(UPDATE, 0),
   when (cleanupMode) {
     BulkAlertCleanupMode.KEEP_ALL -> 0
-    EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED -> getOrDefault(Status.EXPIRE, 0)
+    EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED -> getOrDefault(EXPIRE, 0)
   },
 )
 
