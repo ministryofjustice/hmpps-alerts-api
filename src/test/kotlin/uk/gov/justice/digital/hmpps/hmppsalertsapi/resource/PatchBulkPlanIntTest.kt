@@ -98,10 +98,9 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
           },
         ),
       ),
-    ).errorResponse(HttpStatus.BAD_REQUEST)
+    ).invalidRowResponse(HttpStatus.BAD_REQUEST)
 
     with(res) {
-      assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("The prison numbers from rows 2 and 4 were not recognised")
     }
   }
@@ -125,10 +124,9 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
           },
         ),
       ),
-    ).errorResponse(HttpStatus.BAD_REQUEST)
+    ).invalidRowResponse(HttpStatus.BAD_REQUEST)
 
     with(res) {
-      assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("The prison numbers from the following rows were not recognised: 2, 4, 6, 7")
     }
   }
@@ -148,10 +146,9 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
           },
         ),
       ),
-    ).errorResponse(HttpStatus.BAD_REQUEST)
+    ).invalidRowResponse(HttpStatus.BAD_REQUEST)
 
     with(res) {
-      assertThat(status).isEqualTo(400)
       assertThat(userMessage).isEqualTo("The prison number from row 1 was not recognised")
     }
   }

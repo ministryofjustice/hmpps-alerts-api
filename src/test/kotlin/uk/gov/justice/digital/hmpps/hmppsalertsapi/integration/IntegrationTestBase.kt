@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.HmppsDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidRowResponse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.LocalStackContainer.setLocalStackProperties
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.container.PostgresContainer
@@ -191,6 +192,10 @@ abstract class IntegrationTestBase {
 
   fun WebTestClient.ResponseSpec.errorResponse(httpStatus: HttpStatus) = expectStatus().isEqualTo(httpStatus)
     .expectBody<ErrorResponse>()
+    .returnResult().responseBody!!
+
+  fun WebTestClient.ResponseSpec.invalidRowResponse(httpStatus: HttpStatus) = expectStatus().isEqualTo(httpStatus)
+    .expectBody<InvalidRowResponse>()
     .returnResult().responseBody!!
 
   final inline fun <reified T> WebTestClient.ResponseSpec.successResponse(httpStatus: HttpStatus = HttpStatus.OK): T = expectStatus().isEqualTo(httpStatus)
