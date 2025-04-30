@@ -14,6 +14,7 @@ HMPPS_ALERTS_PRISONER_SEARCH_CLIENT_SECRET
 ```
 
 These environment variables should be set to the dev secrets values. Remember to escape any `$` characters with `\$`.
+It's easiest to set these in your `.bash_profile` or `.zprofile`
 
 ## Running the service locally
 
