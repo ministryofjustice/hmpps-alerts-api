@@ -28,7 +28,7 @@ hmpps.sqs:
   provider: localstack
   localstackUrl: http://localhost:4567
   queues:
-    publish:
+    hmppsdomaineventsqueue:
       queueName: publish-queue
       dlqName: publish-dlq
   topics:
