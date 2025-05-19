@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><database name="alerts" schema="public" type="PostgreSQL - 16.8 (Debian 16.8-1.pgdg120+1)">
+<?xml version="1.0" encoding="UTF-8"?><database name="alerts" schema="public" type="PostgreSQL - 16.9 (Debian 16.9-1.pgdg120+1)">
    <sequences>
       <sequence increment="1" name="alert_code_alert_code_id_seq" startValue="1"/>
       <sequence increment="1" name="alert_type_alert_type_id_seq" startValue="1"/>
@@ -50,7 +50,7 @@
             <column ascending="true" name="prison_number"/>
          </index>
       </table>
-      <table name="alert_code" remarks="Second level categorisation of alerts grouped by type" schema="public" type="TABLE">
+      <table name="alert_code" numRows="213" remarks="Second level categorisation of alerts grouped by type" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('alert_code_alert_code_id_seq'::regclass)" digits="0" id="0" name="alert_code_id" nullable="false" remarks="Internal primary key. Not returned by API" size="19" type="bigserial" typeCode="-5">
             <child column="alert_code_id" foreignKey="alert_alert_code_fk" implied="false" onDeleteCascade="false" schema="public" table="alert"/>
          </column>
