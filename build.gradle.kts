@@ -15,7 +15,7 @@ dependencies {
   // Spring boot dependencies
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.4.8")
+  implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.4.9")
   implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.17.0")
   implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
 
@@ -26,7 +26,7 @@ dependencies {
   implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.10.3")
 
   // AWS
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.4.7")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.4.8")
 
   // OpenAPI
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
