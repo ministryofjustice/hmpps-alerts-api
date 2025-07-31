@@ -14,7 +14,7 @@ import java.lang.ThreadLocal.withInitial
 @Component
 class DomainEventBatcher(
   private val domainEventPublisher: DomainEventPublisher,
-  @Value("\${service.event.batch-size:10}") private val eventBatchSize: Int,
+  @param:Value("\${service.event.batch-size:10}") private val eventBatchSize: Int,
 ) {
   private val batchedEvents = withInitial { mutableSetOf<DomainEvent>() }
 

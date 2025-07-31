@@ -6,7 +6,7 @@ import org.springframework.boot.actuate.info.InfoContributor
 import org.springframework.stereotype.Component
 
 @Component
-class NavigationInfo(@Value("\${service.ui.url}") val url: String = "") : InfoContributor {
+class NavigationInfo(@param:Value("\${service.ui.url}") val url: String = "") : InfoContributor {
   override fun contribute(builder: Info.Builder?) {
     val navigation = Navigation(href = url)
     builder?.withDetail("navigation", navigation)

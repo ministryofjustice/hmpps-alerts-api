@@ -22,7 +22,7 @@ import uk.gov.justice.hmpps.sqs.publish
 class DomainEventPublisher(
   private val hmppsQueueService: HmppsQueueService,
   private val objectMapper: ObjectMapper,
-  @Value("\${service.event.batch-size:10}") private val eventBatchSize: Int,
+  @param:Value("\${service.event.batch-size:10}") private val eventBatchSize: Int,
 ) {
   private val domainEventsTopic by lazy {
     hmppsQueueService.findByTopicId("hmppseventtopic") ?: throw IllegalStateException("hmppseventtopic not found")
