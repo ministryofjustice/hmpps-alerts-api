@@ -8,6 +8,7 @@ import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus.BAD_REQUEST
+import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
@@ -27,6 +28,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
@@ -116,6 +118,51 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       assertThat(userMessage).isEqualTo("Not found: Alert not found")
       assertThat(developerMessage).isEqualTo("Alert not found with identifier $uuid")
       assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `403 forbidden - should not delete restricted alert when the user does not have permission`() {
+    val restrictedAlertCode = givenNewAlertCode(alertCode("XXDA", restricted = true))
+    val prisonNumber = givenPrisonerExists("D2345LA")
+    val alert = givenAlert(alert(prisonNumber = prisonNumber, alertCode = restrictedAlertCode))
+
+    val response = webTestClient.delete()
+      .uri("/alerts/${alert.id}")
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
+      .headers(setAlertRequestContext())
+      .exchange().errorResponse(FORBIDDEN)
+
+    with(response) {
+      assertThat(status).isEqualTo(403)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Permission denied - Permission denied for AlertCode ${restrictedAlertCode.code}")
+      assertThat(developerMessage).isEqualTo("Permission denied for AlertCode ${restrictedAlertCode.code}")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `Restricted alert should be deleted when user has permission`() {
+    val restrictedAlertCode = givenNewAlertCode(alertCode("XXDB", restricted = true))
+    givenNewAlertCodeRestriction(restrictedAlertCode)
+    val prisonNumber = "D1234LU"
+    val alert = givenAlert(alert(prisonNumber, restrictedAlertCode))
+
+    webTestClient.deleteAlert(alert.id)
+    val alertEntity = alertRepository.findByAlertUuidIncludingSoftDelete(alert.id)!!
+
+    with(alertEntity) {
+      assertThat(deletedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+    }
+    with(alertEntity.auditEvents()[0]) {
+      assertThat(action).isEqualTo(AuditEventAction.DELETED)
+      assertThat(description).isEqualTo("Alert deleted")
+      assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+      assertThat(actionedBy).isEqualTo(TEST_USER)
+      assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+      assertThat(source).isEqualTo(DPS)
+      assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
     }
   }
 

@@ -34,6 +34,9 @@ import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert as AlertEntity
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 
 class UpdateAlertIntTest : IntegrationTestBase() {
 
@@ -158,6 +161,52 @@ class UpdateAlertIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `403 forbidden - restricted alert should not be updated when user does not have permission`() {
+    val restrictedAlertCode = givenNewAlertCode(alertCode("XXUA", restricted = true))
+    val prisonNumber = givenPrisonerExists("U3456VD")
+    val alert = givenAlert(alert(prisonNumber = prisonNumber, alertCode = restrictedAlertCode))
+    val response = webTestClient.put()
+      .uri("/alerts/${alert.id}")
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RW)))
+      .headers(setAlertRequestContext())
+      .bodyValue(updateAlertRequest())
+      .exchange()
+      .expectStatus().isForbidden
+      .expectBody(ErrorResponse::class.java)
+      .returnResult().responseBody
+
+    with(response!!) {
+      assertThat(status).isEqualTo(403)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Permission denied - Permission denied for AlertCode ${restrictedAlertCode.code}")
+      assertThat(developerMessage).isEqualTo("Permission denied for AlertCode ${restrictedAlertCode.code}")
+      assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `Restricted alert should be updated when the user has permission`() {
+    val restrictedAlertCode = givenNewAlertCode(alertCode("XXUB", restricted = true))
+    givenNewAlertCodeRestriction(restrictedAlertCode)
+    val prisonNumber = givenPrisonerExists("U3456VE")
+    val alert = givenAlert(alert(prisonNumber = prisonNumber, alertCode = restrictedAlertCode))
+    val request = updateAlertRequest()
+    val updatedAlert = webTestClient.updateAlert(alert.id, request = request)
+    val alertEntity = alertRepository.findByIdOrNull(alert.id)!!
+    val alertCode = alertCodeRepository.findByCode(alertEntity.alertCode.code)!!
+    val lastModifiedAuditEvent = alertEntity.lastModifiedAuditEvent()!!
+
+    verifyUpdatedAlert(
+        request,
+        updatedAlert,
+        alert,
+        alertCode,
+        lastModifiedAuditEvent,
+        alertEntity,
+    )
+  }
+
+  @Test
   fun `alert updated via DPS`() {
     val prisonNumber = givenPrisonerExists("U2345VD")
     val alert = givenAlert(alert(prisonNumber))
@@ -167,66 +216,14 @@ class UpdateAlertIntTest : IntegrationTestBase() {
     val alertCode = alertCodeRepository.findByCode(alertEntity.alertCode.code)!!
     val lastModifiedAuditEvent = alertEntity.lastModifiedAuditEvent()!!
 
-    with(request) {
-      assertThat(updatedAlert).isEqualTo(
-        Alert(
-          alert.id,
-          alert.prisonNumber,
-          alertCode.summary(),
-          description,
-          authorisedBy,
-          activeFrom!!,
-          activeTo,
-          true,
-          alert.createdAt.truncatedTo(ChronoUnit.SECONDS),
-          TEST_USER,
-          TEST_USER_NAME,
-          lastModifiedAuditEvent.actionedAt.withNano(0),
-          TEST_USER,
-          TEST_USER_NAME,
-          lastModifiedAuditEvent.actionedAt.withNano(0),
-          TEST_USER,
-          TEST_USER_NAME,
-          null,
-          null,
-          null,
-          PRISON_CODE_LEEDS,
-        ),
-      )
-
-      assertThat(alertEntity).usingRecursiveComparison()
-        .ignoringFields("auditEvents", "alertCode.alertType", "version").isEqualTo(
-          AlertEntity(
-            id = alertEntity.id,
-            alertCode = alertCode,
-            prisonNumber = alertEntity.prisonNumber,
-            description = description,
-            authorisedBy = authorisedBy,
-            activeFrom = activeFrom,
-            activeTo = activeTo,
-            createdAt = alertEntity.createdAt,
-            prisonCodeWhenCreated = PRISON_CODE_LEEDS,
-          ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
-        )
-      with(lastModifiedAuditEvent) {
-        assertThat(action).isEqualTo(AuditEventAction.UPDATED)
-        assertThat(description).isEqualTo(
-          """Updated alert description from '${alert.description}' to '${request.description}'
-Updated authorised by from '${alert.authorisedBy}' to '$authorisedBy'
-Updated active from from '${alert.activeFrom}' to '$activeFrom'
-Updated active to from '${alert.activeTo}' to '$activeTo'""",
-        )
-        assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
-        assertThat(actionedBy).isEqualTo(TEST_USER)
-        assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
-        assertThat(source).isEqualTo(DPS)
-        assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
-        assertThat(descriptionUpdated).isTrue()
-        assertThat(authorisedByUpdated).isTrue()
-        assertThat(activeFromUpdated).isTrue()
-        assertThat(activeToUpdated).isTrue()
-      }
-    }
+    verifyUpdatedAlert(
+        request,
+        updatedAlert,
+        alert,
+        alertCode,
+        lastModifiedAuditEvent,
+        alertEntity,
+    )
   }
 
   @Test
@@ -274,7 +271,7 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
             prisonNumber = alertEntity.prisonNumber,
             description = description,
             authorisedBy = authorisedBy,
-            activeFrom = activeFrom,
+            activeFrom = activeFrom!!,
             activeTo = activeTo,
             createdAt = alertEntity.createdAt,
             prisonCodeWhenCreated = PRISON_CODE_LEEDS,
@@ -345,7 +342,7 @@ Updated active from from '${alert.activeFrom}' to '$activeFrom'""",
             prisonNumber = alertEntity.prisonNumber,
             description = description,
             authorisedBy = authorisedBy,
-            activeFrom = activeFrom,
+            activeFrom = activeFrom!!,
             activeTo = activeTo,
             createdAt = alertEntity.createdAt,
             prisonCodeWhenCreated = PRISON_CODE_LEEDS,
@@ -516,4 +513,74 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
     .expectStatus().isOk
     .expectBody(Alert::class.java)
     .returnResult().responseBody!!
+
+  private fun verifyUpdatedAlert(
+    request: UpdateAlert,
+    updatedAlert: Alert,
+    alert: uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert,
+    alertCode: AlertCode,
+    lastModifiedAuditEvent: AuditEvent,
+    alertEntity: uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert,
+  ) {
+    with(request) {
+      assertThat(updatedAlert).isEqualTo(
+        Alert(
+          alert.id,
+          alert.prisonNumber,
+          alertCode.summary(),
+          description,
+          authorisedBy,
+          activeFrom!!,
+          activeTo,
+          true,
+          alert.createdAt.truncatedTo(ChronoUnit.SECONDS),
+          TEST_USER,
+          TEST_USER_NAME,
+          lastModifiedAuditEvent.actionedAt.withNano(0),
+          TEST_USER,
+          TEST_USER_NAME,
+          lastModifiedAuditEvent.actionedAt.withNano(0),
+          TEST_USER,
+          TEST_USER_NAME,
+          null,
+          null,
+          null,
+          PRISON_CODE_LEEDS,
+        ),
+      )
+
+      assertThat(alertEntity).usingRecursiveComparison()
+        .ignoringFields("auditEvents", "alertCode.alertType", "version").isEqualTo(
+          uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert(
+            id = alertEntity.id,
+            alertCode = alertCode,
+            prisonNumber = alertEntity.prisonNumber,
+            description = description,
+            authorisedBy = authorisedBy,
+            activeFrom = activeFrom!!,
+            activeTo = activeTo,
+            createdAt = alertEntity.createdAt,
+            prisonCodeWhenCreated = PRISON_CODE_LEEDS,
+          ).apply { lastModifiedAt = lastModifiedAuditEvent.actionedAt },
+        )
+      with(lastModifiedAuditEvent) {
+        assertThat(action).isEqualTo(AuditEventAction.UPDATED)
+        assertThat(description).isEqualTo(
+          """Updated alert description from '${alert.description}' to '${request.description}'
+Updated authorised by from '${alert.authorisedBy}' to '$authorisedBy'
+Updated active from from '${alert.activeFrom}' to '$activeFrom'
+Updated active to from '${alert.activeTo}' to '$activeTo'""",
+        )
+        assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+        assertThat(actionedBy).isEqualTo(TEST_USER)
+        assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+        assertThat(source).isEqualTo(DPS)
+        assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
+        assertThat(descriptionUpdated).isTrue()
+        assertThat(authorisedByUpdated).isTrue()
+        assertThat(activeFromUpdated).isTrue()
+        assertThat(activeToUpdated).isTrue()
+      }
+    }
+  }
 }

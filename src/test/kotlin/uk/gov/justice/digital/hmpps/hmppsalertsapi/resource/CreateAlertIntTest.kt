@@ -10,9 +10,11 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
+import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.PersonReference
@@ -33,15 +35,16 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.PrisonerAlertsIntTest.AlertsPage
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
 import java.time.LocalDate.now
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 class CreateAlertIntTest : IntegrationTestBase() {
 
@@ -381,30 +384,37 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val alertEntity = alertRepository.findByIdOrNull(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
-    assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "version")
-      .isEqualTo(
-        Alert(
-          id = alert.alertUuid,
-          alertCode = alertCode,
-          prisonNumber = prisonNumber,
-          description = request.description,
-          authorisedBy = request.authorisedBy,
-          activeFrom = request.activeFrom!!,
-          activeTo = request.activeTo,
-          createdAt = alertEntity.createdAt,
-          prisonCodeWhenCreated = PRISON_CODE_LEEDS,
-        ),
-      )
-    with(alertEntity.auditEvents().single()) {
-      assertThat(action).isEqualTo(AuditEventAction.CREATED)
-      assertThat(description).isEqualTo("Alert created")
-      assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
-      assertThat(actionedAt).isEqualTo(alertEntity.createdAt)
-      assertThat(actionedBy).isEqualTo(TEST_USER)
-      assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
-      assertThat(source).isEqualTo(DPS)
-      assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
+    verifyCreatedAlert(alertEntity, alert, alertCode, prisonNumber, request, DPS)
+  }
+
+  @Test
+  fun `403 forbidden - should not create new alert for restricted alert code when user does not have permission`() {
+    val restrictedAlertCode = givenNewAlertCode(alertCode(code = "XXCA", restricted = true))
+    val request = createAlertRequest(restrictedAlertCode.code)
+
+    val response = webTestClient.createAlertResponseSpec(request = request).errorResponse(FORBIDDEN)
+
+    with(response) {
+      assertThat(status).isEqualTo(403)
+      assertThat(errorCode).isNull()
+      assertThat(userMessage).isEqualTo("Permission denied - Permission denied for AlertCode ${restrictedAlertCode.code}")
+      assertThat(developerMessage).isEqualTo("Permission denied for AlertCode ${restrictedAlertCode.code}")
+      assertThat(moreInfo).isNull()
     }
+  }
+
+  @Test
+  fun `should create new alert for restricted alert code when user has permission`() {
+    val restrictedAlertCode = givenNewAlertCode(alertCode("XXCB", restricted = true))
+    givenNewAlertCodeRestriction(restrictedAlertCode)
+    val prisonNumber = givenPrisoner()
+    val request = createAlertRequest(restrictedAlertCode.code)
+
+    val alert = webTestClient.createAlert(prisonNumber, request)
+
+    val alertEntity = alertRepository.findByIdOrNull(alert.alertUuid)!!
+    val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
+    verifyCreatedAlert(alertEntity, alert, alertCode, prisonNumber, request, DPS)
   }
 
   @Test
@@ -417,30 +427,14 @@ class CreateAlertIntTest : IntegrationTestBase() {
     val alertEntity = alertRepository.findByIdOrNull(alert.alertUuid)!!
     val alertCode = alertCodeRepository.findByCode(request.alertCode)!!
 
-    assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "version")
-      .isEqualTo(
-        Alert(
-          id = alert.alertUuid,
-          alertCode = alertCode,
-          prisonNumber = prisonNumber,
-          description = request.description,
-          authorisedBy = request.authorisedBy,
-          activeFrom = request.activeFrom!!,
-          activeTo = request.activeTo,
-          createdAt = alertEntity.createdAt,
-          prisonCodeWhenCreated = PRISON_CODE_LEEDS,
-        ),
-      )
-    with(alertEntity.auditEvents().single()) {
-      assertThat(action).isEqualTo(AuditEventAction.CREATED)
-      assertThat(description).isEqualTo("Alert created")
-      assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
-      assertThat(actionedAt).isEqualTo(alertEntity.createdAt)
-      assertThat(actionedBy).isEqualTo(TEST_USER)
-      assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
-      assertThat(source).isEqualTo(NOMIS)
-      assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
-    }
+    verifyCreatedAlert(
+      alertEntity,
+      alert,
+      alertCode,
+      prisonNumber,
+      request,
+      NOMIS,
+    )
   }
 
   @Test
@@ -627,17 +621,37 @@ class CreateAlertIntTest : IntegrationTestBase() {
     source: Source = DPS,
   ) = createAlertResponseSpec(prisonNumber, request, source).successResponse<AlertModel>(HttpStatus.CREATED)
 
-  private fun getActivePrisonerAlerts(prisonNumber: String) = webTestClient.get()
-    .uri { builder ->
-      builder
-        .path("/prisoners/$prisonNumber/alerts")
-        .queryParam("isActive", true)
-        .build()
+  private fun verifyCreatedAlert(
+    alertEntity: Alert,
+    alert: uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert,
+    alertCode: AlertCode,
+    prisonNumber: String,
+    request: CreateAlert,
+    requestSource: Source,
+  ) {
+    assertThat(alertEntity).usingRecursiveComparison().ignoringFields("auditEvents", "alertCode.alertType", "version")
+      .isEqualTo(
+        Alert(
+          id = alert.alertUuid,
+          alertCode = alertCode,
+          prisonNumber = prisonNumber,
+          description = request.description,
+          authorisedBy = request.authorisedBy,
+          activeFrom = request.activeFrom!!,
+          activeTo = request.activeTo,
+          createdAt = alertEntity.createdAt,
+          prisonCodeWhenCreated = PRISON_CODE_LEEDS,
+        ),
+      )
+    with(alertEntity.auditEvents().single()) {
+      assertThat(action).isEqualTo(AuditEventAction.CREATED)
+      assertThat(description).isEqualTo("Alert created")
+      assertThat(actionedAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+      assertThat(actionedAt).isEqualTo(alertEntity.createdAt)
+      assertThat(actionedBy).isEqualTo(TEST_USER)
+      assertThat(actionedByDisplayName).isEqualTo(TEST_USER_NAME)
+      assertThat(source).isEqualTo(requestSource)
+      assertThat(activeCaseLoadId).isEqualTo(PRISON_CODE_LEEDS)
     }
-    .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
-    .exchange()
-    .expectStatus().isOk
-    .expectHeader().valueEquals("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
-    .expectBody(AlertsPage::class.java)
-    .returnResult().responseBody!!.content
+  }
 }

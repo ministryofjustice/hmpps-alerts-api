@@ -24,6 +24,7 @@ class AlertCode(
 
   val code: String,
   var description: String,
+  var restricted: Boolean,
   var listSequence: Int,
   val createdAt: LocalDateTime,
   val createdBy: String,

@@ -40,6 +40,12 @@ data class AlertCode(
     example = "true",
   )
   val isActive: Boolean,
+  
+  @Schema(
+    description = "Indicates that the alert code can only be used to create new alerts by specific users.",
+    example = "false",
+  )
+  val isRestricted: Boolean,
 
   @Schema(
     description = "The date and time the alert code was created",
