@@ -19,43 +19,43 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepositor
 class AlertTypeService(
   private val alertTypeRepository: AlertTypeRepository,
 ) {
-  fun getAlertTypes(includeInactive: Boolean) = alertTypeRepository.findAll().toAlertTypeModels(includeInactive)
+  fun getAlertTypes(includeInactive: Boolean, context: AlertRequestContext) = alertTypeRepository.findAll().toAlertTypeModels(context.username, includeInactive)
 
   fun createAlertType(createAlertTypeRequest: CreateAlertTypeRequest, context: AlertRequestContext): AlertType = createAlertTypeRequest.let {
     it.checkForExistingAlertType()
     val entity = it.toEntity(context)
     with(entity) {
       val toSave = create()
-      alertTypeRepository.save(toSave).toAlertTypeModel(false)
+      alertTypeRepository.save(toSave).toAlertTypeModel(context.username, false)
     }
   }
 
-  fun getAlertType(alertType: String): AlertType = alertType.let {
+  fun getAlertType(alertType: String, context: AlertRequestContext): AlertType = alertType.let {
     it.checkAlertTypeExists()
-    alertTypeRepository.findByCode(alertType)!!.toAlertTypeModel(true)
+    alertTypeRepository.findByCode(alertType)!!.toAlertTypeModel(context.username, true)
   }
 
   @Transactional
-  fun deactivateAlertType(alertType: String, alertRequestContext: AlertRequestContext): AlertType = alertType.let {
+  fun deactivateAlertType(alertType: String, context: AlertRequestContext): AlertType = alertType.let {
     it.checkAlertTypeExists()
     with(alertTypeRepository.findByCode(it)!!) {
-      deactivatedAt = alertRequestContext.requestAt
-      deactivatedBy = alertRequestContext.username
+      deactivatedAt = context.requestAt
+      deactivatedBy = context.username
       deactivate()
-      alertTypeRepository.save(this).toAlertTypeModel(true)
+      alertTypeRepository.save(this).toAlertTypeModel(context.username, true)
     }
   }
 
   @Transactional
-  fun reactivateAlertType(alertType: String, alertRequestContext: AlertRequestContext) = alertType.let {
+  fun reactivateAlertType(alertType: String, context: AlertRequestContext) = alertType.let {
     it.checkAlertTypeExists()
     with(alertTypeRepository.findByCode(it)!!) {
       if (deactivatedAt != null) {
         deactivatedAt = null
         deactivatedBy = null
-        reactivate(alertRequestContext.requestAt)
+        reactivate(context.requestAt)
       }
-      alertTypeRepository.save(this).toAlertTypeModel(false)
+      alertTypeRepository.save(this).toAlertTypeModel(context.username, false)
     }
   }
 
@@ -63,17 +63,17 @@ class AlertTypeService(
   fun updateAlertType(
     alertType: String,
     updateAlertTypeRequest: UpdateAlertTypeRequest,
-    alertRequestContext: AlertRequestContext,
+    context: AlertRequestContext,
   ): AlertType = alertType.let {
     it.checkAlertTypeExists()
     with(alertTypeRepository.findByCode(it)!!) {
       if (description != updateAlertTypeRequest.description) {
         description = updateAlertTypeRequest.description
-        modifiedBy = alertRequestContext.username
-        modifiedAt = alertRequestContext.requestAt
+        modifiedBy = context.username
+        modifiedAt = context.requestAt
         update()
       }
-      alertTypeRepository.save(this).toAlertTypeModel(false)
+      alertTypeRepository.save(this).toAlertTypeModel(context.username, false)
     }
   }
 

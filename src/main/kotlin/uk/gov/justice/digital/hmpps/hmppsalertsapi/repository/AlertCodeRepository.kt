@@ -8,10 +8,10 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
 
 @Repository
 interface AlertCodeRepository : JpaRepository<AlertCode, Long> {
-  @EntityGraph(attributePaths = ["alertType"])
+  @EntityGraph(attributePaths = ["alertType", "privilegedUsers"])
   fun findByCode(code: String): AlertCode?
 
-  @EntityGraph(attributePaths = ["alertType"])
+  @EntityGraph(attributePaths = ["alertType", "privilegedUsers"])
   fun findByCodeIn(codes: Collection<String>): Collection<AlertCode>
 }
 

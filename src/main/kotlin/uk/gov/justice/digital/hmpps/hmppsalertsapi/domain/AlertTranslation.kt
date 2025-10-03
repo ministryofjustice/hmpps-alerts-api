@@ -40,7 +40,7 @@ fun CreateAlert.toAlertEntity(
   activeCaseLoadId = context.activeCaseLoadId,
 )
 
-fun Alert.toAlertModel(auditEvents: Collection<AuditEvent>? = null): AlertModel {
+fun Alert.toAlertModel(context: AlertRequestContext, auditEvents: Collection<AuditEvent>? = null): AlertModel {
   val events = auditEvents ?: auditEvents()
   val createdAuditEvent = events.single { it.action == AuditEventAction.CREATED }
   val lastModifiedAuditEvent = events.firstOrNull { it.action == AuditEventAction.UPDATED }
@@ -55,7 +55,7 @@ fun Alert.toAlertModel(auditEvents: Collection<AuditEvent>? = null): AlertModel 
 
   return AlertModel(
     alertUuid = id,
-    alertCode = alertCode.toAlertCodeSummary(),
+    alertCode = alertCode.toAlertCodeSummary(context.username),
     prisonNumber = prisonNumber,
     description = description,
     authorisedBy = authorisedBy,

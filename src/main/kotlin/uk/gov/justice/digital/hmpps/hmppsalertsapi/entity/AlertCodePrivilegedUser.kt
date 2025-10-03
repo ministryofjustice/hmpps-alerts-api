@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity
 
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.IdClass
@@ -11,8 +12,10 @@ import java.io.Serializable
 @Table
 class AlertCodePrivilegedUser(
   @Id
+  @Column(name = "alert_code_id", nullable = false)
   val alertCodeId: Long,
   @Id
+  @Column(name = "username", nullable = false)
   val username: String,
 )
 

@@ -62,6 +62,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @UsernameHeader
   fun retrievePrisonerAlerts(
     @PathVariable
     @Parameter(
@@ -118,6 +119,7 @@ class PrisonerAlertsController(val alertService: AlertService) {
     activeFromEnd = activeFromEnd,
     search = search,
     pageable = pageable,
+    context = AlertRequestContext.get(),
   )
 
   @Tag(name = RW_OPERATIONS)

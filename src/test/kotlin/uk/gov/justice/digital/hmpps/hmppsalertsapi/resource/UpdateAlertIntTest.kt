@@ -9,6 +9,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.PersonReference
@@ -27,6 +29,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.summary
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 import java.time.LocalDate
@@ -34,9 +37,6 @@ import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert as AlertEntity
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 
 class UpdateAlertIntTest : IntegrationTestBase() {
 
@@ -187,7 +187,7 @@ class UpdateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `Restricted alert should be updated when the user has permission`() {
     val restrictedAlertCode = givenNewAlertCode(alertCode("XXUB", restricted = true))
-    givenNewAlertCodeRestriction(restrictedAlertCode)
+    givenNewAlertCodePrivilegedUser(restrictedAlertCode)
     val prisonNumber = givenPrisonerExists("U3456VE")
     val alert = givenAlert(alert(prisonNumber = prisonNumber, alertCode = restrictedAlertCode))
     val request = updateAlertRequest()
@@ -197,12 +197,12 @@ class UpdateAlertIntTest : IntegrationTestBase() {
     val lastModifiedAuditEvent = alertEntity.lastModifiedAuditEvent()!!
 
     verifyUpdatedAlert(
-        request,
-        updatedAlert,
-        alert,
-        alertCode,
-        lastModifiedAuditEvent,
-        alertEntity,
+      request,
+      updatedAlert,
+      alert,
+      alertCode,
+      lastModifiedAuditEvent,
+      alertEntity,
     )
   }
 
@@ -217,12 +217,12 @@ class UpdateAlertIntTest : IntegrationTestBase() {
     val lastModifiedAuditEvent = alertEntity.lastModifiedAuditEvent()!!
 
     verifyUpdatedAlert(
-        request,
-        updatedAlert,
-        alert,
-        alertCode,
-        lastModifiedAuditEvent,
-        alertEntity,
+      request,
+      updatedAlert,
+      alert,
+      alertCode,
+      lastModifiedAuditEvent,
+      alertEntity,
     )
   }
 

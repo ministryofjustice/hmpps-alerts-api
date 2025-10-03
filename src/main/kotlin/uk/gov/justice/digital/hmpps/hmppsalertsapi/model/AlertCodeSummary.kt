@@ -29,4 +29,10 @@ data class AlertCodeSummary(
     example = "Alert code description",
   )
   val description: String,
+
+  @Schema(
+    description = "Indicates that the alert code can be administered by the user",
+    example = "false",
+  )
+  val canBeAdministered: Boolean,
 )

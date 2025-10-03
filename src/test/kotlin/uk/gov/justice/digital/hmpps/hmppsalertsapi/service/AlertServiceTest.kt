@@ -39,10 +39,10 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodePrivilegedUserRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AuditEventRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_RESTRICTED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_RESTRICTED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_VICTIM
@@ -58,9 +58,6 @@ import java.util.UUID
 class AlertServiceTest {
   @Mock
   lateinit var alertCodeRepository: AlertCodeRepository
-
-  @Mock
-  lateinit var alertCodePrivilegedUserRepository: AlertCodePrivilegedUserRepository
 
   @Mock
   lateinit var alertRepository: AlertRepository
@@ -104,7 +101,6 @@ class AlertServiceTest {
     @Test
     fun `Alert code is restricted and user does not have permission`() {
       whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_RESTRICTED)
-      whenever(alertCodePrivilegedUserRepository.findByAlertCodeIdAndUsername(any(), anyString())).thenReturn(null)
 
       val error = assertThrows<PermissionDeniedException> {
         underTest.createAlert(prisoner(), createAlertRequest(alertCode = AC_RESTRICTED.code), false)
@@ -115,9 +111,13 @@ class AlertServiceTest {
 
     @Test
     fun `Alert code is restricted but user has permission`() {
-      val restriction = AlertCodePrivilegedUser(AC_RESTRICTED.alertCodeId, "username")
-      whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_RESTRICTED)
-      whenever(alertCodePrivilegedUserRepository.findByAlertCodeIdAndUsername(any(), anyString())).thenReturn(restriction)
+      val privilegedUser = AlertCodePrivilegedUser(AC_RESTRICTED.alertCodeId, TEST_USER)
+      val restrictedAlertCode = alertCode(
+        code = ALERT_CODE_RESTRICTED,
+        restricted = true,
+        privilegedUsers = mutableSetOf(privilegedUser),
+      )
+      whenever(alertCodeRepository.findByCode(anyString())).thenReturn(restrictedAlertCode)
       whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
 
       underTest.createAlert(prisoner(), createAlertRequest(alertCode = AC_RESTRICTED.code), false)
@@ -276,11 +276,15 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
 
     @Test
     fun `restricted alert should be updated if user has permission`() {
-      val alert = alert(alertCode = AC_RESTRICTED)
       val updateRequest = updateAlertRequestChange()
-      val restriction = AlertCodePrivilegedUser(AC_RESTRICTED.alertCodeId, "username")
+      val privilegedUser = AlertCodePrivilegedUser(AC_RESTRICTED.alertCodeId, TEST_USER)
+      val restrictedAlertCode = alertCode(
+        code = ALERT_CODE_RESTRICTED,
+        restricted = true,
+        privilegedUsers = mutableSetOf(privilegedUser),
+      )
+      val alert = alert(alertCode = restrictedAlertCode)
       whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
-      whenever(alertCodePrivilegedUserRepository.findByAlertCodeIdAndUsername(any(), anyString())).thenReturn(restriction)
       whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
 
       underTest.updateAlert(alert.id, updateRequest, context)
@@ -295,7 +299,7 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
       whenever(alertRepository.findById(any())).thenReturn(Optional.empty())
       val alertUuid = UUID.randomUUID()
       val exception = assertThrows<NotFoundException> {
-        underTest.retrieveAlert(alertUuid)
+        underTest.retrieveAlert(alertUuid, context)
       }
       assertThat(exception.message).isEqualTo("Alert not found")
     }
@@ -304,8 +308,8 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
     fun `returns alert model if found`() {
       val alert = alert()
       whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
-      val result = underTest.retrieveAlert(UUID.randomUUID())
-      assertThat(result).isEqualTo(alert.toAlertModel())
+      val result = underTest.retrieveAlert(UUID.randomUUID(), context)
+      assertThat(result).isEqualTo(alert.toAlertModel(context))
     }
   }
 
@@ -358,10 +362,14 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
 
     @Test
     fun `restricted alert should be deleted if user has permission`() {
-      val alert = alert(alertCode = AC_RESTRICTED)
-      val restriction = AlertCodePrivilegedUser(AC_RESTRICTED.alertCodeId, "username")
+      val privilegedUser = AlertCodePrivilegedUser(AC_RESTRICTED.alertCodeId, TEST_USER)
+      val restrictedAlertCode = alertCode(
+        code = ALERT_CODE_RESTRICTED,
+        restricted = true,
+        privilegedUsers = mutableSetOf(privilegedUser),
+      )
+      val alert = alert(alertCode = restrictedAlertCode)
       whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
-      whenever(alertCodePrivilegedUserRepository.findByAlertCodeIdAndUsername(any(), anyString())).thenReturn(restriction)
 
       underTest.deleteAlert(alert.id, context)
       verify(alertRepository).save(any())
@@ -397,7 +405,7 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
   private fun alert(
     uuid: UUID = UUID.randomUUID(),
     updateAlert: UpdateAlert = updateAlertRequestNoChange(),
-    alertCode: AlertCode = AC_VICTIM
+    alertCode: AlertCode = AC_VICTIM,
   ) = LocalDateTime.now().minusDays(1).let {
     Alert(
       id = uuid,

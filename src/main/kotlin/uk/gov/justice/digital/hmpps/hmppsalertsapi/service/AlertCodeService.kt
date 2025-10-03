@@ -29,7 +29,7 @@ class AlertCodeService(
       val entity = it.toEntity(context, alertType!!)
       with(entity) {
         val toSave = create()
-        alertCodeRepository.save(toSave).toAlertCodeModel()
+        alertCodeRepository.save(toSave).toAlertCodeModel(context.username)
       }
     }
   }
@@ -41,47 +41,47 @@ class AlertCodeService(
   private fun String.checkAlertCodeExists(): uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode = verifyExists(alertCodeRepository.findByCode(this)) { NotFoundException("Alert code", this) }
 
   @Transactional
-  fun deactivateAlertCode(alertCode: String, alertRequestContext: AlertRequestContext): AlertCode = with(alertCode.checkAlertCodeExists()) {
-    deactivatedAt = alertRequestContext.requestAt
-    deactivatedBy = alertRequestContext.username
+  fun deactivateAlertCode(alertCode: String, context: AlertRequestContext): AlertCode = with(alertCode.checkAlertCodeExists()) {
+    deactivatedAt = context.requestAt
+    deactivatedBy = context.username
     deactivate()
-    alertCodeRepository.save(this).toAlertCodeModel()
+    alertCodeRepository.save(this).toAlertCodeModel(context.username)
   }
 
   @Transactional
-  fun reactivateAlertCode(alertCode: String, alertRequestContext: AlertRequestContext): AlertCode = alertCode.let {
+  fun reactivateAlertCode(alertCode: String, context: AlertRequestContext): AlertCode = alertCode.let {
     it.checkAlertCodeExists()
     with(alertCodeRepository.findByCode(it)!!) {
       if (deactivatedAt != null) {
         deactivatedAt = null
         deactivatedBy = null
-        reactivate(alertRequestContext.requestAt)
+        reactivate(context.requestAt)
       }
-      alertCodeRepository.save(this).toAlertCodeModel()
+      alertCodeRepository.save(this).toAlertCodeModel(context.username)
     }
   }
 
-  fun retrieveAlertCode(alertCode: String): AlertCode = alertCode.let {
+  fun retrieveAlertCode(alertCode: String, context: AlertRequestContext): AlertCode = alertCode.let {
     it.checkAlertCodeExists()
-    alertCodeRepository.findByCode(it)!!.toAlertCodeModel()
+    alertCodeRepository.findByCode(it)!!.toAlertCodeModel(context.username)
   }
 
-  fun retrieveAlertCodes(includeInactive: Boolean): Collection<AlertCode> = alertCodeRepository.findAll().toAlertCodeModels(includeInactive)
+  fun retrieveAlertCodes(includeInactive: Boolean, context: AlertRequestContext): Collection<AlertCode> = alertCodeRepository.findAll().toAlertCodeModels(context.username, includeInactive)
 
   fun updateAlertCode(
     alertCode: String,
     updateAlertCodeRequest: UpdateAlertCodeRequest,
-    alertRequestContext: AlertRequestContext,
+    context: AlertRequestContext,
   ): AlertCode = alertCode.let {
     it.checkAlertCodeExists()
     with(alertCodeRepository.findByCode(it)!!) {
       if (description != updateAlertCodeRequest.description) {
         description = updateAlertCodeRequest.description
-        modifiedBy = alertRequestContext.username
-        modifiedAt = alertRequestContext.requestAt
+        modifiedBy = context.username
+        modifiedAt = context.requestAt
         update()
       }
-      alertCodeRepository.save(this).toAlertCodeModel()
+      alertCodeRepository.save(this).toAlertCodeModel(context.username)
     }
   }
 }

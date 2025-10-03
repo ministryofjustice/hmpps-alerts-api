@@ -33,7 +33,7 @@ data class CreateAlertCodeRequest(
   @Schema(
     description = "Whether or not the alert code is restricted so that only specific users may create alerts with it",
     example = "false",
-    defaultValue = "false"
+    defaultValue = "false",
   )
   val restricted: Boolean = false,
 )

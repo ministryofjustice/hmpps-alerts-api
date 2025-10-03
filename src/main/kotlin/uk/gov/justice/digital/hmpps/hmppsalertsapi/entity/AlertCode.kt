@@ -1,11 +1,13 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.entity
 
 import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.springframework.data.domain.AbstractAggregateRoot
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertCodeCreatedEvent
@@ -37,6 +39,10 @@ class AlertCode(
   var deactivatedAt: LocalDateTime? = null
   var deactivatedBy: String? = null
 
+  @OneToMany(fetch = FetchType.EAGER)
+  @JoinColumn(name = "alert_code_id", nullable = false, insertable = false, updatable = false)
+  var privilegedUsers: MutableSet<AlertCodePrivilegedUser> = mutableSetOf()
+
   fun isActive() = deactivatedAt?.isBefore(LocalDateTime.now()) != true
 
   fun create(): AlertCode = this.also {
@@ -62,4 +68,6 @@ class AlertCode(
       AlertCodeUpdatedEvent(code, modifiedAt!!),
     )
   }
+
+  fun canBeAdministeredByUser(username: String): Boolean = !restricted || privilegedUsers.any { username == it.username }
 }

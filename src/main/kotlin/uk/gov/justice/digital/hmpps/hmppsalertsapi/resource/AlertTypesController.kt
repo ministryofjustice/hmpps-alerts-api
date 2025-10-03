@@ -66,12 +66,13 @@ class AlertTypesController(
       ),
     ],
   )
+  @UsernameHeader
   fun retrieveAlertTypes(
     @Parameter(
       description = "Include inactive alert types and codes. Defaults to false",
     )
     includeInactive: Boolean = false,
-  ): Collection<AlertType> = alertTypeService.getAlertTypes(includeInactive)
+  ): Collection<AlertType> = alertTypeService.getAlertTypes(includeInactive, AlertRequestContext.get())
 
   @Tag(name = RO_OPERATIONS)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
@@ -104,7 +105,8 @@ class AlertTypesController(
       ),
     ],
   )
-  fun retrieveAlertType(@PathVariable alertTypeCode: String): AlertType = alertTypeService.getAlertType(alertTypeCode)
+  @UsernameHeader
+  fun retrieveAlertType(@PathVariable alertTypeCode: String): AlertType = alertTypeService.getAlertType(alertTypeCode, AlertRequestContext.get())
 
   @Tag(name = ADMIN_UI_ONLY)
   @ResponseStatus(CREATED)

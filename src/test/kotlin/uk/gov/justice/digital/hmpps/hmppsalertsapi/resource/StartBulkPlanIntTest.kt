@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
+import org.awaitility.kotlin.atMost
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
@@ -98,7 +99,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     val startTime = LocalDateTime.now()
     startPlanResponseSpec(plan.id).expectStatus().isAccepted
 
-    await withPollDelay ofSeconds(1) untilCallTo {
+    await atMost ofSeconds(20) withPollDelay ofSeconds(1) untilCallTo {
       bulkPlanRepository.getPlan(plan.id).completedAt
     } matches { it != null }
 
@@ -144,7 +145,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
       }
     }
 
-    await withPollDelay ofSeconds(5) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches {
+    await atMost ofSeconds(20) withPollDelay ofSeconds(5) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches {
       it == (30 + (2 * saved.expiredCount!!)) + if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) 4 else 0
     }
     val messages = hmppsEventsQueue.receiveAllMessages()
@@ -215,7 +216,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     val startTime = LocalDateTime.now()
     startPlanResponseSpec(plan.id).expectStatus().isAccepted
 
-    await withPollDelay ofSeconds(1) untilCallTo {
+    await atMost ofSeconds(20) withPollDelay ofSeconds(1) untilCallTo {
       bulkPlanRepository.getPlan(plan.id).completedAt
     } matches { it != null }
 
@@ -255,7 +256,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
       }
     }
 
-    await withPollDelay ofSeconds(5) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches {
+    await atMost ofSeconds(20) withPollDelay ofSeconds(5) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches {
       it == 45
     }
     val messages = hmppsEventsQueue.receiveAllMessages()

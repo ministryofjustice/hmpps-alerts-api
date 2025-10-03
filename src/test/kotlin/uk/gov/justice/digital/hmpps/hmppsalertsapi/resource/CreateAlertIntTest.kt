@@ -35,9 +35,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT_FOUND
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_THROW_EXCEPTION
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.CreateAlert
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.PrisonerAlertsIntTest.AlertsPage
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COVID_REFUSING_TO_SHIELD
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
@@ -45,6 +43,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertC
 import java.time.LocalDate.now
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 class CreateAlertIntTest : IntegrationTestBase() {
 
@@ -406,7 +405,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
   @Test
   fun `should create new alert for restricted alert code when user has permission`() {
     val restrictedAlertCode = givenNewAlertCode(alertCode("XXCB", restricted = true))
-    givenNewAlertCodeRestriction(restrictedAlertCode)
+    givenNewAlertCodePrivilegedUser(restrictedAlertCode)
     val prisonNumber = givenPrisoner()
     val request = createAlertRequest(restrictedAlertCode.code)
 

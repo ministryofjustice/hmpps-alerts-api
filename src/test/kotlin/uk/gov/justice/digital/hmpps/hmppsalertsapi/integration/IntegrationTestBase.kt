@@ -227,9 +227,7 @@ abstract class IntegrationTestBase {
     return alertCodeRepository.save(alertCode.apply { set(::alertType, type) })
   }
 
-  fun givenNewAlertCodeRestriction(alertCode: AlertCode, username: String = TEST_USER): AlertCodePrivilegedUser {
-    return alertCodePrivilegedUserRepository.save(AlertCodePrivilegedUser(alertCode.alertCodeId, username))
-  }
+  fun givenNewAlertCodePrivilegedUser(alertCode: AlertCode, username: String = TEST_USER): AlertCodePrivilegedUser = alertCodePrivilegedUserRepository.save(AlertCodePrivilegedUser(alertCode.alertCodeId, username))
 
   fun givenAlert(alert: Alert): Alert = alertRepository.save(
     alert.create(

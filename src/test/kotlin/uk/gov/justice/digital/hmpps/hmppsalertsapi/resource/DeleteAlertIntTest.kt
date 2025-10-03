@@ -145,7 +145,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
   @Test
   fun `Restricted alert should be deleted when user has permission`() {
     val restrictedAlertCode = givenNewAlertCode(alertCode("XXDB", restricted = true))
-    givenNewAlertCodeRestriction(restrictedAlertCode)
+    givenNewAlertCodePrivilegedUser(restrictedAlertCode)
     val prisonNumber = "D1234LU"
     val alert = givenAlert(alert(prisonNumber, restrictedAlertCode))
 

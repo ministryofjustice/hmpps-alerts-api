@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.utils
 
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCodePrivilegedUser
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
 import java.time.LocalDateTime
 
@@ -10,7 +11,7 @@ object EntityGenerator {
   val AC_RESTRICTED = alertCode(
     code = ALERT_CODE_RESTRICTED,
     description = "Restricted",
-    restricted = true
+    restricted = true,
   )
 
   fun alertType(
@@ -42,10 +43,12 @@ object EntityGenerator {
     modifiedBy: String = "MODIFIED_BY",
     deactivatedAt: LocalDateTime? = null,
     deactivatedBy: String? = null,
+    privilegedUsers: MutableSet<AlertCodePrivilegedUser> = mutableSetOf(),
   ) = AlertCode(type, code, description, restricted, listSequence, createdAt, createdBy).apply {
     this.modifiedAt = modifiedAt
     this.modifiedBy = modifiedBy
     this.deactivatedAt = deactivatedAt
     this.deactivatedBy = deactivatedBy
+    this.privilegedUsers = privilegedUsers
   }
 }

@@ -6,9 +6,4 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCodePrivilegedUse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCodePrivilegedUserId
 
 @Repository
-interface AlertCodePrivilegedUserRepository : JpaRepository<AlertCodePrivilegedUser, AlertCodePrivilegedUserId> {
-  fun findByAlertCodeIdAndUsername(alertCodeId: Long, username: String): AlertCodePrivilegedUser?
-}
-
-fun AlertCodePrivilegedUserRepository.userCanAdministerAlertCode(alertCodeId: Long, username: String): Boolean =
-  findByAlertCodeIdAndUsername(alertCodeId, username) != null
+interface AlertCodePrivilegedUserRepository : JpaRepository<AlertCodePrivilegedUser, AlertCodePrivilegedUserId>
