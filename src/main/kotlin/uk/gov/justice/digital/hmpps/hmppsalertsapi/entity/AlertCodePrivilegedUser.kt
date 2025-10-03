@@ -19,9 +19,10 @@ class AlertCodePrivilegedUser(
   val username: String,
 )
 
-class AlertCodePrivilegedUserId : Serializable {
-  private val alertCodeId: Long? = null
-  private val username: String? = null
+class AlertCodePrivilegedUserId(
+  val alertCodeId: Long? = null,
+  val username: String? = null,
+) : Serializable {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

@@ -84,4 +84,13 @@ class AlertCodeService(
       alertCodeRepository.save(this).toAlertCodeModel(context.username)
     }
   }
+
+  @Transactional
+  fun setAlertCodeRestrictedStatus(alertCode: String, restrictedStatus: Boolean, context: AlertRequestContext): AlertCode = alertCode.let {
+    it.checkAlertCodeExists()
+    with(alertCodeRepository.findByCode(it)!!) {
+      restricted = restrictedStatus
+      alertCodeRepository.save(this).toAlertCodeModel(context.username)
+    }
+  }
 }
