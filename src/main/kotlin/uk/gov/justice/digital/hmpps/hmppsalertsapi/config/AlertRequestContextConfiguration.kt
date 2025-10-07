@@ -44,7 +44,8 @@ class AlertRequestContextInterceptor(
   private val userService: UserService,
   private val prisonerSearchClient: PrisonerSearchClient,
 ) : HandlerInterceptor {
-  private val getPathPatterns = listOf("/alert-codes.*", "/alert-types.*").map { it.toRegex() }
+  private val getPathPatterns = listOf("/alerts/.*", "/alert-codes/.*", "/alert-types/.*", "/prisoners/.*")
+    .map { it.toRegex() }
 
   override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
     if (arrayOf("POST", "PUT", "PATCH", "DELETE").contains(request.method) || shouldApplyToGetPath(request)) {
