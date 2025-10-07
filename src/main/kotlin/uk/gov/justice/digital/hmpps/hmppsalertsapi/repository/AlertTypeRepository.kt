@@ -7,9 +7,9 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
 
 @Repository
 interface AlertTypeRepository : JpaRepository<AlertType, Long> {
-  @EntityGraph(attributePaths = ["alertCodes"])
+  @EntityGraph(attributePaths = ["alertCodes", "alertCodes.privilegedUsers"])
   override fun findAll(): List<AlertType>
 
-  @EntityGraph(attributePaths = ["alertCodes"])
+  @EntityGraph(attributePaths = ["alertCodes", "alertCodes.privilegedUsers"])
   fun findByCode(code: String): AlertType?
 }

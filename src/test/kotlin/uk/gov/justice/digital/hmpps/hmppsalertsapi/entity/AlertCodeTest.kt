@@ -33,6 +33,7 @@ class AlertCodeTest {
     ),
     "ABC",
     "Alert code ABC",
+    false,
     1,
     LocalDateTime.now().minusDays(3),
     "CREATED_BY",

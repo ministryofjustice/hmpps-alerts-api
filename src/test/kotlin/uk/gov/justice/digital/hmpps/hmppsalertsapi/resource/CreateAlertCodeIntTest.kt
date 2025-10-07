@@ -187,6 +187,18 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
     assertThat(alertCode).isNotNull
     assertThat(alertCode.code).isEqualTo("CO")
     assertThat(alertCode.description).isEqualTo("Description")
+    assertThat(alertCode.isRestricted).isFalse()
+    assertThat(alertCode.createdAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
+  }
+
+  @Test
+  fun `should create restricted alert code`() {
+    val request = CreateAlertCodeRequest("CO", "Description", AT_VULNERABILITY.code, true)
+    val alertCode = webTestClient.createAlertCode(request = request)
+    assertThat(alertCode).isNotNull
+    assertThat(alertCode.code).isEqualTo("CO")
+    assertThat(alertCode.description).isEqualTo("Description")
+    assertThat(alertCode.isRestricted).isTrue()
     assertThat(alertCode.createdAt).isCloseTo(LocalDateTime.now(), within(3, ChronoUnit.SECONDS))
   }
 

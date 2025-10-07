@@ -29,4 +29,11 @@ data class CreateAlertCodeRequest(
   )
   @field:Size(max = 12, min = 1, message = "Code must be between 1 & 12 characters")
   val parent: String,
+
+  @Schema(
+    description = "Whether or not the alert code is restricted so that only specific users may create alerts with it",
+    example = "false",
+    defaultValue = "false",
+  )
+  val restricted: Boolean = false,
 )

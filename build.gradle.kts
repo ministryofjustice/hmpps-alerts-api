@@ -51,6 +51,7 @@ tasks {
     compilerOptions {
       jvmTarget = JvmTarget.JVM_21
       freeCompilerArgs.add("-Xwhen-guards")
+      freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
   }
 

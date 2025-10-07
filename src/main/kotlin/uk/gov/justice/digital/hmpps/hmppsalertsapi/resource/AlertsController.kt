@@ -68,6 +68,7 @@ class AlertsController(private val alertService: AlertService) {
     ],
   )
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @UsernameHeader
   fun retrieveAlert(
     @PathVariable
     @Parameter(
@@ -75,7 +76,7 @@ class AlertsController(private val alertService: AlertService) {
       required = true,
     )
     alertUuid: UUID,
-  ): Alert = alertService.retrieveAlert(alertUuid)
+  ): Alert = alertService.retrieveAlert(alertUuid, AlertRequestContext.get())
 
   @Tag(name = RW_OPERATIONS)
   @ResponseStatus(HttpStatus.OK)
@@ -177,6 +178,4 @@ class AlertsController(private val alertService: AlertService) {
   fun publishInactiveAlertEvents() {
     alertService.publishInactiveTodayAlertEvents()
   }
-
-  private fun HttpServletRequest.alertRequestContext() = getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
 }

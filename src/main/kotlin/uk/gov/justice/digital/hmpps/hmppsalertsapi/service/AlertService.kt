@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlreadyExistsException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidInputException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.PermissionDeniedException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.verifyExists
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertsResponse
@@ -49,9 +50,12 @@ class AlertService(
       check(request.dateRangeIsValid()) { "Active from must be before active to" }
       checkForExistingActiveAlert(prisoner.prisonerNumber, request.alertCode)
     }
+    if (!alertCode.canBeAdministeredByUser(context.username)) {
+      throw PermissionDeniedException("AlertCode", alertCode.code)
+    }
 
     return alertRepository.save(request.toAlertEntity(context, prisoner.prisonerNumber, alertCode, prisoner.prisonId))
-      .toAlertModel().apply {
+      .toAlertModel(context).apply {
         if (allowInactiveCode && !alertCode.isActive()) {
           telemetryClient.trackEvent(
             "INACTIVE_CODE_ALERT_CREATION",
@@ -78,11 +82,14 @@ class AlertService(
     .any { it.isActive() } &&
     throw AlreadyExistsException("Alert", alertCode)
 
-  fun retrieveAlert(alertUuid: UUID): AlertModel = alertRepository.findByIdOrNull(alertUuid)?.toAlertModel()
+  fun retrieveAlert(alertUuid: UUID, context: AlertRequestContext): AlertModel = alertRepository.findByIdOrNull(alertUuid)?.toAlertModel(context)
     ?: throw NotFoundException("Alert", alertUuid.toString())
 
   @PublishPersonAlertsChanged
   fun updateAlert(alertUuid: UUID, request: UpdateAlert, context: AlertRequestContext) = alertRepository.findByIdOrNull(alertUuid)?.let {
+    if (!it.alertCode.canBeAdministeredByUser(context.username)) {
+      throw PermissionDeniedException("AlertCode", it.alertCode.code)
+    }
     alertRepository.save(
       it.update(
         description = request.description,
@@ -95,13 +102,16 @@ class AlertService(
         source = context.source,
         activeCaseLoadId = context.activeCaseLoadId,
       ),
-    ).toAlertModel()
+    ).toAlertModel(context)
   } ?: throw NotFoundException("Alert", alertUuid.toString())
 
   @PublishPersonAlertsChanged
   fun deleteAlert(alertUuid: UUID, context: AlertRequestContext) {
     val alert = alertRepository.findByIdOrNull(alertUuid)
       ?: throw NotFoundException("Alert", alertUuid.toString())
+    if (!alert.alertCode.canBeAdministeredByUser(context.username)) {
+      throw PermissionDeniedException("AlertCode", alert.alertCode.code)
+    }
     with(alert) {
       delete(
         deletedAt = context.requestAt,
@@ -124,6 +134,7 @@ class AlertService(
     activeFromEnd: LocalDate?,
     search: String?,
     pageable: Pageable,
+    context: AlertRequestContext,
   ): Page<AlertModel> = alertRepository.findAll(
     AlertsFilter(
       prisonNumber = prisonNumber,
@@ -139,11 +150,11 @@ class AlertService(
     val alertIds = alerts.content.map { it.id }
     val auditEvents =
       auditEventRepository.findAuditEventsByAlertIdInOrderByActionedAtDesc(alertIds).groupBy { it.alert.id }
-    alerts.map { it.toAlertModel(auditEvents[it.id]) }
+    alerts.map { it.toAlertModel(context, auditEvents[it.id]) }
   }
 
-  fun retrieveAlertsForPrisonNumbers(prisonNumbers: Set<String>, includeInactive: Boolean): AlertsResponse = AlertsResponse(
-    alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive).map { it.toAlertModel(it.auditEvents()) },
+  fun retrieveAlertsForPrisonNumbers(prisonNumbers: Set<String>, includeInactive: Boolean, context: AlertRequestContext): AlertsResponse = AlertsResponse(
+    alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive).map { it.toAlertModel(context, it.auditEvents()) },
   )
 
   @PublishPersonAlertsChanged

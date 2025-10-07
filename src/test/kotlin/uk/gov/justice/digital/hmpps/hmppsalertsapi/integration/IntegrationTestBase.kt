@@ -23,6 +23,7 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCodePrivilegedUser
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.BulkPlan
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.BulkPlanRepository
@@ -44,6 +45,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.Prisoner
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodePrivilegedUserRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertTypeRepository
@@ -82,6 +84,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   lateinit var alertCodeRepository: AlertCodeRepository
+
+  @Autowired
+  lateinit var alertCodePrivilegedUserRepository: AlertCodePrivilegedUserRepository
 
   @Autowired
   lateinit var alertTypeRepository: AlertTypeRepository
@@ -221,6 +226,8 @@ abstract class IntegrationTestBase {
     val type = alertTypeRepository.findByCode(alertCode.alertType.code)
     return alertCodeRepository.save(alertCode.apply { set(::alertType, type) })
   }
+
+  fun givenNewAlertCodePrivilegedUser(alertCode: AlertCode, username: String = TEST_USER): AlertCodePrivilegedUser = alertCodePrivilegedUserRepository.save(AlertCodePrivilegedUser(alertCode.alertCodeId, username))
 
   fun givenAlert(alert: Alert): Alert = alertRepository.save(
     alert.create(

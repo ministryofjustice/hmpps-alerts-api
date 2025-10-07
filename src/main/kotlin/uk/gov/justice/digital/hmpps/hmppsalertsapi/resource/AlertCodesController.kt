@@ -181,12 +181,13 @@ class AlertCodesController(
       ),
     ],
   )
+  @UsernameHeader
   fun retrieveAlertCodes(
     @Parameter(
       description = "Include inactive alert types and codes. Defaults to false",
     )
     includeInactive: Boolean = false,
-  ) = alertCodeService.retrieveAlertCodes(includeInactive)
+  ) = alertCodeService.retrieveAlertCodes(includeInactive, AlertRequestContext.get())
 
   @Tag(name = RO_OPERATIONS)
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
@@ -218,10 +219,10 @@ class AlertCodesController(
       ),
     ],
   )
+  @UsernameHeader
   fun retrieveAlertCode(
     @PathVariable alertCode: String,
-    httpRequest: HttpServletRequest,
-  ) = alertCodeService.retrieveAlertCode(alertCode)
+  ) = alertCodeService.retrieveAlertCode(alertCode, AlertRequestContext.get())
 
   @Tag(name = ADMIN_UI_ONLY)
   @ResponseStatus(HttpStatus.OK)
@@ -267,6 +268,4 @@ class AlertCodesController(
     @Valid @RequestBody updateRequest: UpdateAlertCodeRequest,
     httpRequest: HttpServletRequest,
   ) = alertCodeService.updateAlertCode(alertCode, updateRequest, httpRequest.alertRequestContext())
-
-  private fun HttpServletRequest.alertRequestContext() = getAttribute(AlertRequestContext::class.simpleName) as AlertRequestContext
 }

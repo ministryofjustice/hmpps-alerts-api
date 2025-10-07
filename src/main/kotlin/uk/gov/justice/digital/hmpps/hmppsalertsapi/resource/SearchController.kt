@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.RO_OPERATIONS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertsResponse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.service.AlertService
@@ -47,8 +48,9 @@ class SearchController(private val alertService: AlertService) {
   )
   @PostMapping("/prison-numbers")
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @UsernameHeader
   fun retrievePrisonerAlerts(
     @RequestBody @NotEmpty(message = "Prison numbers must not be empty") prisonNumbers: Set<String>,
     @RequestParam(required = false, defaultValue = "false") includeInactive: Boolean,
-  ): AlertsResponse = alertService.retrieveAlertsForPrisonNumbers(prisonNumbers, includeInactive)
+  ): AlertsResponse = alertService.retrieveAlertsForPrisonNumbers(prisonNumbers, includeInactive, AlertRequestContext.get())
 }

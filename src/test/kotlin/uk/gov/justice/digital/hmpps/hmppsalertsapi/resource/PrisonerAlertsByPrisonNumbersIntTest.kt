@@ -102,6 +102,7 @@ class PrisonerAlertsByPrisonNumbersIntTest : IntegrationTestBase() {
     }
     .bodyValue(prisonNumbers)
     .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
+    .headers(setAlertRequestContext())
     .exchange()
     .expectStatus().isOk
     .expectBody<AlertsResponse>()

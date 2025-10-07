@@ -4,6 +4,7 @@ import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
@@ -14,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.web.context.request.RequestAttributes
@@ -24,10 +26,12 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.domain.toAlertModel
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCodePrivilegedUser
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.AuditEventAction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source.DPS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.AlreadyExistsException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.PermissionDeniedException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_LEEDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_CODE_MOORLANDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PRISON_NUMBER
@@ -38,7 +42,9 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.UpdateAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertCodeRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AuditEventRepository
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_RESTRICTED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_RESTRICTED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.AC_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator
@@ -71,207 +77,302 @@ class AlertServiceTest {
   @InjectMocks
   lateinit var underTest: AlertService
 
-  @Test
-  fun `Alert code not found`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(null)
-    val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(prisoner(), createAlertRequest(alertCode = "A"), false)
+  @Nested
+  inner class CreateAlerts {
+    @Test
+    fun `Alert code not found`() {
+      whenever(alertCodeRepository.findByCode(anyString())).thenReturn(null)
+      val error = assertThrows<IllegalArgumentException> {
+        underTest.createAlert(prisoner(), createAlertRequest(alertCode = "A"), false)
+      }
+      assertThat(error.message).isEqualTo("Alert code is invalid")
     }
-    assertThat(error.message).isEqualTo("Alert code is invalid")
-  }
 
-  @Test
-  fun `Alert code not active`() {
-    whenever(mockAlertCode.isActive()).thenReturn(false)
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(mockAlertCode)
-    val error = assertThrows<IllegalArgumentException> {
-      underTest.createAlert(prisoner(), createAlertRequest(alertCode = "A"), false)
+    @Test
+    fun `Alert code not active`() {
+      whenever(mockAlertCode.isActive()).thenReturn(false)
+      whenever(alertCodeRepository.findByCode(anyString())).thenReturn(mockAlertCode)
+      val error = assertThrows<IllegalArgumentException> {
+        underTest.createAlert(prisoner(), createAlertRequest(alertCode = "A"), false)
+      }
+      assertThat(error.message).isEqualTo("Alert code is inactive")
     }
-    assertThat(error.message).isEqualTo("Alert code is inactive")
-  }
 
-  @Test
-  fun `Existing active alert with code`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
-    whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
-      .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now(), activeTo = null)))
-    val error = assertThrows<AlreadyExistsException> {
+    @Test
+    fun `Alert code is restricted and user does not have permission`() {
+      whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_RESTRICTED)
+
+      val error = assertThrows<PermissionDeniedException> {
+        underTest.createAlert(prisoner(), createAlertRequest(alertCode = AC_RESTRICTED.code), false)
+      }
+      assertThat(error.message).isEqualTo("Permission denied for AlertCode ${AC_RESTRICTED.code}")
+      verify(alertRepository, never()).save(any())
+    }
+
+    @Test
+    fun `Alert code is restricted but user has permission`() {
+      val privilegedUser = AlertCodePrivilegedUser(AC_RESTRICTED.alertCodeId, TEST_USER)
+      val restrictedAlertCode = alertCode(
+        code = ALERT_CODE_RESTRICTED,
+        restricted = true,
+        privilegedUsers = mutableSetOf(privilegedUser),
+      )
+      whenever(alertCodeRepository.findByCode(anyString())).thenReturn(restrictedAlertCode)
+      whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
+
+      underTest.createAlert(prisoner(), createAlertRequest(alertCode = AC_RESTRICTED.code), false)
+      verify(alertRepository).save(any())
+    }
+
+    @Test
+    fun `Existing active alert with code`() {
+      whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
+      whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
+        .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now(), activeTo = null)))
+      val error = assertThrows<AlreadyExistsException> {
+        underTest.createAlert(prisoner(), createAlertRequest(), false)
+      }
+      assertThat(error.message).isEqualTo("Alert already exists")
+    }
+
+    @Test
+    fun `Existing alert with code that will become active`() {
+      whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
+      whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
+        .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().plusDays(1), activeTo = null)))
+      val error = assertThrows<AlreadyExistsException> {
+        underTest.createAlert(prisoner(), createAlertRequest(), false)
+      }
+      assertThat(error.message).isEqualTo("Alert already exists")
+    }
+
+    @Test
+    fun `Existing inactive alert with code`() {
+      whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
+      whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
+        .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().minusDays(1), activeTo = LocalDate.now())))
+      whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
       underTest.createAlert(prisoner(), createAlertRequest(), false)
+      verify(alertRepository).save(any<Alert>())
     }
-    assertThat(error.message).isEqualTo("Alert already exists")
-  }
 
-  @Test
-  fun `Existing alert with code that will become active`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
-    whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
-      .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().plusDays(1), activeTo = null)))
-    val error = assertThrows<AlreadyExistsException> {
-      underTest.createAlert(prisoner(), createAlertRequest(), false)
+    @Test
+    fun `returns properties from request context`() {
+      whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
+      whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
+      val request = createAlertRequest()
+      val result = underTest.createAlert(prisoner(), request, false)
+      with(result) {
+        assertThat(createdAt).isCloseTo(context.requestAt, within(2, ChronoUnit.SECONDS))
+        assertThat(createdBy).isEqualTo(context.username)
+        assertThat(createdByDisplayName).isEqualTo(context.userDisplayName)
+      }
     }
-    assertThat(error.message).isEqualTo("Alert already exists")
-  }
 
-  @Test
-  fun `Existing inactive alert with code`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
-    whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
-      .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().minusDays(1), activeTo = LocalDate.now())))
-    whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
-    underTest.createAlert(prisoner(), createAlertRequest(), false)
-    verify(alertRepository).save(any<Alert>())
-  }
+    @Test
+    fun `track appinsights event when an alert with inactive code is created from Alerts UI`() {
+      whenever(alertCodeRepository.findByCode(anyString())).thenReturn(
+        alertCode(
+          code = ALERT_CODE_VICTIM,
+          description = "Victim",
+          deactivatedAt = LocalDateTime.of(1999, 12, 31, 0, 0, 0),
+        ),
+      )
+      whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
+      val request = createAlertRequest()
 
-  @Test
-  fun `returns properties from request context`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
-    whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
-    val request = createAlertRequest()
-    val result = underTest.createAlert(prisoner(), request, false)
-    with(result) {
-      assertThat(createdAt).isCloseTo(context.requestAt, within(2, ChronoUnit.SECONDS))
-      assertThat(createdBy).isEqualTo(context.username)
-      assertThat(createdByDisplayName).isEqualTo(context.userDisplayName)
-    }
-  }
+      val result = underTest.createAlert(prisoner(), request, true)
 
-  @Test
-  fun `track appinsights event when an alert with inactive code is created from Alerts UI`() {
-    whenever(alertCodeRepository.findByCode(anyString())).thenReturn(
-      alertCode(
-        code = ALERT_CODE_VICTIM,
-        description = "Victim",
-        deactivatedAt = LocalDateTime.of(1999, 12, 31, 0, 0, 0),
-      ),
-    )
-    whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
-    val request = createAlertRequest()
-
-    val result = underTest.createAlert(prisoner(), request, true)
-
-    verify(telemetryClient).trackEvent(
-      "INACTIVE_CODE_ALERT_CREATION",
-      mapOf(
-        "username" to TEST_USER,
-        "alertCode" to ALERT_CODE_VICTIM,
-        "alertUuid" to result.alertUuid.toString(),
-      ),
-      mapOf(),
-    )
-  }
-
-  @Test
-  fun `no audit event if nothing has changed`() {
-    val uuid = UUID.randomUUID()
-    val updateRequest = updateAlertRequestNoChange()
-    val alert = alert(updateAlert = updateRequest, uuid = uuid)
-    whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
-    val alertCaptor = argumentCaptor<Alert>()
-    whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
-
-    underTest.updateAlert(uuid, updateRequest, context)
-    val savedAlert = alertCaptor.firstValue
-    assertThat(savedAlert.auditEvents()).hasSize(1)
-    assertThat(savedAlert.auditEvents().first().action).isEqualTo(AuditEventAction.CREATED)
-  }
-
-  @Test
-  fun `null activeFrom will not update value`() {
-    val uuid = UUID.randomUUID()
-    val updateRequest = updateAlertRequestNoChange(activeFrom = null)
-    val alert = alert(uuid = uuid)
-    whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
-    val alertCaptor = argumentCaptor<Alert>()
-    whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
-
-    underTest.updateAlert(uuid, updateRequest, context)
-    val savedAlert = alertCaptor.firstValue
-    with(savedAlert) {
-      assertThat(activeFrom).isEqualTo(alert.activeFrom)
+      verify(telemetryClient).trackEvent(
+        "INACTIVE_CODE_ALERT_CREATION",
+        mapOf(
+          "username" to TEST_USER,
+          "alertCode" to ALERT_CODE_VICTIM,
+          "alertUuid" to result.alertUuid.toString(),
+        ),
+        mapOf(),
+      )
     }
   }
 
-  @Test
-  fun `change written successfully`() {
-    val uuid = UUID.randomUUID()
-    val updateRequest = updateAlertRequestChange()
-    val alert = alert(uuid = uuid)
-    val unchangedAlert = alert(uuid = uuid)
-    whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
-    val alertCaptor = argumentCaptor<Alert>()
-    whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
-    underTest.updateAlert(uuid, updateRequest, context)
-    val savedAlert = alertCaptor.firstValue
-    assertThat(savedAlert.activeTo).isEqualTo(updateRequest.activeTo)
-    assertThat(savedAlert.activeFrom).isEqualTo(updateRequest.activeFrom)
-    assertThat(savedAlert.activeTo).isEqualTo(updateRequest.activeTo)
-    assertThat(savedAlert.description).isEqualTo(updateRequest.description)
-    assertThat(savedAlert.authorisedBy).isEqualTo(updateRequest.authorisedBy)
-    assertThat(savedAlert.auditEvents()).hasSize(2)
-    with(savedAlert.auditEvents()[0]) {
-      assertThat(action).isEqualTo(AuditEventAction.UPDATED)
-      assertThat(description).isEqualTo(
-        """Updated alert description from '${unchangedAlert.description}' to '${savedAlert.description}'
+  @Nested
+  inner class UpdateAlerts {
+    @Test
+    fun `no audit event if nothing has changed`() {
+      val uuid = UUID.randomUUID()
+      val updateRequest = updateAlertRequestNoChange()
+      val alert = alert(updateAlert = updateRequest, uuid = uuid)
+      whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
+      val alertCaptor = argumentCaptor<Alert>()
+      whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
+
+      underTest.updateAlert(uuid, updateRequest, context)
+      val savedAlert = alertCaptor.firstValue
+      assertThat(savedAlert.auditEvents()).hasSize(1)
+      assertThat(savedAlert.auditEvents().first().action).isEqualTo(AuditEventAction.CREATED)
+    }
+
+    @Test
+    fun `null activeFrom will not update value`() {
+      val uuid = UUID.randomUUID()
+      val updateRequest = updateAlertRequestNoChange(activeFrom = null)
+      val alert = alert(uuid = uuid)
+      whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
+      val alertCaptor = argumentCaptor<Alert>()
+      whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
+
+      underTest.updateAlert(uuid, updateRequest, context)
+      val savedAlert = alertCaptor.firstValue
+      with(savedAlert) {
+        assertThat(activeFrom).isEqualTo(alert.activeFrom)
+      }
+    }
+
+    @Test
+    fun `change written successfully`() {
+      val uuid = UUID.randomUUID()
+      val updateRequest = updateAlertRequestChange()
+      val alert = alert(uuid = uuid)
+      val unchangedAlert = alert(uuid = uuid)
+      whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
+      val alertCaptor = argumentCaptor<Alert>()
+      whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
+      underTest.updateAlert(uuid, updateRequest, context)
+      val savedAlert = alertCaptor.firstValue
+      assertThat(savedAlert.activeTo).isEqualTo(updateRequest.activeTo)
+      assertThat(savedAlert.activeFrom).isEqualTo(updateRequest.activeFrom)
+      assertThat(savedAlert.activeTo).isEqualTo(updateRequest.activeTo)
+      assertThat(savedAlert.description).isEqualTo(updateRequest.description)
+      assertThat(savedAlert.authorisedBy).isEqualTo(updateRequest.authorisedBy)
+      assertThat(savedAlert.auditEvents()).hasSize(2)
+      with(savedAlert.auditEvents()[0]) {
+        assertThat(action).isEqualTo(AuditEventAction.UPDATED)
+        assertThat(description).isEqualTo(
+          """Updated alert description from '${unchangedAlert.description}' to '${savedAlert.description}'
 Updated authorised by from '${unchangedAlert.authorisedBy}' to '${savedAlert.authorisedBy}'
 Updated active from from '${unchangedAlert.activeFrom}' to '${savedAlert.activeFrom}'
 Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'""",
+        )
+        assertThat(actionedAt).isEqualTo(context.requestAt)
+        assertThat(actionedBy).isEqualTo(context.username)
+        assertThat(actionedByDisplayName).isEqualTo(context.userDisplayName)
+        assertThat(source).isEqualTo(context.source)
+        assertThat(activeCaseLoadId).isEqualTo(context.activeCaseLoadId)
+      }
+    }
+
+    @Test
+    fun `restricted alert should throw exception when user does not have permission`() {
+      val alert = alert(alertCode = AC_RESTRICTED)
+      val updateRequest = updateAlertRequestChange()
+      whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
+
+      val exception = assertThrows<PermissionDeniedException> {
+        underTest.updateAlert(alert.id, updateRequest, context)
+      }
+      assertThat(exception.message).isEqualTo("Permission denied for AlertCode ${AC_RESTRICTED.code}")
+      verify(alertRepository, never()).save(any())
+    }
+
+    @Test
+    fun `restricted alert should be updated if user has permission`() {
+      val updateRequest = updateAlertRequestChange()
+      val privilegedUser = AlertCodePrivilegedUser(AC_RESTRICTED.alertCodeId, TEST_USER)
+      val restrictedAlertCode = alertCode(
+        code = ALERT_CODE_RESTRICTED,
+        restricted = true,
+        privilegedUsers = mutableSetOf(privilegedUser),
       )
-      assertThat(actionedAt).isEqualTo(context.requestAt)
-      assertThat(actionedBy).isEqualTo(context.username)
-      assertThat(actionedByDisplayName).isEqualTo(context.userDisplayName)
-      assertThat(source).isEqualTo(context.source)
-      assertThat(activeCaseLoadId).isEqualTo(context.activeCaseLoadId)
+      val alert = alert(alertCode = restrictedAlertCode)
+      whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
+      whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
+
+      underTest.updateAlert(alert.id, updateRequest, context)
+      verify(alertRepository).save(any())
     }
   }
 
-  @Test
-  fun `alert uuid not found`() {
-    whenever(alertRepository.findById(any())).thenReturn(Optional.empty())
-    val alertUuid = UUID.randomUUID()
-    val exception = assertThrows<NotFoundException> {
-      underTest.retrieveAlert(alertUuid)
+  @Nested
+  inner class RetrieveAlerts {
+    @Test
+    fun `alert uuid not found`() {
+      whenever(alertRepository.findById(any())).thenReturn(Optional.empty())
+      val alertUuid = UUID.randomUUID()
+      val exception = assertThrows<NotFoundException> {
+        underTest.retrieveAlert(alertUuid, context)
+      }
+      assertThat(exception.message).isEqualTo("Alert not found")
     }
-    assertThat(exception.message).isEqualTo("Alert not found")
-  }
 
-  @Test
-  fun `returns alert model if found`() {
-    val alert = alert()
-    whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
-    val result = underTest.retrieveAlert(UUID.randomUUID())
-    assertThat(result).isEqualTo(alert.toAlertModel())
-  }
-
-  @Test
-  fun `delete alert uuid not found throws exception`() {
-    whenever(alertRepository.findById(any())).thenReturn(Optional.empty())
-    val alertUuid = UUID.randomUUID()
-    val exception = assertThrows<NotFoundException> {
-      underTest.deleteAlert(alertUuid, context)
+    @Test
+    fun `returns alert model if found`() {
+      val alert = alert()
+      whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
+      val result = underTest.retrieveAlert(UUID.randomUUID(), context)
+      assertThat(result).isEqualTo(alert.toAlertModel(context))
     }
-    assertThat(exception.message).isEqualTo("Alert not found")
   }
 
-  @Test
-  fun `delete alert should add audit event`() {
-    val uuid = UUID.randomUUID()
-    val alert = alert(uuid = uuid)
-    whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
-    val alertCaptor = argumentCaptor<Alert>()
-    whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
-    underTest.deleteAlert(uuid, context)
+  @Nested
+  inner class DeleteAlerts {
+    @Test
+    fun `alert uuid not found throws exception`() {
+      whenever(alertRepository.findById(any())).thenReturn(Optional.empty())
+      val alertUuid = UUID.randomUUID()
+      val exception = assertThrows<NotFoundException> {
+        underTest.deleteAlert(alertUuid, context)
+      }
+      assertThat(exception.message).isEqualTo("Alert not found")
+    }
 
-    val savedAlert = alertCaptor.firstValue
-    assertThat(savedAlert.deletedAt).isEqualTo(context.requestAt)
-    assertThat(savedAlert.auditEvents()).hasSize(2)
-    with(savedAlert.auditEvents()[0]) {
-      assertThat(action).isEqualTo(AuditEventAction.DELETED)
-      assertThat(description).isEqualTo("Alert deleted")
-      assertThat(actionedAt).isEqualTo(context.requestAt)
-      assertThat(actionedBy).isEqualTo(context.username)
-      assertThat(actionedByDisplayName).isEqualTo(context.userDisplayName)
-      assertThat(source).isEqualTo(context.source)
-      assertThat(activeCaseLoadId).isEqualTo(context.activeCaseLoadId)
+    @Test
+    fun `should add audit event`() {
+      val uuid = UUID.randomUUID()
+      val alert = alert(uuid = uuid)
+      whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
+      val alertCaptor = argumentCaptor<Alert>()
+      whenever(alertRepository.save(alertCaptor.capture())).thenAnswer { alertCaptor.firstValue }
+      underTest.deleteAlert(uuid, context)
+
+      val savedAlert = alertCaptor.firstValue
+      assertThat(savedAlert.deletedAt).isEqualTo(context.requestAt)
+      assertThat(savedAlert.auditEvents()).hasSize(2)
+      with(savedAlert.auditEvents()[0]) {
+        assertThat(action).isEqualTo(AuditEventAction.DELETED)
+        assertThat(description).isEqualTo("Alert deleted")
+        assertThat(actionedAt).isEqualTo(context.requestAt)
+        assertThat(actionedBy).isEqualTo(context.username)
+        assertThat(actionedByDisplayName).isEqualTo(context.userDisplayName)
+        assertThat(source).isEqualTo(context.source)
+        assertThat(activeCaseLoadId).isEqualTo(context.activeCaseLoadId)
+      }
+    }
+
+    @Test
+    fun `restricted alert should throw exception when user does not have permission`() {
+      val alert = alert(alertCode = AC_RESTRICTED)
+      whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
+
+      val exception = assertThrows<PermissionDeniedException> {
+        underTest.deleteAlert(alert.id, context)
+      }
+      assertThat(exception.message).isEqualTo("Permission denied for AlertCode ${AC_RESTRICTED.code}")
+      verify(alertRepository, never()).save(any())
+    }
+
+    @Test
+    fun `restricted alert should be deleted if user has permission`() {
+      val privilegedUser = AlertCodePrivilegedUser(AC_RESTRICTED.alertCodeId, TEST_USER)
+      val restrictedAlertCode = alertCode(
+        code = ALERT_CODE_RESTRICTED,
+        restricted = true,
+        privilegedUsers = mutableSetOf(privilegedUser),
+      )
+      val alert = alert(alertCode = restrictedAlertCode)
+      whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
+
+      underTest.deleteAlert(alert.id, context)
+      verify(alertRepository).save(any())
     }
   }
 
@@ -301,10 +402,14 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
     activeTo = LocalDate.now().plusMonths(10),
   )
 
-  private fun alert(uuid: UUID = UUID.randomUUID(), updateAlert: UpdateAlert = updateAlertRequestNoChange()) = LocalDateTime.now().minusDays(1).let {
+  private fun alert(
+    uuid: UUID = UUID.randomUUID(),
+    updateAlert: UpdateAlert = updateAlertRequestNoChange(),
+    alertCode: AlertCode = AC_VICTIM,
+  ) = LocalDateTime.now().minusDays(1).let {
     Alert(
       id = uuid,
-      alertCode = AC_VICTIM,
+      alertCode = alertCode,
       prisonNumber = PRISON_NUMBER,
       description = "new description",
       authorisedBy = "B Bauthorizer",

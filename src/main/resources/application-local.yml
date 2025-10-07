@@ -5,7 +5,6 @@
 #
 
 # Most values are inherited from - application.yml - except the following:
-
 spring:
   security:
     oauth2:

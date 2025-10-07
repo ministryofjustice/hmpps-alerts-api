@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USE
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -38,6 +39,7 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
     webTestClient.get()
       .uri("/alerts/$uuid")
       .headers(setAuthorisation())
+      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
   }
@@ -47,6 +49,7 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
     val response = webTestClient.get()
       .uri("/alerts/$uuid")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
+      .headers(setAlertRequestContext())
       .exchange().errorResponse(NOT_FOUND)
 
     with(response) {
@@ -67,6 +70,7 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
     val response = webTestClient.get()
       .uri("/alerts/${alert.id}")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
+      .headers(setAlertRequestContext())
       .exchange().successResponse<Alert>()
 
     with(alert) {
@@ -115,6 +119,7 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
     val response = webTestClient.get()
       .uri("/alerts/${alert.id}")
       .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
+      .headers(setAlertRequestContext())
       .exchange().successResponse<Alert>()
 
     with(alert) {
@@ -140,6 +145,47 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
           alert.deactivationEvent()?.actionedAt,
           "DEAC1",
           "Deactivating User",
+          PRISON_CODE_LEEDS,
+        ),
+      )
+    }
+  }
+
+  @Test
+  fun `retrieve restricted alert`() {
+    val prisonNumber = "G1234EX"
+    val alertCode = givenNewAlertCode(alertCode(code = "XRACZ", restricted = true))
+    val alert = givenAlert(alert(prisonNumber, alertCode))
+
+    val response = webTestClient.get()
+      .uri("/alerts/${alert.id}")
+      .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
+      .headers(setAlertRequestContext())
+      .exchange().successResponse<Alert>()
+
+    with(alert) {
+      assertThat(response).usingRecursiveComparison().ignoringFields("createdAt").isEqualTo(
+        Alert(
+          alert.id,
+          prisonNumber,
+          alertCodeSummary(alertCode.alertType, alertCode, false),
+          description,
+          authorisedBy,
+          activeFrom,
+          activeTo,
+          true,
+          alert.createdAt,
+          TEST_USER,
+          TEST_USER_NAME,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
           PRISON_CODE_LEEDS,
         ),
       )

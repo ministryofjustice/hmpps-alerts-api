@@ -22,6 +22,7 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
     webTestClient.get()
       .uri("/alert-types")
       .headers(setAuthorisation())
+      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
   }
@@ -54,10 +55,12 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
         .build()
     }
     .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
+    .headers(setAlertRequestContext())
     .exchange().expectStatus().isOk.expectBodyList<AlertType>().returnResult().responseBody!!
 
   private fun WebTestClient.getAlertType(alertTypeCode: String) = get()
     .uri { builder -> builder.path("/alert-types/$alertTypeCode").build() }
     .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__RO)))
+    .headers(setAlertRequestContext())
     .exchange().successResponse<AlertType>()
 }

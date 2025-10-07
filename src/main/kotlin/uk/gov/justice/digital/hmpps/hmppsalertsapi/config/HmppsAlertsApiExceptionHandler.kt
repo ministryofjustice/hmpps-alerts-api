@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidInputExcept
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidRowException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidRowResponse
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.NotFoundException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.PermissionDeniedException
 import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
 
 @RestControllerAdvice
@@ -46,6 +47,17 @@ class HmppsAlertsApiExceptionHandler {
       ErrorResponse(
         status = HttpStatus.FORBIDDEN.value(),
         userMessage = "Authentication problem. Check token and roles - ${e.message}",
+        developerMessage = e.message,
+      ),
+    )
+
+  @ExceptionHandler(PermissionDeniedException::class)
+  fun handlePermissionDeniedException(e: PermissionDeniedException): ResponseEntity<ErrorResponse> = ResponseEntity
+    .status(HttpStatus.FORBIDDEN)
+    .body(
+      ErrorResponse(
+        status = HttpStatus.FORBIDDEN.value(),
+        userMessage = "Permission denied - ${e.message}",
         developerMessage = e.message,
       ),
     )

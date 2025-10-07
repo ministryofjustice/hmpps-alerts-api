@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.resource.ROLE_PRISONER_ALERTS
 
 const val RO_OPERATIONS = "RO Operations"
 const val RW_OPERATIONS = "RW Operations"
+const val ADMIN_ONLY = "Admin Only"
 const val ADMIN_UI_ONLY = "Admin UI Only"
 const val NOMIS_SYNC_ONLY = "Nomis Sync Only"
 
@@ -101,6 +102,10 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
     .addTagsItem(
       Tag().name(ADMIN_UI_ONLY)
         .description("Endpoints for alerts admin ui only - Not to be used by any service other than the alert admin ui"),
+    )
+    .addTagsItem(
+      Tag().name(ADMIN_ONLY)
+        .description("Endpoints for alerts admins only - Not to be used by any service - for manual use by admin team members only"),
     )
 
   @Bean

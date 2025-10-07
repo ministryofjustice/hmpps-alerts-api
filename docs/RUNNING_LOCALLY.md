@@ -7,6 +7,8 @@ It connects to the dev version of hmpps-auth.
 The script expects the following environment variables to be set:
 
 ```
+HMPPS_ALERTS_CLIENT_ID
+HMPPS_ALERTS_CLIENT_SECRET
 HMPPS_ALERTS_MANAGE_USERS_CLIENT_ID
 HMPPS_ALERTS_MANAGE_USERS_CLIENT_SECRET
 HMPPS_ALERTS_PRISONER_SEARCH_CLIENT_ID
