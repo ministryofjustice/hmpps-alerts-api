@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><database name="alerts" schema="public" type="PostgreSQL - 16.10 (Debian 16.10-1.pgdg13+1)">
    <sequences>
       <sequence increment="1" name="alert_code_alert_code_id_seq" startValue="1"/>
+      <sequence increment="1" name="alert_code_privileged_user_alert_code_id_seq" startValue="1"/>
       <sequence increment="1" name="alert_type_alert_type_id_seq" startValue="1"/>
       <sequence increment="1" name="resync_audit_id_seq" startValue="1"/>
    </sequences>
@@ -53,6 +54,7 @@
       <table name="alert_code" numRows="213" remarks="Second level categorisation of alerts grouped by type" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('alert_code_alert_code_id_seq'::regclass)" digits="0" id="0" name="alert_code_id" nullable="false" remarks="Internal primary key. Not returned by API" size="19" type="bigserial" typeCode="-5">
             <child column="alert_code_id" foreignKey="alert_alert_code_fk" implied="false" onDeleteCascade="false" schema="public" table="alert"/>
+            <child column="alert_code_id" foreignKey="alert_code_privileged_user_alert_code_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_code_privileged_user"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="alert_type_id" nullable="false" remarks="Foreign key to alert type" size="19" type="int8" typeCode="-5">
             <parent column="alert_type_id" foreignKey="alert_code_alert_type_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_type"/>
@@ -66,6 +68,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="modified_by" nullable="true" remarks="The username of the user who last modified the alert code" size="64" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="9" name="deactivated_at" nullable="true" remarks="The date and time the alert code was deactivated" size="29" type="timestamp" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="deactivated_by" nullable="true" remarks="The username of the user who deactivated the alert code" size="64" type="varchar" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="false" digits="0" id="11" name="restricted" nullable="false" remarks="Can the alert code be administered by all users (false) or named users only (true)?" size="1" type="bool" typeCode="-7"/>
          <primaryKey column="alert_code_id" sequenceNumberInPK="1"/>
          <index name="alert_code_pk" unique="true">
             <column ascending="true" name="alert_code_id"/>
@@ -84,6 +87,24 @@
          </index>
          <index name="idx_alert_code_list_sequence" unique="false">
             <column ascending="true" name="list_sequence"/>
+         </index>
+      </table>
+      <table name="alert_code_privileged_user" remarks="Data for restricting certain alerts to be administered only by named users" schema="public" type="TABLE">
+         <column autoUpdated="true" defaultValue="nextval('alert_code_privileged_user_alert_code_id_seq'::regclass)" digits="0" id="0" name="alert_code_id" nullable="false" remarks="Foreign key to alert code" size="19" type="bigserial" typeCode="-5">
+            <parent column="alert_code_id" foreignKey="alert_code_privileged_user_alert_code_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_code"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="username" nullable="false" remarks="The username of the person who can administer the alert" size="64" type="varchar" typeCode="12"/>
+         <primaryKey column="alert_code_id" sequenceNumberInPK="1"/>
+         <primaryKey column="username" sequenceNumberInPK="2"/>
+         <index name="alert_code_privileged_user_pkey" unique="true">
+            <column ascending="true" name="alert_code_id"/>
+            <column ascending="true" name="username"/>
+         </index>
+         <index name="idx_alert_code_privileged_user_alert_code_id" unique="false">
+            <column ascending="true" name="alert_code_id"/>
+         </index>
+         <index name="idx_alert_code_privileged_user_username" unique="false">
+            <column ascending="true" name="username"/>
          </index>
       </table>
       <table name="alert_type" remarks="First level categorisation of alerts" schema="public" type="TABLE">

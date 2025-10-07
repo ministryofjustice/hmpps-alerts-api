@@ -3,6 +3,7 @@ alert_type
 bulk_plan
 alert_code
 alert
+alert_code_privileged_user
 audit_event
 resync_audit
 plan_person

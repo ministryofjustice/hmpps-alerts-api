@@ -1,6 +1,7 @@
 plan_person
 resync_audit
 audit_event
+alert_code_privileged_user
 alert
 alert_code
 bulk_plan
