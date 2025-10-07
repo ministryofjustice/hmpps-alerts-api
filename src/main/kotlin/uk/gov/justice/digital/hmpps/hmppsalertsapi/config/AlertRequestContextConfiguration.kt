@@ -52,7 +52,7 @@ class AlertRequestContextInterceptor(
   ).map { it.toRegex() }
 
   override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-    if (arrayOf("POST", "PUT", "PATCH", "DELETE").contains(request.method) || shouldApplyToGetPath(request)) {
+    if (arrayOf("POST", "PUT", "PATCH", "DELETE").contains(request.method)) {
       val source = request.getSource()
       val username = request.getUsername(source)
       if (request.method == "POST" && request.servletPath.matches("/prisoners/$PRISON_NUMBER_REGEX/alerts".toRegex())) {
@@ -84,6 +84,21 @@ class AlertRequestContextInterceptor(
             )
           }.block()
       }
+    } else if (shouldApplyToGetPath(request)) {
+      // No manage users check for GET endpoints as some of these are being called with client credentials and we
+      // need them to continue working as before for existing clients
+      val source = request.getSource()
+      val username = request.getUsername(source) ?: "unknown"
+      request.setAttribute(
+        AlertRequestContext::class.simpleName,
+        AlertRequestContext(
+          username = username,
+          userDisplayName = username,
+          activeCaseLoadId = null,
+          source = source,
+          prisoner = null,
+        ),
+      )
     }
     return true
   }
