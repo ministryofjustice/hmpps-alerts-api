@@ -123,12 +123,12 @@
 <text text-anchor="start" x="202.5" y="-191.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">restricted</text>
 <polygon fill="none" stroke="#000000" points="305.5,-184.7 305.5,-206.7 389.5,-206.7 389.5,-184.7 305.5,-184.7"/>
 <text text-anchor="start" x="308.5" y="-192.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">bool[1]</text>
-<polygon fill="#ffffff" stroke="transparent" points="182.5,-165.7 182.5,-184.7 229.5,-184.7 229.5,-165.7 182.5,-165.7"/>
-<polygon fill="none" stroke="#000000" points="182.5,-165.7 182.5,-184.7 229.5,-184.7 229.5,-165.7 182.5,-165.7"/>
+<polygon fill="#ffffff" stroke="transparent" points="182.5,-165.7 182.5,-184.7 248.5,-184.7 248.5,-165.7 182.5,-165.7"/>
+<polygon fill="none" stroke="#000000" points="182.5,-165.7 182.5,-184.7 248.5,-184.7 248.5,-165.7 182.5,-165.7"/>
 <text text-anchor="start" x="185.5" y="-171.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 1</text>
-<polygon fill="#ffffff" stroke="transparent" points="229.5,-165.7 229.5,-184.7 305.5,-184.7 305.5,-165.7 229.5,-165.7"/>
-<polygon fill="none" stroke="#000000" points="229.5,-165.7 229.5,-184.7 305.5,-184.7 305.5,-165.7 229.5,-165.7"/>
-<text text-anchor="start" x="257.8807" y="-171.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">213 rows</text>
+<polygon fill="#ffffff" stroke="transparent" points="248.5,-165.7 248.5,-184.7 305.5,-184.7 305.5,-165.7 248.5,-165.7"/>
+<polygon fill="none" stroke="#000000" points="248.5,-165.7 248.5,-184.7 305.5,-184.7 305.5,-165.7 248.5,-165.7"/>
+<text text-anchor="start" x="296.3862" y="-171.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
 <polygon fill="#ffffff" stroke="transparent" points="305.5,-165.7 305.5,-184.7 389.5,-184.7 389.5,-165.7 305.5,-165.7"/>
 <polygon fill="none" stroke="#000000" points="305.5,-165.7 305.5,-184.7 389.5,-184.7 389.5,-165.7 305.5,-165.7"/>
 <text text-anchor="start" x="370.9053" y="-171.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">2 &gt;</text>
