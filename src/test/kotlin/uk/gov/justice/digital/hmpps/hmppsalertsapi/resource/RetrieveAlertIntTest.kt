@@ -39,6 +39,7 @@ class RetrieveAlertIntTest : IntegrationTestBase() {
     webTestClient.get()
       .uri("/alerts/$uuid")
       .headers(setAuthorisation())
+      .headers(setAlertRequestContext())
       .exchange()
       .expectStatus().isForbidden
   }
