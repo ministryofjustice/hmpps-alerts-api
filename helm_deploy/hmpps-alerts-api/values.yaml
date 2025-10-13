@@ -55,10 +55,13 @@ generic-service:
 
   namespace_secrets:
     hmpps-alerts-api:
-      CLIENT_ID: "CLIENT_ID"
-      CLIENT_SECRET: "CLIENT_SECRET"
       SENTRY_DSN: SENTRY_DSN
       SENTRY_AUTH_TOKEN: SENTRY_AUTH_TOKEN
+    hmpps-alerts-api-application-insights:
+      APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
+    hmpps-alerts-api-client-creds:
+      CLIENT_ID: "API_CLIENT_ID"
+      CLIENT_SECRET: "API_CLIENT_SECRET"
     rds-postgresql-instance-output:
       DB_SERVER: "rds_instance_address"
       DB_NAME: "database_name"
@@ -70,8 +73,6 @@ generic-service:
       HMPPS_SQS_QUEUES_HMPPSDOMAINEVENTSQUEUE_QUEUE_NAME: "queue_name"
     sqs-domain-events-dlq-secret:
       HMPPS_SQS_QUEUES_HMPPSDOMAINEVENTSQUEUE_DLQ_NAME: "queue_name"
-    application-insights:
-      APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
 
   allowlist:
     groups:
