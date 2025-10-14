@@ -47,6 +47,10 @@ on:
         description: Database schema name
         type: string
         required: true
+
+permissions:
+  contents: write
+
 jobs:
   schema-spy:
     name: Schema Spy report generation
@@ -54,7 +58,7 @@ jobs:
     timeout-minutes: 240
     environment: test
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: refresh cache
         id: initial-cache
@@ -67,7 +71,7 @@ jobs:
             - gradle-
           key: ${{ runner.os }}-gradle-${{ env.cache-name }}-${{ hashFiles('build.gradle.kts') }}
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '${{ inputs.java_version }}'
@@ -91,3 +95,8 @@ jobs:
         with:
           folder: /tmp/schema-spy-report/
           target-folder: schema-spy-report
+
+      - name: Link workflow summary to report
+        shell: bash
+        run: |
+          echo '[SchemaSpy report](https://ministryofjustice.github.io/hmpps-alerts-api/schema-spy-report/)' >> $GITHUB_STEP_SUMMARY

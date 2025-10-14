@@ -13,7 +13,7 @@ services:
       - POSTGRES_USER=alerts
 
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack:4
     networks:
       - hmpps
     container_name: localstack
