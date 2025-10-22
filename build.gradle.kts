@@ -3,7 +3,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.1.1"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "9.1.3"
   kotlin("plugin.spring") version "2.2.20"
   kotlin("plugin.jpa") version "2.2.20"
   jacoco
@@ -18,8 +18,8 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:1.7.0")
-  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.22.0")
-  implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
+  implementation("io.sentry:sentry-spring-boot-starter-jakarta:8.24.0")
+  implementation("com.fasterxml.uuid:java-uuid-generator:5.1.1")
 
   // Database dependencies
   runtimeOnly("org.flywaydb:flyway-core")
@@ -28,7 +28,7 @@ dependencies {
   implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.11.0")
 
   // AWS
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.4.11")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.6.0")
 
   // OpenAPI
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
