@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
   packages: write
 
 concurrency:
@@ -45,6 +46,12 @@ jobs:
       postgres-db: 'alerts'
       postgres-username: 'alerts'
       postgres-password: 'alerts'
+  coverage:
+    name: upload coverage report
+    if: ${{ !cancelled() }}
+    uses: ./.github/workflows/upload_coverage.yml
+    needs:
+      - kotlin_validate
   schema-spy:
     name: SchemaSpy report
     if: github.ref == 'refs/heads/main'
