@@ -31,7 +31,7 @@ class AlertType(
   var deactivatedBy: String? = null
 
   @OneToMany(mappedBy = "alertType")
-  val alertCodes: MutableList<AlertCode> = mutableListOf()
+  val alertCodes: MutableSet<AlertCode> = mutableSetOf()
 
   fun isActive() = deactivatedAt?.isBefore(LocalDateTime.now()) != true
 
