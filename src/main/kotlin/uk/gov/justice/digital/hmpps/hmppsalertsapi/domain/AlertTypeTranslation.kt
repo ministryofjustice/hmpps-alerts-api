@@ -33,9 +33,12 @@ fun AlertCode.toAlertCodeModel(username: String) = AlertCodeModel(
   canBeAdministered = canBeAdministeredByUser(username),
 )
 
-fun Collection<AlertCode>.toAlertCodeModels(username: String, includeInactive: Boolean) = sortedWith(compareBy({ it.listSequence }, { it.code }))
-  .filter { includeInactive || it.isActive() }
-  .map { it.toAlertCodeModel(username) }
+fun Collection<AlertCode>.toAlertCodeModels(username: String, includeInactive: Boolean): List<AlertCodeModel> {
+  val normalisedUsername = username.uppercase()
+  return sortedWith(compareBy({ it.listSequence }, { it.code }))
+    .filter { includeInactive || it.isActive() }
+    .map { it.toAlertCodeModel(normalisedUsername) }
+}
 
 fun AlertType.toAlertTypeModel(username: String, includeInactive: Boolean) = AlertTypeModel(
   code = code,

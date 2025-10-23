@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBodyList
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import java.util.Optional
@@ -41,14 +42,14 @@ class RetrieveAlertCodeIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `get alert codes shows if each code can be administered by the user`() {
+  fun `get alert codes shows if each code can be administered by the user (case-insensitive)`() {
     val restrictedAlertCode = givenNewAlertCode(alertCode(code = "XRACA", restricted = true))
     val restrictedAlertCodeWithPermissionForUser = givenNewAlertCode(alertCode(code = "XRACB", restricted = true))
     val restrictedAlertCodeWithPermissionForOtherUser = givenNewAlertCode(alertCode(code = "XRACC", restricted = true))
     givenNewAlertCodePrivilegedUser(restrictedAlertCodeWithPermissionForUser)
     givenNewAlertCodePrivilegedUser(restrictedAlertCodeWithPermissionForOtherUser, "SOME_OTHER_USER")
 
-    val alertCodes = webTestClient.getAlertCodes(true)
+    val alertCodes = webTestClient.getAlertCodes(true, "teSt_USer")
 
     alertCodes.first { it.code == restrictedAlertCode.code }.let {
       assertThat(it.isRestricted).isTrue()
@@ -70,7 +71,7 @@ class RetrieveAlertCodeIntTest : IntegrationTestBase() {
     assertThat(alertCodes.code).isEqualTo("VI")
   }
 
-  private fun WebTestClient.getAlertCodes(includeInactive: Boolean?) = get()
+  private fun WebTestClient.getAlertCodes(includeInactive: Boolean?, username: String? = TEST_USER) = get()
     .uri { builder ->
       builder
         .path("/alert-codes")
@@ -78,7 +79,7 @@ class RetrieveAlertCodeIntTest : IntegrationTestBase() {
         .build()
     }
     .headers(setAuthorisation(roles = listOf(ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI)))
-    .headers(setAlertRequestContext())
+    .headers(setAlertRequestContext(username = username))
     .exchange().expectStatus().isOk.expectBodyList<AlertCode>().returnResult().responseBody!!
 
   private fun WebTestClient.getAlertCode(alertCode: String) = get()

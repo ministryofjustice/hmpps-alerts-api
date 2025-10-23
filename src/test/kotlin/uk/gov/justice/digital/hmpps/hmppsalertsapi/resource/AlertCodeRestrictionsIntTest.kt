@@ -194,14 +194,12 @@ class AlertCodeRestrictionsIntTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `should add privileged user`() {
+    fun `should normalise input username and add privileged user`() {
       val alertCode = givenNewAlertCode(alertCode(code = "ACRC", restricted = true))
-      val username = "USERNAME_1"
 
-      webTestClient.addPrivilegedUser(alertCode.code, username)
-
+      webTestClient.addPrivilegedUser(alertCode.code, "USERname_1")
       assertThat(
-        alertCodePrivilegedUserRepository.findById(AlertCodePrivilegedUserId(alertCode.alertCodeId, username)),
+        alertCodePrivilegedUserRepository.findById(AlertCodePrivilegedUserId(alertCode.alertCodeId, "USERNAME_1")),
       ).isNotEmpty
     }
 
@@ -265,15 +263,13 @@ class AlertCodeRestrictionsIntTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `should delete existing privileged user`() {
+    fun `should normalise input username and delete existing privileged user`() {
       val alertCode = givenNewAlertCode(alertCode(code = "ACRD", restricted = true))
-      val username = "USERNAME_1"
-      givenNewAlertCodePrivilegedUser(alertCode, username)
+      givenNewAlertCodePrivilegedUser(alertCode, "USERNAME_1")
 
-      webTestClient.deletePrivilegedUser(alertCode.code, username)
-
+      webTestClient.deletePrivilegedUser(alertCode.code, "USERname_1")
       assertThat(
-        alertCodePrivilegedUserRepository.findById(AlertCodePrivilegedUserId(alertCode.alertCodeId, username)),
+        alertCodePrivilegedUserRepository.findById(AlertCodePrivilegedUserId(alertCode.alertCodeId, "USERNAME_1")),
       ).isEmpty
     }
 

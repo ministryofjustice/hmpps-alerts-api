@@ -6,6 +6,8 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.expectBodyList
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertType
 import java.util.Optional
 
 class GetAlertTypesIntTest : IntegrationTestBase() {
@@ -45,6 +47,19 @@ class GetAlertTypesIntTest : IntegrationTestBase() {
   fun `get specific alert type`() {
     val alertType = webTestClient.getAlertType("L")
     assertThat(alertType.code).isEqualTo("L")
+    assertThat(alertType.alertCodes).hasSize(4)
+  }
+
+  @Test
+  fun `get specific alert type - does not produce duplicates for restricted alerts`() {
+    val alertCode = givenExistingAlertCode("LPQAA")
+    givenNewAlertCodePrivilegedUser(alertCode = alertCode, username = "USER_1")
+    givenNewAlertCodePrivilegedUser(alertCode = alertCode, username = "USER_2")
+    givenNewAlertCodePrivilegedUser(alertCode = alertCode, username = "USER_3")
+
+    val alertType = webTestClient.getAlertType("L")
+    assertThat(alertType.code).isEqualTo("L")
+    assertThat(alertType.alertCodes).hasSize(4)
   }
 
   private fun WebTestClient.getAlertTypes(includeInactive: Boolean?) = get()

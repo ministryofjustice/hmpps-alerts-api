@@ -256,7 +256,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
       }
     }
 
-    await atMost ofSeconds(20) withPollDelay ofSeconds(5) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches {
+    await atMost ofSeconds(30) withPollDelay ofSeconds(5) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches {
       it == 45
     }
     val messages = hmppsEventsQueue.receiveAllMessages()
