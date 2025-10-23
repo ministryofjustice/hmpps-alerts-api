@@ -18,13 +18,13 @@ class AlertCodePrivilegedUserService(
   fun addPrivilegedUser(alertCode: String, username: String) {
     val alertCodeId = alertCodeRepository.getAlertCodeIdForCode(alertCode)
       ?: throw NotFoundException("Alert code", alertCode)
-    alertCodePrivilegedUserRepository.save(AlertCodePrivilegedUser(alertCodeId, username))
+    alertCodePrivilegedUserRepository.save(AlertCodePrivilegedUser(alertCodeId, username.uppercase()))
   }
 
   @Transactional
   fun removePrivilegedUser(alertCode: String, username: String) = alertCode.let {
     val alertCodeId = alertCodeRepository.getAlertCodeIdForCode(alertCode)
       ?: throw NotFoundException("Alert code", alertCode)
-    alertCodePrivilegedUserRepository.deleteById(AlertCodePrivilegedUserId(alertCodeId, username))
+    alertCodePrivilegedUserRepository.deleteById(AlertCodePrivilegedUserId(alertCodeId, username.uppercase()))
   }
 }
