@@ -168,14 +168,14 @@
 <text text-anchor="start" x="235" y="-826.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">deactivated_by</text>
 <polygon fill="none" stroke="#000000" points="215,-797.2 215,-819.2 338,-819.2 338,-797.2 215,-797.2"/>
 <text text-anchor="start" x="235" y="-804.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">restricted</text>
-<polygon fill="#ffffff" stroke="transparent" points="215,-778.2 215,-797.2 270,-797.2 270,-778.2 215,-778.2"/>
-<polygon fill="none" stroke="#000000" points="215,-778.2 215,-797.2 270,-797.2 270,-778.2 215,-778.2"/>
+<polygon fill="#ffffff" stroke="transparent" points="215,-778.2 215,-797.2 251,-797.2 251,-778.2 215,-778.2"/>
+<polygon fill="none" stroke="#000000" points="215,-778.2 215,-797.2 251,-797.2 251,-778.2 215,-778.2"/>
 <text text-anchor="start" x="218" y="-784.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">&lt; 1</text>
-<polygon fill="#ffffff" stroke="transparent" points="270,-778.2 270,-797.2 299,-797.2 299,-778.2 270,-778.2"/>
-<polygon fill="none" stroke="#000000" points="270,-778.2 270,-797.2 299,-797.2 299,-778.2 270,-778.2"/>
-<text text-anchor="start" x="289.8862" y="-784.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000"> &#160;</text>
-<polygon fill="#ffffff" stroke="transparent" points="299,-778.2 299,-797.2 338,-797.2 338,-778.2 299,-778.2"/>
-<polygon fill="none" stroke="#000000" points="299,-778.2 299,-797.2 338,-797.2 338,-778.2 299,-778.2"/>
+<polygon fill="#ffffff" stroke="transparent" points="251,-778.2 251,-797.2 309,-797.2 309,-778.2 251,-778.2"/>
+<polygon fill="none" stroke="#000000" points="251,-778.2 251,-797.2 309,-797.2 309,-778.2 251,-778.2"/>
+<text text-anchor="start" x="261.3807" y="-784.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">213 rows</text>
+<polygon fill="#ffffff" stroke="transparent" points="309,-778.2 309,-797.2 338,-797.2 338,-778.2 309,-778.2"/>
+<polygon fill="none" stroke="#000000" points="309,-778.2 309,-797.2 338,-797.2 338,-778.2 309,-778.2"/>
 <text text-anchor="start" x="319.4053" y="-784.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">2 &gt;</text>
 </a>
 </g>
