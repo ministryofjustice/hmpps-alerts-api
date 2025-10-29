@@ -36,11 +36,12 @@ jobs:
     secrets: inherit
     with:
       environment: ${{ matrix.environments }}
-  kotlin_validate:
+  gradle-verify:
     name: Validate the kotlin
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/gradle_localstack_postgres_verify.yml@v2 # WORKFLOW_VERSION
     secrets: inherit
     with:
+      java-version: '25'
       localstack-tag: '4'
       postgres-tag: '16'
       postgres-db: 'alerts'
@@ -51,7 +52,7 @@ jobs:
     if: ${{ !cancelled() }}
     uses: ./.github/workflows/upload_coverage.yml
     needs:
-      - kotlin_validate
+      - gradle-verify
   schema-spy:
     name: SchemaSpy report
     if: github.ref == 'refs/heads/main'
@@ -69,7 +70,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     uses: ministryofjustice/hmpps-github-actions/.github/workflows/docker_build.yml@v2 # WORKFLOW_VERSION
     needs:
-      - kotlin_validate
+      - gradle-verify
     with:
       docker_registry: 'ghcr.io'
       registry_org: 'ministryofjustice'
