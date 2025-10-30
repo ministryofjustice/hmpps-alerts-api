@@ -5,6 +5,7 @@
 .env
 .idea/
 .gradle/
+.kotlin/
 build/
 
 # CMake
