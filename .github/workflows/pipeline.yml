@@ -23,6 +23,10 @@ permissions:
   packages: write
 
 concurrency:
+  # Only cancel in progress when on a branch - use SHA on main to ensure uniqueness.
+  # This will allow multiple pipelines to run at the same time on main.
+  # Note that two pipelines running within a few minutes of each other will cause issues with helm deploying to
+  # a namespace, as the second one will not be able to get a lock as a deploy will be in progress.
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.sha || github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
@@ -56,6 +60,8 @@ jobs:
   schema-spy:
     name: SchemaSpy report
     if: github.ref == 'refs/heads/main'
+    needs:
+      - gradle-verify
     uses: ./.github/workflows/schema-spy.yml
     with:
       docker_compose_file: 'docker-compose-schema-spy.yml'
