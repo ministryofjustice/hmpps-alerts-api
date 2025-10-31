@@ -1,4 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?><database name="alerts" schema="public" type="PostgreSQL - 16.10 (Debian 16.10-1.pgdg13+1)">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<database name="alerts" schema="public" type="PostgreSQL - 17.6 (Debian 17.6-2.pgdg13+1)">
    <sequences>
       <sequence increment="1" name="alert_code_alert_code_id_seq" startValue="1"/>
       <sequence increment="1" name="alert_code_privileged_user_alert_code_id_seq" startValue="1"/>
@@ -6,15 +7,15 @@
       <sequence increment="1" name="resync_audit_id_seq" startValue="1"/>
    </sequences>
    <tables>
-      <table name="alert" remarks="Individual alerts associated with a person identifier (prison number)" schema="public" type="TABLE">
+      <table catalog="alerts" name="alert" remarks="Individual alerts associated with a person identifier (prison number)" schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="Public primary key" size="2147483647" type="uuid" typeCode="1111">
-            <child column="alert_id" foreignKey="alert_id_fk" implied="false" onDeleteCascade="false" schema="public" table="audit_event"/>
+            <child catalog="alerts" column="alert_id" foreignKey="alert_id_fk" implied="false" onDeleteCascade="false" schema="public" table="audit_event"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="alert_code_id" nullable="false" remarks="Foreign key to alert code categorising the alert" size="19" type="int8" typeCode="-5">
-            <parent column="alert_code_id" foreignKey="alert_alert_code_fk" implied="false" onDeleteCascade="false" schema="public" table="alert_code"/>
+            <parent catalog="alerts" column="alert_code_id" foreignKey="alert_alert_code_fk" implied="false" onDeleteCascade="false" schema="public" table="alert_code"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="prison_number" nullable="false" remarks="The prison number of the person the alert is for" size="10" type="varchar" typeCode="12">
-            <parent column="prison_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="person_summary"/>
+            <parent catalog="alerts" column="prison_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="person_summary"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="description" nullable="true" remarks="The description of the alert" size="2147483647" type="text" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="authorised_by" nullable="true" remarks="Migrated from NOMIS. Not populated or displayed in DPS" size="40" type="varchar" typeCode="12"/>
@@ -51,13 +52,13 @@
             <column ascending="true" name="prison_number"/>
          </index>
       </table>
-      <table name="alert_code" numRows="213" remarks="Second level categorisation of alerts grouped by type" schema="public" type="TABLE">
+      <table catalog="alerts" name="alert_code" numRows="213" remarks="Second level categorisation of alerts grouped by type" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('alert_code_alert_code_id_seq'::regclass)" digits="0" id="0" name="alert_code_id" nullable="false" remarks="Internal primary key. Not returned by API" size="19" type="bigserial" typeCode="-5">
-            <child column="alert_code_id" foreignKey="alert_alert_code_fk" implied="false" onDeleteCascade="false" schema="public" table="alert"/>
-            <child column="alert_code_id" foreignKey="alert_code_privileged_user_alert_code_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_code_privileged_user"/>
+            <child catalog="alerts" column="alert_code_id" foreignKey="alert_alert_code_fk" implied="false" onDeleteCascade="false" schema="public" table="alert"/>
+            <child catalog="alerts" column="alert_code_id" foreignKey="alert_code_privileged_user_alert_code_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_code_privileged_user"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="alert_type_id" nullable="false" remarks="Foreign key to alert type" size="19" type="int8" typeCode="-5">
-            <parent column="alert_type_id" foreignKey="alert_code_alert_type_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_type"/>
+            <parent catalog="alerts" column="alert_type_id" foreignKey="alert_code_alert_type_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_type"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="code" nullable="false" remarks="The short code for the alert code" size="12" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="description" nullable="false" remarks="The description of the alert code" size="40" type="varchar" typeCode="12"/>
@@ -89,9 +90,9 @@
             <column ascending="true" name="list_sequence"/>
          </index>
       </table>
-      <table name="alert_code_privileged_user" remarks="Data for restricting certain alerts to be administered only by named users" schema="public" type="TABLE">
+      <table catalog="alerts" name="alert_code_privileged_user" remarks="Data for restricting certain alerts to be administered only by named users" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('alert_code_privileged_user_alert_code_id_seq'::regclass)" digits="0" id="0" name="alert_code_id" nullable="false" remarks="Foreign key to alert code" size="19" type="bigserial" typeCode="-5">
-            <parent column="alert_code_id" foreignKey="alert_code_privileged_user_alert_code_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_code"/>
+            <parent catalog="alerts" column="alert_code_id" foreignKey="alert_code_privileged_user_alert_code_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_code"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="username" nullable="false" remarks="The username of the person who can administer the alert" size="64" type="varchar" typeCode="12"/>
          <primaryKey column="alert_code_id" sequenceNumberInPK="1"/>
@@ -107,9 +108,9 @@
             <column ascending="true" name="username"/>
          </index>
       </table>
-      <table name="alert_type" remarks="First level categorisation of alerts" schema="public" type="TABLE">
+      <table catalog="alerts" name="alert_type" remarks="First level categorisation of alerts" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('alert_type_alert_type_id_seq'::regclass)" digits="0" id="0" name="alert_type_id" nullable="false" remarks="Internal primary key. Not returned by API" size="19" type="bigserial" typeCode="-5">
-            <child column="alert_type_id" foreignKey="alert_code_alert_type_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_code"/>
+            <child catalog="alerts" column="alert_type_id" foreignKey="alert_code_alert_type_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_code"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="code" nullable="false" remarks="The short code for the alert type" size="12" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="description" nullable="false" remarks="The description of the alert type" size="40" type="varchar" typeCode="12"/>
@@ -137,7 +138,7 @@
             <column ascending="true" name="list_sequence"/>
          </index>
       </table>
-      <table name="audit_event" remarks="Detailed change history of alerts. Became the system of record for alert changes from 20th of June 2024" schema="public" type="TABLE">
+      <table catalog="alerts" name="audit_event" remarks="Detailed change history of alerts. Became the system of record for alert changes from 20th of June 2024" schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="action" nullable="false" remarks="The audit event type" size="40" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="description" nullable="false" remarks="A human readable description of what changed as a result of the action" size="2147483647" type="text" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="2" name="actioned_at" nullable="false" remarks="The date and time the event happened" size="29" type="timestamp" typeCode="93"/>
@@ -150,7 +151,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="active_from_updated" nullable="true" remarks="Whether the alert active from property changed as a result of the action" size="1" type="bool" typeCode="-7"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="active_to_updated" nullable="true" remarks="Whether the alert active to property changed as a result of the action" size="1" type="bool" typeCode="-7"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="alert_id" nullable="false" remarks="Foreign key to alert" size="2147483647" type="uuid" typeCode="1111">
-            <parent column="id" foreignKey="alert_id_fk" implied="false" onDeleteCascade="false" schema="public" table="alert"/>
+            <parent catalog="alerts" column="id" foreignKey="alert_id_fk" implied="false" onDeleteCascade="false" schema="public" table="alert"/>
          </column>
          <column autoUpdated="false" defaultValue="0" digits="0" id="12" name="version" nullable="false" remarks="Supports bulk Hibernate operations" size="10" type="int4" typeCode="4"/>
          <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="13" name="id" nullable="false" remarks="Primary key" size="2147483647" type="uuid" typeCode="1111"/>
@@ -172,9 +173,9 @@
             <column ascending="true" name="alert_id"/>
          </index>
       </table>
-      <table name="bulk_plan" remarks="Bulk alert journey session data" schema="public" type="TABLE">
+      <table catalog="alerts" name="bulk_plan" remarks="Bulk alert journey session data" schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="id" nullable="false" remarks="Public primary key" size="2147483647" type="uuid" typeCode="1111">
-            <child column="plan_id" foreignKey="fk_plan_id" implied="false" onDeleteCascade="false" schema="public" table="plan_person"/>
+            <child catalog="alerts" column="plan_id" foreignKey="fk_plan_id" implied="false" onDeleteCascade="false" schema="public" table="plan_person"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="alert_code_id" nullable="true" remarks="Foreign key to alert code categorising the alerts affected by the bulk plan" size="10" type="int4" typeCode="4"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="description" nullable="true" remarks="Description set on all new alerts created by the bulk plan" size="2147483647" type="text" typeCode="12"/>
@@ -195,13 +196,13 @@
          <index name="bulk_plan_pkey" unique="true">
             <column ascending="true" name="id"/>
          </index>
-         <checkConstraint constraint="(((cleanup_mode)::text = ANY ((ARRAY['KEEP_ALL'::character varying, 'EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED'::character varying])::text[])))" name="ch_bulk_plan_cleanup_mode"/>
+         <checkConstraint constraint="((cleanup_mode)::text = ANY ((ARRAY['KEEP_ALL'::character varying, 'EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED'::character varying])::text[]))" name="ch_bulk_plan_cleanup_mode"/>
       </table>
-      <table name="person_summary" remarks="Data for the people who are included in a bulk alert journey. Domain events cause the summary data to be updated keeping it accurate" schema="public" type="TABLE">
+      <table catalog="alerts" name="person_summary" remarks="Data for the people who are included in a bulk alert journey. Domain events cause the summary data to be updated keeping it accurate" schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="prison_number" nullable="false" remarks="The prison number of the person the summary data is associated with" size="10" type="varchar" typeCode="12">
-            <child column="prison_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="alert"/>
-            <child column="prison_number" foreignKey="fk_prison_number" implied="false" onDeleteCascade="false" schema="public" table="plan_person"/>
-            <child column="prison_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="resync_audit"/>
+            <child catalog="alerts" column="prison_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="alert"/>
+            <child catalog="alerts" column="prison_number" foreignKey="fk_prison_number" implied="false" onDeleteCascade="false" schema="public" table="plan_person"/>
+            <child catalog="alerts" column="prison_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="resync_audit"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="first_name" nullable="false" remarks="The first name of the person" size="64" type="varchar" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="last_name" nullable="false" remarks="The last name of the person" size="64" type="varchar" typeCode="12"/>
@@ -216,18 +217,18 @@
             <column ascending="true" name="prison_number"/>
          </index>
       </table>
-      <table name="plan_person" remarks="Joining table for people included in a bulk alert journey" schema="public" type="TABLE">
+      <table catalog="alerts" name="plan_person" remarks="Joining table for people included in a bulk alert journey" schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="plan_id" nullable="false" remarks="Public primary key of the bulk plan" size="2147483647" type="uuid" typeCode="1111">
-            <parent column="id" foreignKey="fk_plan_id" implied="false" onDeleteCascade="false" schema="public" table="bulk_plan"/>
+            <parent catalog="alerts" column="id" foreignKey="fk_plan_id" implied="false" onDeleteCascade="false" schema="public" table="bulk_plan"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="prison_number" nullable="false" remarks="The prison number of the person who is part of the bulk plan" size="10" type="varchar" typeCode="12">
-            <parent column="prison_number" foreignKey="fk_prison_number" implied="false" onDeleteCascade="false" schema="public" table="person_summary"/>
+            <parent catalog="alerts" column="prison_number" foreignKey="fk_prison_number" implied="false" onDeleteCascade="false" schema="public" table="person_summary"/>
          </column>
       </table>
-      <table name="resync_audit" remarks="Audit of alert changes caused by a resync call driven by a prisoner level change to alerts" schema="public" type="TABLE">
+      <table catalog="alerts" name="resync_audit" remarks="Audit of alert changes caused by a resync call driven by a prisoner level change to alerts" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('resync_audit_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="Internal primary key" size="19" type="bigserial" typeCode="-5"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="prison_number" nullable="false" remarks="The prison number of the person whose alerts were resynced" size="10" type="varchar" typeCode="12">
-            <parent column="prison_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="person_summary"/>
+            <parent catalog="alerts" column="prison_number" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="public" table="person_summary"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="request" nullable="false" remarks="The full resync request" size="2147483647" type="jsonb" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="6" id="3" name="requested_at" nullable="false" remarks="The date and time of the resync request" size="29" type="timestamp" typeCode="93"/>
