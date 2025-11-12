@@ -20,12 +20,12 @@
 <text text-anchor="start" x="271" y="-169.3" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">plan_person</text>
 <text text-anchor="start" x="455.0437" y="-168.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
 <polygon fill="none" stroke="#000000" points="266,-138.7 266,-160.7 396,-160.7 396,-138.7 266,-138.7"/>
-<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="271" y="-155.7"/>
+<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="271" y="-155.7"/>
 <text text-anchor="start" x="286" y="-145.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">plan_id</text>
 <polygon fill="none" stroke="#000000" points="396,-138.7 396,-160.7 490,-160.7 490,-138.7 396,-138.7"/>
 <text text-anchor="start" x="398.9758" y="-146.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">uuid[2147483647]</text>
 <polygon fill="none" stroke="#000000" points="266,-116.7 266,-138.7 396,-138.7 396,-116.7 266,-116.7"/>
-<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="271" y="-133.7"/>
+<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="271" y="-133.7"/>
 <text text-anchor="start" x="286" y="-123.8" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">prison_number</text>
 <polygon fill="none" stroke="#000000" points="396,-116.7 396,-138.7 490,-138.7 490,-116.7 396,-116.7"/>
 <text text-anchor="start" x="399" y="-124.4" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">varchar[10]</text>

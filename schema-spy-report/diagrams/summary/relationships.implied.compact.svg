@@ -347,10 +347,10 @@
 <text text-anchor="start" x="501.5" y="-109.8" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="11.00" fill="#000000">plan_person</text>
 <text text-anchor="start" x="591.5437" y="-109.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">[table]</text>
 <polygon fill="none" stroke="#000000" points="496.5,-79.2 496.5,-101.2 626.5,-101.2 626.5,-79.2 496.5,-79.2"/>
-<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="501.5" y="-96.2"/>
+<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="501.5" y="-96.2"/>
 <text text-anchor="start" x="516.5" y="-86.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">plan_id</text>
 <polygon fill="none" stroke="#000000" points="496.5,-57.2 496.5,-79.2 626.5,-79.2 626.5,-57.2 496.5,-57.2"/>
-<image xlink:href="../../images/foreignKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="501.5" y="-74.2"/>
+<image xlink:href="../../images/primaryKeys.png" width="11px" height="12px" preserveAspectRatio="xMinYMin meet" x="501.5" y="-74.2"/>
 <text text-anchor="start" x="516.5" y="-64.3" font-family="Helvetica,sans-Serif" font-size="11.00" fill="#000000">prison_number</text>
 <polygon fill="#ffffff" stroke="transparent" points="496.5,-38.2 496.5,-57.2 626.5,-57.2 626.5,-38.2 496.5,-38.2"/>
 <polygon fill="none" stroke="#000000" points="496.5,-38.2 496.5,-57.2 626.5,-57.2 626.5,-38.2 496.5,-38.2"/>

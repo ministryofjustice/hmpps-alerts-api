@@ -224,6 +224,12 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="prison_number" nullable="false" remarks="The prison number of the person who is part of the bulk plan" size="10" type="varchar" typeCode="12">
             <parent catalog="alerts" column="prison_number" foreignKey="fk_prison_number" implied="false" onDeleteCascade="false" schema="public" table="person_summary"/>
          </column>
+         <primaryKey column="plan_id" sequenceNumberInPK="1"/>
+         <primaryKey column="prison_number" sequenceNumberInPK="2"/>
+         <index name="pk_plan_person" unique="true">
+            <column ascending="true" name="plan_id"/>
+            <column ascending="true" name="prison_number"/>
+         </index>
       </table>
       <table catalog="alerts" name="resync_audit" remarks="Audit of alert changes caused by a resync call driven by a prisoner level change to alerts" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('resync_audit_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="Internal primary key" size="19" type="bigserial" typeCode="-5"/>
