@@ -52,6 +52,17 @@
       {
         "telemetryType": "trace",
         "percentage": 0
+      },
+      {
+        "telemetryType": "dependency",
+        "attributes": [
+          {
+            "key": "db.system",
+            "value": "postgresql",
+            "matchType": "strict"
+          }
+        ],
+        "percentage": 0
       }
     ]
   }
