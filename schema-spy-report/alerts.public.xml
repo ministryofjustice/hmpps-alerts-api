@@ -52,7 +52,7 @@
             <column ascending="true" name="prison_number"/>
          </index>
       </table>
-      <table catalog="alerts" name="alert_code" numRows="213" remarks="Second level categorisation of alerts grouped by type" schema="public" type="TABLE">
+      <table catalog="alerts" name="alert_code" remarks="Second level categorisation of alerts grouped by type" schema="public" type="TABLE">
          <column autoUpdated="true" defaultValue="nextval('alert_code_alert_code_id_seq'::regclass)" digits="0" id="0" name="alert_code_id" nullable="false" remarks="Internal primary key. Not returned by API" size="19" type="bigserial" typeCode="-5">
             <child catalog="alerts" column="alert_code_id" foreignKey="alert_alert_code_fk" implied="false" onDeleteCascade="false" schema="public" table="alert"/>
             <child catalog="alerts" column="alert_code_id" foreignKey="alert_code_privileged_user_alert_code_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="alert_code_privileged_user"/>
