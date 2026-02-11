@@ -30,7 +30,7 @@ const val NOMIS_SYNC_ONLY = "Nomis Sync Only"
 
 @Configuration
 class OpenApiConfiguration(buildProperties: BuildProperties) {
-  private val version: String = buildProperties.version
+  private val version: String = buildProperties.version ?: "unknown"
 
   @Autowired
   private lateinit var context: ApplicationContext
@@ -69,7 +69,7 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
             |- A 400 Bad Request response will be returned if the username cannot be found in the user management service.
             |- A 403 Forbidden response will also be returned if the user identified by the username does not have access to the caseload associated with the person.
             |
-          """.trimMargin(),
+          """,
         ).contact(
           Contact()
             .name("HMPPS Digital Studio")

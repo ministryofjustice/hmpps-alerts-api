@@ -4,14 +4,14 @@ import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonProcessingException
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
-import org.springframework.boot.jackson.JsonComponent
+import org.springframework.boot.jackson.JacksonComponent
 import java.io.IOException
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeFormatterBuilder
 
-@JsonComponent
+@JacksonComponent
 class ZonedDateTimeDeserializer : JsonDeserializer<ZonedDateTime>() {
   companion object {
     private val formatter: DateTimeFormatter = DateTimeFormatterBuilder().parseCaseInsensitive()
