@@ -8,7 +8,7 @@ import reactor.util.retry.Retry
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.DownstreamServiceException
 import java.time.Duration
 
-fun <T> Mono<T>.retryNetworkExceptions(downstreamErrorMessage: String): Mono<T> = retryWhen(
+fun <T : Any> Mono<T>.retryNetworkExceptions(downstreamErrorMessage: String): Mono<T> = retryWhen(
   Retry.backoff(3, Duration.ofMillis(250))
     .filter {
       it is WebClientRequestException || (it is WebClientResponseException && it.statusCode.is5xxServerError)
@@ -21,7 +21,7 @@ fun <T> Mono<T>.retryNetworkExceptions(downstreamErrorMessage: String): Mono<T> 
     },
 )
 
-fun <T> Flux<T>.retryNetworkExceptions(downstreamErrorMessage: String): Flux<T> = retryWhen(
+fun <T : Any> Flux<T>.retryNetworkExceptions(downstreamErrorMessage: String): Flux<T> = retryWhen(
   Retry.backoff(3, Duration.ofMillis(250))
     .filter {
       it is WebClientRequestException || (it is WebClientResponseException && it.statusCode.is5xxServerError)

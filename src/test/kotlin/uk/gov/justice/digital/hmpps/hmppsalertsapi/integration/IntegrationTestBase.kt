@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
+import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -68,6 +69,7 @@ import java.util.UUID
 
 @ExtendWith(HmppsAuthApiExtension::class, ManageUsersExtension::class, PrisonerSearchExtension::class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
+@AutoConfigureWebTestClient
 @ActiveProfiles("test")
 abstract class IntegrationTestBase {
   @Autowired
@@ -203,9 +205,9 @@ abstract class IntegrationTestBase {
     .expectBody<InvalidRowResponse>()
     .returnResult().responseBody!!
 
-  final inline fun <reified T> WebTestClient.ResponseSpec.successResponse(httpStatus: HttpStatus = HttpStatus.OK): T = expectStatus().isEqualTo(httpStatus)
+  final inline fun <reified T : Any> WebTestClient.ResponseSpec.successResponse(httpStatus: HttpStatus = HttpStatus.OK): T = expectStatus().isEqualTo(httpStatus)
     .expectHeader().contentType(MediaType.APPLICATION_JSON)
-    .expectBody(T::class.java)
+    .expectBody<T>()
     .returnResult().responseBody!!
 
   fun givenPrisoner(): String = givenPrisonerExists(prisonNumber())

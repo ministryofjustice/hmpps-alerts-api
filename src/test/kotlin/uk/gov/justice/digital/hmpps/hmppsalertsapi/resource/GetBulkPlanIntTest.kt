@@ -8,6 +8,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.http.HttpStatus
+import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.PersonSummary
@@ -150,8 +151,8 @@ class GetBulkPlanIntTest : IntegrationTestBase() {
     .headers(setAlertRequestContext(username = username))
     .exchange()
 
-  private inline fun <reified T> getPlan(path: String, id: UUID): T = getPlanResponseSpec(path, id).expectStatus().isOk
-    .expectBody(T::class.java).returnResult().responseBody!!
+  private inline fun <reified T : Any> getPlan(path: String, id: UUID): T = getPlanResponseSpec(path, id).expectStatus().isOk
+    .expectBody<T>().returnResult().responseBody!!
 
   companion object {
     private const val BASE_URL = "/bulk-alerts/plan/{id}"
