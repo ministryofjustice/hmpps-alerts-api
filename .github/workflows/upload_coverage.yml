@@ -17,11 +17,13 @@ jobs:
         with:
           name: test-results
           path: build
-      - uses: codecov/test-results-action@v1
+      - uses: codecov/codecov-action@v6
         with:
           use_oidc: true
           directory: build
-      - uses: codecov/codecov-action@v5
+          report_type: coverage
+      - uses: codecov/codecov-action@v6
         with:
           use_oidc: true
           directory: build
+          report_type: test_results
