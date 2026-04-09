@@ -11,7 +11,7 @@ spring:
       max-in-memory-size: 10MB
 
   jackson:
-    time-zone: "Europe/London"
+    time-zone: "UTC"
     date-format: "yyyy-MM-dd HH:mm:ss"
 
   security:
