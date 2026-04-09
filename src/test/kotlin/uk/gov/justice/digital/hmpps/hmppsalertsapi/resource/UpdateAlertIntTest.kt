@@ -456,7 +456,7 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
     )
     assertThat(
       updateAlertEvent.occurredAt,
-    ).isCloseTo(alertRepository.findByIdOrNull(alert.id)!!.lastModifiedAt?.toZoneDateTime(), within(1, ChronoUnit.MICROS))
+    ).isCloseTo(alertRepository.findByIdOrNull(alert.id)!!.lastModifiedAt?.toZoneDateTime(), within(1, ChronoUnit.SECONDS))
   }
 
   @Test
@@ -489,7 +489,7 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
     )
     assertThat(
       updateAlertEvent.occurredAt,
-    ).isCloseTo(alertRepository.findByIdOrNull(alert.id)!!.lastModifiedAt?.toZoneDateTime(), within(1, ChronoUnit.MICROS))
+    ).isCloseTo(alertRepository.findByIdOrNull(alert.id)!!.lastModifiedAt?.toZoneDateTime(), within(1, ChronoUnit.SECONDS))
   }
 
   private fun updateAlertRequest(

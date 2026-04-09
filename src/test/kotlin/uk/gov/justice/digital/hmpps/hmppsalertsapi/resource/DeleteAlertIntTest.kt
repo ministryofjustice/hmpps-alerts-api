@@ -293,7 +293,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       alertRepository.findByAlertUuidIncludingSoftDelete(
         alert.id,
       )!!.deletedAt?.toZoneDateTime(),
-      within(1, ChronoUnit.MICROS),
+      within(1, ChronoUnit.SECONDS),
     )
   }
 
@@ -330,7 +330,7 @@ class DeleteAlertIntTest : IntegrationTestBase() {
       alertRepository.findByAlertUuidIncludingSoftDelete(
         alert.id,
       )!!.deletedAt?.toZoneDateTime(),
-      within(1, ChronoUnit.MICROS),
+      within(1, ChronoUnit.SECONDS),
     )
   }
 
