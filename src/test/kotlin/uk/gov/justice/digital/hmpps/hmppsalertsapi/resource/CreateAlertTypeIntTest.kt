@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.ReferenceDataAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
@@ -290,8 +291,8 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
         "http://localhost:8080/alert-types/${request.code}",
       ),
     )
-    assertThat(event.occurredAt.toLocalDateTime()).isCloseTo(
-      alertTypeRepository.findByCode(alertType.code)!!.createdAt,
+    assertThat(event.occurredAt).isCloseTo(
+      alertTypeRepository.findByCode(alertType.code)!!.createdAt.toZoneDateTime(),
       within(1, ChronoUnit.MICROS),
     )
   }
