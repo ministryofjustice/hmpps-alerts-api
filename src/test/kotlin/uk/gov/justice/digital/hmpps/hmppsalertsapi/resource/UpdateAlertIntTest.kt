@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AuditEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
@@ -455,8 +454,8 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
       ),
     )
     assertThat(
-      updateAlertEvent.occurredAt,
-    ).isCloseTo(alertRepository.findByIdOrNull(alert.id)!!.lastModifiedAt?.toZoneDateTime(), within(1, ChronoUnit.MICROS))
+      updateAlertEvent.occurredAt.toLocalDateTime(),
+    ).isCloseTo(alertRepository.findByIdOrNull(alert.id)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
   }
 
   @Test
@@ -488,8 +487,8 @@ Updated active to from '${alert.activeTo}' to '$activeTo'""",
       ),
     )
     assertThat(
-      updateAlertEvent.occurredAt,
-    ).isCloseTo(alertRepository.findByIdOrNull(alert.id)!!.lastModifiedAt?.toZoneDateTime(), within(1, ChronoUnit.MICROS))
+      updateAlertEvent.occurredAt.toLocalDateTime(),
+    ).isCloseTo(alertRepository.findByIdOrNull(alert.id)!!.lastModifiedAt, within(1, ChronoUnit.MICROS))
   }
 
   private fun updateAlertRequest(

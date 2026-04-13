@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus.METHOD_NOT_ALLOWED
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.ReferenceDataAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
@@ -336,8 +335,8 @@ class CreateAlertCodeIntTest : IntegrationTestBase() {
         "http://localhost:8080/alert-codes/${request.code}",
       ),
     )
-    assertThat(event.occurredAt).isCloseTo(
-      alertCodeRepository.findByCode(alertCode.code)!!.createdAt.toZoneDateTime(),
+    assertThat(event.occurredAt.toLocalDateTime()).isCloseTo(
+      alertCodeRepository.findByCode(alertCode.code)!!.createdAt,
       within(1, ChronoUnit.MICROS),
     )
   }

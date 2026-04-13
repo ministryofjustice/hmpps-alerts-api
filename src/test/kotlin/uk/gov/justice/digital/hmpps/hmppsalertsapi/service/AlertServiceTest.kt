@@ -118,7 +118,7 @@ class AlertServiceTest {
         privilegedUsers = mutableSetOf(privilegedUser),
       )
       whenever(alertCodeRepository.findByCode(anyString())).thenReturn(restrictedAlertCode)
-      whenever(alertRepository.save(any<Alert>())).thenAnswer { it.arguments[0] }
+      whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
 
       underTest.createAlert(prisoner(), createAlertRequest(alertCode = AC_RESTRICTED.code), false)
       verify(alertRepository).save(any())
@@ -151,7 +151,7 @@ class AlertServiceTest {
       whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
       whenever(alertRepository.findByPrisonNumberAndAlertCodeCode(anyString(), anyString()))
         .thenReturn(listOf(alertEntity(activeFrom = LocalDate.now().minusDays(1), activeTo = LocalDate.now())))
-      whenever(alertRepository.save(any<Alert>())).thenAnswer { it.arguments[0] }
+      whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
       underTest.createAlert(prisoner(), createAlertRequest(), false)
       verify(alertRepository).save(any<Alert>())
     }
@@ -159,7 +159,7 @@ class AlertServiceTest {
     @Test
     fun `returns properties from request context`() {
       whenever(alertCodeRepository.findByCode(anyString())).thenReturn(AC_VICTIM)
-      whenever(alertRepository.save(any<Alert>())).thenAnswer { it.arguments[0] }
+      whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
       val request = createAlertRequest()
       val result = underTest.createAlert(prisoner(), request, false)
       with(result) {
@@ -178,7 +178,7 @@ class AlertServiceTest {
           deactivatedAt = LocalDateTime.of(1999, 12, 31, 0, 0, 0),
         ),
       )
-      whenever(alertRepository.save(any<Alert>())).thenAnswer { it.arguments[0] }
+      whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
       val request = createAlertRequest()
 
       val result = underTest.createAlert(prisoner(), request, true)
@@ -285,7 +285,7 @@ Updated active to from '${unchangedAlert.activeTo}' to '${savedAlert.activeTo}'"
       )
       val alert = alert(alertCode = restrictedAlertCode)
       whenever(alertRepository.findById(any())).thenReturn(Optional.of(alert))
-      whenever(alertRepository.save(any<Alert>())).thenAnswer { it.arguments[0] }
+      whenever(alertRepository.save(any())).thenAnswer { it.arguments[0] }
 
       underTest.updateAlert(alert.id, updateRequest, context)
       verify(alertRepository).save(any())
