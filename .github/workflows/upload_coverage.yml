@@ -12,16 +12,18 @@ jobs:
     name: Upload coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: test-results
           path: build
-      - uses: codecov/test-results-action@v1
+      - uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
         with:
           use_oidc: true
           directory: build
-      - uses: codecov/codecov-action@v5
+          report_type: coverage
+      - uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
         with:
           use_oidc: true
           directory: build
+          report_type: test_results

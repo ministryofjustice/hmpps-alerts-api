@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
@@ -465,8 +466,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
       ),
     )
     assertThat(
-      event.occurredAt.toLocalDateTime(),
-    ).isCloseTo(alertRepository.findByIdOrNull(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
+      event.occurredAt,
+    ).isCloseTo(alertRepository.findByIdOrNull(alert.alertUuid)!!.createdAt.toZoneDateTime(), within(1, ChronoUnit.MICROS))
   }
 
   @Test
@@ -498,8 +499,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
       ),
     )
     assertThat(
-      event.occurredAt.toLocalDateTime(),
-    ).isCloseTo(alertRepository.findByIdOrNull(alert.alertUuid)!!.createdAt, within(1, ChronoUnit.MICROS))
+      event.occurredAt,
+    ).isCloseTo(alertRepository.findByIdOrNull(alert.alertUuid)!!.createdAt.toZoneDateTime(), within(1, ChronoUnit.MICROS))
   }
 
   @Test
