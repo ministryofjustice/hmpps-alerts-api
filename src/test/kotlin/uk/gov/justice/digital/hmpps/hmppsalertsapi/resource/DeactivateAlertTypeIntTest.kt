@@ -131,7 +131,7 @@ class DeactivateAlertTypeIntTest : IntegrationTestBase() {
     )
     assertThat(deleteAlertEvent.occurredAt).isCloseTo(
       alertTypeRepository.findByCode(alertType.code)!!.deactivatedAt?.toZoneDateTime(),
-      within(1, ChronoUnit.SECONDS),
+      within(1, ChronoUnit.MICROS),
     )
   }
 

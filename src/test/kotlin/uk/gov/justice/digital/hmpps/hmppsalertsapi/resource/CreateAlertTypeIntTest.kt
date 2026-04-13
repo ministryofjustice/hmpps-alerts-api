@@ -293,7 +293,7 @@ class CreateAlertTypeIntTest : IntegrationTestBase() {
     )
     assertThat(event.occurredAt).isCloseTo(
       alertTypeRepository.findByCode(alertType.code)!!.createdAt.toZoneDateTime(),
-      within(1, ChronoUnit.SECONDS),
+      within(1, ChronoUnit.MICROS),
     )
   }
 

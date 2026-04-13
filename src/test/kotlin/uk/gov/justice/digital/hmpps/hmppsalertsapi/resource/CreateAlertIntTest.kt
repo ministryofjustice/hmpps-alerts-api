@@ -467,7 +467,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     )
     assertThat(
       event.occurredAt,
-    ).isCloseTo(alertRepository.findByIdOrNull(alert.alertUuid)!!.createdAt.toZoneDateTime(), within(1, ChronoUnit.SECONDS))
+    ).isCloseTo(alertRepository.findByIdOrNull(alert.alertUuid)!!.createdAt.toZoneDateTime(), within(1, ChronoUnit.MICROS))
   }
 
   @Test
@@ -500,7 +500,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
     )
     assertThat(
       event.occurredAt,
-    ).isCloseTo(alertRepository.findByIdOrNull(alert.alertUuid)!!.createdAt.toZoneDateTime(), within(1, ChronoUnit.SECONDS))
+    ).isCloseTo(alertRepository.findByIdOrNull(alert.alertUuid)!!.createdAt.toZoneDateTime(), within(1, ChronoUnit.MICROS))
   }
 
   @Test
