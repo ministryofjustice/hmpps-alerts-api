@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.PersonReference
@@ -288,10 +289,10 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         PersonReference.withPrisonNumber(prisonNumber),
       ),
     )
-    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
+    assertThat(deleteAlertEvent.occurredAt).isCloseTo(
       alertRepository.findByAlertUuidIncludingSoftDelete(
         alert.id,
-      )!!.deletedAt,
+      )!!.deletedAt?.toZoneDateTime(),
       within(1, ChronoUnit.MICROS),
     )
   }
@@ -325,10 +326,10 @@ class DeleteAlertIntTest : IntegrationTestBase() {
         PersonReference.withPrisonNumber(prisonNumber),
       ),
     )
-    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
+    assertThat(deleteAlertEvent.occurredAt).isCloseTo(
       alertRepository.findByAlertUuidIncludingSoftDelete(
         alert.id,
-      )!!.deletedAt,
+      )!!.deletedAt?.toZoneDateTime(),
       within(1, ChronoUnit.MICROS),
     )
   }

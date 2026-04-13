@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.AlertDomainEvent
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.event.ReferenceDataAdditionalInformation
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
@@ -122,8 +123,8 @@ class DeactivateAlertCodeIntTest : IntegrationTestBase() {
         "http://localhost:8080/alert-codes/${alertCode.code}",
       ),
     )
-    assertThat(deleteAlertEvent.occurredAt.toLocalDateTime()).isCloseTo(
-      alertCodeRepository.findByCode(alertCode.code)!!.deactivatedAt,
+    assertThat(deleteAlertEvent.occurredAt).isCloseTo(
+      alertCodeRepository.findByCode(alertCode.code)!!.deactivatedAt?.toZoneDateTime(),
       within(1, ChronoUnit.MICROS),
     )
   }
