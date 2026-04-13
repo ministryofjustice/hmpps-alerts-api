@@ -20,19 +20,19 @@ class PersonSummary(
   cellLocation: String?,
   supportingPrisonCode: String?,
 ) {
-  var firstName: String = firstName
+  final var firstName: String = firstName
     private set
-  var lastName: String = lastName
+  final var lastName: String = lastName
     private set
-  var status: String = status
+  final var status: String = status
     private set
-  var restrictedPatient: Boolean = restrictedPatient
+  final var restrictedPatient: Boolean = restrictedPatient
     private set
-  var prisonCode: String? = prisonCode
+  final var prisonCode: String? = prisonCode
     private set
-  var cellLocation: String? = cellLocation
+  final var cellLocation: String? = cellLocation
     private set
-  var supportingPrisonCode: String? = supportingPrisonCode
+  final var supportingPrisonCode: String? = supportingPrisonCode
     private set
 
   @Version
