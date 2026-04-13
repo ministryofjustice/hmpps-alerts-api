@@ -19,7 +19,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.USER_NOT
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertType
 import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
@@ -132,7 +131,7 @@ class ReactivateAlertTypeIntTest : IntegrationTestBase() {
       ),
     )
     assertThat(reactivateAlertEvent.occurredAt).isCloseTo(
-      ZonedDateTime.now(ZoneId.of("Europe/London")),
+      ZonedDateTime.now(),
       within(3, ChronoUnit.SECONDS),
     )
   }

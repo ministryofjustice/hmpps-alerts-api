@@ -20,7 +20,6 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_TYPE_CODE_VULNERABILITY
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import java.time.LocalDateTime
-import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
@@ -135,7 +134,7 @@ class ReactivateAlertCodeIntTest : IntegrationTestBase() {
       ),
     )
     assertThat(reactivateAlertEvent.occurredAt).isCloseTo(
-      ZonedDateTime.now(ZoneId.of("Europe/London")),
+      ZonedDateTime.now(),
       within(3, ChronoUnit.SECONDS),
     )
   }
