@@ -4,9 +4,9 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
   id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.2.1"
-  kotlin("jvm") version "2.3.20"
-  kotlin("plugin.spring") version "2.3.20"
-  kotlin("plugin.jpa") version "2.3.20"
+  kotlin("jvm") version "2.3.21"
+  kotlin("plugin.spring") version "2.3.21"
+  kotlin("plugin.jpa") version "2.3.21"
   jacoco
 }
 
@@ -36,6 +36,9 @@ dependencies {
 
   // OpenAPI
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
+  constraints {
+    implementation("org.webjars:swagger-ui:5.32.2")
+  }
 
   // Test dependencies
   testImplementation("org.junit.jupiter:junit-jupiter:6.0.3")
@@ -50,15 +53,17 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt-jackson:0.13.0")
 }
 
-java {
-  sourceCompatibility = JavaVersion.VERSION_24
-  targetCompatibility = JavaVersion.VERSION_24
+kotlin {
+  jvmToolchain(25)
+  compilerOptions {
+    freeCompilerArgs.addAll("-Xannotation-default-target=param-property")
+  }
 }
 
 tasks {
   withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     compilerOptions {
-      jvmTarget = JvmTarget.JVM_24
+      jvmTarget = JvmTarget.JVM_25
       freeCompilerArgs.add("-Xwhen-guards")
       freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
