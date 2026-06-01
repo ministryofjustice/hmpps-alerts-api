@@ -232,7 +232,7 @@ class Alert(
     }
     if (activeFromUpdated) {
       sb.appendLine("Updated active from from '${this.activeFrom}' to '$activeFrom'")
-      this.activeFrom = activeFrom!!
+      this.activeFrom = activeFrom
       updated = true
     }
     if (activeToUpdated) {
