@@ -7,6 +7,7 @@ import io.swagger.v3.oas.models.info.Contact
 import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
+import io.swagger.v3.oas.models.servers.Server
 import io.swagger.v3.oas.models.tags.Tag
 import org.springdoc.core.customizers.OperationCustomizer
 import org.springframework.beans.factory.annotation.Autowired
@@ -37,6 +38,13 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
 
   @Bean
   fun customOpenAPI(): OpenAPI? = OpenAPI()
+    .servers(
+      listOf(
+        Server().url("https://alerts-api-dev.hmpps.service.justice.gov.uk").description("dev"),
+        Server().url("https://alerts-api-preprod.hmpps.service.justice.gov.uk").description("preprod"),
+        Server().url("https://alerts-api.hmpps.service.justice.gov.uk").description("prod"),
+      ),
+    )
     .info(
       Info()
         .title("Prisoner Alerts API")
@@ -52,14 +60,18 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
             |
             |## Authorisation
             |
-            |The API uses roles to control access to the endpoints. The roles required for each endpoint are documented in the endpoint descriptions.
+            |The API uses roles to control access to the endpoints.
+            |The roles required for each endpoint are documented in the endpoint descriptions.
             |Services integrating with the API should request one of the two following roles depending on their needs:
-            | 1. ROLE_PRISONER_ALERTS__RO - Grants read only access to the API e.g. retrieving alerts for a prisoner
-            | 2. ROLE_PRISONER_ALERTS__RW - Grants read/write access to the API e.g. creating and expiring alerts
+            | 1. `ROLE_PRISONER_ALERTS__RO` - Grants read only access to the API e.g. retrieving alerts for a prisoner
+            | 2. `ROLE_PRISONER_ALERTS__RW` - Grants read/write access to the API e.g. creating and expiring alerts
             |
             |## Identifying the user
             |
-            |The majority of the endpoints in this API require the user to be identified via their username. This is to correctly populate the change history of alerts e.g. who created or updated an alert and for auditing purposes. The username is required when the service is called directly by a user or when another service is acting on behalf of a user. The following methods for supplying the username are supported to cater for these scenarios:
+            |The majority of the endpoints in this API require the user to be identified via their username.
+            |This is to correctly populate the change history of alerts e.g. who created or updated an alert and for auditing purposes.
+            |The username is required when the service is called directly by a user or when another service is acting on behalf of a user.
+            |The following methods for supplying the username are supported to cater for these scenarios:
             |
             |1. **Token claim** - The username can be passed in via a `subject` claim in the JWT
             |
@@ -69,7 +81,7 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
             |- A 400 Bad Request response will be returned if the username cannot be found in the user management service.
             |- A 403 Forbidden response will also be returned if the user identified by the username does not have access to the caseload associated with the person.
             |
-          """,
+          """.trimMargin(),
         ).contact(
           Contact()
             .name("HMPPS Digital Studio")
