@@ -75,6 +75,7 @@ tasks {
 
   val testSuite = testing.suites.named("test", JvmTestSuite::class)
   register("initialiseDatabase", Test::class) {
+    description = "initialise database"
     testClassesDirs = files(testSuite.map { it.sources.output.classesDirs })
     classpath = files(testSuite.map { it.sources.runtimeClasspath })
     include("**/InitialiseDatabase.class")
