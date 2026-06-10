@@ -89,7 +89,7 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
       plan.id,
       setOf(
         AddPrisonNumbers(
-          newLinkedHashSet<String?>(5).apply {
+          newLinkedHashSet<String>(5).apply {
             add(prisonNumber())
             add("Invalid")
             add(prisonNumber())
@@ -112,7 +112,7 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
       plan.id,
       setOf(
         AddPrisonNumbers(
-          newLinkedHashSet<String?>(5).apply {
+          newLinkedHashSet<String>(5).apply {
             add(prisonNumber())
             add("Invalid")
             add(prisonNumber())
@@ -140,7 +140,7 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
       plan.id,
       setOf(
         AddPrisonNumbers(
-          newLinkedHashSet<String?>(5).apply {
+          newLinkedHashSet<String>(5).apply {
             add(prisonNumber())
             addAll(validPns)
           },
@@ -191,7 +191,7 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
       val existingPeople = listOf(givenPersonSummary(personSummary()), givenPersonSummary(personSummary()))
       val plan = givenBulkPlan(plan(givenAlertCode()).apply { people.addAll(existingPeople) })
       plan to existingPeople
-    }!!
+    }
     val newPrisonNumbers = (1..10).map { _ -> prisonNumber() }
     val prisonNumbers: LinkedHashSet<String> = newLinkedHashSet<String>(12).apply {
       addAll(existingPeople.map { it.prisonNumber })
@@ -220,7 +220,7 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
       }
       val plan = givenBulkPlan(plan(givenAlertCode()).apply { people.addAll(existingPeople) })
       plan to existingPeople
-    }!!
+    }
     assertThat(existingPeople.size).isEqualTo(5)
     val toRemove = listOf(existingPeople.first().prisonNumber, existingPeople.last().prisonNumber).toSet()
 
