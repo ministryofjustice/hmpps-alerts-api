@@ -22,6 +22,7 @@ permissions:
   packages: write
   id-token: write
   attestations: write
+  pages: write
 
 concurrency:
   # Only cancel in progress when on a branch - use SHA on main to ensure uniqueness.
@@ -60,7 +61,7 @@ jobs:
       - gradle-verify
   schema-spy:
     name: SchemaSpy report
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CDPS-1961'
     needs:
       - gradle-verify
     uses: ./.github/workflows/schema-spy.yml
