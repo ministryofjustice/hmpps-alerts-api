@@ -61,7 +61,7 @@ jobs:
       - gradle-verify
   schema-spy:
     name: SchemaSpy report
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/CDPS-1961'
+    if: github.ref == 'refs/heads/main'
     needs:
       - gradle-verify
     uses: ./.github/workflows/schema-spy.yml
