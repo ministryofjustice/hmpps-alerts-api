@@ -3,7 +3,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.5.4"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "10.5.6"
   kotlin("jvm") version "2.4.0"
   kotlin("plugin.spring") version "2.4.0"
   kotlin("plugin.jpa") version "2.4.0"
@@ -29,7 +29,7 @@ dependencies {
   runtimeOnly("org.flywaydb:flyway-core")
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
   runtimeOnly("org.postgresql:postgresql")
-  implementation("io.hypersistence:hypersistence-utils-hibernate-71:3.15.3")
+  implementation("io.hypersistence:hypersistence-utils-hibernate-71:3.15.4")
 
   // AWS
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.4.0")
