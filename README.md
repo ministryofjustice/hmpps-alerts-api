@@ -5,8 +5,7 @@
 [![codecov](https://codecov.io/github/ministryofjustice/hmpps-alerts-api/branch/main/graph/badge.svg)](https://codecov.io/github/ministryofjustice/hmpps-alerts-api)
 [![API docs](https://img.shields.io/badge/API_docs_-view-85EA2D.svg?logo=swagger)](https://alerts-api-dev.hmpps.service.justice.gov.uk/swagger-ui/index.html)
 [![Event docs](https://img.shields.io/badge/Event_docs-view-85EA2D.svg)](https://studio.asyncapi.com/?readOnly&url=https://raw.githubusercontent.com/ministryofjustice/hmpps-alerts-api/main/async-api.yml)
-
-Datebase Schema diagram: https://ministryofjustice.github.io/hmpps-alerts-api/
+[![Database schema](https://img.shields.io/badge/Database_schema-view-85EA2D.svg)](https://ministryofjustice.github.io/hmpps-alerts-api/)
 
 ## Architectural Decision Records
 

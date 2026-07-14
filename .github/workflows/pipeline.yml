@@ -18,11 +18,11 @@ on:
         type: boolean
 
 permissions:
-  contents: write
+  contents: read
   packages: write
+  pages: write
   id-token: write
   attestations: write
-  pages: write
 
 concurrency:
   # Only cancel in progress when on a branch - use SHA on main to ensure uniqueness.
@@ -71,7 +71,6 @@ jobs:
       database_name: 'alerts'
       database_user: 'alerts'
       database_password: 'alerts'
-      database_schema: 'public'
     secrets: inherit
   build:
     name: Build docker image from hmpps-github-actions
