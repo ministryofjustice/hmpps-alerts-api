@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class ProductIdInfoContributor(
-  @param:Value("\${product-id:default}") private val productId: String,
+  @param:Value($$"${product-id:default}") private val productId: String,
 ) : InfoContributor {
 
   override fun contribute(builder: Info.Builder) {
