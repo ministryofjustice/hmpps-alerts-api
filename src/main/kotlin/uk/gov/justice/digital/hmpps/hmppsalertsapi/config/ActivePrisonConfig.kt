@@ -5,6 +5,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class ActivePrisonConfig(
-  @param:Value($$"${service.active.prisons}")
+  @param:Value("\${service.active.prisons}")
   val activePrisons: List<String>,
 )
