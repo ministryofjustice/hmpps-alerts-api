@@ -153,8 +153,19 @@ class AlertService(
     alerts.map { it.toAlertModel(context, auditEvents[it.id]) }
   }
 
-  fun retrieveAlertsForPrisonNumbers(prisonNumbers: Set<String>, includeInactive: Boolean, context: AlertRequestContext): AlertsResponse = AlertsResponse(
-    alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive).map { it.toAlertModel(context, it.auditEvents()) },
+  fun retrieveAlertsForPrisonNumbers(
+    prisonNumbers: Set<String>,
+    includeInactive: Boolean,
+    filterAlertCodes: Set<String>?,
+    context: AlertRequestContext,
+  ): AlertsResponse = AlertsResponse(
+    if (filterAlertCodes != null) {
+      alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive, filterAlertCodes)
+    } else {
+      alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive)
+    }.map {
+      it.toAlertModel(context, it.auditEvents())
+    },
   )
 
   @PublishPersonAlertsChanged
