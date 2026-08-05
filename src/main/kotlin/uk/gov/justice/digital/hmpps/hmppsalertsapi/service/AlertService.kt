@@ -159,11 +159,7 @@ class AlertService(
     filterAlertCodes: Set<String>?,
     context: AlertRequestContext,
   ): AlertsResponse = AlertsResponse(
-    if (filterAlertCodes != null) {
-      alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive, filterAlertCodes)
-    } else {
-      alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive)
-    }.map {
+    alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive, filterAlertCodes).map {
       it.toAlertModel(context, it.auditEvents())
     },
   )

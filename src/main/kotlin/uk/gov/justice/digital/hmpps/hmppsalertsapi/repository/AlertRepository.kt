@@ -37,25 +37,13 @@ interface AlertRepository :
     join fetch a.auditEvents ae
     where a.prisonNumber in :prisonNumbers
     and (:includeInactive = true or a.activeTo is null or a.activeTo > current_date)
-    """,
-  )
-  fun findByPrisonNumberIn(prisonNumbers: Collection<String>, includeInactive: Boolean): Collection<Alert>
-
-  @Query(
-    """
-    select a from Alert a
-    join fetch a.alertCode ac
-    join fetch ac.alertType at
-    join fetch a.auditEvents ae
-    where a.prisonNumber in :prisonNumbers
-    and ac.code in :filterAlertCodes
-    and (:includeInactive = true or a.activeTo is null or a.activeTo > current_date)
+    and (:filterAlertCodes is null or ac.code in :filterAlertCodes)
     """,
   )
   fun findByPrisonNumberIn(
     prisonNumbers: Collection<String>,
     includeInactive: Boolean,
-    filterAlertCodes: Set<String>,
+    filterAlertCodes: Set<String>? = null,
   ): Collection<Alert>
 
   @EntityGraph(value = "alert")
