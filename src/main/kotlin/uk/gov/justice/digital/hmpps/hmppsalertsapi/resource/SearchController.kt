@@ -1,12 +1,14 @@
 package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.Size
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -50,7 +52,15 @@ class SearchController(private val alertService: AlertService) {
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__RO', '$ROLE_PRISONER_ALERTS__RW', '$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @UsernameHeader
   fun retrievePrisonerAlerts(
-    @RequestBody @NotEmpty(message = "Prison numbers must not be empty") prisonNumbers: Set<String>,
-    @RequestParam(required = false, defaultValue = "false") includeInactive: Boolean,
-  ): AlertsResponse = alertService.retrieveAlertsForPrisonNumbers(prisonNumbers, includeInactive, AlertRequestContext.get())
+    @RequestBody
+    @NotEmpty(message = "Prison numbers must not be empty")
+    prisonNumbers: Set<String>,
+    @RequestParam(required = false, defaultValue = "false")
+    @Parameter(description = "Whether to include inactive alerts")
+    includeInactive: Boolean,
+    @RequestParam(required = false)
+    @Size(min = 1, message = "When provided, filterAlertCodes must include at least one code")
+    @Parameter(description = "Whether to filter for only given alert codes (all by default)")
+    filterAlertCodes: Set<String>? = null,
+  ): AlertsResponse = alertService.retrieveAlertsForPrisonNumbers(prisonNumbers, includeInactive, filterAlertCodes, AlertRequestContext.get())
 }
