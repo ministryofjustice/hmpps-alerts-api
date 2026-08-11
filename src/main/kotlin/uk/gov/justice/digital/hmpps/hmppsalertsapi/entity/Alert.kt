@@ -118,7 +118,7 @@ class Alert(
 
   fun lastModifiedAuditEvent() = auditEvents().firstOrNull { it.action == AuditEventAction.UPDATED }
 
-  final var deletedAt: LocalDateTime? = null
+  var deletedAt: LocalDateTime? = null
     private set
 
   fun resync(
