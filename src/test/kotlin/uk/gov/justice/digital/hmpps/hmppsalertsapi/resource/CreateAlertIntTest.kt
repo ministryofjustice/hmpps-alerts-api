@@ -2,16 +2,19 @@ package uk.gov.justice.digital.hmpps.hmppsalertsapi.resource
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
+import org.awaitility.kotlin.atMost
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.MediaType
+import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
@@ -41,12 +44,19 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_INACTIVE_COV
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.ALERT_CODE_VICTIM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.RequestGenerator.alertCodeSummary
+import uk.gov.justice.hmpps.kotlin.common.ErrorResponse
+import java.time.Duration.ofSeconds
 import java.time.LocalDate.now
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit.SECONDS
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.Alert as AlertModel
 
 class CreateAlertIntTest : IntegrationTestBase() {
+  @Autowired
+  lateinit var jdbcTemplate: JdbcTemplate
 
   @Test
   fun `401 unauthorised`() {
@@ -517,6 +527,52 @@ class CreateAlertIntTest : IntegrationTestBase() {
       assertThat(userMessage).isEqualTo("Duplicate failure: Alert already exists")
       assertThat(developerMessage).isEqualTo("Alert already exists with identifier ${request.alertCode}")
       assertThat(moreInfo).isNull()
+    }
+  }
+
+  @Test
+  fun `concurrent dps requests do not create duplicate active alerts`() {
+    val prisonNumber = givenPrisoner()
+    val alertCode = givenAlertCode()
+    val request = createAlertRequest(alertCode.code)
+    val executor = Executors.newFixedThreadPool(2)
+    val blockerReady = CountDownLatch(1)
+    val releaseBlocker = CountDownLatch(1)
+
+    try {
+      val blocker = executor.submit {
+        transactionTemplate.executeWithoutResult {
+          alertRepository.lockActiveAlertCreation(prisonNumber, alertCode.code)
+          givenAlert(alert(prisonNumber, alertCode))
+          alertRepository.flush()
+          blockerReady.countDown()
+          check(releaseBlocker.await(10, SECONDS))
+        }
+      }
+      check(blockerReady.await(10, SECONDS))
+
+      val response = executor.submit<ErrorResponse> {
+        webTestClient.createAlertResponseSpec(prisonNumber, request).errorResponse(CONFLICT)
+      }
+      await atMost ofSeconds(10) untilCallTo {
+        jdbcTemplate.queryForObject(
+          "select count(*) from pg_locks where locktype = 'advisory' and not granted",
+          Long::class.java,
+        )
+      } matches { it != null && it > 0 }
+
+      releaseBlocker.countDown()
+      blocker.get(10, SECONDS)
+
+      with(response.get(10, SECONDS)) {
+        assertThat(status).isEqualTo(409)
+        assertThat(userMessage).isEqualTo("Duplicate failure: Alert already exists")
+        assertThat(developerMessage).isEqualTo("Alert already exists with identifier ${request.alertCode}")
+      }
+      assertThat(alertRepository.findByPrisonNumberAndAlertCodeCode(prisonNumber, alertCode.code).filter { it.isActive() }).hasSize(1)
+    } finally {
+      releaseBlocker.countDown()
+      executor.shutdownNow()
     }
   }
 
