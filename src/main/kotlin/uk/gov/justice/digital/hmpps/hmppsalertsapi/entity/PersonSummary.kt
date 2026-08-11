@@ -12,29 +12,14 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.client.prisonersearch.dto.Pri
 class PersonSummary(
   @Id
   val prisonNumber: String,
-  firstName: String,
-  lastName: String,
-  status: String,
-  restrictedPatient: Boolean,
-  prisonCode: String?,
-  cellLocation: String?,
-  supportingPrisonCode: String?,
+  var firstName: String,
+  var lastName: String,
+  var status: String,
+  var restrictedPatient: Boolean,
+  var prisonCode: String?,
+  var cellLocation: String?,
+  var supportingPrisonCode: String?,
 ) {
-  var firstName: String = firstName
-    private set
-  var lastName: String = lastName
-    private set
-  var status: String = status
-    private set
-  var restrictedPatient: Boolean = restrictedPatient
-    private set
-  var prisonCode: String? = prisonCode
-    private set
-  var cellLocation: String? = cellLocation
-    private set
-  var supportingPrisonCode: String? = supportingPrisonCode
-    private set
-
   @Version
   val version: Int? = null
 
