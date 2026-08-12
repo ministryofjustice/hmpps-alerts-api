@@ -212,6 +212,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     val prisonNumbers = people.map { it.prisonNumber }.toSet()
     val existingAlertsToExpire = alertRepository.findAllActiveByCode("XNR")
       .filter { it.prisonNumber !in prisonNumbers }
+    val affectedPrisonNumbers = prisonNumbers + existingAlertsToExpire.map { it.prisonNumber }
 
     val startTime = LocalDateTime.now()
     startPlanResponseSpec(plan.id).expectStatus().isAccepted
@@ -257,9 +258,10 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     }
 
     await atMost ofSeconds(30) withPollDelay ofSeconds(5) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches {
-      it == 45
+      it != null && it >= 45
     }
-    val messages = hmppsEventsQueue.receiveAllMessages()
+    val messages = hmppsEventsQueue.receiveAllMessages().filter { it.personReference.findNomsNumber() in affectedPrisonNumbers }
+    assertThat(messages).hasSize(45)
     val created = messages.filter { it.eventType == DomainEventType.ALERT_CREATED.eventType }
     assertThat(created).hasSize(saved.createdCount!!)
     val updated = messages.filter { it.eventType == DomainEventType.ALERT_UPDATED.eventType }

@@ -26,6 +26,9 @@ interface AlertRepository :
   @EntityGraph(value = "alert")
   fun findByPrisonNumberAndAlertCodeCode(prisonNumber: String, alertCode: String): Collection<Alert>
 
+  @Query(value = "select pg_advisory_xact_lock(hashtext(:prisonNumber), hashtext(:alertCode))", nativeQuery = true)
+  fun lockActiveAlertCreation(prisonNumber: String, alertCode: String)
+
   @Query(value = "select * from alert a where a.id = :alertUuid", nativeQuery = true)
   fun findByAlertUuidIncludingSoftDelete(alertUuid: UUID): Alert?
 
