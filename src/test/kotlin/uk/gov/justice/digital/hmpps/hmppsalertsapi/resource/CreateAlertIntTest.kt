@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus.CONFLICT
 import org.springframework.http.HttpStatus.FORBIDDEN
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.queryForObject
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.toZoneDateTime
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
@@ -532,7 +533,6 @@ class CreateAlertIntTest : IntegrationTestBase() {
 
   @Test
   fun `concurrent dps requests do not create duplicate active alerts`() {
-    val prisonNumber = givenPrisoner()
     val alertCode = givenAlertCode()
     val request = createAlertRequest(alertCode.code)
     val executor = Executors.newFixedThreadPool(2)
@@ -542,8 +542,8 @@ class CreateAlertIntTest : IntegrationTestBase() {
     try {
       val blocker = executor.submit {
         transactionTemplate.executeWithoutResult {
-          alertRepository.lockActiveAlertCreation(prisonNumber, alertCode.code)
-          givenAlert(alert(prisonNumber, alertCode))
+          alertRepository.lockActiveAlertCreation(PRISON_NUMBER, alertCode.code)
+          givenAlert(alert(PRISON_NUMBER, alertCode))
           alertRepository.flush()
           blockerReady.countDown()
           check(releaseBlocker.await(10, SECONDS))
@@ -552,12 +552,11 @@ class CreateAlertIntTest : IntegrationTestBase() {
       check(blockerReady.await(10, SECONDS))
 
       val response = executor.submit<ErrorResponse> {
-        webTestClient.createAlertResponseSpec(prisonNumber, request).errorResponse(CONFLICT)
+        webTestClient.createAlertResponseSpec(PRISON_NUMBER, request).errorResponse(CONFLICT)
       }
       await atMost ofSeconds(10) untilCallTo {
-        jdbcTemplate.queryForObject(
+        jdbcTemplate.queryForObject<Long>(
           "select count(*) from pg_locks where locktype = 'advisory' and not granted",
-          Long::class.java,
         )
       } matches { it != null && it > 0 }
 
@@ -569,7 +568,7 @@ class CreateAlertIntTest : IntegrationTestBase() {
         assertThat(userMessage).isEqualTo("Duplicate failure: Alert already exists")
         assertThat(developerMessage).isEqualTo("Alert already exists with identifier ${request.alertCode}")
       }
-      assertThat(alertRepository.findByPrisonNumberAndAlertCodeCode(prisonNumber, alertCode.code).filter { it.isActive() }).hasSize(1)
+      assertThat(alertRepository.findByPrisonNumberAndAlertCodeCode(PRISON_NUMBER, alertCode.code).filter { it.isActive() }).hasSize(1)
     } finally {
       releaseBlocker.countDown()
       executor.shutdownNow()
