@@ -5,7 +5,6 @@ import org.assertj.core.api.Assertions.assertThatCode
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.jdbc.Sql
-import org.springframework.test.context.transaction.TestTransaction
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.repository.AlertRepository
 import java.time.LocalDateTime
 import java.util.UUID
@@ -17,7 +16,6 @@ class AlertRepositoryTest : RepositoryTest() {
 
   @Test
   fun `finds active alerts for prison number`() {
-    commitAndStartNew()
     val alerts = repository.findByPrisonNumberIn(listOf("A1234AA"), includeInactive = false)
 
     assertThat(alerts.map { it.id }).containsExactlyInAnyOrder(ALERT_1, ALERT_2, ALERT_6)
@@ -25,7 +23,6 @@ class AlertRepositoryTest : RepositoryTest() {
 
   @Test
   fun `includes inactive alerts and filters by code`() {
-    commitAndStartNew()
     val alerts = repository.findByPrisonNumberIn(listOf("A1234AA"), includeInactive = true, setOf("AS"))
 
     assertThat(alerts.map { it.id }).containsExactlyInAnyOrder(ALERT_1, ALERT_2, ALERT_3, ALERT_4)
@@ -33,7 +30,6 @@ class AlertRepositoryTest : RepositoryTest() {
 
   @Test
   fun `finds active alerts by code`() {
-    commitAndStartNew()
     val alerts = repository.findAllActiveByCode("AS")
 
     assertThat(alerts.map { it.id }).containsExactlyInAnyOrder(ALERT_1, ALERT_2, ALERT_5)
@@ -41,7 +37,6 @@ class AlertRepositoryTest : RepositoryTest() {
 
   @Test
   fun `finds soft-deleted alert by ID`() {
-    commitAndStartNew()
     val alert = repository.findByAlertUuidIncludingSoftDelete(ALERT_7)
 
     assertThat(alert?.id).isEqualTo(ALERT_7)
@@ -49,7 +44,6 @@ class AlertRepositoryTest : RepositoryTest() {
 
   @Test
   fun `finds prison numbers with created or inactive events in time window`() {
-    commitAndStartNew()
     val prisonNumbers = repository.prisonNumbersCreatedOrInactiveBetween(
       LocalDateTime.parse("2024-01-10T10:00:00"),
       LocalDateTime.parse("2024-01-10T11:00:00"),
@@ -60,14 +54,7 @@ class AlertRepositoryTest : RepositoryTest() {
 
   @Test
   fun `locks active alert creation`() {
-    commitAndStartNew()
     assertThatCode { repository.lockActiveAlertCreation("A1234AA", "AS") }.doesNotThrowAnyException()
-  }
-
-  private fun commitAndStartNew() {
-    TestTransaction.flagForCommit()
-    TestTransaction.end()
-    TestTransaction.start()
   }
 
   companion object {

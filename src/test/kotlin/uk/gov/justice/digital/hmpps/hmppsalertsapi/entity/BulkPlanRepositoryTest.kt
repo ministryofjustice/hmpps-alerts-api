@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.jdbc.Sql
-import org.springframework.test.context.transaction.TestTransaction
 import java.util.UUID
 
 @Sql("classpath:jpa/repository/reset.sql", "classpath:jpa/repository/bulk-plan-repository.sql")
@@ -14,7 +13,6 @@ class BulkPlanRepositoryTest : RepositoryTest() {
 
   @Test
   fun `counts how plan affects existing alerts`() {
-    commitAndStartNew()
     val affects = repository.findPlanAffects(PLAN_1, "AS").associate { it.status to it.count }
 
     assertThat(affects).containsExactlyInAnyOrderEntriesOf(
@@ -29,16 +27,9 @@ class BulkPlanRepositoryTest : RepositoryTest() {
 
   @Test
   fun `finds plans containing prison number`() {
-    commitAndStartNew()
     val plans = repository.findPlansWithPrisonNumber("A1111AA")
 
     assertThat(plans.map { it.id }).containsExactlyInAnyOrder(PLAN_1, PLAN_2)
-  }
-
-  private fun commitAndStartNew() {
-    TestTransaction.flagForCommit()
-    TestTransaction.end()
-    TestTransaction.start()
   }
 
   companion object {
