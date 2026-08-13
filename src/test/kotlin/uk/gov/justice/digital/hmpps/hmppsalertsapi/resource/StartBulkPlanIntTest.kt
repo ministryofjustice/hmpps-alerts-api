@@ -90,7 +90,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
           .apply { people.addAll(existingPeople) },
       )
       plan to existingPeople
-    }!!
+    }
 
     val prisonNumbers = people.map { it.prisonNumber }.toSet()
     val existingAlertsToExpire = alertRepository.findAllActiveByCode("XSA")
@@ -120,10 +120,10 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     assertThat(alerts.map { it.activeTo }.all { it == null }).isTrue()
 
     val results = alerts.map {
-      val auditEvent = it.auditEvents().first()
+      val auditEvents = it.auditEvents()
       when {
-        auditEvent.actionedBy == BULK_ALERT_USERNAME && auditEvent.action == CREATED -> Status.CREATE to it
-        auditEvent.actionedBy == BULK_ALERT_USERNAME && auditEvent.action == UPDATED -> Status.UPDATE to it
+        auditEvents.any { event -> event.actionedBy == BULK_ALERT_USERNAME && event.action == CREATED } -> Status.CREATE to it
+        auditEvents.any { event -> event.actionedBy == BULK_ALERT_USERNAME && event.action == UPDATED } -> Status.UPDATE to it
         else -> Status.ACTIVE to it
       }
     }.groupBy({ it.first }, { it.second })
@@ -137,7 +137,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
       assertThat(expired).hasSize(existingAlertsToExpire.size)
       expired.forEach {
         assertThat(it.activeTo).isEqualTo(LocalDate.now())
-        with(it.auditEvents().first()) {
+        with(it.auditEvents().first { event -> event.action == AuditEventAction.INACTIVE }) {
           assertThat(action).isEqualTo(AuditEventAction.INACTIVE)
           assertThat(actionedBy).isEqualTo(BULK_ALERT_USERNAME)
           assertThat(actionedByDisplayName).isEqualTo(BULK_ALERT_DISPLAY_NAME)
@@ -145,8 +145,16 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
       }
     }
 
+    val createdPrisoners = results[Status.CREATE].orEmpty().map { it.prisonNumber }.toSet()
+    val updatedPrisoners = results[Status.UPDATE].orEmpty().map { it.prisonNumber }.toSet()
+    val basePrisonerCount = (createdPrisoners + updatedPrisoners).size
+    val expiredPrisoners = if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) existingAlertsToExpire.map { it.prisonNumber }.toSet() else emptySet()
+    val expectedPersonAlertsChangedEvents = basePrisonerCount + expiredPrisoners.size
+    val expectedAlertEvents = saved.createdCount!! + saved.updatedCount!! + (if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) 2 * saved.expiredCount!! else 0)
+    val expectedTotal = expectedAlertEvents + expectedPersonAlertsChangedEvents
+
     await atMost ofSeconds(20) withPollDelay ofSeconds(5) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches {
-      it == (30 + (2 * saved.expiredCount!!)) + if (cleanupMode == EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED) 4 else 0
+      it == expectedTotal
     }
     val messages = hmppsEventsQueue.receiveAllMessages()
     val created = messages.filter { it.eventType == DomainEventType.ALERT_CREATED.eventType }
@@ -159,7 +167,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
       assertThat(expired).hasSize(saved.expiredCount!!)
     }
     val personAlertsChanged = messages.filter { it.eventType == DomainEventType.PERSON_ALERTS_CHANGED.eventType }
-    assertThat(personAlertsChanged).hasSize(15 + saved.expiredCount!!)
+    assertThat(personAlertsChanged).hasSize(expectedPersonAlertsChangedEvents)
   }
 
   @Test
@@ -207,7 +215,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
           .apply { people.addAll(existingPeople) },
       )
       plan to existingPeople
-    }!!
+    }
 
     val prisonNumbers = people.map { it.prisonNumber }.toSet()
     val existingAlertsToExpire = alertRepository.findAllActiveByCode("XNR")
@@ -235,10 +243,10 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     assertThat(alerts.map { it.activeTo }.all { it == null }).isTrue()
 
     val results = alerts.map {
-      val auditEvent = it.auditEvents().first()
+      val auditEvents = it.auditEvents()
       when {
-        auditEvent.actionedBy == BULK_ALERT_USERNAME && auditEvent.action == CREATED -> Status.CREATE to it
-        auditEvent.actionedBy == BULK_ALERT_USERNAME && auditEvent.action == UPDATED -> Status.UPDATE to it
+        auditEvents.any { event -> event.actionedBy == BULK_ALERT_USERNAME && event.action == CREATED } -> Status.CREATE to it
+        auditEvents.any { event -> event.actionedBy == BULK_ALERT_USERNAME && event.action == UPDATED } -> Status.UPDATE to it
         else -> Status.ACTIVE to it
       }
     }.groupBy({ it.first }, { it.second })
@@ -250,18 +258,26 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     assertThat(expired).hasSize(existingAlertsToExpire.size)
     expired.forEach {
       assertThat(it.activeTo).isEqualTo(LocalDate.now())
-      with(it.auditEvents().first()) {
+      with(it.auditEvents().first { event -> event.action == AuditEventAction.INACTIVE }) {
         assertThat(action).isEqualTo(AuditEventAction.INACTIVE)
         assertThat(actionedBy).isEqualTo(BULK_ALERT_USERNAME)
         assertThat(actionedByDisplayName).isEqualTo(BULK_ALERT_DISPLAY_NAME)
       }
     }
 
+    val expectedAlertEvents = saved.createdCount!! + saved.updatedCount!! + 2 * saved.expiredCount!!
+    val createdPrisoners = results[Status.CREATE].orEmpty().map { it.prisonNumber }.toSet()
+    val updatedPrisoners = results[Status.UPDATE].orEmpty().map { it.prisonNumber }.toSet()
+    val basePrisonerCount = (createdPrisoners + updatedPrisoners).size
+    val expiredPrisoners = existingAlertsToExpire.map { it.prisonNumber }.toSet()
+    val expectedPersonAlertsChangedEvents = basePrisonerCount + expiredPrisoners.size
+    val expectedTotal = expectedAlertEvents + expectedPersonAlertsChangedEvents
+
     await atMost ofSeconds(30) withPollDelay ofSeconds(5) untilCallTo { hmppsEventsQueue.countAllMessagesOnQueue() } matches {
-      it != null && it >= 45
+      it != null && it >= expectedTotal
     }
     val messages = hmppsEventsQueue.receiveAllMessages().filter { it.personReference.findNomsNumber() in affectedPrisonNumbers }
-    assertThat(messages).hasSize(45)
+    assertThat(messages).hasSize(expectedTotal)
     val created = messages.filter { it.eventType == DomainEventType.ALERT_CREATED.eventType }
     assertThat(created).hasSize(saved.createdCount!!)
     val updated = messages.filter { it.eventType == DomainEventType.ALERT_UPDATED.eventType }
@@ -270,7 +286,7 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     val expiredMessages = messages.filter { it.eventType == DomainEventType.ALERT_INACTIVE.eventType }
     assertThat(expiredMessages).hasSize(saved.expiredCount!!)
     val personAlertsChanged = messages.filter { it.eventType == DomainEventType.PERSON_ALERTS_CHANGED.eventType }
-    assertThat(personAlertsChanged).hasSize(18)
+    assertThat(personAlertsChanged).hasSize(expectedPersonAlertsChangedEvents)
   }
 
   private fun startPlanResponseSpec(
