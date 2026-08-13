@@ -1,0 +1,2 @@
+INSERT INTO alert_code (alert_code_id, alert_type_id, code, description, restricted, list_sequence, created_at, created_by)
+VALUES (900001, (SELECT alert_type_id FROM alert_type WHERE code = 'A'), 'TEST_CODE', 'Repository test code', false, 1, '2024-01-01 00:00:00', 'REPOSITORY_TEST');
