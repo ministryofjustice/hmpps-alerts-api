@@ -3,7 +3,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.2"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.4"
   kotlin("jvm") version "2.4.10"
   kotlin("plugin.spring") version "2.4.10"
   kotlin("plugin.jpa") version "2.4.10"
@@ -22,7 +22,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-restclient")
   implementation("org.springframework.boot:spring-boot-starter-webclient")
   implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:3.0.0")
-  implementation("io.sentry:sentry-spring-boot-4:8.51.0")
+  implementation("io.sentry:sentry-spring-boot-4:8.52.0")
   implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
 
   // Database dependencies
@@ -41,7 +41,7 @@ dependencies {
   }
 
   // Test dependencies
-  testImplementation("org.junit.jupiter:junit-jupiter:6.1.2")
+  testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
   testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
   testImplementation("org.springframework.boot:spring-boot-starter-webclient-test")
