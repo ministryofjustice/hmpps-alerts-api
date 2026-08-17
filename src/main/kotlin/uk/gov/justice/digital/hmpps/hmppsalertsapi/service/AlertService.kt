@@ -48,6 +48,7 @@ class AlertService(
 
     if (notNomis) {
       check(request.dateRangeIsValid()) { "Active from must be before active to" }
+      alertRepository.lockActiveAlertCreation(prisoner.prisonerNumber, request.alertCode)
       checkForExistingActiveAlert(prisoner.prisonerNumber, request.alertCode)
     }
     if (!alertCode.canBeAdministeredByUser(context.username)) {
@@ -153,8 +154,15 @@ class AlertService(
     alerts.map { it.toAlertModel(context, auditEvents[it.id]) }
   }
 
-  fun retrieveAlertsForPrisonNumbers(prisonNumbers: Set<String>, includeInactive: Boolean, context: AlertRequestContext): AlertsResponse = AlertsResponse(
-    alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive).map { it.toAlertModel(context, it.auditEvents()) },
+  fun retrieveAlertsForPrisonNumbers(
+    prisonNumbers: Set<String>,
+    includeInactive: Boolean,
+    filterAlertCodes: Set<String>?,
+    context: AlertRequestContext,
+  ): AlertsResponse = AlertsResponse(
+    alertRepository.findByPrisonNumberIn(prisonNumbers, includeInactive, filterAlertCodes).map {
+      it.toAlertModel(context, it.auditEvents())
+    },
   )
 
   @PublishPersonAlertsChanged
