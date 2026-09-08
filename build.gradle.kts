@@ -34,9 +34,6 @@ dependencies {
 
   // OpenAPI
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
-  constraints {
-    implementation("org.webjars:swagger-ui:5.32.11")
-  }
 
   // Test dependencies
   testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
