@@ -2,9 +2,9 @@
 
 plugins {
   id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.8"
-  kotlin("jvm") version "2.4.10"
-  kotlin("plugin.spring") version "2.4.10"
-  kotlin("plugin.jpa") version "2.4.10"
+  kotlin("jvm") version "2.4.20"
+  kotlin("plugin.spring") version "2.4.20"
+  kotlin("plugin.jpa") version "2.4.20"
   jacoco
 }
 
@@ -20,7 +20,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-restclient")
   implementation("org.springframework.boot:spring-boot-starter-webclient")
   implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:3.0.1")
-  implementation("io.sentry:sentry-spring-boot-4:8.54.0")
+  implementation("io.sentry:sentry-spring-boot-4:8.55.0")
   implementation("com.fasterxml.uuid:java-uuid-generator:5.2.0")
 
   // Database dependencies
@@ -33,7 +33,7 @@ dependencies {
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:7.4.1")
 
   // OpenAPI
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
 
   // Test dependencies
   testImplementation("org.junit.jupiter:junit-jupiter:6.1.3")
