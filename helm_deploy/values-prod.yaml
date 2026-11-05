@@ -1,7 +1,5 @@
----
-# Per environment values which override defaults in hmpps-alerts-api/values.yaml
-
 generic-service:
+
   ingress:
     host: alerts-api.hmpps.service.justice.gov.uk
 
@@ -28,10 +26,7 @@ generic-service:
         DB_PASS_PREPROD: "database_password"
         DB_HOST_PREPROD: "rds_instance_address"
 
-# CloudPlatform AlertManager receiver to route prometheus alerts to slack
-# See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
 generic-prometheus-alerts:
-  alertSeverity: hmpps-connect-dps-prod # sent to #connect-dps-prod-alerts
   sqsOldestAlertQueueNames:
     - "hmpps-move-and-improve-production-hmpps_alerts_domain_events_queue"
   sqsNumberAlertQueueNames:
@@ -41,7 +36,6 @@ generic-prometheus-alerts:
   rdsAlertsDatabases:
     cloud-platform-d1cf1f967e4eb6d9: 'Prisoner Alerts API'
   rdsAlertsConnectionThreshold: 100
-
 
 generic-data-analytics-extractor:
   enabled: true
