@@ -69,5 +69,5 @@ class AlertCode(
     )
   }
 
-  fun canBeAdministeredByUser(username: String): Boolean = !restricted || privilegedUsers.any { username == it.username }
+  fun canBeAdministeredByUser(username: String): Boolean = !restricted || privilegedUsers.any { username.uppercase() == it.username }
 }
