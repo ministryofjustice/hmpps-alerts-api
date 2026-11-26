@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.common.aop.PublishPersonAlert
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.config.AlertRequestContext.Companion.PRISON_NUMBER_REGEX
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.Alert
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.AlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.BulkPlan.Companion.BULK_ALERT_DISPLAY_NAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.BulkPlan.Companion.BULK_ALERT_USERNAME
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.entity.BulkPlanRepository
@@ -24,6 +25,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode.EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.Source
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.InvalidRowException
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.exceptions.PermissionDeniedException
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlan
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanAffect
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlanCounts
@@ -80,11 +82,23 @@ class PlanBulkAlert(
     return plan.toModel()
   }
 
+  fun canStart(id: UUID): Boolean = planRepository.getPlan(id).alertCode?.canBeAdministeredByUser(AlertRequestContext.get().username) ?: true
+
+  fun checkCanSetAlertCodes(actions: Set<BulkAction>, context: AlertRequestContext) {
+    actions.filterIsInstance<SetAlertCode>().forEach { action ->
+      val alertCode = alertCodeRepository.getByCode(action.alertCode)
+      if (!alertCode.canBeAdministeredByUser(context.username)) {
+        throw PermissionDeniedException("AlertCode", alertCode.code)
+      }
+    }
+  }
+
   @Async
   @PublishPersonAlertsChanged
   fun start(id: UUID, context: AlertRequestContext) {
     val plan = planRepository.getPlan(id)
     val (alertCode, cleanupMode) = plan.ready()
+    alertCode.checkCanBeAdministeredBy(context.username)
     plan.start(context)
     val existingAlerts = alertRepository.findAllActiveByCode(alertCode.code).groupBy { it.prisonNumber }
     val toAction = plan.people.flatMap {
@@ -152,6 +166,10 @@ class PlanBulkAlert(
   fun status(id: UUID): BulkPlanStatus = planRepository.getPlan(id).status()
 
   fun findPlansFromPrisonNumber(prisonNumber: String) = planRepository.findPlansWithPrisonNumber(prisonNumber)
+
+  private fun AlertCode.checkCanBeAdministeredBy(username: String) {
+    if (!canBeAdministeredByUser(username)) throw PermissionDeniedException("AlertCode", code)
+  }
 
   private fun Plan.setAlertCode(action: SetAlertCode) {
     alertCode = alertCodeRepository.getByCode(action.alertCode)

@@ -24,8 +24,10 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupM
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode.KEEP_ALL
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.DomainEventType
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.ManageUsersExtension
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER_NAME
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import java.time.Duration.ofSeconds
 import java.time.LocalDate
@@ -289,6 +291,71 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
     assertThat(personAlertsChanged).hasSize(expectedPersonAlertsChangedEvents)
   }
 
+  @Test
+  fun `403 forbidden - cannot start a plan for restricted alert code when user is not privileged`() {
+    ManageUsersExtension.manageUsers.stubGetUserDetails(username = NOT_PRIVILEGED_USER)
+    val (plan, existingAlert) = transactionTemplate.execute {
+      val restrictedAlertCode = givenNewAlertCode(alertCode("XXBR", restricted = true))
+      val existing = givenAlert(alert(prisonNumber(), restrictedAlertCode, activeTo = LocalDate.now().plusDays(7)))
+      val person = givenPersonSummary(personSummary())
+      val bulkPlan = givenBulkPlan(
+        plan(restrictedAlertCode, "A description for restricted alert", EXPIRE_FOR_PRISON_NUMBERS_NOT_SPECIFIED)
+          .apply { people.add(person) },
+      )
+      bulkPlan to existing
+    }
+
+    startPlanResponseSpec(plan.id, username = NOT_PRIVILEGED_USER).expectStatus().isForbidden
+
+    assertThat(bulkPlanRepository.getPlan(plan.id).startedAt).isNull()
+    val alerts = alertRepository.findAllActiveByCode("XXBR")
+    assertThat(alerts).hasSize(1)
+    assertThat(alerts.single().id).isEqualTo(existingAlert.id)
+    assertThat(alerts.single().activeTo).isEqualTo(LocalDate.now().plusDays(7))
+  }
+
+  @Test
+  fun `202 accepted - can start a plan for restricted alert code when user is privileged`() {
+    val plan = transactionTemplate.execute {
+      val restrictedAlertCode = givenNewAlertCode(alertCode("XXBP", restricted = true))
+      givenNewAlertCodePrivilegedUser(restrictedAlertCode)
+      val person = givenPersonSummary(personSummary())
+      givenBulkPlan(
+        plan(restrictedAlertCode, "A description for privileged user", KEEP_ALL)
+          .apply { people.add(person) },
+      )
+    }
+
+    startPlanResponseSpec(plan.id).expectStatus().isAccepted
+
+    await atMost ofSeconds(20) withPollDelay ofSeconds(1) untilCallTo {
+      bulkPlanRepository.getPlan(plan.id).completedAt
+    } matches { it != null }
+
+    assertThat(alertRepository.findAllActiveByCode("XXBP")).hasSize(1)
+  }
+
+  @Test
+  fun `202 accepted - can start a plan for unrestricted alert code for any user`() {
+    ManageUsersExtension.manageUsers.stubGetUserDetails(username = NOT_PRIVILEGED_USER)
+    val plan = transactionTemplate.execute {
+      val unrestrictedAlertCode = givenNewAlertCode(alertCode("XXBU", restricted = false))
+      val person = givenPersonSummary(personSummary())
+      givenBulkPlan(
+        plan(unrestrictedAlertCode, "A description for unrestricted alert", KEEP_ALL)
+          .apply { people.add(person) },
+      )
+    }
+
+    startPlanResponseSpec(plan.id, username = NOT_PRIVILEGED_USER).expectStatus().isAccepted
+
+    await atMost ofSeconds(20) withPollDelay ofSeconds(1) untilCallTo {
+      bulkPlanRepository.getPlan(plan.id).completedAt
+    } matches { it != null }
+
+    assertThat(alertRepository.findAllActiveByCode("XXBU")).hasSize(1)
+  }
+
   private fun startPlanResponseSpec(
     id: UUID,
     username: String = TEST_USER,
@@ -300,5 +367,6 @@ class StartBulkPlanIntTest : IntegrationTestBase() {
 
   companion object {
     private const val URL = "/bulk-alerts/plan/{id}/start"
+    private const val NOT_PRIVILEGED_USER = "NOT_PRIVILEGED_USER"
   }
 }
