@@ -10,6 +10,7 @@ import org.springframework.test.web.reactive.server.expectBody
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.IdGenerator.newUuid
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.enumeration.BulkAlertCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.ManageUsersExtension
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.PrisonerSearchExtension.Companion.prisonerSearch
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.integration.wiremock.TEST_USER
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.BulkPlan
@@ -19,6 +20,7 @@ import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.RemovePrisonNum
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.SetAlertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.SetCleanupMode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.model.request.SetDescription
+import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.EntityGenerator.alertCode
 import uk.gov.justice.digital.hmpps.hmppsalertsapi.utils.IdGenerator.prisonNumber
 import java.util.LinkedHashSet.newLinkedHashSet
 import java.util.UUID
@@ -173,6 +175,43 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `403 forbidden - cannot set a restricted alert code when user is not privileged`() {
+    ManageUsersExtension.manageUsers.stubGetUserDetails(username = NOT_PRIVILEGED_USER)
+    val plan = givenBulkPlan(plan())
+    val restrictedAlertCode = transactionTemplate.execute {
+      givenNewAlertCode(alertCode("XXPR", restricted = true))
+    }
+
+    patchPlanResponseSpec(
+      plan.id,
+      setOf(SetAlertCode(restrictedAlertCode.code)),
+      username = NOT_PRIVILEGED_USER,
+    ).expectStatus().isForbidden
+
+    val saved = requireNotNull(bulkPlanRepository.findByIdOrNull(plan.id))
+    assertThat(saved.alertCode).isNull()
+  }
+
+  @Test
+  fun `200 ok - set a restricted alert code when user is privileged`() {
+    val plan = givenBulkPlan(plan())
+    val restrictedAlertCode = transactionTemplate.execute {
+      val code = givenNewAlertCode(alertCode("XXPP", restricted = true))
+      givenNewAlertCodePrivilegedUser(code)
+      code
+    }
+
+    val res = patchPlan(
+      plan.id,
+      setOf(SetAlertCode(restrictedAlertCode.code)),
+    )
+    assertThat(res.id).isEqualTo(plan.id)
+
+    val saved = requireNotNull(bulkPlanRepository.findByIdOrNull(plan.id))
+    assertThat(saved.alertCode?.code).isEqualTo(restrictedAlertCode.code)
+  }
+
+  @Test
   fun `200 ok - set description to null for a plan`() {
     val plan = givenBulkPlan(plan())
     val res = patchPlan(
@@ -274,5 +313,6 @@ class PatchBulkPlanIntTest : IntegrationTestBase() {
 
   companion object {
     private const val URL = "/bulk-alerts/plan/{id}"
+    private const val NOT_PRIVILEGED_USER = "NOT_PRIVILEGED_USER"
   }
 }

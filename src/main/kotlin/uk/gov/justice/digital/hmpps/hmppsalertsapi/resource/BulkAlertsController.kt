@@ -97,7 +97,10 @@ class BulkAlertsController(private val plan: PlanBulkAlert, private val auditEve
   @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
   @UsernameHeader
   @SourceHeader
-  fun updatePlan(@PathVariable id: UUID, @RequestBody @NotEmpty @Valid actions: Set<BulkAction>): BulkPlan = plan.update(id, actions)
+  fun updatePlan(@PathVariable id: UUID, @RequestBody @NotEmpty @Valid actions: Set<BulkAction>): BulkPlan {
+    plan.checkCanSetAlertCodes(actions, AlertRequestContext.get())
+    return plan.update(id, actions)
+  }
 
   @GetMapping("/plan/{id}/prisoners")
   @Operation(summary = "Get prisoners associated with a plan")
@@ -178,7 +181,7 @@ class BulkAlertsController(private val plan: PlanBulkAlert, private val auditEve
     ],
   )
   @ResponseStatus(HttpStatus.ACCEPTED)
-  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI')")
+  @PreAuthorize("hasAnyRole('$ROLE_PRISONER_ALERTS__PRISONER_ALERTS_ADMINISTRATION_UI') and @planBulkAlert.canStart(#id)")
   @UsernameHeader
   @SourceHeader
   fun startPlan(@PathVariable id: UUID) {
